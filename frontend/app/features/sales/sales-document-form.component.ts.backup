@@ -1,0 +1,977 @@
+import { Component, Input, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { DocumentTypeModalComponent } from '../../shared/components/document-type-modal.component';
+import { EntityListModalComponent } from '../../shared/components/entity-list-modal.component';
+import { ArticleListModalComponent } from '../../shared/components/article-list-modal.component';
+import { IvaListModalComponent } from '../../shared/components/iva-list-modal.component';
+import { ARTICLES, IVA_RATES } from '../../shared/constants';
+import { AccountingService } from '../../shared/accounting.service';
+import { InventoryService } from '../../shared/inventory.service';
+import { SalesDocument, SalesDocumentLine } from '../../shared/models';
+
+interface GridRow {
+  articleCode: string;
+  warehouse: string;
+  location: string;
+  batch: string;
+  description: string;
+  civa: string;
+  iva: string;
+  unitPrice: number;
+  discount: number;
+  unit: string;
+  quantity: number;
+  totalLiquid: number;
+  project: string;
+  pepElement: string;
+  barcode: string;
+  ivaRule: string;
+  totalValue: number;
+  contract: string;
+  processNumber: string;
+}
+
+@Component({
+  selector: 'app-sales-document-form',
+  standalone: true,
+  imports: [CommonModule, FormsModule, DocumentTypeModalComponent, EntityListModalComponent, ArticleListModalComponent, IvaListModalComponent],
+  template: `
+    <div class="flex flex-col h-full w-full bg-[#F0F0F0] text-xs overflow-hidden relative">
+      <!-- Toolbar -->
+      <div class="flex items-center gap-1 px-2 py-1.5 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0 overflow-x-auto">
+        <ng-container *ngFor="let item of toolbarItems; let i = index">
+          <button 
+            (click)="item.label === 'Gravar' ? saveDocument() : null"
+            class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 whitespace-nowrap group"
+          >
+            <span class="material-symbols-outlined text-[18px] text-gray-600 group-hover:text-primary">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
+          </button>
+          <div *ngIf="shouldRenderDivider(i)" class="w-px h-4 bg-gray-300 mx-1"></div>
+        </ng-container>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex items-end px-1 pt-2 border-b border-gray-300 bg-[#E0E0E0] shrink-0 gap-1 overflow-x-auto">
+        <button *ngFor="let tab of tabs; let i = index"
+          (click)="activeTab = i"
+          [class]="'px-3 py-1 border-t-2 border-x border-b-0 rounded-t-sm text-[11px] font-medium transition-colors relative -mb-px cursor-pointer ' + 
+            (i === activeTab ? 'bg-[#F0F0F0] border-t-primary border-x-gray-300 text-black pb-1.5 z-10' : 'bg-[#D4D4D4] border-t-transparent border-x-transparent hover:bg-[#E8E8E8] text-gray-600')"
+        >
+          {{ tab }}
+        </button>
+      </div>
+
+      <!-- Form Header -->
+      <div class="flex flex-col p-2 bg-[#F0F0F0] border-b border-gray-300 shrink-0 h-auto gap-2">
+        <!-- Aba Geral -->
+        <div *ngIf="activeTab === 0" class="flex flex-col md:flex-row gap-2 h-full">
+          
+          <!-- Left Inputs Area -->
+          <div class="flex-1 flex flex-col gap-1.5">
+            <!-- Row 1 -->
+            <div class="flex items-center gap-2">
+              <label class="w-20 text-blue-600 font-medium text-right">Documento:</label>
+              <div class="flex items-center border border-gray-300 bg-white rounded-sm h-5 w-24 relative">
+                 <input class="w-full h-full px-1 focus:outline-none" [value]="selectedDocType || defaultDocValue" [readOnly]="!isInternal" />
+                 <button (click)="openDocTypeModal()" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[10px] font-bold cursor-pointer">F4</button>
+              </div>
+              <input class="flex-1 h-5 border border-gray-300 px-1 bg-[#FDFDFD] rounded-sm focus:outline-none focus:border-blue-500" [value]="selectedDocDescription" disabled />
+              
+              <input type="number" class="h-5 border border-gray-300 px-1 w-16 rounded-sm text-right ml-2" value="1" min="1" />
+
+              <div class="flex items-center gap-2 ml-4">
+                 <label class="font-medium">Data Doc.:</label>
+                 <input type="date" class="h-5 border border-gray-300 px-1 w-28 rounded-sm text-xs" [value]="defaultDate" />
+              </div>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="flex items-center gap-2">
+              <label class="w-20 text-blue-600 font-medium text-right">Entidade:</label>
+              <div class="flex items-center border border-gray-300 bg-white rounded-sm h-5 w-24 relative">
+                 <input class="w-full h-full px-1 focus:outline-none" [value]="selectedEntityCode" />
+                 <button (click)="openEntityModal()" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[10px] font-bold cursor-pointer">F4</button>
+              </div>
+              <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm focus:outline-none focus:border-blue-500" [value]="selectedEntityName" />
+              
+              <div class="flex items-center gap-2 ml-4">
+                 <label class="font-medium text-blue-600">Data Venc.:</label>
+                 <input type="date" class="h-5 border border-gray-300 px-1 w-28 rounded-sm text-xs" [value]="defaultDate" />
+              </div>
+            </div>
+
+             <!-- Row 3 - Read Only Address/Name Lines -->
+             <div class="flex items-center gap-2">
+               <div class="w-20"></div>
+               <input class="flex-1 h-5 border border-gray-300 px-1 bg-[#F8F8F8] text-gray-500 rounded-sm" [value]="selectedEntityAddress" readonly />
+               <div class="flex items-center gap-2 ml-4">
+                 <label class="font-medium w-[58px] text-right">Desc. Cli.</label>
+                 <input 
+                    type="number" 
+                    class="h-5 border border-gray-300 px-1 w-28 text-right rounded-sm" 
+                    [(ngModel)]="clientDiscount" 
+                    (ngModelChange)="calculateTotals()"
+                    min="0" max="100"
+                 />
+              </div>
+             </div>
+             <div class="flex items-center gap-2">
+               <div class="w-20"></div>
+               <div class="flex-1 flex gap-1">
+                   <input class="w-24 h-5 border border-gray-300 px-1 bg-[#F8F8F8] text-gray-500 rounded-sm relative" readonly />
+                   <span class="absolute ml-[80px] mt-[2px] text-blue-600 text-[10px] font-bold z-10 cursor-pointer">F4</span>
+                   <input class="flex-1 h-5 border border-gray-300 px-1 bg-[#F8F8F8] text-gray-500 rounded-sm relative" readonly />
+                   <span class="absolute right-[430px] mt-[2px] text-blue-600 text-[10px] font-bold z-10 cursor-pointer">F4</span>
+               </div>
+               <div class="flex items-center gap-2 ml-4">
+                 <label class="font-medium w-[58px] text-right">Desc. Financ.</label>
+                 <input 
+                    type="number" 
+                    class="h-5 border border-gray-300 px-1 w-28 text-right rounded-sm" 
+                    [(ngModel)]="financialDiscount" 
+                    (ngModelChange)="calculateTotals()"
+                    min="0" max="100"
+                 />
+              </div>
+             </div>
+
+             <!-- Row 4 -->
+             <div class="flex items-center gap-2 mt-1">
+               <label class="w-20 font-medium text-right">Contribuinte:</label>
+               <input class="w-32 h-5 border border-gray-300 px-1 bg-white rounded-sm" [value]="selectedEntityNif" />
+               <label class="ml-4 font-medium text-gray-500">{{ documentRefLabel }}</label>
+               <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm" />
+               <span class="material-symbols-outlined text-lg text-gray-400 cursor-pointer">search</span>
+             </div>
+          </div>
+
+          <!-- Right Side Summary Panel -->
+          <div class="w-56 bg-[#FDFDFD] border border-gray-300 p-2 shadow-sm flex flex-col gap-1 text-[11px]">
+             <div class="flex justify-between text-gray-700">
+                 <span>Merc./Serv.:</span>
+                 <span class="font-mono">{{ merchandiseTotal | number:'1.2-2' }}</span>
+             </div>
+             <div class="flex justify-between text-gray-700">
+                 <span>Descontos:</span>
+                 <span class="font-mono">{{ discountValue | number:'1.2-2' }}</span>
+             </div>
+             <div class="flex justify-between text-gray-700">
+                 <span>IVA:</span>
+                 <span class="font-mono">{{ totalIva | number:'1.2-2' }}</span>
+             </div>
+             <div class="flex justify-between text-gray-700">
+                 <span>Outros:</span>
+                 <span class="font-mono">0.00</span>
+             </div>
+             <div class="border-t border-gray-300 my-1"></div>
+             <div class="flex justify-between text-gray-700">
+                 <span>Subtotal:</span>
+                 <span class="font-mono">{{ subtotal | number:'1.2-2' }}</span>
+             </div>
+             <div class="flex justify-between text-gray-700">
+                 <span>Ajuste:</span>
+                 <span class="font-mono">0.00</span>
+             </div>
+             <div class="flex justify-between text-gray-700">
+                 <span>Ecovalor:</span>
+                 <span class="font-mono">0.00</span>
+             </div>
+             <div class="border-t-2 border-gray-400 my-1"></div>
+             <div class="flex justify-between font-bold text-primary text-sm">
+                 <span>TOTAL:</span>
+                 <span class="font-mono">{{ totalValue | number:'1.2-2' }}</span>
+             </div>
+          </div>
+       </div>
+
+       <!-- Aba Condições -->
+       <div *ngIf="activeTab === 1" class="flex flex-col gap-4 p-4">
+         <div class="bg-white border border-gray-300 rounded p-4">
+           <h3 class="text-sm font-semibold text-gray-700 mb-3">Condições de Pagamento</h3>
+           
+           <div class="flex flex-col gap-3">
+             <div class="flex items-center gap-4">
+               <label class="w-32 font-medium text-gray-700">Condição:</label>
+               <select [(ngModel)]="paymentCondition" class="h-7 border border-gray-300 px-2 bg-white rounded text-sm focus:outline-none focus:border-blue-500 w-48">
+                 <option value="PRONTO">Pronto Pagamento</option>
+                 <option value="PRAZO">A Prazo (Crédito)</option>
+               </select>
+             </div>
+
+             <div *ngIf="paymentCondition === 'PRONTO'" class="flex items-center gap-4">
+               <label class="w-32 font-medium text-gray-700">Conta de Depósito:</label>
+               <select [(ngModel)]="selectedTreasuryAccountId" class="h-7 border border-gray-300 px-2 bg-white rounded text-sm focus:outline-none focus:border-blue-500 flex-1">
+                 <option *ngFor="let acc of treasuryAccounts" [value]="acc.id">{{ acc.code }} - {{ acc.name }}</option>
+               </select>
+             </div>
+
+             <div *ngIf="paymentCondition === 'PRAZO'" class="flex items-center gap-4">
+               <label class="w-32 font-medium text-gray-700">Prazo (dias):</label>
+               <input type="number" class="h-7 border border-gray-300 px-2 rounded text-sm w-24" value="30" min="0" />
+             </div>
+           </div>
+         </div>
+       </div>
+
+       <!-- Outras abas (placeholder) -->
+       <div *ngIf="activeTab > 1" class="flex items-center justify-center p-8 text-gray-400">
+         <p>Conteúdo da aba "{{ tabs[activeTab] }}" em desenvolvimento...</p>
+       </div>
+     </div>
+
+     <!-- Grid Section (sempre visível) -->
+     <div class="flex-1 overflow-hidden flex flex-col">
+       <!-- Grid Header -->
+       <div class="bg-[#E8E8E8] border-b border-gray-300 overflow-x-auto shrink-0">
+         <div class="flex text-[10px] font-medium text-gray-700 min-w-max">
+           <div *ngFor="let header of gridHeaders" class="px-1 py-1 border-r border-gray-300 text-center" [style.width]="header === 'Descrição' ? '200px' : '80px'">
+             {{ header }}
+           </div>
+         </div>
+       </div>
+
+       <!-- Scrollable Grid Body -->
+       <div class="flex-1 overflow-auto bg-white">
+         <div class="min-w-max">
+           <div *ngFor="let row of rows; let i = index" class="flex border-b border-gray-200 hover:bg-blue-50 group" (contextmenu)="onContextMenu($event, i)">
+             <!-- Grid cells... (mantém o código existente) -->
+           </div>
+         </div>
+       </div>
+
+       <!-- Summary Footer (sempre visível abaixo da grid) -->
+          <div class="w-56 bg-[#FDFDFD] border border-gray-300 p-2 shadow-sm flex flex-col gap-1 text-[11px]">
+             <div class="flex justify-between text-gray-700">
+                 <span>Merc./Serv.:</span>
+                 <span class="font-mono">{{ merchandiseTotal | number:'1.2-2' }}</span>
+             </div>
+             <div class="flex justify-between text-gray-700">
+                 <span>Descontos:</span>
+                 <span class="font-mono">{{ discountValue | number:'1.2-2' }}</span>
+             </div>
+             <div class="flex justify-between text-gray-700">
+                 <span>IVA:</span>
+                 <span class="font-mono">{{ totalIva | number:'1.2-2' }}</span>
+             </div>
+             <div class="flex justify-between text-gray-700">
+                 <span>Outros:</span>
+                 <span class="font-mono">{{ 0 | number:'1.2-2' }}</span>
+             </div>
+             <div class="flex justify-between text-gray-700">
+                 <span>Subtotal:</span>
+                 <span class="font-mono">{{ subtotal | number:'1.2-2' }}</span>
+             </div>
+             <div class="flex justify-between text-gray-700">
+                 <span>Acerto:</span>
+                 <span class="font-mono">{{ 0 | number:'1.2-2' }}</span>
+             </div>
+             <div class="flex justify-between text-gray-700">
+                 <span>Ecovalor:</span>
+                 <span class="font-mono">{{ 0 | number:'1.2-2' }}</span>
+             </div>
+             
+             <div class="mt-auto pt-1 border-t border-gray-200 flex justify-between font-bold text-black text-xs">
+               <span>Total: MT</span>
+               <span>{{ totalValue | number:'1.2-2' }}</span>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Grid -->
+      <div class="flex-1 overflow-auto bg-white relative border-t border-gray-300">
+         <table class="w-full border-collapse text-[11px] min-w-max">
+           <thead class="bg-gray-50 sticky top-0 z-10 shadow-sm">
+             <tr>
+               <th *ngFor="let h of gridHeaders; let i = index" 
+                  [class]="'px-2 py-1 border-r border-b border-gray-300 text-blue-600 font-medium text-left whitespace-nowrap ' + (i === 0 ? 'border-l' : '')">
+                   {{ h }}
+               </th>
+             </tr>
+           </thead>
+           <tbody>
+             <tr *ngFor="let row of rows; let i = index" 
+                 class="hover:bg-blue-50 group"
+                 (contextmenu)="onContextMenu($event, i)">
+               <!-- Article Code -->
+               <td class="border-r border-b border-gray-200 h-6 px-1 relative p-0">
+                 <input 
+                    type="text" 
+                    [(ngModel)]="row.articleCode" 
+                    (blur)="onArticleBlur(i)"
+                    (keydown)="onArticleKeydown(i, $event)"
+                    class="w-full h-full px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50"
+                 />
+                 <span *ngIf="row.articleCode" class="material-symbols-outlined text-[14px] text-red-500 absolute left-1 top-1.5 hidden group-hover:block" title="Artigo">pentagon</span>
+               </td>
+               
+               <!-- Other Columns (Read-only for now or simple inputs) -->
+               <td class="border-r border-b border-gray-200 h-6 px-1">{{ row.warehouse }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1">{{ row.location }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1">{{ row.batch }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1">{{ row.description }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1 relative p-0 group/civa">
+                 <input 
+                    type="text" 
+                    [(ngModel)]="row.civa" 
+                    (keydown)="onCivaKeydown(i, $event)"
+                    class="w-full h-full px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50"
+                 />
+                 <span *ngIf="row.civa" class="material-symbols-outlined text-[14px] text-blue-500 absolute right-1 top-1.5 hidden group-hover/civa:block cursor-pointer" (click)="openIvaModal(i)">arrow_drop_down</span>
+               </td>
+               <td class="border-r border-b border-gray-200 h-6 px-1 text-right">{{ row.articleCode ? row.iva : '' }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1 text-right">{{ row.articleCode ? (row.unitPrice | number:'1.2-2') : '' }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1 text-right">{{ row.articleCode ? (row.discount | number:'1.2-2') : '' }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1">{{ row.unit }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1 text-right">
+                  <input 
+                    *ngIf="row.articleCode"
+                    type="number" 
+                    [(ngModel)]="row.quantity" 
+                    (ngModelChange)="calculateRow(i)"
+                    class="w-full h-full px-1 border-none bg-transparent focus:outline-none text-right" 
+                  />
+               </td>
+               <td class="border-r border-b border-gray-200 h-6 px-1 text-right">{{ row.articleCode ? (row.totalLiquid | number:'1.2-2') : '' }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1">{{ row.project }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1">{{ row.pepElement }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1">{{ row.barcode }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1">{{ row.ivaRule }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1 text-right">{{ row.articleCode ? (row.totalValue | number:'1.2-2') : '' }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1">{{ row.contract }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-1">{{ row.processNumber }}</td>
+             </tr>
+           </tbody>
+         </table>
+         <div class="absolute inset-0 pointer-events-none shadow-[inset_0px_0px_4px_rgba(0,0,0,0.05)]"></div>
+      </div>
+
+      <!-- Modals -->
+      <app-document-type-modal 
+        *ngIf="showDocTypeModal" 
+        (close)="showDocTypeModal = false"
+        (select)="onDocTypeSelect($event)"
+      ></app-document-type-modal>
+
+      <app-entity-list-modal
+        *ngIf="showEntityModal"
+        (close)="showEntityModal = false"
+        (select)="onEntitySelect($event)"
+      ></app-entity-list-modal>
+
+      <app-article-list-modal
+        *ngIf="showArticleModal"
+        (close)="showArticleModal = false"
+        (select)="onArticleSelect($event)"
+      ></app-article-list-modal>
+
+      <app-iva-list-modal
+        *ngIf="showIvaModal"
+        (close)="showIvaModal = false"
+        (select)="onIvaSelect($event)"
+      ></app-iva-list-modal>
+
+      <!-- Context Menu -->
+      <div *ngIf="contextMenuVisible" 
+           class="fixed z-50 bg-white shadow-lg border border-gray-200 rounded-sm py-1 w-72 text-xs"
+           [style.left.px]="contextMenuPosition.x"
+           [style.top.px]="contextMenuPosition.y">
+        
+        <button (click)="insertLine()" class="w-full text-left px-4 py-1.5 hover:bg-blue-50 flex items-center gap-2 text-gray-700">
+          <span class="material-symbols-outlined text-[16px] text-blue-600">add</span>
+          Insere Linha
+        </button>
+        <button (click)="removeLine()" class="w-full text-left px-4 py-1.5 hover:bg-blue-50 flex items-center gap-2 text-gray-700">
+          <span class="material-symbols-outlined text-[16px] text-red-600">remove</span>
+          Remove Linha
+        </button>
+        
+        <div class="h-px bg-gray-200 my-1"></div>
+        
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 text-gray-700 pl-10">Preços de Venda</button>
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 flex justify-between text-gray-700 pl-10">
+          <span>Desconto em Valor sobre Mercadorias</span>
+          <span class="text-gray-400">F5</span>
+        </button>
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 flex justify-between text-gray-700 pl-10">
+          <span>Desconto em Valor sobre Serviços</span>
+          <span class="text-gray-400">F6</span>
+        </button>
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 flex justify-between text-gray-700 pl-10">
+          <span>Acerto</span>
+          <span class="text-gray-400">F7</span>
+        </button>
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 flex justify-between text-gray-700 pl-10">
+          <span>Portes</span>
+          <span class="text-gray-400">F8</span>
+        </button>
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 flex justify-between text-gray-700 pl-10">
+          <span>Outros Serviços</span>
+          <span class="text-gray-400">F9</span>
+        </button>
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 flex justify-between text-gray-700 pl-10">
+          <span>Adiantamentos</span>
+          <span class="text-gray-400">Ctrl+A</span>
+        </button>
+
+        <div class="h-px bg-gray-200 my-1"></div>
+
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 flex justify-between text-gray-700 pl-10">
+          <span>Outros campos da linha</span>
+          <span class="text-gray-400">F10</span>
+        </button>
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 flex justify-between text-gray-700 pl-10">
+          <span>Números de Série</span>
+          <span class="text-gray-400">Ctrl+S</span>
+        </button>
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 text-gray-700 pl-10">Informação sobre o Lote</button>
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 flex justify-between text-gray-700 pl-10">
+          <span>Stock nos diversos Armazéns</span>
+          <span class="text-gray-400">F11</span>
+        </button>
+
+        <div class="h-px bg-gray-200 my-1"></div>
+
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 text-gray-700 pl-10">Detalhe do Ecovalor</button>
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 text-gray-700 pl-10">Detalhe do IEC</button>
+
+        <div class="h-px bg-gray-200 my-1"></div>
+        
+        <button class="w-full text-left px-4 py-1 hover:bg-blue-50 flex justify-between text-gray-700 pl-10">
+          <span>Resumo de Encomendas</span>
+          <span class="text-gray-400">Ctrl+F3</span>
+        </button>
+      </div>
+    </div>
+  `
+})
+export class SalesDocumentForm {
+  @Input() viewMode: string = 'sales-form';
+
+  showDocTypeModal = false;
+  selectedDocType = '';
+  selectedDocDescription = '';
+
+  showEntityModal = false;
+  selectedEntityCode = '';
+  selectedEntityName = '';
+  selectedEntityNif = '';
+  selectedEntityAddress = '';
+  selectedCustomer: any = null;
+
+  showArticleModal = false;
+  activeRowIndex = -1;
+
+  showIvaModal = false;
+  activeIvaRowIndex = -1;
+
+  clientDiscount = 0;
+  financialDiscount = 0;
+  paymentCondition: 'PRONTO' | 'PRAZO' = 'PRONTO';
+
+  treasuryAccounts: any[] = [];
+  selectedTreasuryAccountId: string = '';
+
+  // Totals
+  merchandiseTotal = 0;
+  subtotal = 0;
+  discountValue = 0;
+  totalIva = 0;
+  totalValue = 0;
+
+  // Context Menu State
+  contextMenuVisible = false;
+  contextMenuPosition = { x: 0, y: 0 };
+  contextMenuRowIndex = -1;
+
+  rows: GridRow[] = Array(20).fill(null).map(() => ({
+    articleCode: '',
+    warehouse: '',
+    location: '',
+    batch: '',
+    description: '',
+    civa: '',
+    iva: '',
+    unitPrice: 0,
+    discount: 0,
+    unit: '',
+    quantity: 0,
+    totalLiquid: 0,
+    project: '',
+    pepElement: '',
+    barcode: '',
+    ivaRule: '',
+    totalValue: 0,
+    contract: '',
+    processNumber: ''
+  }));
+
+  get isInternal(): boolean {
+    return this.viewMode === 'internal-docs';
+  }
+
+  get toolbarItems() {
+    return this.isInternal
+      ? [
+        { label: "Gravar", icon: "save" },
+        { label: "Novo", icon: "add_circle" },
+        { label: "Duplicar", icon: "content_copy" },
+        { label: "Imprimir", icon: "print" },
+        { label: "Procurar", icon: "search" },
+        { label: "Enviar", icon: "send" },
+        { label: "CRM", icon: "contacts" },
+        { label: "Contexto", icon: "settings" },
+        { label: "Ajuda", icon: "help_outline" },
+        { label: "Cancelar", icon: "logout" },
+      ]
+      : [
+        { label: "Gravar", icon: "save" },
+        { label: "Novo", icon: "add_circle" },
+        { label: "Anular", icon: "block" },
+        { label: "Duplicar", icon: "content_copy" },
+        { label: "Anular e Duplicar", icon: "file_copy" },
+        { label: "Imprimir", icon: "print" },
+        { label: "Rascunhos", icon: "history_edu" },
+        { label: "Procurar", icon: "search" },
+        { label: "Enviar", icon: "send" },
+        { label: "CRM", icon: "contacts" },
+        { label: "Contexto", icon: "settings" },
+        { label: "Ajuda", icon: "help_outline" },
+        { label: "Cancelar", icon: "logout" },
+      ];
+  }
+
+  activeTab = 0;
+
+  tabs = [
+    "Geral", "Condições", "Transação", "Fatura", "Impressão",
+    "Carga/Descarga", "Observações", "Estado", "Anexos"
+  ];
+
+  gridHeaders = [
+    "Artigo", "Arm.", "Localização", "Lote", "Descrição",
+    "CIVA", "IVA", "Pr. Unit.", "Desc.", "UN", "Qtd.",
+    "Total Liq.", "Projeto", "Elem. PEP", "Cód. Barras",
+    "IVA - Regra Cálculo", "Valor Total", "Contrato", "N.º Processo"
+  ];
+
+  totals = {
+    merchandise: 0,
+    discounts: 0,
+    iva: 0,
+    others: 0,
+    subtotal: 0,
+    adjustment: 0,
+    ecovalue: 0,
+    total: 0
+  };
+
+  get documentRefLabel(): string {
+    return this.isInternal ? "N.º Doc:" : "V/Refer.";
+  }
+
+  get defaultDocValue(): string {
+    return this.isInternal ? "" : "FA";
+  }
+
+  get defaultDate(): string {
+    return this.isInternal ? "2011-07-19" : "2025-11-21";
+  }
+
+  shouldRenderDivider(idx: number): boolean {
+    if (this.isInternal) {
+      return idx === 2 || idx === 3 || idx === 4 || idx === 6;
+    } else {
+      return idx === 4 || idx === 6 || idx === 9;
+    }
+  }
+
+  openDocTypeModal() {
+    this.showDocTypeModal = true;
+  }
+
+  onDocTypeSelect(type: any) {
+    this.selectedDocType = type.code;
+    this.selectedDocDescription = type.description;
+    this.showDocTypeModal = false;
+
+    // Auto-select PRONTO for VD
+    if (this.selectedDocType === 'VD') {
+      this.paymentCondition = 'PRONTO';
+    }
+  }
+
+  openEntityModal() {
+    this.showEntityModal = true;
+  }
+
+  onEntitySelect(entity: any) {
+    this.selectedEntityCode = entity.code;
+    this.selectedEntityName = entity.name;
+    this.selectedEntityNif = entity.nif;
+    this.selectedEntityAddress = entity.address;
+    this.selectedCustomer = entity;
+    this.showEntityModal = false;
+  }
+
+  // Article Logic
+  onArticleBlur(index: number) {
+    const code = this.rows[index].articleCode;
+    if (!code) return;
+
+    const article = ARTICLES.find(a => a.code.toLowerCase() === code.toLowerCase());
+    if (article) {
+      this.updateRowWithArticle(index, article);
+    } else {
+      // Optional: Show error or clear
+      // console.log('Article not found');
+    }
+  }
+
+  onArticleKeydown(index: number, event: KeyboardEvent) {
+    if (event.key === 'F4') {
+      event.preventDefault();
+      this.activeRowIndex = index;
+      this.showArticleModal = true;
+    }
+  }
+
+  onArticleSelect(article: any) {
+    if (this.activeRowIndex !== -1) {
+      this.updateRowWithArticle(this.activeRowIndex, article);
+      this.activeRowIndex = -1;
+    }
+    this.showArticleModal = false;
+  }
+
+  private updateRowWithArticle(index: number, article: any) {
+    this.rows[index] = {
+      ...this.rows[index],
+      articleCode: article.code,
+      description: article.description,
+      unit: article.unit,
+      unitPrice: article.price,
+      iva: article.iva,
+      quantity: 1 // Default to 1
+    };
+
+    // Default IVA mapping based on article IVA string (e.g. "23%")
+    // In a real app, this would be more robust.
+    if (article.iva === "23%") {
+      this.rows[index].civa = "23";
+    } else {
+      this.rows[index].civa = "01"; // Default to something
+    }
+
+    this.calculateRow(index);
+  }
+
+  calculateRow(index: number) {
+    const row = this.rows[index];
+    if (!row.articleCode) return;
+
+    // Parse IVA percentage (e.g., "23%")
+    const ivaRate = parseFloat(row.iva.replace('%', '')) / 100 || 0;
+
+    // Calculate totals
+    const grossTotal = row.quantity * row.unitPrice;
+    const discountValue = grossTotal * (row.discount / 100); // Assuming discount is percentage for now, or 0
+    const liquidTotal = grossTotal - discountValue;
+    const ivaValue = liquidTotal * ivaRate;
+    const totalValue = liquidTotal + ivaValue;
+
+    // Update row
+    this.rows[index] = {
+      ...row,
+      totalLiquid: liquidTotal,
+      totalValue: totalValue
+    };
+
+    this.calculateTotals();
+  }
+
+  calculateTotals() {
+    let merchandise = 0;
+    let rowDiscounts = 0;
+    let iva = 0;
+    let subtotal = 0;
+
+    this.rows.forEach(row => {
+      if (!row.articleCode) return;
+
+      const ivaRate = parseFloat(row.iva.replace('%', '')) / 100 || 0;
+      const grossTotal = row.quantity * row.unitPrice;
+      const discountValue = grossTotal * (row.discount / 100);
+      const liquidTotal = grossTotal - discountValue;
+      const ivaValue = liquidTotal * ivaRate;
+
+      merchandise += grossTotal;
+      rowDiscounts += discountValue;
+      iva += ivaValue;
+      subtotal += liquidTotal;
+    });
+
+    // Apply Global Discounts
+    const clientDiscountValue = subtotal * (this.clientDiscount / 100);
+    const afterClientDiscount = subtotal - clientDiscountValue;
+
+    const financialDiscountValue = afterClientDiscount * (this.financialDiscount / 100);
+
+    const totalDiscounts = rowDiscounts + clientDiscountValue + financialDiscountValue;
+    const total = subtotal + iva - clientDiscountValue - financialDiscountValue;
+
+    // Update class properties
+    this.merchandiseTotal = merchandise;
+    this.subtotal = subtotal - clientDiscountValue - financialDiscountValue;
+    this.discountValue = totalDiscounts;
+    this.totalIva = iva;
+    this.totalValue = total;
+  }
+
+  // IVA Logic
+  onCivaKeydown(index: number, event: KeyboardEvent) {
+    if (event.key === 'F4') {
+      event.preventDefault();
+      this.openIvaModal(index);
+    }
+  }
+
+  openIvaModal(index: number) {
+    this.activeIvaRowIndex = index;
+    this.showIvaModal = true;
+  }
+
+  onIvaSelect(iva: any) {
+    if (this.activeIvaRowIndex !== -1) {
+      const row = this.rows[this.activeIvaRowIndex];
+      this.rows[this.activeIvaRowIndex] = {
+        ...row,
+        civa: iva.code,
+        iva: iva.rate + '%'
+      };
+      this.calculateRow(this.activeIvaRowIndex);
+      this.activeIvaRowIndex = -1;
+    }
+    this.showIvaModal = false;
+  }
+
+  // Context Menu Logic
+  onContextMenu(event: MouseEvent, index: number) {
+    event.preventDefault();
+    this.contextMenuVisible = true;
+    this.contextMenuPosition = { x: event.clientX, y: event.clientY };
+    this.contextMenuRowIndex = index;
+  }
+
+  insertLine() {
+    if (this.contextMenuRowIndex !== -1) {
+      const newRow = {
+        articleCode: '',
+        warehouse: '',
+        location: '',
+        batch: '',
+        description: '',
+        civa: '',
+        iva: '',
+        unitPrice: 0,
+        discount: 0,
+        unit: '',
+        quantity: 0,
+        totalLiquid: 0,
+        project: '',
+        pepElement: '',
+        barcode: '',
+        ivaRule: '',
+        totalValue: 0,
+        contract: '',
+        processNumber: ''
+      };
+      // Insert at index
+      this.rows.splice(this.contextMenuRowIndex, 0, newRow);
+      this.calculateTotals();
+      this.contextMenuVisible = false;
+    }
+  }
+
+  removeLine() {
+    if (this.contextMenuRowIndex !== -1) {
+      this.rows.splice(this.contextMenuRowIndex, 1);
+      this.calculateTotals();
+      // Ensure we maintain a minimum number of rows if desired, or just let it shrink
+      if (this.rows.length < 20) {
+        this.rows.push({
+          articleCode: '',
+          warehouse: '',
+          location: '',
+          batch: '',
+          description: '',
+          civa: '',
+          iva: '',
+          unitPrice: 0,
+          discount: 0,
+          unit: '',
+          quantity: 0,
+          totalLiquid: 0,
+          project: '',
+          pepElement: '',
+          barcode: '',
+          ivaRule: '',
+          totalValue: 0,
+          contract: '',
+          processNumber: ''
+        });
+      }
+      this.contextMenuVisible = false;
+    }
+  }
+
+  constructor(
+    private accountingService: AccountingService,
+    private inventoryService: InventoryService
+  ) {
+    // Load Treasury Accounts (Class 1 or specific types)
+    this.treasuryAccounts = this.accountingService.getAccounts()
+      .filter(a => a.allowPosting && (a.code.startsWith('11') || a.code.startsWith('12')))
+      .sort((a, b) => a.code.localeCompare(b.code));
+
+    // Default to first treasury account (usually Cash)
+    if (this.treasuryAccounts.length > 0) {
+      this.selectedTreasuryAccountId = this.treasuryAccounts[0].id;
+    }
+  }
+
+  // Save document with accounting and inventory integration
+  saveDocument() {
+    // Validate document
+    if (!this.selectedDocType) {
+      alert('Por favor selecione um tipo de documento');
+      return;
+    }
+
+    if (!this.selectedEntityCode) {
+      alert('Por favor selecione uma entidade');
+      return;
+    }
+
+    // Check if there are lines with articles
+    const validLines = this.rows.filter(row => row.articleCode && row.quantity > 0);
+    if (validLines.length === 0) {
+      alert('Por favor adicione pelo menos um artigo');
+      return;
+    }
+
+    // Create sales document
+    const documentNumber = `${this.selectedDocType}/${new Date().getFullYear()}/${Date.now()}`;
+
+    const salesLines: SalesDocumentLine[] = validLines.map((row, index) => {
+      const ivaRate = parseFloat(row.iva) || 0;
+      const subtotal = row.quantity * row.unitPrice * (1 - row.discount / 100);
+      const ivaAmount = subtotal * (ivaRate / 100);
+
+      return {
+        id: `LINE${index + 1}`,
+        articleId: row.articleCode,
+        articleCode: row.articleCode,
+        articleName: row.description,
+        quantity: row.quantity,
+        unitPrice: row.unitPrice,
+        discount: row.discount,
+        ivaRate: ivaRate,
+        ivaCode: row.civa,
+        subtotal: subtotal,
+        ivaAmount: ivaAmount,
+        total: subtotal + ivaAmount
+      };
+    });
+
+    const salesDoc: SalesDocument = {
+      id: `DOC${Date.now()}`,
+      documentType: this.selectedDocType,
+      documentNumber: documentNumber,
+      date: new Date(),
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      customerId: this.selectedEntityCode,
+      customerName: this.selectedEntityName,
+      customerNif: '',
+      lines: salesLines,
+      subtotal: this.subtotal,
+      discounts: this.discountValue,
+      totalIva: this.totalIva,
+      total: this.totalValue,
+      status: 'CONFIRMED',
+      notes: ''
+    };
+
+    // Save to localStorage
+    const savedDocs = JSON.parse(localStorage.getItem('erp_sales_documents') || '[]');
+    savedDocs.push(salesDoc);
+    localStorage.setItem('erp_sales_documents', JSON.stringify(savedDocs));
+
+    // Create accounting entries
+    try {
+      const articles = this.inventoryService.getArticles();
+      // Pass the selected treasury account if payment is PRONTO
+      const debitAccountId = this.paymentCondition === 'PRONTO' ? this.selectedTreasuryAccountId : undefined;
+
+      this.accountingService.createSalesJournalEntry(salesDoc, this.selectedCustomer, articles, this.paymentCondition, debitAccountId);
+
+      // Create COGS entry
+      this.accountingService.createCOGSEntry(salesDoc, articles);
+
+      // Process stock movements
+      this.inventoryService.processSalesStockMovements(
+        salesDoc.id,
+        salesDoc.lines,
+        salesDoc.documentNumber
+      );
+
+      alert(`Documento ${documentNumber} gravado com sucesso!\n\nLançamentos contabilísticos criados automaticamente.`);
+
+      // Clear form
+      this.clearForm();
+    } catch (error) {
+      console.error('Erro ao criar lançamentos:', error);
+      alert('Documento gravado mas houve erro ao criar lançamentos contabilísticos.');
+    }
+  }
+
+  clearForm() {
+    this.selectedDocType = '';
+    this.selectedDocDescription = '';
+    this.selectedEntityCode = '';
+    this.selectedEntityName = '';
+    this.rows = Array(20).fill(null).map(() => ({
+      articleCode: '',
+      warehouse: '',
+      location: '',
+      batch: '',
+      description: '',
+      civa: '',
+      iva: '',
+      unitPrice: 0,
+      discount: 0,
+      unit: '',
+      quantity: 0,
+      totalLiquid: 0,
+      project: '',
+      pepElement: '',
+      barcode: '',
+      ivaRule: '',
+      totalValue: 0,
+      contract: '',
+      processNumber: ''
+    }));
+    this.subtotal = 0;
+    this.discountValue = 0;
+    this.totalIva = 0;
+    this.totalValue = 0;
+  }
+
+  // Close context menu on click outside
+  @HostListener('document:click')
+  onDocumentClick() {
+    this.contextMenuVisible = false;
+  }
+}

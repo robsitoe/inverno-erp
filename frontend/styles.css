@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #F0F0F0;
+}
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+    user-select: none;
+}
+
+/* Custom scrollbar for sidebar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+@media print {
+
+    app-header,
+    app-sidebar,
+    app-footer,
+    app-main-content>*:not(app-sales-document-form),
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background-color: white;
+        overflow: visible !important;
+    }
+
+    app-root {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    /* Ensure the print component is visible if it's inside the form */
+    app-sales-document-form {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    /* Target the wrapper div inside the component */
+    app-sales-document-form>div {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+        position: static !important;
+    }
+
+    /* Hide everything in the wrapper div except the print component */
+    app-sales-document-form>div>*:not(app-sales-document-print) {
+        display: none !important;
+    }
+
+    /* Ensure the print component itself is visible and positioned */
+    app-sales-document-print {
+        display: block !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 9999;
+    }
+}
