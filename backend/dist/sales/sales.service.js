@@ -48,16 +48,28 @@ let SalesService = class SalesService {
             });
         });
         const total = subtotal + totalIva;
-        const lastDoc = await this.salesDocumentRepository.findOne({
-            where: { documentType: documentData.documentType, series: documentData.series },
-            order: { documentNumber: 'DESC' },
-        });
-        const nextNumber = (Number(lastDoc?.documentNumber) || 0) + 1;
-        const documentNumber = `${documentData.documentType} ${documentData.series}/${nextNumber}`;
+        let seriesNumber = documentData.seriesNumber;
+        let documentNumber = documentData.documentNumber;
+        if (!documentData.id) {
+            if (!seriesNumber) {
+                const lastDoc = await this.salesDocumentRepository.findOne({
+                    where: {
+                        documentType: documentData.documentType,
+                        series: documentData.series,
+                        companyId: documentData.companyId
+                    },
+                    order: { seriesNumber: 'DESC' },
+                });
+                seriesNumber = (lastDoc?.seriesNumber || 0) + 1;
+            }
+            if (!documentNumber || documentNumber.includes('undefined')) {
+                documentNumber = `${documentData.documentType} ${documentData.series}/${seriesNumber}`;
+            }
+        }
         const document = this.salesDocumentRepository.create({
             ...documentData,
             documentNumber,
-            seriesNumber: nextNumber,
+            seriesNumber,
             subtotal,
             totalIva,
             discounts,
@@ -66,8 +78,13 @@ let SalesService = class SalesService {
         });
         return this.salesDocumentRepository.save(document);
     }
-    findAll() {
+    findAll(companyId) {
+        const where = {};
+        if (companyId) {
+            where.companyId = companyId;
+        }
         return this.salesDocumentRepository.find({
+            where,
             order: { date: 'DESC', createdAt: 'DESC' },
             relations: ['lines']
         });
@@ -86,6 +103,18 @@ let SalesService = class SalesService {
         const document = await this.findOne(id);
         this.salesDocumentRepository.merge(document, updateSalesDocumentDto);
         return this.salesDocumentRepository.save(document);
+    }
+    async findByNumber(companyId, type, series, number) {
+        const document = await this.salesDocumentRepository.findOne({
+            where: {
+                companyId,
+                documentType: type,
+                series,
+                seriesNumber: number
+            },
+            relations: ['lines']
+        });
+        return document;
     }
     async remove(id) {
         const document = await this.findOne(id);

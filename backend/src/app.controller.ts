@@ -15,6 +15,7 @@ import { Journal } from './accounting/entities/journal.entity';
 import { Customer } from './customers/entities/customer.entity';
 import { Supplier } from './suppliers/entities/supplier.entity';
 import { User } from './users/entities/user.entity';
+import { GenericEntity } from './common-entities/generic-entity.entity';
 import * as bcrypt from 'bcrypt';
 import { CreateJournalDto } from './accounting/dto/create-journal.dto';
 import { CreateCustomerDto } from './customers/dto/create-customer.dto';
@@ -40,7 +41,6 @@ export class AppController {
 
   @Get('company')
   async getCompanyInfo() {
-    // Return the first company as default for now, or handle by ID if needed
     const companies = await this.dataSource.getRepository(Company).find();
     return companies[0] || {
       name: 'Minha Empresa, Lda.',
@@ -120,7 +120,7 @@ export class AppController {
     if (Array.isArray(journal)) {
       return await repo.save(journal);
     }
-    return await repo.save(journal);
+    return await repo.save(journal as any);
   }
 
   // --- Customers Endpoints ---
@@ -135,7 +135,7 @@ export class AppController {
     if (Array.isArray(customer)) {
       return await repo.save(customer);
     }
-    return await repo.save(customer);
+    return await repo.save(customer as any);
   }
 
   // --- Suppliers Endpoints ---
@@ -150,7 +150,22 @@ export class AppController {
     if (Array.isArray(supplier)) {
       return await repo.save(supplier);
     }
-    return await repo.save(supplier);
+    return await repo.save(supplier as any);
+  }
+
+  // --- Generic Entities Endpoints ---
+  @Get('entities')
+  async getGenericEntities(@Query('type') type: string) {
+    const repo = this.dataSource.getRepository(GenericEntity);
+    if (type) {
+      return await repo.find({ where: { type }, order: { name: 'ASC' } });
+    }
+    return await repo.find({ order: { name: 'ASC' } });
+  }
+
+  @Post('entities')
+  async saveGenericEntity(@Body() entity: any) {
+    return await this.dataSource.getRepository(GenericEntity).save(entity);
   }
 
   @Post('test-db-connection')
@@ -198,7 +213,7 @@ export class AppController {
             username: config.username,
             password: config.password,
             database: dbName,
-            entities: [Account, JournalEntry, Article, StockMovement, SalesDocument, PurchaseDocument, TreasuryDocument, Company, FiscalYear, Journal, Customer, Supplier, User],
+            entities: [Account, JournalEntry, Article, StockMovement, SalesDocument, PurchaseDocument, TreasuryDocument, Company, FiscalYear, Journal, Customer, Supplier, User, GenericEntity],
             synchronize: true,
           });
 
@@ -232,71 +247,23 @@ export class AppController {
     await queryRunner.startTransaction();
 
     try {
-      // 0. Companies & Fiscal Years
-      if (data.companies && data.companies.length > 0) {
-        await queryRunner.manager.save(Company, data.companies);
-      } else if (data.companyInfo) {
-        await queryRunner.manager.save(Company, data.companyInfo);
-      }
+      if (data.companies && data.companies.length > 0) await queryRunner.manager.save(Company, data.companies);
+      else if (data.companyInfo) await queryRunner.manager.save(Company, data.companyInfo);
 
-      if (data.fiscalYears && data.fiscalYears.length > 0) {
-        await queryRunner.manager.save(FiscalYear, data.fiscalYears);
-      }
+      if (data.fiscalYears && data.fiscalYears.length > 0) await queryRunner.manager.save(FiscalYear, data.fiscalYears);
+      if (data.articles && data.articles.length > 0) await queryRunner.manager.save(Article, data.articles);
+      if (data.accounts && data.accounts.length > 0) await queryRunner.manager.save(Account, data.accounts);
+      if (data.journals && data.journals.length > 0) await queryRunner.manager.save(Journal, data.journals);
+      if (data.salesDocuments && data.salesDocuments.length > 0) await queryRunner.manager.save(SalesDocument, data.salesDocuments);
+      if (data.purchaseDocuments && data.purchaseDocuments.length > 0) await queryRunner.manager.save(PurchaseDocument, data.purchaseDocuments);
+      if (data.journalEntries && data.journalEntries.length > 0) await queryRunner.manager.save(JournalEntry, data.journalEntries);
+      if (data.stockMovements && data.stockMovements.length > 0) await queryRunner.manager.save(StockMovement, data.stockMovements);
+      if (data.receipts && data.receipts.length > 0) await queryRunner.manager.save(TreasuryDocument, data.receipts);
+      if (data.payments && data.payments.length > 0) await queryRunner.manager.save(TreasuryDocument, data.payments);
+      if (data.customers && data.customers.length > 0) await queryRunner.manager.save(Customer, data.customers);
+      if (data.suppliers && data.suppliers.length > 0) await queryRunner.manager.save(Supplier, data.suppliers);
+      if (data.genericEntities && data.genericEntities.length > 0) await queryRunner.manager.save(GenericEntity, data.genericEntities);
 
-      // 1. Articles
-      if (data.articles && data.articles.length > 0) {
-        await queryRunner.manager.save(Article, data.articles);
-      }
-
-      // 2. Accounts
-      if (data.accounts && data.accounts.length > 0) {
-        await queryRunner.manager.save(Account, data.accounts);
-      }
-
-      // 3. Journals
-      if (data.journals && data.journals.length > 0) {
-        await queryRunner.manager.save(Journal, data.journals);
-      }
-
-      // 4. Sales Documents
-      if (data.salesDocuments && data.salesDocuments.length > 0) {
-        await queryRunner.manager.save(SalesDocument, data.salesDocuments);
-      }
-
-      // 5. Purchase Documents
-      if (data.purchaseDocuments && data.purchaseDocuments.length > 0) {
-        await queryRunner.manager.save(PurchaseDocument, data.purchaseDocuments);
-      }
-
-      // 6. Journal Entries
-      if (data.journalEntries && data.journalEntries.length > 0) {
-        await queryRunner.manager.save(JournalEntry, data.journalEntries);
-      }
-
-      // 7. Stock Movements
-      if (data.stockMovements && data.stockMovements.length > 0) {
-        await queryRunner.manager.save(StockMovement, data.stockMovements);
-      }
-
-      // 8. Treasury Documents
-      if (data.receipts && data.receipts.length > 0) {
-        await queryRunner.manager.save(TreasuryDocument, data.receipts);
-      }
-      if (data.payments && data.payments.length > 0) {
-        await queryRunner.manager.save(TreasuryDocument, data.payments);
-      }
-
-      // 9. Customers
-      if (data.customers && data.customers.length > 0) {
-        await queryRunner.manager.save(Customer, data.customers);
-      }
-
-      // 10. Suppliers
-      if (data.suppliers && data.suppliers.length > 0) {
-        await queryRunner.manager.save(Supplier, data.suppliers);
-      }
-
-      // 11. Users
       if (data.users && data.users.length > 0) {
         for (const user of data.users) {
           if (user.password && !user.password.startsWith('$2b$')) {

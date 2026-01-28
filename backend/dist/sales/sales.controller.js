@@ -26,8 +26,11 @@ let SalesController = class SalesController {
     create(createSalesDocumentDto) {
         return this.salesService.create(createSalesDocumentDto);
     }
-    findAll() {
-        return this.salesService.findAll();
+    findAll(companyId, documentType, series) {
+        return this.salesService.findAll(companyId);
+    }
+    findByNumber(companyId, type, series, number) {
+        return this.salesService.findByNumber(companyId, type, series, Number(number));
     }
     findOne(id) {
         return this.salesService.findOne(id);
@@ -52,10 +55,24 @@ __decorate([
 __decorate([
     (0, common_1.Get)('documents'),
     (0, swagger_1.ApiOperation)({ summary: 'Get all sales documents' }),
+    __param(0, (0, common_1.Query)('companyId')),
+    __param(1, (0, common_1.Query)('documentType')),
+    __param(2, (0, common_1.Query)('series')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], SalesController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('documents/find'),
+    (0, swagger_1.ApiOperation)({ summary: 'Find a sales document by number' }),
+    __param(0, (0, common_1.Query)('companyId')),
+    __param(1, (0, common_1.Query)('type')),
+    __param(2, (0, common_1.Query)('series')),
+    __param(3, (0, common_1.Query)('number')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Number]),
+    __metadata("design:returntype", void 0)
+], SalesController.prototype, "findByNumber", null);
 __decorate([
     (0, common_1.Get)('documents/:id'),
     (0, swagger_1.ApiOperation)({ summary: 'Get a sales document by ID' }),

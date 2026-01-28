@@ -1,4 +1,4 @@
-import { Component, Input, HostListener, ViewChild } from '@angular/core';
+import { Component, Input, HostListener, ViewChild, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -494,7 +494,7 @@ interface GridRow {
         *ngIf="isConfigModalOpen"
         [module]="'SALES'"
         [documentCode]="selectedDocType || defaultDocValue"
-        (close)="isConfigModalOpen = false"
+        (close)="onConfigModalClose()"
       ></app-document-type-config-modal>
 
       <!-- Context Menu -->
@@ -611,8 +611,7 @@ export class SalesDocumentForm {
 
   ngOnInit() {
     this.loadActiveCompany();
-    this.loadSeries();
-    this.loadNextNumber();
+    // loadSeries and loadNextNumber are now called inside loadActiveCompany
   }
 
   loadActiveCompany() {
@@ -621,6 +620,10 @@ export class SalesDocumentForm {
       this.activeCompany = JSON.parse(stored);
       this.activeCompanyId = this.activeCompany.id;
     }
+
+    // Always call these to ensure state is initialized, even if company is not found
+    this.loadSeries();
+    this.loadNextNumber();
   }
 
   loadSeries() {
@@ -634,7 +637,7 @@ export class SalesDocumentForm {
       if (docType && docType.series && docType.series.length > 0) {
         // Filter by active and company
         if (this.activeCompanyId) {
-          this.availableSeries = docType.series.filter((s: any) => s.active && s.companyId === this.activeCompanyId);
+          this.availableSeries = docType.series.filter((s: any) => s.active && s.companyId == this.activeCompanyId);
         } else {
           this.availableSeries = docType.series.filter((s: any) => s.active && !s.companyId);
         }
@@ -643,9 +646,11 @@ export class SalesDocumentForm {
 
     // Ensure current series is in the list
     if (this.availableSeries.length > 0) {
-      // If current series is not in the list, select the first one
-      if (!this.currentSeries || !this.availableSeries.find(s => s.code === this.currentSeries)) {
-        this.currentSeries = this.availableSeries[0].code;
+      const currentExists = this.availableSeries.find(s => s.code === this.currentSeries);
+      // If current series is not in the list, select the default one or the first one
+      if (!this.currentSeries || !currentExists) {
+        const defaultS = this.availableSeries.find(s => s.isDefault);
+        this.currentSeries = defaultS ? defaultS.code : this.availableSeries[0].code;
       }
     } else {
       this.currentSeries = '';
@@ -660,6 +665,11 @@ export class SalesDocumentForm {
   isLocationModalOpen = false;
   isBatchModalOpen = false;
   isConfigModalOpen = false;
+
+  onConfigModalClose() {
+    this.isConfigModalOpen = false;
+    this.loadSeries();
+  }
 
   // Active row for modals
   activeModalRowIndex = -1;
@@ -1122,7 +1132,9 @@ export class SalesDocumentForm {
     private titleService: Title,
     private auditService: AuditService,
     private periodService: PeriodService,
-    private dataService: DataService
+    private dataService: DataService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {
     this.initializeGrid();
     this.calculateTotals();
@@ -1265,19 +1277,23 @@ export class SalesDocumentForm {
   }
 
   loadNextNumber() {
-    this.dataService.getSalesDocuments().subscribe(docs => {
+    this.dataService.getSalesDocuments(this.activeCompanyId || undefined).subscribe(docs => {
       const typeDocs = docs.filter((d: any) =>
         d.documentType === (this.selectedDocType || this.defaultDocValue) &&
         d.series === this.currentSeries
       );
 
       if (typeDocs.length > 0) {
-        const maxNum = Math.max(...typeDocs.map((d: any) => d.seriesNumber));
+        const numbers = typeDocs.map((d: any) => Number(d.seriesNumber)).filter(n => !isNaN(n));
+        const maxNum = numbers.length > 0 ? Math.max(...numbers) : 0;
         this.currentSeriesNumber = maxNum + 1;
       } else {
         this.currentSeriesNumber = 1;
       }
-      this.updatePageTitle();
+      this.ngZone.run(() => {
+        this.updatePageTitle();
+        this.cdr.detectChanges();
+      });
     });
   }
 
@@ -1309,26 +1325,38 @@ export class SalesDocumentForm {
   }
 
   onNumberChange(newNumber: number) {
-    this.currentSeriesNumber = newNumber;
-    this.tryLoadDocumentByNumber();
-    this.updatePageTitle();
+    this.ngZone.run(() => {
+      this.currentSeriesNumber = newNumber;
+      this.tryLoadDocumentByNumber();
+      this.updatePageTitle();
+      this.cdr.detectChanges();
+    });
   }
 
   tryLoadDocumentByNumber() {
-    this.dataService.getSalesDocuments().subscribe(docs => {
-      const doc = docs.find((d: any) =>
-        d.documentType === (this.selectedDocType || this.defaultDocValue) &&
-        d.series === this.currentSeries &&
-        d.seriesNumber === this.currentSeriesNumber
-      );
+    const type = this.selectedDocType || this.defaultDocValue;
+    const series = this.currentSeries;
+    const num = this.currentSeriesNumber;
 
-      if (doc) {
-        this.loadDocument(doc);
-      } else {
-        // If loading a number that doesn't exist, reset to draft
-        this.status = 'DRAFT';
-        // But keep the number
-      }
+    if (!type || !series || !num || !this.activeCompanyId) return;
+
+    this.dataService.getSalesDocumentByNumber(this.activeCompanyId, type, series, num).subscribe(doc => {
+      this.ngZone.run(() => {
+        if (doc) {
+          this.loadDocument(doc);
+        } else {
+          // If loading a number that doesn't exist, reset to draft and clear entity/lines
+          // but keep the current number
+          const currentNum = this.currentSeriesNumber;
+          this.status = 'DRAFT';
+          this.clearForm();
+          this.currentSeriesNumber = currentNum;
+          this.selectedDocType = type;
+          this.currentSeries = series;
+          this.updatePageTitle();
+        }
+        this.cdr.detectChanges();
+      });
     });
   }
 
@@ -1393,13 +1421,15 @@ export class SalesDocumentForm {
   }
 
   resetForm() {
-    this.selectedEntityCode = '';
-    this.selectedEntityName = '';
-    this.selectedEntityNif = '';
-    this.selectedEntityAddress = '';
-    this.status = 'DRAFT';
-    this.clearForm();
-    this.loadNextNumber();
+    setTimeout(() => {
+      this.ngZone.run(() => {
+        // Keep context (Type/Series) when resetting for "Novo"
+        this.status = 'DRAFT';
+        this.clearForm(true);
+        this.loadNextNumber();
+        this.cdr.detectChanges();
+      });
+    }, 50);
   }
 
   getCurrentDocument(): SalesDocument {
@@ -1558,6 +1588,7 @@ export class SalesDocumentForm {
 
     const salesDoc: SalesDocument = {
       id: `DOC${Date.now()}`,
+      companyId: this.activeCompanyId || undefined,
       documentType: this.selectedDocType,
       documentNumber: documentNumber,
       series: this.currentSeries,
@@ -1578,79 +1609,112 @@ export class SalesDocumentForm {
     };
 
     // Save via DataService
-    this.dataService.saveSalesDocument(salesDoc).subscribe(() => {
-      // Update local status
-      this.status = newStatus;
+    // Check for sequential number gap
+    this.dataService.getSalesDocuments(this.activeCompanyId || undefined).subscribe(docs => {
+      this.ngZone.run(() => {
+        const typeDocs = docs.filter((d: any) =>
+          d.documentType === this.selectedDocType &&
+          d.series === this.currentSeries
+        );
 
-      if (isPrinting) {
-        // Instead of printing immediately, open settings
-        // We need to construct the document object to pass to the print component
-        this.documentToPrint = salesDoc;
-        this.isPrintSettingsOpen = true;
-        // alert(`Documento ${documentNumber} enviado para a impressora.`);
-        // setTimeout(() => window.print(), 500); // Small delay to ensure UI updates
-      } else if (isCancelling) {
-        alert(`Documento ${documentNumber} anulado.`);
-      } else {
-        // Determine if this document type should create accounting entries
-        const accountingDocTypes = ['FA', 'VD', 'NC', 'ND']; // Fatura, Venda Dinheiro, Nota Crédito, Nota Débito
-        const shouldCreateAccounting = accountingDocTypes.includes(this.selectedDocType);
+        const numbers = typeDocs.map((d: any) => Number(d.seriesNumber)).filter(n => !isNaN(n));
+        const maxNum = numbers.length > 0 ? Math.max(...numbers) : 0;
+        const expectedNum = maxNum + 1;
 
-        // Process stock and accounting
-        try {
-          const articles = this.inventoryService.getArticles();
-
-          // ALWAYS process stock movements (for all document types including GR)
-          this.inventoryService.processSalesStockMovements(
-            salesDoc.id,
-            salesDoc.lines,
-            salesDoc.documentNumber
-          );
-
-          // ONLY create accounting entries for financial documents
-          if (shouldCreateAccounting) {
-            // Pass the selected treasury account if payment is PRONTO
-            const debitAccountId = this.paymentCondition === 'PRONTO' ? this.selectedTreasuryAccountId : undefined;
-
-            this.accountingService.createSalesJournalEntry(salesDoc, this.selectedCustomer, articles, this.paymentCondition, debitAccountId);
-
-            // Create COGS entry
-            this.accountingService.createCOGSEntry(salesDoc, articles);
-
-            alert(`Documento ${documentNumber} gravado com sucesso!\n\nMovimentos de stock e lançamentos contabilísticos criados automaticamente.`);
-          } else {
-            // For non-accounting documents (like GR), only stock movement
-            alert(`Documento ${documentNumber} gravado com sucesso!\n\nMovimento de stock criado. (Sem lançamento contábil)`);
-          }
-
-          // Force recalculation of stock for all articles in the document
-          // This ensures the article list reflects the changes immediately
-          salesDoc.lines.forEach(line => {
-            if (line.articleCode) {
-              this.inventoryService.recalculateArticleStock(line.articleCode);
+        // Only check schema if we are creating a new doc or changing number to something potentially new
+        if (!salesDoc.id || !docs.find((d: any) => d.id === salesDoc.id)) {
+          if (this.currentSeriesNumber > expectedNum) {
+            if (!confirm(`O número ${this.currentSeriesNumber} não é sequencial (Esperado: ${expectedNum}). Deseja continuar e criar um intervalo na numeração?`)) {
+              return;
             }
-          });
-
-          // Increment number if it was a new document (not an update)
-          // We can't easily check existingIndex here without another call, 
-          // but we can assume if we are in DRAFT or just created it, we might want to increment.
-          // However, the original logic was: if (existingIndex === -1) this.currentSeriesNumber++;
-          // For now, let's just keep it simple or skip increment if it's an update.
-          // Actually, let's just skip the increment for now to avoid complexity, 
-          // or just always increment if it's a new save.
-        } catch (error) {
-          console.error('Erro ao processar documento:', error);
-          alert('Documento gravado mas houve erro ao processar movimentos.');
+          }
+        } else {
+          // If updating existing doc, check if we changed number to something way off?
+          // Maybe too complex for now, assume updates are fine or handled by uniqueness check elsewhere.
         }
-      }
+
+        // Save via DataService
+        this.dataService.saveSalesDocument(salesDoc).subscribe(savedDoc => {
+          this.ngZone.run(() => {
+            // Update local status
+            this.status = newStatus;
+            const finalId = savedDoc?.id || salesDoc.id;
+
+            this.processPostSaveActions(salesDoc, finalId, documentNumber, isPrinting, isCancelling);
+            this.cdr.detectChanges();
+          });
+        });
+      });
     });
   }
 
-  clearForm() {
-    this.selectedDocType = '';
-    this.selectedDocDescription = '';
+  processPostSaveActions(
+    salesDoc: SalesDocument,
+    id: string,
+    documentNumber: string,
+    isPrinting: boolean,
+    isCancelling: boolean
+  ) {
+    if (isPrinting) {
+      this.documentToPrint = salesDoc;
+      this.isPrintSettingsOpen = true;
+      this.cdr.detectChanges(); // Force Check
+    } else if (isCancelling) {
+      alert(`Documento ${documentNumber} anulado.`);
+    } else {
+      // Determine if this document type should create accounting entries
+      const accountingDocTypes = ['FA', 'VD', 'NC', 'ND'];
+      const shouldCreateAccounting = accountingDocTypes.includes(this.selectedDocType);
+
+      try {
+        const articles = this.inventoryService.getArticles();
+
+        // ALWAYS process stock movements
+        this.inventoryService.processSalesStockMovements(
+          id,
+          salesDoc.lines,
+          documentNumber
+        );
+
+        // ONLY create accounting entries for financial documents
+        if (shouldCreateAccounting) {
+          const debitAccountId = this.paymentCondition === 'PRONTO' ? this.selectedTreasuryAccountId : undefined;
+          // Assuming selectedCustomer is available or configured
+          const customer = { code: this.selectedEntityCode, name: this.selectedEntityName, nif: this.selectedEntityNif };
+
+          this.accountingService.createSalesJournalEntry(salesDoc, customer, articles, this.paymentCondition, debitAccountId);
+          this.accountingService.createCOGSEntry(salesDoc, articles);
+
+          alert(`Documento ${documentNumber} gravado com sucesso!\n\nMovimentos de stock e lançamentos contabilísticos criados automaticamente.`);
+        } else {
+          alert(`Documento ${documentNumber} gravado com sucesso!\n\nMovimento de stock criado.`);
+        }
+
+        salesDoc.lines.forEach(line => {
+          if (line.articleCode) {
+            this.inventoryService.recalculateArticleStock(line.articleCode);
+          }
+        });
+
+      } catch (error) {
+        console.error('Erro ao processar documento:', error);
+        alert('Documento gravado mas houve erro ao processar movimentos.');
+      }
+    }
+  }
+
+  clearForm(keepContext: boolean = false) {
+    if (!keepContext) {
+      this.selectedDocType = '';
+      this.selectedDocDescription = '';
+      this.currentSeries = ''; // Also clear series if clearing type
+    }
     this.selectedEntityCode = '';
     this.selectedEntityName = '';
+    this.selectedEntityNif = '';
+    this.selectedEntityAddress = '';
+    this.selectedCustomer = null;
+
     this.rows = Array(20).fill(null).map(() => ({
       articleCode: '',
       warehouse: '',
@@ -1672,6 +1736,11 @@ export class SalesDocumentForm {
       contract: '',
       processNumber: ''
     }));
+
+    this.clientDiscount = 0;
+    this.financialDiscount = 0;
+
+    this.merchandiseTotal = 0;
     this.subtotal = 0;
     this.discountValue = 0;
     this.totalIva = 0;

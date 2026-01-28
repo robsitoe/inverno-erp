@@ -25,8 +25,11 @@ let PurchasesController = class PurchasesController {
     create(createPurchaseDto) {
         return this.purchasesService.create(createPurchaseDto);
     }
-    findAll() {
-        return this.purchasesService.findAll();
+    findAll(companyId) {
+        return this.purchasesService.findAll(companyId);
+    }
+    findByNumber(companyId, type, series, number) {
+        return this.purchasesService.findByNumber(companyId, type, series, Number(number));
     }
     findOne(id) {
         return this.purchasesService.findOne(id);
@@ -48,10 +51,21 @@ __decorate([
 ], PurchasesController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)('documents'),
+    __param(0, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], PurchasesController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('documents/find'),
+    __param(0, (0, common_1.Query)('companyId')),
+    __param(1, (0, common_1.Query)('type')),
+    __param(2, (0, common_1.Query)('series')),
+    __param(3, (0, common_1.Query)('number')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Number]),
+    __metadata("design:returntype", void 0)
+], PurchasesController.prototype, "findByNumber", null);
 __decorate([
     (0, common_1.Get)('documents/:id'),
     __param(0, (0, common_1.Param)('id')),

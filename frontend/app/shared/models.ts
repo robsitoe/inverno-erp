@@ -163,6 +163,28 @@ export interface Supplier {
     isActive: boolean;
 }
 
+export interface GenericEntity {
+    id: string;
+    companyId?: string;
+    code: string;
+    name: string;
+    nif: string;
+    address: string;
+    type: string; // Refers to EntityTypeCode (e.g., 'SOCIO', 'FUNC')
+    accountId: string; // Dedicated accounting account
+    isActive: boolean;
+}
+
+export interface PaymentMethod {
+    id: string;
+    companyId?: string;
+    code: string;              // 'NUM', 'TRF', 'CHQ', 'MB', 'MBWAY', 'MPESA'
+    description: string;       // 'Numerário', 'Transferência Bancária', etc.
+    treasuryAccountId: string; // ID da conta de tesouraria (ex: '3' = 11.1.1 Caixa)
+    isActive: boolean;
+    sortOrder: number;         // Order for display in dropdowns
+}
+
 export interface StockMovement {
     id: string;
     companyId?: string;

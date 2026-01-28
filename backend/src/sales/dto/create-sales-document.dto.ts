@@ -29,6 +29,11 @@ export class CreateSalesDocumentLineDto {
     @IsNotEmpty()
     unitPrice: number;
 
+    @ApiProperty({ example: 'LINE-ID', description: 'Line ID' })
+    @IsString()
+    @IsOptional()
+    id?: string;
+
     @ApiProperty({ example: 0, description: 'Discount percentage' })
     @IsNumber()
     @IsOptional()
@@ -84,6 +89,11 @@ export class CreateSalesDocumentDto {
     @IsString()
     @IsOptional()
     documentNumber?: string;
+
+    @ApiProperty({ example: 1, description: 'Series Number' })
+    @IsNumber()
+    @IsOptional()
+    seriesNumber?: number;
 
     @ApiProperty({ example: '2023-10-27', description: 'Document Date' })
     @IsDateString()

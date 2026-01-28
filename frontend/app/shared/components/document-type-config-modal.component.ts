@@ -100,11 +100,11 @@ import { DataService } from '../../services/data.service';
           </div>
 
           <!-- Tabs -->
-          <div class="flex items-end border-b border-gray-300 mt-2">
+          <div class="flex items-end border-b border-gray-300 mt-2 shrink-0">
             <button *ngFor="let tab of tabs" 
               (click)="activeTab = tab"
-              [class]="'px-3 py-1 border-t border-x rounded-t-sm -mb-px ' + (activeTab === tab ? 'bg-white border-gray-300 border-b-white font-medium' : 'bg-gray-100 border-transparent text-gray-600 hover:bg-gray-200')">
-              {{ tab }}
+              [class]="'px-3 py-1 border-t border-x rounded-t-sm -mb-px text-[11px] ' + (activeTab === tab ? 'bg-white border-gray-300 border-b-white font-bold text-blue-700' : 'bg-gray-100 border-transparent text-gray-600 hover:bg-gray-200')">
+              {{ (module === 'TREASURY' && tab === 'Contas Correntes') ? 'Configuração' : tab }}
             </button>
           </div>
 
@@ -114,110 +114,98 @@ import { DataService } from '../../services/data.service';
             <!-- Tab: Gerais -->
             <div *ngIf="activeTab === 'Gerais'">
               
-              <!-- TREASURY Specific Layout -->
-              <div *ngIf="module === 'TREASURY'" class="grid grid-cols-2 gap-4">
+              <!-- TREASURY Specific Layout (Mirrors Image) -->
+              <div *ngIf="module === 'TREASURY'" class="grid grid-cols-2 gap-x-4 gap-y-2">
                 <!-- Left Column -->
-                <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-2">
                   <!-- Características -->
-                  <fieldset class="border border-gray-300 p-2 rounded-sm h-64 flex flex-col">
-                     <legend class="px-1 text-blue-600 font-medium">Características</legend>
-                     <!-- Tipo Doc -->
+                  <fieldset class="border border-gray-300 p-2 rounded-sm flex flex-col">
+                     <legend class="px-1 text-blue-700 font-medium">Características</legend>
                      <div class="flex items-center gap-2 mb-2">
-                       <label class="w-20">Tipo Doc.:</label>
-                       <select [(ngModel)]="config.type" class="flex-1 border border-gray-300 px-1 py-0.5">
+                       <label class="w-16">Tipo Doc.:</label>
+                       <select [(ngModel)]="config.type" class="flex-1 border border-gray-300 px-1 py-0.5 bg-white">
                          <option value="Liquidações">Liquidações</option>
                          <option value="Pagamentos">Pagamentos</option>
                          <option value="Recebimentos">Recebimentos</option>
                          <option value="Transferências">Transferências</option>
                        </select>
                      </div>
-                     <!-- Documento permitido a ... -->
-                     <div class="flex-1 border border-gray-300 bg-white p-1 overflow-y-auto">
-                       <div class="font-medium mb-1">Documento permitido a ...</div>
-                       <div class="ml-2 flex flex-col gap-1">
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowedEntities.customer"> Cliente</label>
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowedEntities.supplier"> Fornecedor</label>
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowedEntities.state"> Estado/Ente Público</label>
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowedEntities.other"> Outro</label>
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowedEntities.shareholder"> Acionista/Sócio</label>
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowedEntities.bank"> Banco</label>
+                     <fieldset class="border border-gray-200 p-2 pt-1 flex-1 bg-white">
+                       <legend class="px-1 text-gray-700">Documento permitido a ...</legend>
+                       <div class="flex flex-col gap-1">
+                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowedEntities.customer" class="rounded-sm border-gray-400"> Cliente</label>
+                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowedEntities.supplier" class="rounded-sm border-gray-400"> Fornecedor</label>
+                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowedEntities.state" class="rounded-sm border-gray-400"> Estado/Ente Público</label>
+                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowedEntities.other" class="rounded-sm border-gray-400"> Outro</label>
+                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowedEntities.shareholder" class="rounded-sm border-gray-400"> Acionista/Sócio</label>
+                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowedEntities.bank" class="rounded-sm border-gray-400"> Banco</label>
+                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowedEntities.employee" class="rounded-sm border-gray-400"> Funcionário</label>
                        </div>
-                     </div>
+                     </fieldset>
                   </fieldset>
 
-                  <!-- Estorno/Crédito -->
-                  <fieldset class="border border-gray-300 p-2 rounded-sm">
-                     <div class="flex items-center gap-2 mb-2">
-                        <input type="checkbox" [(ngModel)]="config.allowReversal"> <span class="font-medium">Permite Documentos Estorno/Crédito</span>
-                     </div>
-                     <div class="grid grid-cols-[80px_1fr] gap-2 items-center mb-1">
-                        <label class="text-blue-600">Documento:</label>
-                        <select [(ngModel)]="config.reversalDoc" class="border border-gray-300 px-1 py-0.5">
-                           <option value="EST">EST</option>
-                           <option value="NC">NC</option>
-                        </select>
-                     </div>
-                     <div class="grid grid-cols-[80px_1fr] gap-2 items-center">
-                        <label>Série:</label>
-                        <select [(ngModel)]="config.reversalSeries" class="border border-gray-300 px-1 py-0.5">
-                           <option value="018">018</option>
-                           <option value="2025">2025</option>
-                        </select>
-                     </div>
-                  </fieldset>
+                  <!-- Estorno -->
+                   <fieldset class="border border-gray-300 p-2 rounded-sm">
+                      <label class="flex items-center gap-2 mb-2 font-bold select-none cursor-pointer">
+                        <input type="checkbox" [(ngModel)]="config.allowReversal" class="rounded-sm border-gray-400"> 
+                        Permite Documentos Estorno/Crédito
+                      </label>
+                      <div class="flex items-center gap-2 mb-1 pl-5">
+                         <label class="w-16 text-blue-700">Documento:</label>
+                         <select [(ngModel)]="config.reversalDoc" class="flex-1 border border-gray-300 px-1 py-0.5 bg-white">
+                            <option value="EST">EST</option>
+                            <option value="NC">NC</option>
+                         </select>
+                      </div>
+                      <div class="flex items-center gap-2 pl-5">
+                         <label class="w-16">Série:</label>
+                         <select [(ngModel)]="config.reversalSeries" class="flex-1 border border-gray-300 px-1 py-0.5 bg-white">
+                            <option value="2025">2025</option>
+                            <option value="018">018</option>
+                         </select>
+                      </div>
+                   </fieldset>
 
                   <!-- Natureza -->
                   <fieldset class="border border-gray-300 p-2 rounded-sm">
-                     <legend class="px-1 text-blue-600 font-medium">Natureza</legend>
-                     <div class="flex flex-col gap-1">
-                        <label class="flex items-center gap-2"><input type="radio" name="nature" value="PAY" [(ngModel)]="config.nature"> Pagamento</label>
-                        <label class="flex items-center gap-2"><input type="radio" name="nature" value="RECEIVE" [(ngModel)]="config.nature"> Recebimento</label>
+                     <legend class="px-1 text-blue-700 font-medium">Natureza</legend>
+                     <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="nature" value="PAY" [(ngModel)]="config.nature" class="text-blue-600"> Pagamento</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="nature" value="RECEIVE" [(ngModel)]="config.nature" class="text-blue-600"> Recebimento</label>
                      </div>
                   </fieldset>
-                  
-                  <!-- Formato exportação -->
-                   <div class="flex items-center gap-2">
-                      <label>Formato exportação:</label>
-                      <select [(ngModel)]="config.exportFormat" class="flex-1 border border-gray-300 px-1 py-0.5"></select>
-                   </div>
                 </div>
 
                 <!-- Right Column -->
-                <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-2">
                    <!-- Opções -->
-                   <fieldset class="border border-gray-300 p-2 rounded-sm h-64">
-                      <legend class="px-1 text-blue-600 font-medium">Opções</legend>
-                      <div class="flex flex-col gap-1">
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.recapitulatives"> Sujeito a recapitulativos</label>
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.commissionCalculation"> Cálculo de comissões</label>
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.treasuryIntegration"> Ligação à Tesouraria</label>
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.creditLimit"> Gestão de limite crédito</label>
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.provisionSuggestion"> Sugestão para provisões</label>
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowNegativeLines"> Permite Linhas Negativas</label>
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.allowNegativeDocs"> Permite Documentos Negativos</label>
+                   <fieldset class="border border-gray-300 p-2 rounded-sm flex-1">
+                      <legend class="px-1 text-blue-700 font-medium">Opções</legend>
+                      <div class="flex flex-col gap-1.5">
+                         <label class="flex items-center gap-2 cursor-pointer font-medium"><input type="checkbox" [(ngModel)]="config.recapitulatives" class="rounded-sm border-gray-400"> Sujeito a recapitulativos</label>
+                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" [(ngModel)]="config.commissionCalculation" class="rounded-sm border-gray-400"> Cálculo de comissões</label>
+                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" [(ngModel)]="config.treasuryIntegration" class="rounded-sm border-gray-400"> Ligação à Tesouraria</label>
+                         <label class="flex items-center gap-2 cursor-pointer font-medium"><input type="checkbox" [(ngModel)]="config.creditLimit" class="rounded-sm border-gray-400"> Gestão de limite crédito</label>
+                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" [(ngModel)]="config.provisionSuggestion" class="rounded-sm border-gray-400"> Sugestão para provisões</label>
+                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" [(ngModel)]="config.allowNegativeLines" class="rounded-sm border-gray-400"> Permite Linhas Negativas</label>
+                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" [(ngModel)]="config.allowNegativeDocs" class="rounded-sm border-gray-400"> Permite Documentos Negativos</label>
                       </div>
                    </fieldset>
 
                    <!-- Retenções -->
                    <fieldset class="border border-gray-300 p-2 rounded-sm">
-                      <legend class="px-1 text-blue-600 font-medium">Retenções</legend>
-                      <div class="flex flex-col gap-1 mb-2">
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.subjectToRetention"> Sujeito a Retenção na Fonte</label>
-                         <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="config.retentionAtSource"> Liquida Retenção na Fonte na Introdução</label>
+                      <legend class="px-1 text-blue-700 font-medium">Retenções</legend>
+                      <div class="flex flex-col gap-1.5 mb-2">
+                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" [(ngModel)]="config.subjectToRetention" class="rounded-sm border-gray-400"> Sujeito a Retenção na Fonte</label>
+                         <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" [(ngModel)]="config.retentionAtSource" class="rounded-sm border-gray-400"> Liquida Retenção na Fonte na Introdução</label>
                       </div>
-                      <div class="flex items-center justify-end gap-2">
-                         <label>Documento a Utilizar:</label>
-                         <select [(ngModel)]="config.retentionDoc" class="w-32 border border-gray-300 px-1 py-0.5">
+                      <div class="flex items-center justify-between gap-1 mt-2">
+                         <label class="whitespace-nowrap">Documento a Utilizar:</label>
+                         <select [(ngModel)]="config.retentionDoc" class="flex-1 border border-gray-300 px-1 py-0.5 bg-white">
                             <option value="">(Nenhum)</option>
                          </select>
                       </div>
                    </fieldset>
-                   
-                   <!-- Designação -->
-                   <div class="flex items-center gap-2 mt-auto">
-                      <label>Designação:</label>
-                      <select [(ngModel)]="config.designation" class="flex-1 border border-gray-300 px-1 py-0.5"></select>
-                   </div>
                 </div>
               </div>
 
@@ -549,32 +537,34 @@ import { DataService } from '../../services/data.service';
 
             <!-- Tab: Séries -->
             <div *ngIf="activeTab === 'Séries'" class="flex flex-col h-full">
-              <div class="flex-1 border border-gray-300 overflow-auto mb-2">
+              <div class="flex-1 border border-gray-300 overflow-auto mb-2 bg-white">
                 <table class="w-full text-left">
-                  <thead class="bg-gray-50 sticky top-0">
+                  <thead class="bg-gray-50 sticky top-0 shadow-sm border-b border-gray-300">
                     <tr>
-                      <th class="px-2 py-1 border-b w-16 text-center">Usar</th>
-                      <th class="px-2 py-1 border-b">Série</th>
-                      <th class="px-2 py-1 border-b">Descrição</th>
-                      <th class="px-2 py-1 border-b w-32">Validade</th>
+                      <th class="px-2 py-1 w-16 text-center">Usar</th>
+                      <th class="px-2 py-1">Série</th>
+                      <th class="px-2 py-1">Descrição</th>
+                      <th class="px-2 py-1 w-32 border-l border-gray-200">Validade</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr *ngFor="let serie of globalSeries" class="hover:bg-blue-50 cursor-pointer">
-                      <td class="px-2 py-1 border-b text-center">
+                    <tr *ngFor="let serie of globalSeries" 
+                        [class]="'hover:bg-blue-50 cursor-pointer border-b border-gray-100 ' + (isSerieSelected(serie.code) ? 'bg-blue-100 shadow-[inset_0_0_0_1px_#3b82f6]' : '')"
+                        (click)="selectSerie(serie.code)">
+                      <td class="px-2 py-1 text-center" (click)="$event.stopPropagation()">
                         <input type="checkbox" 
                                [checked]="isAssociated(serie)" 
                                (change)="toggleAssociation(serie)"
-                               class="cursor-pointer" />
+                               class="cursor-pointer h-3.5 w-3.5" />
                       </td>
-                      <td class="px-2 py-1 border-b">{{ serie.code }}</td>
-                      <td class="px-2 py-1 border-b">{{ serie.description }}</td>
-                      <td class="px-2 py-1 border-b text-gray-500 text-xs">
+                      <td class="px-2 py-1 font-medium">{{ serie.code }}</td>
+                      <td class="px-2 py-1">{{ serie.description }}</td>
+                      <td class="px-2 py-1 text-gray-500 text-[10px] border-l border-gray-100">
                         {{ serie.startDate | date:'dd/MM/yyyy' }} - {{ serie.endDate | date:'dd/MM/yyyy' }}
                       </td>
                     </tr>
                     <tr *ngIf="globalSeries.length === 0">
-                      <td colspan="4" class="px-2 py-8 text-center text-gray-500">
+                      <td colspan="4" class="px-2 py-8 text-center text-gray-400 italic">
                         Nenhuma série global encontrada.
                       </td>
                     </tr>
@@ -582,54 +572,79 @@ import { DataService } from '../../services/data.service';
                 </table>
               </div>
               
-              <div class="h-40 border border-gray-300 p-2 bg-gray-50">
-                <div class="flex gap-4 border-b border-gray-300 mb-2">
-                  <button class="font-medium text-blue-600 border-b-2 border-blue-600 px-2">Gerais</button>
-                  <button class="text-gray-600 px-2">Fiscalidade</button>
-                  <button class="text-gray-600 px-2">Impressão</button>
-                  <button class="text-gray-600 px-2">Sugestão</button>
+              <div class="h-44 border border-gray-300 p-2 bg-[#F8F9FA] flex flex-col gap-2 shadow-sm rounded-sm">
+                <!-- Sub-tabs for Series Configuration -->
+                <div class="flex gap-4 border-b border-[#E2E8F0] mb-1 shrink-0 pb-1">
+                  <button class="font-bold text-blue-700 border-b-2 border-blue-700 px-2 tracking-tight">Gerais</button>
+                  <button class="text-gray-500 px-2 hover:text-gray-700 transition-colors">Fiscalidade</button>
+                  <button class="text-gray-500 px-2 hover:text-gray-700 transition-colors">Impressão</button>
+                  <button class="text-gray-500 px-2 hover:text-gray-700 transition-colors">Sugestão</button>
                 </div>
-                <div class="grid grid-cols-3 gap-4">
-                  <div class="flex flex-col gap-1">
-                    <div class="flex items-center justify-between">
-                      <label>Lançamento:</label>
-                      <select class="w-24 border border-gray-300 px-1 py-0.5"><option>000</option></select>
+
+                <!-- Info message when no series is selected -->
+                <div *ngIf="!selectedSerieConfig" class="flex-1 flex flex-col items-center justify-center text-gray-400 bg-white/50 rounded border border-gray-200 border-dashed">
+                  <span class="material-symbols-outlined text-3xl mb-1">info</span>
+                  <p>Selecione uma série associada para configurar</p>
+                </div>
+
+                <!-- Configuration Grid -->
+                <div *ngIf="selectedSerieConfig" class="grid grid-cols-3 gap-6 flex-1 overflow-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div class="flex flex-col gap-1.5 p-1">
+                    <div class="flex items-center justify-between gap-2">
+                      <label class="text-[10px] font-medium text-gray-600">Lançamento:</label>
+                      <select [(ngModel)]="selectedSerieConfig.postingAccount" class="w-24 h-5 border border-gray-300 px-1 bg-white text-[11px] outline-none hover:border-blue-400 focus:border-blue-500 rounded-sm">
+                        <option value="000">000</option>
+                      </select>
                     </div>
-                    <div class="flex items-center justify-between">
-                      <label>Data Inicial:</label>
-                      <input type="date" value="2025-01-01" class="w-24 border border-gray-300 px-1 py-0.5" />
+                    <div class="flex items-center justify-between gap-2">
+                      <label class="text-[10px] font-medium text-gray-600">Data Inicial:</label>
+                      <input type="date" [(ngModel)]="selectedSerieConfig.initialDate" class="w-28 h-5 border border-gray-300 px-1 text-[11px] outline-none hover:border-blue-400 rounded-sm" />
                     </div>
-                    <div class="flex items-center justify-between">
-                      <label>Limite Inferior:</label>
-                      <input type="number" value="0" class="w-24 border border-gray-300 px-1 py-0.5" />
+                    <div class="flex items-center justify-between gap-2">
+                      <label class="text-[10px] font-medium text-gray-600">Limite Inferior:</label>
+                      <input type="number" [(ngModel)]="selectedSerieConfig.lowerLimit" class="w-24 h-5 border border-gray-300 px-1 text-right text-[11px] outline-none hover:border-blue-400 rounded-sm" />
                     </div>
-                    <div class="flex items-center justify-between">
-                      <label class="text-blue-600">Último Documento:</label>
-                      <input type="number" value="1016" class="w-24 border border-gray-300 px-1 py-0.5" />
-                    </div>
-                  </div>
-                  <div class="flex flex-col gap-1">
-                    <div class="flex items-center justify-between">
-                      <label>Actual</label>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <label>Data Final:</label>
-                      <input type="date" value="2025-12-31" class="w-24 border border-gray-300 px-1 py-0.5" />
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <label>Limite Superior:</label>
-                      <input type="number" value="999999" class="w-24 border border-gray-300 px-1 py-0.5" />
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <label>Data Últ. Doc.:</label>
-                      <input type="date" value="2025-12-16" class="w-24 border border-gray-300 px-1 py-0.5" />
+                    <div class="flex items-center justify-between gap-2">
+                      <label class="text-[10px] font-bold text-blue-800">Último Doc.:</label>
+                      <input type="number" [(ngModel)]="selectedSerieConfig.lastDocNumber" class="w-24 h-5 border border-blue-200 bg-blue-50 px-1 text-right font-bold text-blue-900 text-[11px] outline-none rounded-sm" />
                     </div>
                   </div>
-                  <div class="flex flex-col gap-1">
-                    <label class="flex items-center gap-2"><input type="checkbox" checked /> Sugere Data Sistema</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" checked /> Série por Defeito</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" checked /> Alteração da Data</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" /> IVA Incluído</label>
+
+                  <div class="flex flex-col gap-1.5 border-l border-gray-200 pl-4 p-1">
+                    <div class="flex items-center">
+                      <label class="text-[10px] font-bold text-gray-800 uppercase tracking-widest bg-gray-200 px-2 py-0.5 rounded-sm">Actual</label>
+                    </div>
+                    <div class="flex items-center justify-between gap-2">
+                      <label class="text-[10px] font-medium text-gray-600">Data Final:</label>
+                      <input type="date" [(ngModel)]="selectedSerieConfig.finalDate" class="w-28 h-5 border border-gray-300 px-1 text-[11px] outline-none hover:border-blue-400 rounded-sm" />
+                    </div>
+                    <div class="flex items-center justify-between gap-2">
+                      <label class="text-[10px] font-medium text-gray-600">Limite Superior:</label>
+                      <input type="number" [(ngModel)]="selectedSerieConfig.upperLimit" class="w-24 h-5 border border-gray-300 px-1 text-right text-[11px] outline-none hover:border-blue-400 rounded-sm" />
+                    </div>
+                    <div class="flex items-center justify-between gap-2">
+                      <label class="text-[10px] font-medium text-gray-600">Data Últ. Doc.:</label>
+                      <input type="date" [(ngModel)]="selectedSerieConfig.lastDocDate" class="w-28 h-5 border border-gray-300 px-1 text-[11px] outline-none hover:border-blue-400 rounded-sm" />
+                    </div>
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 border-l border-gray-200 pl-4 bg-white/30 rounded-r p-1">
+                    <label class="flex items-center gap-2 text-[11px] text-gray-700 hover:text-black cursor-pointer group">
+                      <input type="checkbox" [(ngModel)]="selectedSerieConfig.suggestSystemDate" class="cursor-pointer h-3.5 w-3.5 accent-blue-600" /> 
+                      <span class="group-hover:underline decoration-blue-300 underline-offset-2">Sugere Data Sistema</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-[11px] font-bold text-blue-700 hover:text-blue-900 cursor-pointer group">
+                      <input type="checkbox" [(ngModel)]="selectedSerieConfig.isDefault" (change)="toggleDefaultSerie($event)" class="cursor-pointer h-3.5 w-3.5 accent-blue-600 shadow-sm" /> 
+                      <span class="group-hover:underline underline-offset-2">Série por Defeito</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-[11px] text-gray-700 hover:text-black cursor-pointer group">
+                      <input type="checkbox" [(ngModel)]="selectedSerieConfig.allowDateChange" class="cursor-pointer h-3.5 w-3.5 accent-blue-600" /> 
+                      <span class="group-hover:underline decoration-blue-300 underline-offset-2">Alteração da Data</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-[11px] text-gray-700 hover:text-black cursor-pointer group">
+                      <input type="checkbox" [(ngModel)]="selectedSerieConfig.taxIncluded" class="cursor-pointer h-3.5 w-3.5 accent-blue-600" /> 
+                      <span class="group-hover:underline decoration-blue-300 underline-offset-2">IVA Incluído</span>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -754,7 +769,8 @@ export class DocumentTypeConfigModalComponent implements OnInit {
       state: false,
       other: false,
       shareholder: false,
-      bank: false
+      bank: false,
+      employee: false
     },
     commissionCalculation: false,
     provisionSuggestion: false,
@@ -815,11 +831,13 @@ export class DocumentTypeConfigModalComponent implements OnInit {
   showList = false;
   documentTypesList: any[] = [];
 
+  selectedSerieCode: string | null = null;
+  selectedSerieConfig: any = null;
+
   constructor(private dataService: DataService) { }
 
   ngOnInit() {
     this.loadActiveCompany();
-    this.loadGlobalSeries();
 
     // Set defaults based on module
     if (this.module === 'SALES') {
@@ -833,15 +851,17 @@ export class DocumentTypeConfigModalComponent implements OnInit {
     } else if (this.module === 'TREASURY') {
       this.config.type = 'Liquidações';
       this.tabs = ['Gerais', 'Configuração', 'Tesouraria', 'Séries', 'Internet', 'Projetos'];
-      // If activeTab was passed as 'Contas Correntes' (default for others), switch it to 'Configuração'
-      if (this.activeTab === 'Contas Correntes') {
-        // Keep it or change? The user might have requested 'Séries' specifically.
-        // If the user requested 'Séries', it's fine.
-      }
     }
 
     if (this.documentCode) {
       this.loadDocumentType();
+    }
+
+    // Select first series if available
+    if (this.config.series && this.config.series.length > 0) {
+      // Find default or first
+      const defaultSerie = this.config.series.find((s: any) => s.isDefault && s.companyId === this.activeCompanyId) || this.config.series[0];
+      this.selectSerie(defaultSerie.code);
     }
   }
 
@@ -898,6 +918,20 @@ export class DocumentTypeConfigModalComponent implements OnInit {
     if (!this.config.series) {
       this.config.series = [];
     }
+
+    // Refresh selected config if loaded
+    if (this.selectedSerieCode) {
+      this.selectSerie(this.selectedSerieCode);
+    }
+  }
+
+  selectSerie(code: string) {
+    this.selectedSerieCode = code;
+    this.selectedSerieConfig = this.config.series.find((s: any) => s.code === code && s.companyId === this.activeCompanyId) || null;
+  }
+
+  isSerieSelected(code: string): boolean {
+    return this.selectedSerieCode === code;
   }
 
   toggleList() {
@@ -978,14 +1012,49 @@ export class DocumentTypeConfigModalComponent implements OnInit {
     if (index !== -1) {
       // Remove
       this.config.series.splice(index, 1);
+      if (this.selectedSerieCode === globalSerie.code) {
+        this.selectedSerieConfig = null;
+      }
     } else {
       // Add
-      this.config.series.push({
+      const newSerie = {
         code: globalSerie.code,
         description: globalSerie.description,
         active: true,
-        companyId: this.activeCompanyId
+        companyId: this.activeCompanyId,
+        isDefault: this.config.series.length === 0, // Default if first
+
+        // Defaults for series config
+        initialDate: new Date().getFullYear() + '-01-01',
+        finalDate: new Date().getFullYear() + '-12-31',
+        lowerLimit: 0,
+        upperLimit: 999999,
+        lastDocNumber: 0,
+        lastDocDate: '',
+        suggestSystemDate: true,
+        allowDateChange: true,
+        taxIncluded: false,
+        postingAccount: '000'
+      };
+
+      this.config.series.push(newSerie);
+      this.selectSerie(globalSerie.code);
+    }
+  }
+
+  toggleDefaultSerie(event: any) {
+    if (!this.selectedSerieConfig) return;
+
+    const isChecked = (event.target as HTMLInputElement).checked;
+    if (isChecked) {
+      // Uncheck default for all other series
+      this.config.series.forEach((s: any) => {
+        if (s.companyId === this.activeCompanyId) {
+          s.isDefault = (s.code === this.selectedSerieCode);
+        }
       });
+    } else {
+      this.selectedSerieConfig.isDefault = false;
     }
   }
 

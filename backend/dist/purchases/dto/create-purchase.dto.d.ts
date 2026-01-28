@@ -4,6 +4,7 @@ export declare class CreatePurchaseLineDto {
     articleName: string;
     quantity: number;
     unitPrice: number;
+    id?: string;
     discount?: number;
     ivaRate?: number;
     ivaCode?: string;
@@ -17,6 +18,7 @@ export declare class CreatePurchaseDto {
     documentType: string;
     series?: string;
     documentNumber?: string;
+    seriesNumber?: number;
     date: string;
     dueDate: string;
     supplierId?: string;

@@ -19,6 +19,7 @@ class CreateSalesDocumentLineDto {
     articleName;
     quantity;
     unitPrice;
+    id;
     discount;
     ivaRate;
     ivaCode;
@@ -57,6 +58,12 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", Number)
 ], CreateSalesDocumentLineDto.prototype, "unitPrice", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'LINE-ID', description: 'Line ID' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateSalesDocumentLineDto.prototype, "id", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 0, description: 'Discount percentage' }),
     (0, class_validator_1.IsNumber)(),
@@ -99,6 +106,7 @@ class CreateSalesDocumentDto {
     documentType;
     series;
     documentNumber;
+    seriesNumber;
     date;
     dueDate;
     customerId;
@@ -144,6 +152,12 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateSalesDocumentDto.prototype, "documentNumber", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 1, description: 'Series Number' }),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateSalesDocumentDto.prototype, "seriesNumber", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: '2023-10-27', description: 'Document Date' }),
     (0, class_validator_1.IsDateString)(),

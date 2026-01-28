@@ -307,10 +307,9 @@ interface StockDocument {
                 </select>
               </td>
 
-              <!-- Lote -->
               <td class="border-b border-r border-gray-200 p-0">
-                <input [(ngModel)]="line.batch" list="batches-{{i}}" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent">
-                <datalist id="batches-{{i}}">
+                <input [(ngModel)]="line.batch" [attr.list]="'batches-' + i" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent">
+                <datalist [id]="'batches-' + i">
                   <option *ngFor="let batch of batches" [value]="batch.code">{{ batch.description }}</option>
                 </datalist>
               </td>
@@ -470,7 +469,11 @@ export class StockMovementsComponent implements OnInit {
 
       // Set default series
       if (this.availableSeries.length > 0) {
-        this.currentDoc.series = this.availableSeries[0].code;
+        const currentExists = this.availableSeries.find(s => s.code === this.currentDoc.series);
+        if (!this.currentDoc.series || !currentExists) {
+          const defaultS = this.availableSeries.find(s => s.isDefault);
+          this.currentDoc.series = defaultS ? defaultS.code : this.availableSeries[0].code;
+        }
       }
 
       // Update document number for new type

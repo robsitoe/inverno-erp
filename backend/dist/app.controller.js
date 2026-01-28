@@ -63,6 +63,7 @@ const journal_entity_1 = require("./accounting/entities/journal.entity");
 const customer_entity_1 = require("./customers/entities/customer.entity");
 const supplier_entity_1 = require("./suppliers/entities/supplier.entity");
 const user_entity_1 = require("./users/entities/user.entity");
+const generic_entity_entity_1 = require("./common-entities/generic-entity.entity");
 const bcrypt = __importStar(require("bcrypt"));
 let AppController = class AppController {
     appService;
@@ -156,6 +157,16 @@ let AppController = class AppController {
         }
         return await repo.save(supplier);
     }
+    async getGenericEntities(type) {
+        const repo = this.dataSource.getRepository(generic_entity_entity_1.GenericEntity);
+        if (type) {
+            return await repo.find({ where: { type }, order: { name: 'ASC' } });
+        }
+        return await repo.find({ order: { name: 'ASC' } });
+    }
+    async saveGenericEntity(entity) {
+        return await this.dataSource.getRepository(generic_entity_entity_1.GenericEntity).save(entity);
+    }
     async testDbConnection(config) {
         if (!config || !config.host || !config.username || !config.database) {
             throw new common_1.BadRequestException('Configuração de base de dados incompleta.');
@@ -197,7 +208,7 @@ let AppController = class AppController {
                         username: config.username,
                         password: config.password,
                         database: dbName,
-                        entities: [account_entity_1.Account, journal_entry_entity_1.JournalEntry, article_entity_1.Article, stock_movement_entity_1.StockMovement, sales_document_entity_1.SalesDocument, purchase_entity_1.PurchaseDocument, treasury_entity_1.TreasuryDocument, company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, user_entity_1.User],
+                        entities: [account_entity_1.Account, journal_entry_entity_1.JournalEntry, article_entity_1.Article, stock_movement_entity_1.StockMovement, sales_document_entity_1.SalesDocument, purchase_entity_1.PurchaseDocument, treasury_entity_1.TreasuryDocument, company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, user_entity_1.User, generic_entity_entity_1.GenericEntity],
                         synchronize: true,
                     });
                     await newDbDataSource.initialize();
@@ -225,48 +236,36 @@ let AppController = class AppController {
         await queryRunner.connect();
         await queryRunner.startTransaction();
         try {
-            if (data.companies && data.companies.length > 0) {
+            if (data.companies && data.companies.length > 0)
                 await queryRunner.manager.save(company_entity_1.Company, data.companies);
-            }
-            else if (data.companyInfo) {
+            else if (data.companyInfo)
                 await queryRunner.manager.save(company_entity_1.Company, data.companyInfo);
-            }
-            if (data.fiscalYears && data.fiscalYears.length > 0) {
+            if (data.fiscalYears && data.fiscalYears.length > 0)
                 await queryRunner.manager.save(fiscal_year_entity_1.FiscalYear, data.fiscalYears);
-            }
-            if (data.articles && data.articles.length > 0) {
+            if (data.articles && data.articles.length > 0)
                 await queryRunner.manager.save(article_entity_1.Article, data.articles);
-            }
-            if (data.accounts && data.accounts.length > 0) {
+            if (data.accounts && data.accounts.length > 0)
                 await queryRunner.manager.save(account_entity_1.Account, data.accounts);
-            }
-            if (data.journals && data.journals.length > 0) {
+            if (data.journals && data.journals.length > 0)
                 await queryRunner.manager.save(journal_entity_1.Journal, data.journals);
-            }
-            if (data.salesDocuments && data.salesDocuments.length > 0) {
+            if (data.salesDocuments && data.salesDocuments.length > 0)
                 await queryRunner.manager.save(sales_document_entity_1.SalesDocument, data.salesDocuments);
-            }
-            if (data.purchaseDocuments && data.purchaseDocuments.length > 0) {
+            if (data.purchaseDocuments && data.purchaseDocuments.length > 0)
                 await queryRunner.manager.save(purchase_entity_1.PurchaseDocument, data.purchaseDocuments);
-            }
-            if (data.journalEntries && data.journalEntries.length > 0) {
+            if (data.journalEntries && data.journalEntries.length > 0)
                 await queryRunner.manager.save(journal_entry_entity_1.JournalEntry, data.journalEntries);
-            }
-            if (data.stockMovements && data.stockMovements.length > 0) {
+            if (data.stockMovements && data.stockMovements.length > 0)
                 await queryRunner.manager.save(stock_movement_entity_1.StockMovement, data.stockMovements);
-            }
-            if (data.receipts && data.receipts.length > 0) {
+            if (data.receipts && data.receipts.length > 0)
                 await queryRunner.manager.save(treasury_entity_1.TreasuryDocument, data.receipts);
-            }
-            if (data.payments && data.payments.length > 0) {
+            if (data.payments && data.payments.length > 0)
                 await queryRunner.manager.save(treasury_entity_1.TreasuryDocument, data.payments);
-            }
-            if (data.customers && data.customers.length > 0) {
+            if (data.customers && data.customers.length > 0)
                 await queryRunner.manager.save(customer_entity_1.Customer, data.customers);
-            }
-            if (data.suppliers && data.suppliers.length > 0) {
+            if (data.suppliers && data.suppliers.length > 0)
                 await queryRunner.manager.save(supplier_entity_1.Supplier, data.suppliers);
-            }
+            if (data.genericEntities && data.genericEntities.length > 0)
+                await queryRunner.manager.save(generic_entity_entity_1.GenericEntity, data.genericEntities);
             if (data.users && data.users.length > 0) {
                 for (const user of data.users) {
                     if (user.password && !user.password.startsWith('$2b$')) {
@@ -402,6 +401,20 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "saveSupplier", null);
+__decorate([
+    (0, common_1.Get)('entities'),
+    __param(0, (0, common_1.Query)('type')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "getGenericEntities", null);
+__decorate([
+    (0, common_1.Post)('entities'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "saveGenericEntity", null);
 __decorate([
     (0, common_1.Post)('test-db-connection'),
     __param(0, (0, common_1.Body)()),

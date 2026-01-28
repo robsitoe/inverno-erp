@@ -24,6 +24,7 @@ import { Journal } from './accounting/entities/journal.entity';
 import { Customer } from './customers/entities/customer.entity';
 import { Supplier } from './suppliers/entities/supplier.entity';
 import { Series } from './companies/entities/series.entity';
+import { GenericEntity } from './common-entities/generic-entity.entity';
 
 @Module({
   imports: [
@@ -43,7 +44,7 @@ import { Series } from './companies/entities/series.entity';
               Account, JournalEntry, JournalLine, Article, StockMovement,
               SalesDocument, SalesDocumentLine, User, PurchaseDocument,
               PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-              Company, FiscalYear, Journal, Customer, Supplier, Series
+              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity
             ],
             synchronize: true,
           };
@@ -60,7 +61,7 @@ import { Series } from './companies/entities/series.entity';
             Account, JournalEntry, JournalLine, Article, StockMovement,
             SalesDocument, SalesDocumentLine, User, PurchaseDocument,
             PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-            Company, FiscalYear, Journal, Customer, Supplier, Series
+            Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity
           ],
           synchronize: true,
         };

@@ -46,18 +46,34 @@ export class SalesService {
 
     const total = subtotal + totalIva;
 
-    // Get next number for series (simplified)
-    const lastDoc = await this.salesDocumentRepository.findOne({
-      where: { documentType: (documentData as any).documentType, series: documentData.series },
-      order: { documentNumber: 'DESC' } as any,
-    });
-    const nextNumber = (Number(lastDoc?.documentNumber) || 0) + 1;
-    const documentNumber = `${(documentData as any).documentType} ${documentData.series}/${nextNumber}`;
+    let seriesNumber = documentData.seriesNumber;
+    let documentNumber = documentData.documentNumber;
+
+    // If it's a new document (no ID), we usually want to auto-generate the number
+    // if it wasn't provided or force the next one.
+    if (!documentData.id) {
+      if (!seriesNumber) {
+        const lastDoc = await this.salesDocumentRepository.findOne({
+          where: {
+            documentType: documentData.documentType,
+            series: documentData.series,
+            companyId: documentData.companyId
+          },
+          order: { seriesNumber: 'DESC' } as any,
+        });
+        seriesNumber = (lastDoc?.seriesNumber || 0) + 1;
+      }
+
+      // Enforce documentNumber format
+      if (!documentNumber || documentNumber.includes('undefined')) {
+        documentNumber = `${documentData.documentType} ${documentData.series}/${seriesNumber}`;
+      }
+    }
 
     const document = this.salesDocumentRepository.create({
       ...documentData,
       documentNumber,
-      seriesNumber: nextNumber,
+      seriesNumber,
       subtotal,
       totalIva,
       discounts,
@@ -68,8 +84,14 @@ export class SalesService {
     return this.salesDocumentRepository.save(document);
   }
 
-  findAll() {
+  findAll(companyId?: string) {
+    const where: any = {};
+    if (companyId) {
+      where.companyId = companyId;
+    }
+
     return this.salesDocumentRepository.find({
+      where,
       order: { date: 'DESC', createdAt: 'DESC' },
       relations: ['lines']
     });
@@ -92,6 +114,19 @@ export class SalesService {
     // For now, we'll just update the main fields
     this.salesDocumentRepository.merge(document, updateSalesDocumentDto);
     return this.salesDocumentRepository.save(document);
+  }
+
+  async findByNumber(companyId: string, type: string, series: string, number: number) {
+    const document = await this.salesDocumentRepository.findOne({
+      where: {
+        companyId,
+        documentType: type,
+        series,
+        seriesNumber: number
+      },
+      relations: ['lines']
+    });
+    return document;
   }
 
   async remove(id: string) {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SupplierService } from '../supplier.service';
 import { Supplier } from '../models';
@@ -12,7 +12,7 @@ import { Supplier } from '../models';
       <div class="bg-white rounded-sm shadow-lg w-[700px] max-h-[80vh] flex flex-col" (click)="$event.stopPropagation()">
         <!-- Header -->
         <div class="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-gray-50">
-          <h3 class="text-sm font-medium text-gray-700">Lista de Fornecedores</h3>
+          <h3 class="text-sm font-medium text-gray-700">{{ title || 'Lista de Fornecedores' }}</h3>
           <button (click)="onClose()" class="text-gray-400 hover:text-gray-600">
             <span class="material-symbols-outlined text-lg">close</span>
           </button>
@@ -73,6 +73,7 @@ import { Supplier } from '../models';
   `
 })
 export class SupplierListModalComponent implements OnInit {
+  @Input() title: string = '';
   @Output() close = new EventEmitter<void>();
   @Output() select = new EventEmitter<any>();
 

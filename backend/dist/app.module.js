@@ -33,6 +33,7 @@ const journal_entity_1 = require("./accounting/entities/journal.entity");
 const customer_entity_1 = require("./customers/entities/customer.entity");
 const supplier_entity_1 = require("./suppliers/entities/supplier.entity");
 const series_entity_1 = require("./companies/entities/series.entity");
+const generic_entity_entity_1 = require("./common-entities/generic-entity.entity");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -54,7 +55,7 @@ exports.AppModule = AppModule = __decorate([
                                 account_entity_1.Account, journal_entry_entity_1.JournalEntry, journal_entry_entity_1.JournalLine, article_entity_1.Article, stock_movement_entity_1.StockMovement,
                                 sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, user_entity_1.User, purchase_entity_1.PurchaseDocument,
                                 purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
-                                company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series
+                                company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity
                             ],
                             synchronize: true,
                         };
@@ -70,7 +71,7 @@ exports.AppModule = AppModule = __decorate([
                             account_entity_1.Account, journal_entry_entity_1.JournalEntry, journal_entry_entity_1.JournalLine, article_entity_1.Article, stock_movement_entity_1.StockMovement,
                             sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, user_entity_1.User, purchase_entity_1.PurchaseDocument,
                             purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
-                            company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series
+                            company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity
                         ],
                         synchronize: true,
                     };

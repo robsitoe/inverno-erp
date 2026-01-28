@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { UpdatePurchaseDto } from './dto/update-purchase.dto';
@@ -13,8 +13,18 @@ export class PurchasesController {
   }
 
   @Get('documents')
-  findAll() {
-    return this.purchasesService.findAll();
+  findAll(@Query('companyId') companyId?: string) {
+    return this.purchasesService.findAll(companyId);
+  }
+
+  @Get('documents/find')
+  findByNumber(
+    @Query('companyId') companyId: string,
+    @Query('type') type: string,
+    @Query('series') series: string,
+    @Query('number') number: number,
+  ) {
+    return this.purchasesService.findByNumber(companyId, type, series, Number(number));
   }
 
   @Get('documents/:id')

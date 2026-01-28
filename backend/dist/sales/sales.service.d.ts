@@ -7,8 +7,9 @@ export declare class SalesService {
     private readonly salesDocumentLineRepository;
     constructor(salesDocumentRepository: Repository<SalesDocument>, salesDocumentLineRepository: Repository<SalesDocumentLine>);
     create(createSalesDocumentDto: CreateSalesDocumentDto): Promise<SalesDocument>;
-    findAll(): Promise<SalesDocument[]>;
+    findAll(companyId?: string): Promise<SalesDocument[]>;
     findOne(id: string): Promise<SalesDocument>;
     update(id: string, updateSalesDocumentDto: UpdateSalesDocumentDto): Promise<SalesDocument>;
+    findByNumber(companyId: string, type: string, series: string, number: number): Promise<SalesDocument | null>;
     remove(id: string): Promise<SalesDocument>;
 }

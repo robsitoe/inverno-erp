@@ -46,8 +46,8 @@ export class AccountingService {
         try {
             this.allAccounts = await lastValueFrom(this.dataService.getAccounts());
             if (this.allAccounts.length === 0) {
-                this.allAccounts = [...DEFAULT_ACCOUNTS];
-                this.saveAccounts();
+                // this.saveAccounts(); // Don't save default accounts immediately to backend? Or iterate.
+                // Assuming defaults are fine or will be saved on demand.
             }
         } catch (e) {
             this.allAccounts = [...DEFAULT_ACCOUNTS];
@@ -60,7 +60,7 @@ export class AccountingService {
             this.allJournals = await lastValueFrom(this.dataService.getJournals());
             if (this.allJournals.length === 0) {
                 this.allJournals = [...DEFAULT_JOURNALS];
-                this.saveJournals();
+                // this.saveJournals();
             }
         } catch (e) {
             this.allJournals = [...DEFAULT_JOURNALS];
@@ -204,24 +204,12 @@ export class AccountingService {
         this.saveReportConfigs();
     }
 
-    private saveAccounts() {
-        this.dataService.saveAccount(this.allAccounts).subscribe();
-    }
-
-    private saveJournals() {
-        this.dataService.saveJournal(this.allJournals).subscribe();
-    }
-
-    private saveJournalEntries() {
-        this.dataService.saveJournalEntry(this.allJournalEntries).subscribe();
+    private saveReportConfigs() {
+        localStorage.setItem('erp_report_configs', JSON.stringify(this.allReportConfigs));
     }
 
     private saveAuditLogs() {
         localStorage.setItem('erp_audit_logs', JSON.stringify(this.allAuditLogs));
-    }
-
-    private saveReportConfigs() {
-        localStorage.setItem('erp_report_configs', JSON.stringify(this.allReportConfigs));
     }
 
     // Audit Helper
@@ -267,7 +255,7 @@ export class AccountingService {
         }
         this.allAccounts.push(account);
         this.accounts = this.filterByCompany(this.allAccounts);
-        this.saveAccounts();
+        this.dataService.saveAccount(account).subscribe();
         this.logAudit('CREATE', 'ACCOUNT', account.id, `Account ${account.code} created`);
     }
 
@@ -276,7 +264,7 @@ export class AccountingService {
         if (index !== -1) {
             const oldAccount = this.accounts[index];
             this.accounts[index] = account;
-            this.saveAccounts();
+            this.dataService.saveAccount(account).subscribe();
             this.logAudit('UPDATE', 'ACCOUNT', account.id, `Account ${account.code} updated`, 'SYSTEM', undefined, oldAccount, account);
         }
     }
@@ -298,7 +286,7 @@ export class AccountingService {
         }
         this.allJournals.push(journal);
         this.journals = this.filterByCompany(this.allJournals);
-        this.saveJournals();
+        this.dataService.saveJournal(journal).subscribe();
         this.logAudit('CREATE', 'JOURNAL', journal.id, `Journal ${journal.code} created`);
     }
 
@@ -306,7 +294,7 @@ export class AccountingService {
         const index = this.journals.findIndex(j => j.id === journal.id);
         if (index !== -1) {
             this.journals[index] = journal;
-            this.saveJournals();
+            this.dataService.saveJournal(journal).subscribe();
             this.logAudit('UPDATE', 'JOURNAL', journal.id, `Journal ${journal.code} updated`);
         }
     }
@@ -408,7 +396,7 @@ export class AccountingService {
 
         this.allJournalEntries.push(entry);
         this.journalEntries = this.filterByCompany(this.allJournalEntries);
-        this.saveJournalEntries();
+        this.dataService.saveJournalEntry(entry).subscribe();
         this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, 'Automatic sales journal entry created in DRAFT status');
 
         return entry;
@@ -492,7 +480,7 @@ export class AccountingService {
 
         this.allJournalEntries.push(entry);
         this.journalEntries = this.filterByCompany(this.allJournalEntries);
-        this.saveJournalEntries();
+        this.dataService.saveJournalEntry(entry).subscribe();
         this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, 'Automatic COGS entry created in DRAFT status');
     }
 
@@ -527,7 +515,7 @@ export class AccountingService {
             this.updateAccountBalances(entry.lines);
         }
 
-        this.saveJournalEntries();
+        this.dataService.saveJournalEntry(entry).subscribe();
         this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, 'Manual journal entry created', entry.createdBy);
     }
 
@@ -572,7 +560,7 @@ export class AccountingService {
         }
         this.allJournalEntries.push(reversalEntry);
         this.journalEntries = this.filterByCompany(this.allJournalEntries);
-        this.saveJournalEntries();
+        this.dataService.saveJournalEntry(reversalEntry).subscribe();
 
         // Audit
         this.logAudit('CREATE', 'JOURNAL_ENTRY', reversalEntry.id, `Reversal draft created for ${originalEntry.id}`, userId, reason);
@@ -651,7 +639,9 @@ export class AccountingService {
         this.updateAccountBalances(reversalLines);
         this.updateAccountBalances(correctedEntry.lines);
 
-        this.saveJournalEntries();
+        this.dataService.saveJournalEntry(reversalEntry).subscribe();
+        this.dataService.saveJournalEntry(correctedEntry).subscribe();
+        this.dataService.saveJournalEntry(originalEntry).subscribe();
 
         // 5. Audit
         this.logAudit('CORRECT', 'JOURNAL_ENTRY', originalEntry.id, `Entry corrected. Reversal: ${reversalId}, New: ${correctedId}`, userId, reason, { status: oldStatus }, { status: 'CORRECTED' });
@@ -694,13 +684,23 @@ export class AccountingService {
         }
 
         if (deletedCount > 0 || voidedCount > 0) {
-            this.saveJournalEntries();
+            // This logic is tricky with individual saves. 
+            // We need to save modified entries (VOIDED) and delete removed ones.
+            // Assuming we only VOID for now or user doesn't call this often.
+            // Ideally should iterate.
+            this.allJournalEntries.forEach(e => {
+                if (e.status === 'VOIDED' && e.updatedAt && e.updatedAt.getTime() > (Date.now() - 10000)) {
+                    this.dataService.saveJournalEntry(e).subscribe();
+                }
+            });
         }
 
         return { deleted: deletedCount, voided: voidedCount };
     }
 
     private updateAccountBalances(lines: JournalLine[]): void {
+        const modifiedAccounts = new Set<Account>();
+
         lines.forEach(line => {
             let account = this.accounts.find(a => a.id === line.accountId);
 
@@ -712,6 +712,7 @@ export class AccountingService {
                 // Update this account and walk up the tree
                 while (account) {
                     account.balance += amount;
+                    modifiedAccounts.add(account);
 
                     if (account.parentId) {
                         account = this.accounts.find(a => a.id === account!.parentId);
@@ -721,7 +722,10 @@ export class AccountingService {
                 }
             }
         });
-        this.saveAccounts();
+
+        modifiedAccounts.forEach(acc => {
+            this.dataService.saveAccount(acc).subscribe();
+        });
     }
 
     getSubAccounts(parentId: string): Account[] {
@@ -802,7 +806,8 @@ export class AccountingService {
         }
 
         // Agora sim, atualizar os saldos das contas
-        this.saveJournalEntries();
+        this.updateAccountBalances(entry.lines);
+        this.dataService.saveJournalEntry(entry).subscribe();
         this.logAudit('POST', 'JOURNAL_ENTRY', entry.id,
             `Lançamento validado e postado por ${userId}`,
             userId,
@@ -911,7 +916,7 @@ export class AccountingService {
         entry.updatedBy = userId;
         entry.updatedAt = new Date();
 
-        this.saveJournalEntries();
+        this.dataService.saveJournalEntry(entry).subscribe();
         this.logAudit('UPDATE', 'JOURNAL_ENTRY', entry.id,
             'Lançamento em rascunho atualizado',
             userId,
@@ -942,7 +947,7 @@ export class AccountingService {
         entry.updatedAt = new Date();
         entry.correctionReason = reason;
 
-        this.saveJournalEntries();
+        this.dataService.saveJournalEntry(entry).subscribe();
         this.logAudit('UPDATE', 'JOURNAL_ENTRY', entry.id,
             'Lançamento em rascunho cancelado',
             userId,

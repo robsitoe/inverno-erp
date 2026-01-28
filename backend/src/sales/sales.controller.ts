@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SalesService } from './sales.service';
 import { CreateSalesDocumentDto } from './dto/create-sales-document.dto';
@@ -18,8 +18,24 @@ export class SalesController {
 
   @Get('documents')
   @ApiOperation({ summary: 'Get all sales documents' })
-  findAll() {
-    return this.salesService.findAll();
+  findAll(
+    @Query('companyId') companyId?: string,
+    @Query('documentType') documentType?: string,
+    @Query('series') series?: string,
+  ) {
+    // If we have specific filters, they can be handled in a more refined findAll or specific search
+    return this.salesService.findAll(companyId);
+  }
+
+  @Get('documents/find')
+  @ApiOperation({ summary: 'Find a sales document by number' })
+  findByNumber(
+    @Query('companyId') companyId: string,
+    @Query('type') type: string,
+    @Query('series') series: string,
+    @Query('number') number: number,
+  ) {
+    return this.salesService.findByNumber(companyId, type, series, Number(number));
   }
 
   @Get('documents/:id')

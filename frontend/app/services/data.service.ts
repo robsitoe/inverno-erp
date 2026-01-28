@@ -326,21 +326,61 @@ export class DataService {
 
     // --- Documents (Sales, Purchases, Treasury) ---
 
-    getSalesDocuments(): Observable<any[]> {
+    getSalesDocuments(companyId?: string): Observable<any[]> {
         if (this.isLocalBrowser()) {
             const stored = localStorage.getItem('erp_sales_documents');
-            return of(stored ? JSON.parse(stored) : []);
+            const docs = stored ? JSON.parse(stored) : [];
+            if (companyId) {
+                return of(docs.filter((d: any) => d.companyId === companyId));
+            }
+            return of(docs);
         } else {
-            return this.http.get<any[]>(`${this.baseUrl}/sales/documents`);
+            return this.http.get<any[]>(`${this.baseUrl}/sales/documents?companyId=${companyId || ''}`);
         }
     }
 
-    getPurchaseDocuments(): Observable<any[]> {
+    getSalesDocumentByNumber(companyId: string, type: string, series: string, number: number): Observable<any> {
+        if (this.isLocalBrowser()) {
+            const stored = localStorage.getItem('erp_sales_documents');
+            const docs = stored ? JSON.parse(stored) : [];
+            const doc = docs.find((d: any) =>
+                d.companyId === companyId &&
+                d.documentType === type &&
+                d.series === series &&
+                d.seriesNumber === number
+            );
+            return of(doc || null);
+        } else {
+            return this.http.get<any>(`${this.baseUrl}/sales/documents/find?companyId=${companyId}&type=${type}&series=${series}&number=${number}`);
+        }
+    }
+
+    getPurchaseDocuments(companyId?: string): Observable<any[]> {
         if (this.isLocalBrowser()) {
             const stored = localStorage.getItem('erp_purchase_documents');
-            return of(stored ? JSON.parse(stored) : []);
+            const docs = stored ? JSON.parse(stored) : [];
+            if (companyId) {
+                return of(docs.filter((d: any) => d.companyId === companyId));
+            }
+            return of(docs);
         } else {
-            return this.http.get<any[]>(`${this.baseUrl}/purchases/documents`);
+            return this.http.get<any[]>(`${this.baseUrl}/purchases/documents?companyId=${companyId || ''}`);
+        }
+    }
+
+    getPurchaseDocumentByNumber(companyId: string, type: string, series: string, number: number): Observable<any> {
+        if (this.isLocalBrowser()) {
+            const stored = localStorage.getItem('erp_purchase_documents');
+            const docs = stored ? JSON.parse(stored) : [];
+            const doc = docs.find((d: any) =>
+                d.companyId === companyId &&
+                d.documentType === type &&
+                d.series === series &&
+                d.seriesNumber === number
+            );
+            return of(doc || null);
+        } else {
+            return this.http.get<any>(`${this.baseUrl}/purchases/documents/find?companyId=${companyId}&type=${type}&series=${series}&number=${number}`);
         }
     }
 
@@ -387,12 +427,14 @@ export class DataService {
         }
     }
 
-    getReceipts(): Observable<any[]> {
+    getReceipts(companyId?: string): Observable<any[]> {
         if (this.isLocalBrowser()) {
             const stored = localStorage.getItem('erp_receipts');
-            return of(stored ? JSON.parse(stored) : []);
+            const docs = stored ? JSON.parse(stored) : [];
+            if (companyId) return of(docs.filter((d: any) => d.companyId === companyId));
+            return of(docs);
         } else {
-            return this.http.get<any[]>(`${this.baseUrl}/treasury/receipts`);
+            return this.http.get<any[]>(`${this.baseUrl}/treasury/receipts?companyId=${companyId || ''}`);
         }
     }
 
@@ -408,12 +450,14 @@ export class DataService {
         }
     }
 
-    getPayments(): Observable<any[]> {
+    getPayments(companyId?: string): Observable<any[]> {
         if (this.isLocalBrowser()) {
             const stored = localStorage.getItem('erp_payments');
-            return of(stored ? JSON.parse(stored) : []);
+            const docs = stored ? JSON.parse(stored) : [];
+            if (companyId) return of(docs.filter((d: any) => d.companyId === companyId));
+            return of(docs);
         } else {
-            return this.http.get<any[]>(`${this.baseUrl}/treasury/payments`);
+            return this.http.get<any[]>(`${this.baseUrl}/treasury/payments?companyId=${companyId || ''}`);
         }
     }
 
@@ -464,6 +508,71 @@ export class DataService {
             return of(supplier);
         } else {
             return this.http.post(`${this.baseUrl}/suppliers`, supplier);
+        }
+    }
+
+    // --- Generic Entities ---
+    getGenericEntities(type?: string): Observable<any[]> {
+        if (this.isLocalBrowser()) {
+            const stored = localStorage.getItem('erp_generic_entities');
+            const all = stored ? JSON.parse(stored) : [];
+            if (type) {
+                return of(all.filter((e: any) => e.type === type));
+            }
+            return of(all);
+        } else {
+            return this.http.get<any[]>(`${this.baseUrl}/entities?type=${type || ''}`);
+        }
+    }
+
+    saveGenericEntity(entity: any): Observable<any> {
+        if (this.isLocalBrowser()) {
+            const stored = localStorage.getItem('erp_generic_entities');
+            const all = stored ? JSON.parse(stored) : [];
+            const index = all.findIndex((e: any) => e.id === entity.id);
+            if (index !== -1) {
+                all[index] = entity;
+            } else {
+                all.push(entity);
+            }
+            localStorage.setItem('erp_generic_entities', JSON.stringify(all));
+            return of(entity);
+        } else {
+            return this.http.post(`${this.baseUrl}/entities`, entity);
+        }
+    }
+
+    // --- Payment Methods ---
+    getPaymentMethods(companyId?: string): Observable<any[]> {
+        if (this.isLocalBrowser()) {
+            const stored = localStorage.getItem('erp_payment_methods');
+            if (!stored) return of([]);
+
+            const all = JSON.parse(stored);
+            if (companyId) {
+                return of(all.filter((pm: any) => !pm.companyId || pm.companyId === companyId)
+                    .sort((a: any, b: any) => a.sortOrder - b.sortOrder));
+            }
+            return of(all.sort((a: any, b: any) => a.sortOrder - b.sortOrder));
+        } else {
+            return this.http.get<any[]>(`${this.baseUrl}/payment-methods?companyId=${companyId || ''}`);
+        }
+    }
+
+    savePaymentMethod(method: any): Observable<any> {
+        if (this.isLocalBrowser()) {
+            const stored = localStorage.getItem('erp_payment_methods');
+            let all = stored ? JSON.parse(stored) : [];
+            const index = all.findIndex((pm: any) => pm.id === method.id);
+            if (index !== -1) {
+                all[index] = method;
+            } else {
+                all.push(method);
+            }
+            localStorage.setItem('erp_payment_methods', JSON.stringify(all));
+            return of(method);
+        } else {
+            return this.http.post(`${this.baseUrl}/payment-methods`, method);
         }
     }
 

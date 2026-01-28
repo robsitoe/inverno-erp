@@ -4,6 +4,7 @@ export declare class CreateSalesDocumentLineDto {
     articleName: string;
     quantity: number;
     unitPrice: number;
+    id?: string;
     discount?: number;
     ivaRate?: number;
     ivaCode?: string;
@@ -17,6 +18,7 @@ export declare class CreateSalesDocumentDto {
     documentType: string;
     series?: string;
     documentNumber?: string;
+    seriesNumber?: number;
     date: string;
     dueDate: string;
     customerId?: string;

@@ -1,4 +1,4 @@
-import { Account, JournalEntry, Article, Customer, SalesDocument, StockMovement, Warehouse, Journal } from './models';
+import { Account, JournalEntry, Article, Customer, SalesDocument, StockMovement, Warehouse, Journal, PaymentMethod } from './models';
 
 // Default Journals
 export const DEFAULT_JOURNALS: Journal[] = [
@@ -9,6 +9,18 @@ export const DEFAULT_JOURNALS: Journal[] = [
     { id: 'JNL-GEN', code: 'GERAL', name: 'Diário Geral', type: 'GENERAL', isActive: true },
     { id: 'JNL-OPS', code: 'OD', name: 'Operações Diversas', type: 'OPERATIONS', isActive: true }
 ];
+
+// Default Payment Methods (Meios de Pagamento)
+export const DEFAULT_PAYMENT_METHODS: PaymentMethod[] = [
+    { id: 'PM-1', code: 'NUM', description: 'Numerário', treasuryAccountId: '3', isActive: true, sortOrder: 1 },
+    { id: 'PM-2', code: 'TRF', description: 'Transferência Bancária', treasuryAccountId: '10', isActive: true, sortOrder: 2 },
+    { id: 'PM-3', code: 'CHQ', description: 'Cheque', treasuryAccountId: '10', isActive: true, sortOrder: 3 },
+    { id: 'PM-4', code: 'MB', description: 'Multibanco', treasuryAccountId: '10', isActive: true, sortOrder: 4 },
+    { id: 'PM-5', code: 'MBWAY', description: 'MB WAY', treasuryAccountId: '10', isActive: true, sortOrder: 5 },
+    { id: 'PM-6', code: 'VISA', description: 'Cartão Visa/Mastercard', treasuryAccountId: '10', isActive: true, sortOrder: 6 },
+    { id: 'PM-7', code: 'MPESA', description: 'M-Pesa', treasuryAccountId: '3', isActive: true, sortOrder: 7 }
+];
+
 
 // Default Chart of Accounts (Plano de Contas Padrão - Moçambique)
 export const DEFAULT_ACCOUNTS: Account[] = [
@@ -36,6 +48,7 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     { id: '17', code: '21.1.1', name: 'Clientes a Dinheiro', type: 'ASSET', level: 3, parentId: '16', balance: 0, allowPosting: true, isActive: true },
     { id: '18', code: '21.1.2', name: 'Clientes a Crédito', type: 'ASSET', level: 3, parentId: '16', balance: 0, allowPosting: true, isActive: true },
     { id: '19', code: '21.2', name: 'Clientes Internacionais', type: 'ASSET', level: 2, parentId: '15', balance: 0, allowPosting: true, isActive: true },
+    { id: '63', code: '21.9', name: 'Adiantamentos de Clientes', type: 'LIABILITY', level: 2, parentId: '15', balance: 0, allowPosting: true, isActive: true },
 
     // 31 - Mercadorias (ASSET)
     { id: '20', code: '31', name: 'Mercadorias (Comércio)', type: 'ASSET', level: 1, balance: 0, allowPosting: false, isActive: true },
@@ -77,6 +90,7 @@ export const DEFAULT_ACCOUNTS: Account[] = [
     { id: '48', code: '22', name: 'Fornecedores', type: 'LIABILITY', level: 1, balance: 0, allowPosting: false, isActive: true },
     { id: '49', code: '22.1', name: 'Fornecedores Nacionais', type: 'LIABILITY', level: 2, parentId: '48', balance: 0, allowPosting: true, isActive: true },
     { id: '50', code: '22.2', name: 'Fornecedores Internacionais', type: 'LIABILITY', level: 2, parentId: '48', balance: 0, allowPosting: true, isActive: true },
+    { id: '64', code: '22.9', name: 'Adiantamentos a Fornecedores', type: 'ASSET', level: 2, parentId: '48', balance: 0, allowPosting: true, isActive: true },
 
     // 32 - IVA (LIABILITY)
     { id: '51', code: '32', name: 'IVA', type: 'LIABILITY', level: 1, balance: 0, allowPosting: false, isActive: true },
