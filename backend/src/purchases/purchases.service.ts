@@ -1,19 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityTarget, ObjectLiteral } from 'typeorm';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { UpdatePurchaseDto } from './dto/update-purchase.dto';
 import { PurchaseDocument } from './entities/purchase.entity';
+import { TenancyService } from '../tenancy/tenancy.service';
+import { TenancyContext } from '../tenancy/tenancy.context';
 
 @Injectable()
 export class PurchasesService {
   constructor(
+    private readonly tenancyService: TenancyService,
     @InjectRepository(PurchaseDocument)
-    private purchaseRepository: Repository<PurchaseDocument>,
+    private readonly defaultPurchaseRepo: Repository<PurchaseDocument>,
   ) { }
+
+  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>): Promise<Repository<T>> {
+    const companyId = TenancyContext.getCompanyId();
+    if (!companyId) return defaultRepo;
+
+    const ds = await this.tenancyService.getTenantDataSource(companyId);
+    return ds.getRepository(entity);
+  }
+
+  private async getPurchaseRepo() { return this.getRepo(PurchaseDocument, this.defaultPurchaseRepo); }
 
   async create(createPurchaseDto: CreatePurchaseDto) {
     const { lines, ...documentData } = createPurchaseDto;
+    const repo = await this.getPurchaseRepo();
 
     const entityData: any = {
       ...documentData,
@@ -45,7 +59,7 @@ export class PurchasesService {
       entityData.id = `PUR-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
       if (!entityData.number) {
-        const lastDoc = await this.purchaseRepository.findOne({
+        const lastDoc = await repo.findOne({
           where: {
             type: entityData.type,
             series: entityData.series,
@@ -61,28 +75,32 @@ export class PurchasesService {
       }
     }
 
-    const purchase = this.purchaseRepository.create(entityData);
-    return this.purchaseRepository.save(purchase);
+    const purchase = repo.create(entityData);
+    return repo.save(purchase);
   }
 
-  findAll(companyId?: string) {
+  async findAll(companyId?: string) {
+    const repo = await this.getPurchaseRepo();
     const where: any = {};
     if (companyId) {
       where.companyId = companyId;
     }
-    return this.purchaseRepository.find({ where, relations: ['lines'] });
+    return repo.find({ where, relations: ['lines'] });
   }
 
-  findOne(id: string) {
-    return this.purchaseRepository.findOne({ where: { id }, relations: ['lines'] });
+  async findOne(id: string) {
+    const repo = await this.getPurchaseRepo();
+    return repo.findOne({ where: { id }, relations: ['lines'] });
   }
 
-  update(id: string, updatePurchaseDto: UpdatePurchaseDto) {
-    return this.purchaseRepository.update(id, updatePurchaseDto);
+  async update(id: string, updatePurchaseDto: UpdatePurchaseDto) {
+    const repo = await this.getPurchaseRepo();
+    return repo.update(id, updatePurchaseDto);
   }
 
   async findByNumber(companyId: string, type: string, series: string, number: number) {
-    return this.purchaseRepository.findOne({
+    const repo = await this.getPurchaseRepo();
+    return repo.findOne({
       where: {
         companyId,
         type,
@@ -93,7 +111,8 @@ export class PurchasesService {
     });
   }
 
-  remove(id: string) {
-    return this.purchaseRepository.delete(id);
+  async remove(id: string) {
+    const repo = await this.getPurchaseRepo();
+    return repo.delete(id);
   }
 }

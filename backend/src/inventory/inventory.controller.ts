@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { InventoryService } from './inventory.service';
 import { CreateArticleDto } from './dto/create-article.dto';
@@ -19,9 +19,10 @@ export class InventoryController {
 
   @Get('articles')
   @ApiOperation({ summary: 'Get all articles' })
-  findAll() {
-    return this.inventoryService.findAll();
+  findAll(@Query('companyId') companyId?: string) {
+    return this.inventoryService.findAll(companyId);
   }
+
 
   @Get('articles/:id')
   @ApiOperation({ summary: 'Get an article by ID' })

@@ -64,101 +64,196 @@ const customer_entity_1 = require("./customers/entities/customer.entity");
 const supplier_entity_1 = require("./suppliers/entities/supplier.entity");
 const user_entity_1 = require("./users/entities/user.entity");
 const generic_entity_entity_1 = require("./common-entities/generic-entity.entity");
+const document_type_entity_1 = require("./common-entities/entities/document-type.entity");
+const payment_method_entity_1 = require("./treasury/entities/payment-method.entity");
 const bcrypt = __importStar(require("bcrypt"));
+const tenancy_service_1 = require("./tenancy/tenancy.service");
+const tenancy_context_1 = require("./tenancy/tenancy.context");
 let AppController = class AppController {
     appService;
     dataSource;
-    constructor(appService, dataSource) {
+    tenancyService;
+    constructor(appService, dataSource, tenancyService) {
         this.appService = appService;
         this.dataSource = dataSource;
+        this.tenancyService = tenancyService;
+    }
+    async getRepo(entity) {
+        const companyId = tenancy_context_1.TenancyContext.getCompanyId();
+        if (!companyId)
+            return this.dataSource.getRepository(entity);
+        const ds = await this.tenancyService.getTenantDataSource(companyId);
+        return ds.getRepository(entity);
+    }
+    testRoute() {
+        return { status: 'ok', message: 'Backend is reachable' };
     }
     getHello() {
         return this.appService.getHello();
     }
     async getCompanies() {
-        return await this.dataSource.getRepository(company_entity_1.Company).find();
+        return await this.dataSource.getRepository(company_entity_1.Company).find({ order: { name: 'ASC' } });
     }
     async getCompanyInfo() {
-        const companies = await this.dataSource.getRepository(company_entity_1.Company).find();
-        return companies[0] || {
-            name: 'Minha Empresa, Lda.',
-            nif: '123456789',
-            address: 'Maputo, Moçambique',
-            email: 'info@empresa.com',
-            phone: '+258 84 000 0000',
-            website: ''
-        };
+        const companyId = tenancy_context_1.TenancyContext.getCompanyId();
+        if (!companyId) {
+            return this.dataSource.getRepository(company_entity_1.Company).findOne({ where: {} });
+        }
+        return await this.dataSource.getRepository(company_entity_1.Company).findOne({ where: { id: companyId } });
     }
-    async saveCompanyInfo(data) {
-        return await this.dataSource.getRepository(company_entity_1.Company).save(data);
+    async saveCompany(company) {
+        return await this.dataSource.getRepository(company_entity_1.Company).save(company);
     }
     async deleteCompany(id) {
-        return await this.dataSource.getRepository(company_entity_1.Company).delete(id);
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        try {
+            console.log(`🗑️ Starting full cleanup for company ID: ${id}`);
+            const users = await queryRunner.manager.find(user_entity_1.User);
+            for (const user of users) {
+                if (user.permissions && Array.isArray(user.permissions)) {
+                    const originalCount = user.permissions.length;
+                    user.permissions = user.permissions.filter((p) => p.companyId !== id);
+                    if (user.permissions.length !== originalCount) {
+                        await queryRunner.manager.save(user_entity_1.User, user);
+                    }
+                }
+            }
+            await queryRunner.manager.delete(fiscal_year_entity_1.FiscalYear, { companyId: id });
+            await queryRunner.manager.delete(series_entity_1.Series, { companyId: id });
+            await queryRunner.manager.delete(journal_entity_1.Journal, { companyId: id });
+            await queryRunner.manager.delete(customer_entity_1.Customer, { companyId: id });
+            await queryRunner.manager.delete(supplier_entity_1.Supplier, { companyId: id });
+            const deleteResult = await queryRunner.manager.delete(company_entity_1.Company, id);
+            await queryRunner.commitTransaction();
+            console.log(`✅ Company ${id} and all related data removed.`);
+            return { success: true, message: 'Empresa removida com sucesso!', result: deleteResult };
+        }
+        catch (err) {
+            console.error(`❌ Error deleting company ${id}:`, err);
+            await queryRunner.rollbackTransaction();
+            throw new common_1.BadRequestException('Erro ao remover empresa: ' + err.message);
+        }
+        finally {
+            await queryRunner.release();
+        }
     }
     async getFiscalYears(companyId) {
-        const repo = this.dataSource.getRepository(fiscal_year_entity_1.FiscalYear);
-        if (companyId) {
-            return await repo.find({ where: { companyId }, order: { year: 'DESC' } });
+        const repo = await this.getRepo(fiscal_year_entity_1.FiscalYear);
+        const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        if (filterCompanyId) {
+            return await repo.find({ where: { companyId: filterCompanyId }, order: { year: 'DESC' } });
         }
         return await repo.find({ order: { year: 'DESC' } });
     }
     async saveFiscalYear(year) {
+        const repo = await this.getRepo(fiscal_year_entity_1.FiscalYear);
         if (!year.id) {
             year.id = `${year.year}-${year.companyId}`;
         }
-        return await this.dataSource.getRepository(fiscal_year_entity_1.FiscalYear).save(year);
+        return await repo.save(year);
     }
     async setCurrentYear(data) {
-        const repo = this.dataSource.getRepository(fiscal_year_entity_1.FiscalYear);
+        const repo = await this.getRepo(fiscal_year_entity_1.FiscalYear);
         await repo.update({ companyId: data.companyId }, { isCurrent: false });
         await repo.update({ companyId: data.companyId, year: data.year }, { isCurrent: true });
         return { success: true };
     }
     async getSeries(companyId) {
-        const repo = this.dataSource.getRepository(series_entity_1.Series);
-        if (companyId) {
-            return await repo.find({ where: { companyId }, order: { code: 'DESC' } });
+        const repo = await this.getRepo(series_entity_1.Series);
+        const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        if (filterCompanyId) {
+            return await repo.find({ where: { companyId: filterCompanyId }, order: { code: 'DESC' } });
         }
         return await repo.find({ order: { code: 'DESC' } });
     }
     async saveSeries(series) {
-        return await this.dataSource.getRepository(series_entity_1.Series).save(series);
+        const repo = await this.getRepo(series_entity_1.Series);
+        return await repo.save(series);
     }
     async deleteSeries(id) {
-        return await this.dataSource.getRepository(series_entity_1.Series).delete(id);
+        const repo = await this.getRepo(series_entity_1.Series);
+        return await repo.delete(id);
     }
-    async getJournals() {
-        return await this.dataSource.getRepository(journal_entity_1.Journal).find();
+    async getJournals(companyId) {
+        const repo = await this.getRepo(journal_entity_1.Journal);
+        const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        if (filterCompanyId) {
+            return await repo.find({ where: { companyId: filterCompanyId }, order: { code: 'ASC' } });
+        }
+        return await repo.find({ order: { code: 'ASC' } });
     }
     async saveJournal(journal) {
-        const repo = this.dataSource.getRepository(journal_entity_1.Journal);
-        if (Array.isArray(journal)) {
-            return await repo.save(journal);
-        }
+        const repo = await this.getRepo(journal_entity_1.Journal);
         return await repo.save(journal);
     }
-    async getCustomers() {
-        return await this.dataSource.getRepository(customer_entity_1.Customer).find();
+    async getCustomers(companyId) {
+        const repo = await this.getRepo(customer_entity_1.Customer);
+        const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        if (filterCompanyId) {
+            return await repo.find({
+                where: { companyId: filterCompanyId },
+                order: { name: 'ASC' }
+            });
+        }
+        return await repo.find({ order: { name: 'ASC' } });
     }
     async saveCustomer(customer) {
-        const repo = this.dataSource.getRepository(customer_entity_1.Customer);
-        if (Array.isArray(customer)) {
-            return await repo.save(customer);
+        try {
+            const repo = await this.getRepo(customer_entity_1.Customer);
+            if (Array.isArray(customer)) {
+                const processed = customer.map(c => ({
+                    ...c,
+                    id: c.id || `CUST-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+                }));
+                return await repo.save(processed);
+            }
+            const toSave = {
+                ...customer,
+                id: customer.id || `CUST-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+            };
+            return await repo.save(toSave);
         }
-        return await repo.save(customer);
+        catch (error) {
+            console.error('Error in saveCustomer:', error);
+            throw new common_1.BadRequestException(`Erro ao guardar cliente: ${error.message}`);
+        }
     }
-    async getSuppliers() {
-        return await this.dataSource.getRepository(supplier_entity_1.Supplier).find();
+    async getSuppliers(companyId) {
+        const repo = await this.getRepo(supplier_entity_1.Supplier);
+        const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        if (filterCompanyId) {
+            return await repo.find({
+                where: { companyId: filterCompanyId },
+                order: { name: 'ASC' }
+            });
+        }
+        return await repo.find({ order: { name: 'ASC' } });
     }
     async saveSupplier(supplier) {
-        const repo = this.dataSource.getRepository(supplier_entity_1.Supplier);
-        if (Array.isArray(supplier)) {
-            return await repo.save(supplier);
+        try {
+            const repo = await this.getRepo(supplier_entity_1.Supplier);
+            if (Array.isArray(supplier)) {
+                const processed = supplier.map(s => ({
+                    ...s,
+                    id: s.id || `SUPP-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+                }));
+                return await repo.save(processed);
+            }
+            const toSave = {
+                ...supplier,
+                id: supplier.id || `SUPP-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+            };
+            return await repo.save(toSave);
         }
-        return await repo.save(supplier);
+        catch (error) {
+            console.error('Error in saveSupplier:', error);
+            throw new common_1.BadRequestException(`Erro ao guardar fornecedor: ${error.message}`);
+        }
     }
     async getGenericEntities(type) {
-        const repo = this.dataSource.getRepository(generic_entity_entity_1.GenericEntity);
+        const repo = await this.getRepo(generic_entity_entity_1.GenericEntity);
         if (type) {
             return await repo.find({ where: { type }, order: { name: 'ASC' } });
         }
@@ -231,6 +326,44 @@ let AppController = class AppController {
             };
         }
     }
+    async getDocumentTypes(module, companyId) {
+        const repo = await this.getRepo(document_type_entity_1.DocumentType);
+        const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const where = { module };
+        if (filterCompanyId) {
+            where.companyId = filterCompanyId;
+        }
+        return await repo.find({ where, order: { code: 'ASC' } });
+    }
+    async saveDocumentTypes(data) {
+        const repo = await this.getRepo(document_type_entity_1.DocumentType);
+        const companyId = tenancy_context_1.TenancyContext.getCompanyId();
+        const processed = data.types.map(t => ({
+            ...t,
+            module: data.module,
+            companyId: t.companyId || companyId,
+            id: t.id || `${data.module}-${t.code}-${companyId || 'GLOBAL'}`
+        }));
+        return await repo.save(processed);
+    }
+    async getPaymentMethods(companyId) {
+        const repo = await this.getRepo(payment_method_entity_1.PaymentMethod);
+        const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        if (filterCompanyId) {
+            return await repo.find({
+                where: [{ companyId: filterCompanyId }, { companyId: (0, typeorm_1.IsNull)() }],
+                order: { sortOrder: 'ASC' }
+            });
+        }
+        return await repo.find({ order: { sortOrder: 'ASC' } });
+    }
+    async savePaymentMethod(method) {
+        const repo = await this.getRepo(payment_method_entity_1.PaymentMethod);
+        if (!method.id) {
+            method.id = `PM-${Date.now()}`;
+        }
+        return await repo.save(method);
+    }
     async syncPush(data) {
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
@@ -289,6 +422,12 @@ let AppController = class AppController {
 };
 exports.AppController = AppController;
 __decorate([
+    (0, common_1.Get)('test-route'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AppController.prototype, "testRoute", null);
+__decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -312,7 +451,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
-], AppController.prototype, "saveCompanyInfo", null);
+], AppController.prototype, "saveCompany", null);
 __decorate([
     (0, common_1.Delete)('companies/:id'),
     __param(0, (0, common_1.Param)('id')),
@@ -364,8 +503,9 @@ __decorate([
 ], AppController.prototype, "deleteSeries", null);
 __decorate([
     (0, common_1.Get)('accounting/journals'),
+    __param(0, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "getJournals", null);
 __decorate([
@@ -377,8 +517,9 @@ __decorate([
 ], AppController.prototype, "saveJournal", null);
 __decorate([
     (0, common_1.Get)('customers'),
+    __param(0, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "getCustomers", null);
 __decorate([
@@ -390,8 +531,9 @@ __decorate([
 ], AppController.prototype, "saveCustomer", null);
 __decorate([
     (0, common_1.Get)('suppliers'),
+    __param(0, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "getSuppliers", null);
 __decorate([
@@ -423,6 +565,35 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "testDbConnection", null);
 __decorate([
+    (0, common_1.Get)('document-types'),
+    __param(0, (0, common_1.Query)('module')),
+    __param(1, (0, common_1.Query)('companyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "getDocumentTypes", null);
+__decorate([
+    (0, common_1.Post)('document-types'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "saveDocumentTypes", null);
+__decorate([
+    (0, common_1.Get)('payment-methods'),
+    __param(0, (0, common_1.Query)('companyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "getPaymentMethods", null);
+__decorate([
+    (0, common_1.Post)('payment-methods'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "savePaymentMethod", null);
+__decorate([
     (0, common_1.Post)('sync/push'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -432,6 +603,7 @@ __decorate([
 exports.AppController = AppController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [app_service_1.AppService,
-        typeorm_1.DataSource])
+        typeorm_1.DataSource,
+        tenancy_service_1.TenancyService])
 ], AppController);
 //# sourceMappingURL=app.controller.js.map

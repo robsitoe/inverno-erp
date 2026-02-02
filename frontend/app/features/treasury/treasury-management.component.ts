@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+﻿import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -6,6 +6,7 @@ import { AccountingService } from '../../shared/accounting.service';
 import { AuditService } from '../../shared/audit.service';
 import { PeriodService } from '../../shared/period.service';
 import { DataService } from '../../services/data.service';
+import { AuthService } from '../../services/auth.service';
 import { EntityListModalComponent } from '../../shared/components/entity-list-modal.component';
 import { SupplierListModalComponent } from '../../shared/components/supplier-list-modal.component';
 import { DocumentTypeConfigModalComponent } from '../../shared/components/document-type-config-modal.component';
@@ -213,7 +214,7 @@ interface PendingDocRow {
                 <label class="block text-[10px] font-medium text-gray-700 mb-1">Meio de Pagamento *</label>
                 <select [(ngModel)]="advancePaymentMethod" class="w-full border border-gray-300 rounded-sm px-2 py-1 text-sm bg-white">
                   <option value="">Selecione...</option>
-                  <option *ngFor="let pm of paymentMethods.filter(p => p.isActive)" [value]="pm.code">{{ pm.description }}</option>
+                  <option *ngFor="let pm of activePaymentMethods" [value]="pm.code">{{ pm.description }}</option>
                 </select>
               </div>
               <div>
@@ -327,7 +328,7 @@ interface PendingDocRow {
                        <tr>
                           <th class="px-2 py-1 text-left w-20">Código</th>
                           <th class="px-2 py-1 text-left">Descrição</th>
-                          <th class="px-2 py-1 text-left">Conta de Tesouraria</th>
+                          <th class="px-2 py-1 text-left w-40">Tipo</th>
                           <th class="px-2 py-1 text-center w-16">Ativo</th>
                           <th class="px-2 py-1 text-center w-16">Ordem</th>
                           <th class="px-2 py-1 text-center w-20">Ações</th>
@@ -531,15 +532,175 @@ export class TreasuryManagementComponent implements OnInit {
   isConfigModalOpen = false;
   isEntityTypeConfigOpen = false;
 
+  saveDocument(selectedRows: PendingDocRow[], isReceipt: boolean) {
+    const storageKey = isReceipt ? 'erp_receipts' : 'erp_payments';
+    const idPrefix = isReceipt ? 'REC' : 'PAY';
+    const type = isReceipt ? 'RECEIPT' : 'PAYMENT';
+    const typeLabel = isReceipt ? 'Recebimento' : 'Pagamento';
+
+    // Validate Period Closure
+    if (!this.periodService.isPeriodOpen(this.docDate)) {
+      alert('O período para esta data está fechado. Não é possível gravar documentos nesta data.');
+      return;
+    }
+
+    // Validate Treasury Balance (Retroactive Check)
+    // If Payment, amount is negative for balance check (Credit Asset)
+    // If Receipt, amount is positive for balance check (Debit Asset)
+    const amountChange = isReceipt ? this.totalSelected : -this.totalSelected;
+
+    const balanceCheck = this.accountingService.checkBalanceFeasibility(this.selectedTreasuryAccount, this.docDate, amountChange);
+
+    if (!balanceCheck.valid) {
+      const confirmMsg = `Atenção: Este movimento retroativo fará com que o saldo da conta de tesouraria fique negativo em ${balanceCheck.dateOfMinBalance?.toLocaleDateString()}.\n\nSaldo Mínimo Projetado: ${balanceCheck.minBalance.toLocaleString('pt-PT', { style: 'currency', currency: 'MZN' })}\n\nDeseja continuar mesmo assim?`;
+
+      if (!confirm(confirmMsg)) {
+        return;
+      }
+
+      // Log exception if confirmed
+      this.auditService.logException({
+        user: this.authService.currentUserValue?.username || 'current_user',
+        action: 'NEGATIVE_BALANCE_RISK',
+        module: 'TREASURY',
+        documentRef: `${this.selectedDocType} ${this.selectedSeries}/${this.currentSeriesNumber}`,
+        details: {
+          date: this.docDate,
+          amount: amountChange,
+          projectedMinBalance: balanceCheck.minBalance,
+          dateOfMinBalance: balanceCheck.dateOfMinBalance
+        }
+      });
+    }
+
+    const docId = `${idPrefix}${Date.now()}`;
+    const document: any = {
+      id: docId,
+      companyId: this.activeCompanyId || undefined,
+      number: this.docNumberString,
+      docType: this.selectedDocType,
+      series: this.selectedSeries,
+      seriesNumber: this.currentSeriesNumber,
+      date: new Date(this.docDate),
+      type: type,
+      amount: this.totalSelected,
+      treasuryAccountId: this.selectedTreasuryAccount,
+      // Common fields
+      entityCode: this.entityCode,
+      entityName: this.entityName,
+      // Specific fields for compatibility
+      customerCode: isReceipt ? this.entityCode : undefined,
+      customerName: isReceipt ? this.entityName : undefined,
+      beneficiaryCode: !isReceipt ? this.entityCode : undefined,
+      beneficiaryName: !isReceipt ? this.entityName : undefined,
+
+      paymentMethod: this.paymentMethod,
+      description: `${isReceipt ? 'Recebimento de' : 'Pagamento a'} ${this.entityName}`,
+      observations: this.observations,
+      relatedDocument: selectedRows[0].docNumber,
+      lines: selectedRows.map((r, index) => ({
+        id: `${docId}-L${index + 1}`,
+        docNumber: r.docNumber,
+        amount: r.toPay,
+        paymentMode: r.paymentMode
+      }))
+    };
+
+    // Save via DataService
+    this.isSaving = true;
+    const saveObservable = isReceipt ? this.dataService.saveReceipt(document) : this.dataService.savePayment(document);
+
+    saveObservable.subscribe({
+      next: () => {
+        this.ngZone.run(() => {
+          // Create Accounting Entry
+          this.createAccountingEntry(document, selectedRows, isReceipt);
+
+          // Success feedback
+          this.isSaving = false;
+          alert(`${typeLabel} gravado com sucesso!`);
+
+          if (confirm('Deseja imprimir o comprovativo?')) {
+            this.printDocument(document);
+          }
+
+          this.resetForm();
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          console.error('Error saving document:', err);
+          this.isSaving = false;
+          alert(`Erro ao gravar ${typeLabel}. Verifique a consola para mais detalhes.`);
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  printDocument(doc: any) {
+    // For now, simple window print or alert
+    console.log('Printing document:', doc);
+    window.print();
+  }
+
   // Payment Methods Configuration
   paymentMethods: any[] = [];
   editingPaymentMethod: any = null;
+
+  // Simple Payment Categories for User-Friendly Configuration
+  paymentCategories = [
+    {
+      id: 'CASH',
+      name: 'Dinheiro em Caixa',
+      icon: '💵',
+      description: 'Pagamentos em dinheiro físico',
+      accountCode: '11.1.1',
+      accountName: 'Caixa'
+    },
+    {
+      id: 'BANK',
+      name: 'Banco',
+      icon: '🏦',
+      description: 'Transferências, cheques, cartões bancários',
+      accountCode: '12.1.1',
+      accountName: 'Depósitos à Ordem'
+    },
+    {
+      id: 'MOBILE',
+      name: 'Dinheiro Móvel',
+      icon: '📱',
+      description: 'M-Pesa, E-Mola, etc.',
+      accountCode: '11.1.2',
+      accountName: 'Caixa - Dinheiro Móvel'
+    }
+  ];
 
   // ADC (Advance Payment) Mode
   isAdvanceMode = false;
   advanceAmount = 0;
   advancePaymentMethod = '';
   advanceObservations = '';
+
+  get activePaymentMethods() {
+    return this.paymentMethods.filter(p => p.isActive);
+  }
+
+  // Get treasury account ID from category
+  getTreasuryAccountFromCategory(categoryId: string): string {
+    const category = this.paymentCategories.find(c => c.id === categoryId);
+    if (!category) return '3'; // Default to Caixa
+
+    // Find or create the account
+    const account = this.treasuryAccounts.find(a => a.code === category.accountCode);
+    if (account) return account.id;
+
+    // If account doesn't exist, return a default based on category
+    if (categoryId === 'CASH' || categoryId === 'MOBILE') return '3'; // Caixa
+    if (categoryId === 'BANK') return '10'; // Banco
+    return '3';
+  }
 
   openDocConfigModal() {
     this.isConfigModalOpen = true;
@@ -582,6 +743,7 @@ export class TreasuryManagementComponent implements OnInit {
     private auditService: AuditService,
     private periodService: PeriodService,
     private dataService: DataService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
   ) { }
@@ -636,20 +798,15 @@ export class TreasuryManagementComponent implements OnInit {
   }
 
   loadActiveCompany() {
-    this.dataService.getCompanyInfo().subscribe(info => {
+    this.dataService.activeCompany$.subscribe(info => {
       if (info) {
         this.activeCompanyId = info.id;
+        // Only load dependent data if company is valid
+        this.loadPaymentMethods();
+        this.cancelEditPaymentMethod(); // Reset any edit state
+        this.onEntityTypeChange();
       }
-      this.onEntityTypeChange();
     });
-  }
-
-  loadTreasuryAccounts() {
-    // Load treasury accounts (Class 11 - Caixa, Class 12 - Bancos)
-    const allAccounts = this.accountingService.getAccounts();
-    this.treasuryAccounts = allAccounts.filter(acc =>
-      (acc.code.startsWith('11') || acc.code.startsWith('12')) && acc.allowPosting
-    );
   }
 
   // Payment Methods Management
@@ -665,13 +822,60 @@ export class TreasuryManagementComponent implements OnInit {
 
   initializeDefaultPaymentMethods() {
     const defaults = [
-      { id: 'PM-1', code: 'NUM', description: 'Numerário', treasuryAccountId: '3', isActive: true, sortOrder: 1 },
-      { id: 'PM-2', code: 'TRF', description: 'Transferência Bancária', treasuryAccountId: '10', isActive: true, sortOrder: 2 },
-      { id: 'PM-3', code: 'CHQ', description: 'Cheque', treasuryAccountId: '10', isActive: true, sortOrder: 3 },
-      { id: 'PM-4', code: 'MB', description: 'Multibanco', treasuryAccountId: '10', isActive: true, sortOrder: 4 },
-      { id: 'PM-5', code: 'MBWAY', description: 'MB WAY', treasuryAccountId: '10', isActive: true, sortOrder: 5 },
-      { id: 'PM-6', code: 'VISA', description: 'Cartão Visa/Mastercard', treasuryAccountId: '10', isActive: true, sortOrder: 6 },
-      { id: 'PM-7', code: 'MPESA', description: 'M-Pesa', treasuryAccountId: '3', isActive: true, sortOrder: 7 }
+      {
+        id: 'PM-1',
+        code: 'NUM',
+        description: '💵 Numerário (Dinheiro)',
+        category: 'CASH',
+        treasuryAccountId: this.getTreasuryAccountFromCategory('CASH'),
+        isActive: true,
+        sortOrder: 1
+      },
+      {
+        id: 'PM-2',
+        code: 'TRF',
+        description: '🏦 Transferência Bancária',
+        category: 'BANK',
+        treasuryAccountId: this.getTreasuryAccountFromCategory('BANK'),
+        isActive: true,
+        sortOrder: 2
+      },
+      {
+        id: 'PM-3',
+        code: 'CHQ',
+        description: '🏦 Cheque',
+        category: 'BANK',
+        treasuryAccountId: this.getTreasuryAccountFromCategory('BANK'),
+        isActive: true,
+        sortOrder: 3
+      },
+      {
+        id: 'PM-4',
+        code: 'MB',
+        description: '🏦 Multibanco/TPA',
+        category: 'BANK',
+        treasuryAccountId: this.getTreasuryAccountFromCategory('BANK'),
+        isActive: true,
+        sortOrder: 4
+      },
+      {
+        id: 'PM-5',
+        code: 'MPESA',
+        description: '📱 M-Pesa',
+        category: 'MOBILE',
+        treasuryAccountId: this.getTreasuryAccountFromCategory('MOBILE'),
+        isActive: true,
+        sortOrder: 5
+      },
+      {
+        id: 'PM-6',
+        code: 'EMOLA',
+        description: '📱 E-Mola',
+        category: 'MOBILE',
+        treasuryAccountId: this.getTreasuryAccountFromCategory('MOBILE'),
+        isActive: true,
+        sortOrder: 6
+      }
     ];
 
     defaults.forEach(pm => {
@@ -690,7 +894,8 @@ export class TreasuryManagementComponent implements OnInit {
       companyId: this.activeCompanyId || undefined,
       code: '',
       description: '',
-      treasuryAccountId: '',
+      category: 'CASH', // Default category
+      treasuryAccountId: this.getTreasuryAccountFromCategory('CASH'),
       isActive: true,
       sortOrder: this.paymentMethods.length + 1
     };
@@ -730,6 +935,24 @@ export class TreasuryManagementComponent implements OnInit {
     });
   }
 
+  // Helper methods for category-based configuration
+  getCategoryDisplay(categoryId: string): string {
+    const category = this.paymentCategories.find(c => c.id === categoryId);
+    return category ? `${category.icon} ${category.name}` : 'Não definido';
+  }
+
+  getTreasuryAccountCode(accountId: string): string {
+    const account = this.treasuryAccounts.find(acc => acc.id === accountId);
+    return account ? account.code : '';
+  }
+
+  onCategoryChange(paymentMethod: any) {
+    // Automatically update treasury account when category changes
+    if (paymentMethod && paymentMethod.category) {
+      paymentMethod.treasuryAccountId = this.getTreasuryAccountFromCategory(paymentMethod.category);
+    }
+  }
+
   getTreasuryAccountDisplay(accountId: string): string {
     const account = this.treasuryAccounts.find(acc => acc.id === accountId);
     return account ? `${account.code} - ${account.name}` : '';
@@ -738,11 +961,27 @@ export class TreasuryManagementComponent implements OnInit {
   // ADC Mode Methods
   onAdvanceModeChange() {
     if (this.isAdvanceMode) {
+      // Auto-select proper document type (ADC or ADF)
+      const advanceType = this.entityType === 'CUSTOMER' ? 'ADC' : 'ADF';
+      if (this.documentTypes.some(t => t.code === advanceType)) {
+        this.selectedDocType = advanceType;
+        this.onDocumentTypeChange(); // Load series/numbers
+      }
+
       // Clear pending documents when switching to advance mode
       this.pendingRows = [];
       this.totalSelected = 0;
       this.totalExcess = 0;
     } else {
+      // Revert to standard document type (RE or PAG)
+      if (['ADC', 'ADF'].includes(this.selectedDocType)) {
+        const standardType = this.entityType === 'CUSTOMER' ? 'RE' : 'PAG';
+        if (this.documentTypes.some(t => t.code === standardType)) {
+          this.selectedDocType = standardType;
+          this.onDocumentTypeChange(); // Load series/numbers
+        }
+      }
+
       // Clear advance fields when switching back
       this.advanceAmount = 0;
       this.advancePaymentMethod = '';
@@ -782,50 +1021,7 @@ export class TreasuryManagementComponent implements OnInit {
   }
 
   loadDocumentTypes() {
-    this.dataService.getTreasuryDocuments().subscribe(docs => {
-      const stored = localStorage.getItem('erp_treasury_document_types');
-      let allTypes = [];
-
-      if (stored) {
-        allTypes = JSON.parse(stored);
-      }
-
-      // Sync/Add missing required types
-      const requiredDefaults = [
-        { id: '1', code: 'RE', description: 'Recebimento de Cliente', nature: 'RECEIVE', allowedEntities: { customer: true } },
-        { id: '2', code: 'PAG', description: 'Pagamento a Fornecedor', nature: 'PAY', allowedEntities: { supplier: true } },
-        { id: '3', code: 'PAGVEN', description: 'Pagamento de Vencimento', nature: 'PAY', allowedEntities: { employee: true } },
-        { id: '4', code: 'PAGFUNC', description: 'Pagamento a Funcionário', nature: 'PAY', allowedEntities: { employee: true } },
-        { id: '5', code: 'CHQ', description: 'Emissão de Cheque', nature: 'PAY', allowedEntities: { supplier: true, other: true } },
-        { id: '6', code: 'DEP', description: 'Depósito Bancário', nature: 'RECEIVE', allowedEntities: { bank: true, other: true } }
-      ];
-
-      let changed = false;
-      requiredDefaults.forEach(def => {
-        const existingIndex = allTypes.findIndex((t: any) => t.code === def.code);
-        if (existingIndex === -1) {
-          allTypes.push(def);
-          changed = true;
-        } else {
-          // Update flags if missing
-          const existing = allTypes[existingIndex];
-          if (!existing.allowedEntities) {
-            existing.allowedEntities = def.allowedEntities;
-            changed = true;
-          } else if (JSON.stringify(existing.allowedEntities) !== JSON.stringify(def.allowedEntities)) {
-            // Merge/Update entities for employee specifically if it's the target
-            if (def.allowedEntities.employee && !existing.allowedEntities.employee) {
-              existing.allowedEntities.employee = true;
-              changed = true;
-            }
-          }
-        }
-      });
-
-      if (changed || !stored) {
-        localStorage.setItem('erp_treasury_document_types', JSON.stringify(allTypes));
-      }
-
+    this.dataService.getDocumentTypes('TREASURY').subscribe(allTypes => {
       const specificType = this.entityTypeCode; // CLIENTE, FORNECEDOR, FUNCIONARIO, SOCIO, etc.
 
       this.documentTypes = allTypes.filter((t: any) => {
@@ -871,6 +1067,20 @@ export class TreasuryManagementComponent implements OnInit {
   }
 
   onDocumentTypeChange() {
+    // Sync Checkbox State based on Document Type
+    const isAdvanceDoc = ['ADC', 'ADF'].includes(this.selectedDocType);
+    if (this.isAdvanceMode !== isAdvanceDoc) {
+      this.isAdvanceMode = isAdvanceDoc;
+      if (this.isAdvanceMode) {
+        this.pendingRows = [];
+        this.totalSelected = 0;
+        this.totalExcess = 0;
+      } else {
+        this.advanceAmount = 0;
+        this.advancePaymentMethod = '';
+        this.advanceObservations = '';
+      }
+    }
     const docType = this.documentTypes.find(t => t.code === this.selectedDocType);
     this.availableSeries = [];
 
@@ -975,22 +1185,32 @@ export class TreasuryManagementComponent implements OnInit {
     this.selectedTreasuryAccount = doc.treasuryAccountId;
     this.paymentMethod = doc.paymentMethod || 'CASH';
 
-    // Convert doc lines to pendingRows format
-    this.pendingRows = (doc.lines || []).map((l: any) => ({
-      selected: true,
-      id: l.id,
-      date: doc.date,
-      docType: l.docType || (this.entityType === 'CUSTOMER' ? 'FC' : 'VFA'),
-      docNumber: l.docNumber,
-      total: l.amount,
-      pending: 0,
-      toPay: l.amount,
-      currency: 'MZN',
-      paymentMode: l.paymentMode || 'NUM',
-      paymentCode: '',
-      commercialEntity: this.entityName,
-      dueDate: doc.date
-    }));
+    // Handle Advance Mode Detection
+    this.isAdvanceMode = doc.isAdvance === true || ['ADC', 'ADF'].includes(doc.docType);
+
+    if (this.isAdvanceMode) {
+      this.advanceAmount = doc.amount;
+      this.advancePaymentMethod = doc.paymentMethod;
+      this.advanceObservations = doc.observations || '';
+      this.pendingRows = [];
+    } else {
+      // Convert doc lines to pendingRows format
+      this.pendingRows = (doc.lines || []).map((l: any) => ({
+        selected: true,
+        id: l.id,
+        date: doc.date,
+        docType: l.docType || (this.entityType === 'CUSTOMER' ? 'FC' : 'VFA'),
+        docNumber: l.docNumber,
+        total: l.amount,
+        pending: 0,
+        toPay: l.amount,
+        currency: 'MZN',
+        paymentMode: l.paymentMode || 'NUM',
+        paymentCode: '',
+        commercialEntity: this.entityName,
+        dueDate: doc.date
+      }));
+    }
 
     this.totalSelected = doc.amount;
     this.totalExcess = 0;
@@ -1269,107 +1489,6 @@ export class TreasuryManagementComponent implements OnInit {
     }
   }
 
-  saveDocument(selectedRows: PendingDocRow[], isReceipt: boolean) {
-    const storageKey = isReceipt ? 'erp_receipts' : 'erp_payments';
-    const idPrefix = isReceipt ? 'REC' : 'PAY';
-    const type = isReceipt ? 'RECEIPT' : 'PAYMENT';
-    const typeLabel = isReceipt ? 'Recebimento' : 'Pagamento';
-
-    // Validate Period Closure
-    if (!this.periodService.isPeriodOpen(this.docDate)) {
-      alert('O período para esta data está fechado. Não é possível gravar documentos nesta data.');
-      return;
-    }
-
-    // Validate Treasury Balance (Retroactive Check)
-    // If Payment, amount is negative for balance check (Credit Asset)
-    // If Receipt, amount is positive for balance check (Debit Asset)
-    const amountChange = isReceipt ? this.totalSelected : -this.totalSelected;
-
-    const balanceCheck = this.accountingService.checkBalanceFeasibility(this.selectedTreasuryAccount, this.docDate, amountChange);
-
-    if (!balanceCheck.valid) {
-      const confirmMsg = `Atenção: Este movimento retroativo fará com que o saldo da conta de tesouraria fique negativo em ${balanceCheck.dateOfMinBalance?.toLocaleDateString()}.\n\nSaldo Mínimo Projetado: ${balanceCheck.minBalance.toLocaleString('pt-PT', { style: 'currency', currency: 'MZN' })}\n\nDeseja continuar mesmo assim?`;
-
-      if (!confirm(confirmMsg)) {
-        return;
-      }
-
-      // Log exception if confirmed
-      this.auditService.logException({
-        user: 'current_user',
-        action: 'NEGATIVE_BALANCE_RISK',
-        module: 'TREASURY',
-        documentRef: `${this.selectedDocType} ${this.selectedSeries}/${this.currentSeriesNumber}`,
-        details: {
-          date: this.docDate,
-          amount: amountChange,
-          projectedMinBalance: balanceCheck.minBalance,
-          dateOfMinBalance: balanceCheck.dateOfMinBalance
-        }
-      });
-    }
-
-    const docId = `${idPrefix}${Date.now()}`;
-    const document: any = {
-      id: docId,
-      companyId: this.activeCompanyId || undefined,
-      number: this.docNumberString,
-      docType: this.selectedDocType,
-      series: this.selectedSeries,
-      seriesNumber: this.currentSeriesNumber,
-      date: new Date(this.docDate),
-      type: type,
-      amount: this.totalSelected,
-      treasuryAccountId: this.selectedTreasuryAccount,
-      // Common fields
-      entityCode: this.entityCode,
-      entityName: this.entityName,
-      // Specific fields for compatibility
-      customerCode: isReceipt ? this.entityCode : undefined,
-      customerName: isReceipt ? this.entityName : undefined,
-      beneficiaryCode: !isReceipt ? this.entityCode : undefined,
-      beneficiaryName: !isReceipt ? this.entityName : undefined,
-
-      paymentMethod: this.paymentMethod,
-      description: `${isReceipt ? 'Recebimento de' : 'Pagamento a'} ${this.entityName}`,
-      observations: this.observations,
-      relatedDocument: selectedRows[0].docNumber,
-      lines: selectedRows.map((r, index) => ({
-        id: `${docId}-L${index + 1}`,
-        docNumber: r.docNumber,
-        amount: r.toPay,
-        paymentMode: r.paymentMode
-      }))
-    };
-
-    // Save via DataService
-    this.isSaving = true;
-    const saveObservable = isReceipt ? this.dataService.saveReceipt(document) : this.dataService.savePayment(document);
-
-    saveObservable.subscribe({
-      next: () => {
-        this.ngZone.run(() => {
-          // Create Accounting Entry
-          this.createAccountingEntry(document, selectedRows, isReceipt);
-
-          // Success feedback
-          this.isSaving = false;
-          alert(`${typeLabel} gravado com sucesso!`);
-          this.resetForm();
-          this.cdr.detectChanges();
-        });
-      },
-      error: (err) => {
-        this.ngZone.run(() => {
-          console.error('Error saving document:', err);
-          this.isSaving = false;
-          alert(`Erro ao gravar ${typeLabel}. Verifique a consola para mais detalhes.`);
-          this.cdr.detectChanges();
-        });
-      }
-    });
-  }
 
   createAccountingEntry(doc: any, rows: PendingDocRow[], isReceipt: boolean) {
     const entryId = `JE${Date.now()}`;
@@ -1490,7 +1609,200 @@ export class TreasuryManagementComponent implements OnInit {
         credit: Number(l.credit) || 0
       })),
       status: 'POSTED',
-      createdBy: 'user',
+      createdBy: this.authService.currentUserValue?.username || 'Sistema',
+      createdAt: new Date()
+    };
+
+    this.accountingService.createJournalEntry(entry);
+  }
+
+  saveAdvancePayment(isReceipt: boolean) {
+    const idPrefix = isReceipt ? 'REC' : 'PAY';
+    const type = isReceipt ? 'RECEIPT' : 'PAYMENT';
+    const typeLabel = isReceipt ? 'Recebimento' : 'Pagamento';
+
+    // Validate Period Closure
+    if (!this.periodService.isPeriodOpen(this.docDate)) {
+      alert('O período para esta data está fechado. Não é possível gravar documentos nesta data.');
+      return;
+    }
+
+    // Get treasury account from payment method
+    const paymentMethod = this.paymentMethods.find(pm => pm.code === this.advancePaymentMethod);
+    const treasuryAccountId = paymentMethod?.treasuryAccountId || this.selectedTreasuryAccount || '3';
+
+    // Validate Treasury Balance for Payments
+    if (!isReceipt) {
+      const amountChange = -this.advanceAmount;
+      const balanceCheck = this.accountingService.checkBalanceFeasibility(treasuryAccountId, this.docDate, amountChange);
+
+      if (!balanceCheck.valid) {
+        const confirmMsg = `Atenção: Este movimento retroativo fará com que o saldo da conta de tesouraria fique negativo em ${balanceCheck.dateOfMinBalance?.toLocaleDateString()}.\n\nSaldo Mínimo Projetado: ${balanceCheck.minBalance.toLocaleString('pt-PT', { style: 'currency', currency: 'MZN' })}\n\nDeseja continuar mesmo assim?`;
+
+        if (!confirm(confirmMsg)) {
+          return;
+        }
+
+        // Log exception if confirmed
+        this.auditService.logException({
+          user: this.authService.currentUserValue?.username || 'Sistema',
+          action: 'NEGATIVE_BALANCE_RISK',
+          module: 'TREASURY',
+          documentRef: `${this.selectedDocType} ${this.selectedSeries}/${this.currentSeriesNumber}`,
+          details: {
+            date: this.docDate,
+            amount: amountChange,
+            projectedMinBalance: balanceCheck.minBalance,
+            dateOfMinBalance: balanceCheck.dateOfMinBalance
+          }
+        });
+      }
+    }
+
+    const docId = `${idPrefix}${Date.now()}`;
+    const document: any = {
+      id: docId,
+      companyId: this.activeCompanyId || undefined,
+      number: this.docNumberString,
+      docType: this.selectedDocType,
+      series: this.selectedSeries,
+      seriesNumber: this.currentSeriesNumber,
+      date: new Date(this.docDate),
+      type: type,
+      amount: this.advanceAmount,
+      treasuryAccountId: treasuryAccountId,
+      entityCode: this.entityCode,
+      entityName: this.entityName,
+      customerCode: isReceipt ? this.entityCode : undefined,
+      customerName: isReceipt ? this.entityName : undefined,
+      beneficiaryCode: !isReceipt ? this.entityCode : undefined,
+      beneficiaryName: !isReceipt ? this.entityName : undefined,
+      paymentMethod: this.advancePaymentMethod,
+      description: `${isReceipt ? 'Adiantamento de' : 'Adiantamento a'} ${this.entityName}`,
+      observations: this.advanceObservations,
+      isAdvance: true,
+      lines: []
+    };
+
+    // Save via DataService
+    this.isSaving = true;
+    const saveObservable = isReceipt ? this.dataService.saveReceipt(document) : this.dataService.savePayment(document);
+
+    saveObservable.subscribe({
+      next: () => {
+        this.ngZone.run(() => {
+          // Create Accounting Entry for Advance
+          this.createAdvanceAccountingEntry(document, isReceipt, treasuryAccountId);
+
+          // Success feedback
+          this.isSaving = false;
+          alert(`${typeLabel} de Adiantamento gravado com sucesso!`);
+          this.resetForm();
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          console.error('Error saving advance payment:', err);
+          this.isSaving = false;
+          alert(`Erro ao gravar ${typeLabel} de Adiantamento. Verifique a consola para mais detalhes.`);
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  createAdvanceAccountingEntry(doc: any, isReceipt: boolean, treasuryAccountId: string) {
+    const entryId = `JE${Date.now()}`;
+    const lines = [];
+
+    // Get treasury account
+    const treasuryAccount = this.accountingService.getAccount(treasuryAccountId);
+    const treasuryAccountCode = treasuryAccount?.code || '11.1.1';
+    const treasuryAccountName = treasuryAccount?.name || 'Caixa';
+
+    // Determine advance account based on entity type
+    // Customer Advances: 21.9 (Adiantamentos de Clientes)
+    // Supplier Advances: 22.9 (Adiantamentos a Fornecedores)
+    const targetCode = isReceipt ? '21.9' : '22.9';
+    const fallbackName = isReceipt ? 'Adiantamentos de Clientes' : 'Adiantamentos a Fornecedores';
+
+    // Find or use default advance account
+    const allAccounts = this.accountingService.getAccounts();
+    const advanceAccount = allAccounts.find(a => a.code === targetCode || a.code.startsWith(targetCode));
+    const advanceAccountId = advanceAccount?.id || targetCode;
+    const advanceAccountCode = advanceAccount?.code || targetCode;
+    const advanceAccountName = advanceAccount?.name || fallbackName;
+
+    if (isReceipt) {
+      // Customer Advance Receipt
+      // Debit: Treasury
+      lines.push({
+        id: `${entryId}-1`,
+        accountId: treasuryAccountId,
+        accountCode: treasuryAccountCode,
+        accountName: treasuryAccountName,
+        debit: doc.amount,
+        credit: 0,
+        description: `Adiantamento ${doc.number} - ${treasuryAccountName}`
+      });
+
+      // Credit: Customer Advances (21.9)
+      lines.push({
+        id: `${entryId}-2`,
+        accountId: advanceAccountId,
+        accountCode: advanceAccountCode,
+        accountName: advanceAccountName,
+        debit: 0,
+        credit: doc.amount,
+        description: `Adiantamento de ${this.entityName}`
+      });
+    } else {
+      // Supplier Advance Payment
+      // Debit: Supplier Advances (22.9)
+      lines.push({
+        id: `${entryId}-1`,
+        accountId: advanceAccountId,
+        accountCode: advanceAccountCode,
+        accountName: advanceAccountName,
+        debit: doc.amount,
+        credit: 0,
+        description: `Adiantamento a ${this.entityName}`
+      });
+
+      // Credit: Treasury
+      lines.push({
+        id: `${entryId}-2`,
+        accountId: treasuryAccountId,
+        accountCode: treasuryAccountCode,
+        accountName: treasuryAccountName,
+        debit: 0,
+        credit: doc.amount,
+        description: `Adiantamento ${doc.number} - ${treasuryAccountName}`
+      });
+    }
+
+    // Determine Journal ID based on treasury account type
+    let journalId = 'JNL-GEN';
+    if (treasuryAccountCode.startsWith('11')) journalId = 'JNL-CSH';
+    else if (treasuryAccountCode.startsWith('12')) journalId = 'JNL-BNK';
+
+    const entry: any = {
+      id: entryId,
+      companyId: doc.companyId,
+      journalId: journalId,
+      date: doc.date,
+      description: `${isReceipt ? 'Adiantamento de' : 'Adiantamento a'} ${this.entityName} - ${doc.number}`,
+      reference: doc.number,
+      sourceDocument: doc.number,
+      sourceType: isReceipt ? 'RECEIPT' : 'PAYMENT',
+      lines: lines.map(l => ({
+        ...l,
+        debit: Number(l.debit) || 0,
+        credit: Number(l.credit) || 0
+      })),
+      status: 'POSTED',
+      createdBy: this.authService.currentUserValue?.username || 'Sistema',
       createdAt: new Date()
     };
 

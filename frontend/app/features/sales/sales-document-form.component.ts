@@ -7,7 +7,7 @@ import { EntityListModalComponent } from '../../shared/components/entity-list-mo
 import { ArticleListModalComponent } from '../../shared/components/article-list-modal.component';
 import { IvaListModalComponent } from '../../shared/components/iva-list-modal.component';
 import { DocumentTypeConfigModalComponent } from '../../shared/components/document-type-config-modal.component';
-import { ARTICLES, IVA_RATES } from '../../shared/constants';
+import { IVA_RATES } from '../../shared/constants';
 import { AccountingService } from '../../shared/accounting.service';
 import { InventoryService } from '../../shared/inventory.service';
 import { SalesDocument, SalesDocumentLine } from '../../shared/models';
@@ -627,34 +627,35 @@ export class SalesDocumentForm {
   }
 
   loadSeries() {
-    const storedTypes = localStorage.getItem('erp_sales_document_types');
     this.availableSeries = [];
 
-    if (storedTypes) {
-      const types = JSON.parse(storedTypes);
-      const docType = types.find((t: any) => t.code === (this.selectedDocType || this.defaultDocValue));
+    this.dataService.getDocumentTypes('SALES').subscribe(types => {
+      if (types) {
+        const docType = types.find((t: any) => t.code === (this.selectedDocType || this.defaultDocValue));
 
-      if (docType && docType.series && docType.series.length > 0) {
-        // Filter by active and company
-        if (this.activeCompanyId) {
-          this.availableSeries = docType.series.filter((s: any) => s.active && s.companyId == this.activeCompanyId);
-        } else {
-          this.availableSeries = docType.series.filter((s: any) => s.active && !s.companyId);
+        if (docType && docType.series && docType.series.length > 0) {
+          // Filter by active and company
+          if (this.activeCompanyId) {
+            this.availableSeries = docType.series.filter((s: any) => s.active && s.companyId == this.activeCompanyId);
+          } else {
+            this.availableSeries = docType.series.filter((s: any) => s.active && !s.companyId);
+          }
         }
       }
-    }
 
-    // Ensure current series is in the list
-    if (this.availableSeries.length > 0) {
-      const currentExists = this.availableSeries.find(s => s.code === this.currentSeries);
-      // If current series is not in the list, select the default one or the first one
-      if (!this.currentSeries || !currentExists) {
-        const defaultS = this.availableSeries.find(s => s.isDefault);
-        this.currentSeries = defaultS ? defaultS.code : this.availableSeries[0].code;
+      // Ensure current series is in the list
+      if (this.availableSeries.length > 0) {
+        const currentExists = this.availableSeries.find(s => s.code === this.currentSeries);
+        // If current series is not in the list, select the default one or the first one
+        if (!this.currentSeries || !currentExists) {
+          const defaultS = this.availableSeries.find(s => s.isDefault);
+          this.currentSeries = defaultS ? defaultS.code : this.availableSeries[0].code;
+        }
+      } else {
+        this.currentSeries = '';
       }
-    } else {
-      this.currentSeries = '';
-    }
+      this.loadNextNumber(); // Reload next number after series is updated
+    });
   }
 
   showIvaModal = false;
@@ -835,7 +836,7 @@ export class SalesDocumentForm {
     const code = this.rows[index].articleCode;
     if (!code) return;
 
-    const article = ARTICLES.find(a => a.code.toLowerCase() === code.toLowerCase());
+    const article = this.inventoryService.getArticles().find(a => a.code.toLowerCase() === code.toLowerCase());
     if (article) {
       this.updateRowWithArticle(index, article);
     } else {
@@ -879,21 +880,20 @@ export class SalesDocumentForm {
     this.rows[index] = {
       ...this.rows[index],
       articleCode: article.code,
-      description: article.description,
+      description: article.name || article.description,
       unit: article.unit,
-      unitPrice: article.price,
-      iva: article.iva,
+      unitPrice: article.salePrice || 0,
+      iva: (article.ivaRate || 0) + '%',
       quantity: 1, // Default to 1
       warehouse: defaultWarehouse ? defaultWarehouse.code : '',
       batch: defaultBatch
     };
 
-    // Default IVA mapping based on article IVA string (e.g. "23%")
-    // In a real app, this would be more robust.
-    if (article.iva === "23%") {
+    // Default IVA mapping
+    if (article.ivaRate === 23) {
       this.rows[index].civa = "23";
     } else {
-      this.rows[index].civa = "01"; // Default to something
+      this.rows[index].civa = article.ivaCode || "01";
     }
 
     this.calculateRow(index);
@@ -903,8 +903,11 @@ export class SalesDocumentForm {
     const row = this.rows[index];
     if (!row.articleCode) return;
 
-    // Parse IVA percentage (e.g., "23%")
-    const ivaRate = parseFloat(row.iva.replace('%', '')) / 100 || 0;
+    // Parse IVA percentage (e.g., "23%") - handle undefined/null/empty values
+    let ivaRate = 0;
+    if (row.iva && typeof row.iva === 'string' && row.iva.trim() !== '') {
+      ivaRate = parseFloat(row.iva.replace('%', '')) / 100 || 0;
+    }
 
     // Calculate totals
     const grossTotal = row.quantity * row.unitPrice;
@@ -932,7 +935,12 @@ export class SalesDocumentForm {
     this.rows.forEach(row => {
       if (!row.articleCode) return;
 
-      const ivaRate = parseFloat(row.iva.replace('%', '')) / 100 || 0;
+      // Parse IVA percentage - handle undefined/null/empty values
+      let ivaRate = 0;
+      if (row.iva && typeof row.iva === 'string' && row.iva.trim() !== '') {
+        ivaRate = parseFloat(row.iva.replace('%', '')) / 100 || 0;
+      }
+
       const grossTotal = row.quantity * row.unitPrice;
       const discountValue = grossTotal * (row.discount / 100);
       const liquidTotal = grossTotal - discountValue;
@@ -1440,7 +1448,12 @@ export class SalesDocumentForm {
     const documentNumber = `${this.selectedDocType} ${this.currentSeries}/${this.currentSeriesNumber}`;
 
     const salesLines: SalesDocumentLine[] = validLines.map((row, index) => {
-      const ivaRate = parseFloat(row.iva) || 0;
+      // Parse IVA rate properly - handle "23%" format
+      let ivaRate = 0;
+      if (row.iva && typeof row.iva === 'string' && row.iva.trim() !== '') {
+        ivaRate = parseFloat(row.iva.replace('%', '')) || 0;
+      }
+
       const subtotal = row.quantity * row.unitPrice * (1 - row.discount / 100);
       const ivaAmount = subtotal * (ivaRate / 100);
 
@@ -1561,18 +1574,30 @@ export class SalesDocumentForm {
     const documentNumber = `${this.selectedDocType} ${this.currentSeries}/${this.currentSeriesNumber}`;
 
     const salesLines: SalesDocumentLine[] = validLines.map((row, index) => {
-      const ivaRate = parseFloat(row.iva) || 0;
-      const subtotal = row.quantity * row.unitPrice * (1 - row.discount / 100);
+      // Parse IVA rate properly - handle "23%" format
+      let ivaRate = 0;
+      if (row.iva && typeof row.iva === 'string' && row.iva.trim() !== '') {
+        ivaRate = parseFloat(row.iva.replace('%', '')) || 0;
+      }
+
+      const unitPrice = Number(row.unitPrice) || 0;
+      const discount = Number(row.discount) || 0;
+      const quantity = Number(row.quantity) || 0;
+
+      const subtotal = quantity * unitPrice * (1 - discount / 100);
       const ivaAmount = subtotal * (ivaRate / 100);
+
+      // Backend requires articleName. Fallback to code if description is missing.
+      const articleName = row.description && row.description.trim() !== '' ? row.description : row.articleCode;
 
       return {
         id: `LINE${index + 1}`,
-        articleId: row.articleCode,
+        articleId: row.articleCode, // Mapping code to ID for now as per logic
         articleCode: row.articleCode,
-        articleName: row.description,
-        quantity: row.quantity,
-        unitPrice: row.unitPrice,
-        discount: row.discount,
+        articleName: articleName,
+        quantity: quantity,
+        unitPrice: unitPrice,
+        discount: discount,
         ivaRate: ivaRate,
         ivaCode: row.civa,
         subtotal: subtotal,
@@ -1593,8 +1618,8 @@ export class SalesDocumentForm {
       documentNumber: documentNumber,
       series: this.currentSeries,
       seriesNumber: this.currentSeriesNumber,
-      date: new Date(this.documentDate),
-      dueDate: new Date(this.dueDate),
+      date: this.documentDate as any, // Already in YYYY-MM-DD format
+      dueDate: this.dueDate as any, // Already in YYYY-MM-DD format
       customerId: this.selectedEntityCode,
       customerName: this.selectedEntityName,
       customerNif: this.selectedEntityNif,
@@ -1634,15 +1659,27 @@ export class SalesDocumentForm {
         }
 
         // Save via DataService
-        this.dataService.saveSalesDocument(salesDoc).subscribe(savedDoc => {
-          this.ngZone.run(() => {
-            // Update local status
-            this.status = newStatus;
-            const finalId = savedDoc?.id || salesDoc.id;
+        this.dataService.saveSalesDocument(salesDoc).subscribe({
+          next: (savedDoc) => {
+            this.ngZone.run(() => {
+              // Update local status
+              this.status = newStatus;
+              const finalId = savedDoc?.id || salesDoc.id;
 
-            this.processPostSaveActions(salesDoc, finalId, documentNumber, isPrinting, isCancelling);
-            this.cdr.detectChanges();
-          });
+              this.processPostSaveActions(salesDoc, finalId, documentNumber, isPrinting, isCancelling);
+              this.cdr.detectChanges();
+            });
+          },
+          error: (err) => {
+            console.error('Error saving document:', err);
+            // Log full validation error details from backend
+            if (err.error && err.error.message) {
+              console.error('Validation errors:', err.error.message);
+              alert('Erro de validação: ' + (Array.isArray(err.error.message) ? err.error.message.join(', ') : err.error.message));
+            } else {
+              alert('Erro ao gravar documento: ' + err.message);
+            }
+          }
         });
       });
     });

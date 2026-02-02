@@ -325,10 +325,8 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
   }
 
   loadArticles() {
-    this.dataService.getArticles().subscribe(articles => {
-      this.articles = articles;
-      this.filterArticles();
-    });
+    this.articles = this.inventoryService.getArticles();
+    this.filterArticles();
   }
 
   filterArticles() {
@@ -354,8 +352,10 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
   }
 
   newArticle() {
+    const activeCompany = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
     this.selectedArticle = {
       id: `ART${Date.now()}`,
+      companyId: activeCompany.id,
       code: '',
       name: '',
       description: '',
@@ -380,14 +380,36 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
   saveArticle() {
     if (!this.selectedArticle) return;
 
+    // Ensure companyId is set
+    if (!this.selectedArticle.companyId) {
+      const activeCompany = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
+      this.selectedArticle.companyId = activeCompany.id;
+    }
+
     if (!this.selectedArticle.code || !this.selectedArticle.name) {
       alert('Por favor preencha o código e nome do artigo');
       return;
     }
 
-    this.dataService.saveArticle(this.selectedArticle).subscribe(() => {
-      alert(`Artigo ${this.selectedArticle?.code} gravado com sucesso!`);
-      this.loadArticles();
+    this.dataService.saveArticle(this.selectedArticle).subscribe({
+      next: (savedArticle) => {
+        alert(`Artigo ${this.selectedArticle?.code} gravado com sucesso!`);
+
+        // Find if it's a new or existing article
+        const isNew = !this.articles.find(a => a.id === savedArticle.id);
+
+        if (isNew) {
+          this.inventoryService.addArticle(savedArticle);
+        } else {
+          this.inventoryService.updateArticle(savedArticle);
+        }
+
+        this.loadArticles();
+      },
+      error: (err) => {
+        console.error('Error saving article:', err);
+        alert('Erro ao gravar artigo: ' + (err.error?.message || err.message || 'Verifique a consola.'));
+      }
     });
   }
 

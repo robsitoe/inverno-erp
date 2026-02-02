@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SALES_DOCUMENT_TYPES } from '../constants';
+import { DataService } from '../../services/data.service';
 
 @Component({
   selector: 'app-document-type-modal',
@@ -47,24 +47,22 @@ import { SALES_DOCUMENT_TYPES } from '../constants';
     </div>
   `
 })
-export class DocumentTypeModalComponent {
+export class DocumentTypeModalComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
   @Output() select = new EventEmitter<any>();
 
   documentTypes: any[] = [];
+
+  constructor(private dataService: DataService) { }
 
   ngOnInit() {
     this.loadTypes();
   }
 
   loadTypes() {
-    const stored = localStorage.getItem('erp_sales_document_types');
-    if (stored) {
-      this.documentTypes = JSON.parse(stored);
-    } else {
-      this.documentTypes = SALES_DOCUMENT_TYPES;
-      localStorage.setItem('erp_sales_document_types', JSON.stringify(this.documentTypes));
-    }
+    this.dataService.getDocumentTypes('SALES').subscribe(types => {
+      this.documentTypes = types;
+    });
   }
 
   onClose() {

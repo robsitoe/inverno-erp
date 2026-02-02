@@ -21,7 +21,7 @@ export class SalesDocument {
     @PrimaryColumn()
     id: string;
 
-    @Column({ nullable: true })
+    @Column({ nullable: true, type: 'varchar' })
     companyId: string;
 
     @Column()

@@ -25,8 +25,8 @@ let TreasuryController = class TreasuryController {
     create(createTreasuryDto) {
         return this.treasuryService.create(createTreasuryDto);
     }
-    findAll() {
-        return this.treasuryService.findAll();
+    findAll(companyId) {
+        return this.treasuryService.findAll(companyId);
     }
     findOne(id) {
         return this.treasuryService.findOne(id);
@@ -37,14 +37,14 @@ let TreasuryController = class TreasuryController {
     remove(id) {
         return this.treasuryService.remove(id);
     }
-    findAllReceipts() {
-        return this.treasuryService.findAllReceipts();
+    findAllReceipts(companyId) {
+        return this.treasuryService.findAllReceipts(companyId);
     }
     createReceipt(data) {
         return this.treasuryService.createReceipt(data);
     }
-    findAllPayments() {
-        return this.treasuryService.findAllPayments();
+    findAllPayments(companyId) {
+        return this.treasuryService.findAllPayments(companyId);
     }
     createPayment(data) {
         return this.treasuryService.createPayment(data);
@@ -60,8 +60,9 @@ __decorate([
 ], TreasuryController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)('documents'),
+    __param(0, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], TreasuryController.prototype, "findAll", null);
 __decorate([
@@ -88,8 +89,9 @@ __decorate([
 ], TreasuryController.prototype, "remove", null);
 __decorate([
     (0, common_1.Get)('receipts'),
+    __param(0, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], TreasuryController.prototype, "findAllReceipts", null);
 __decorate([
@@ -101,8 +103,9 @@ __decorate([
 ], TreasuryController.prototype, "createReceipt", null);
 __decorate([
     (0, common_1.Get)('payments'),
+    __param(0, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], TreasuryController.prototype, "findAllPayments", null);
 __decorate([

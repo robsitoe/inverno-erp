@@ -17,13 +17,26 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const purchase_entity_1 = require("./entities/purchase.entity");
+const tenancy_service_1 = require("../tenancy/tenancy.service");
+const tenancy_context_1 = require("../tenancy/tenancy.context");
 let PurchasesService = class PurchasesService {
-    purchaseRepository;
-    constructor(purchaseRepository) {
-        this.purchaseRepository = purchaseRepository;
+    tenancyService;
+    defaultPurchaseRepo;
+    constructor(tenancyService, defaultPurchaseRepo) {
+        this.tenancyService = tenancyService;
+        this.defaultPurchaseRepo = defaultPurchaseRepo;
     }
+    async getRepo(entity, defaultRepo) {
+        const companyId = tenancy_context_1.TenancyContext.getCompanyId();
+        if (!companyId)
+            return defaultRepo;
+        const ds = await this.tenancyService.getTenantDataSource(companyId);
+        return ds.getRepository(entity);
+    }
+    async getPurchaseRepo() { return this.getRepo(purchase_entity_1.PurchaseDocument, this.defaultPurchaseRepo); }
     async create(createPurchaseDto) {
         const { lines, ...documentData } = createPurchaseDto;
+        const repo = await this.getPurchaseRepo();
         const entityData = {
             ...documentData,
             type: documentData.documentType,
@@ -50,7 +63,7 @@ let PurchasesService = class PurchasesService {
         if (!entityData.id) {
             entityData.id = `PUR-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             if (!entityData.number) {
-                const lastDoc = await this.purchaseRepository.findOne({
+                const lastDoc = await repo.findOne({
                     where: {
                         type: entityData.type,
                         series: entityData.series,
@@ -64,24 +77,28 @@ let PurchasesService = class PurchasesService {
                 entityData.documentNumber = `${entityData.type} ${entityData.series}/${entityData.number}`;
             }
         }
-        const purchase = this.purchaseRepository.create(entityData);
-        return this.purchaseRepository.save(purchase);
+        const purchase = repo.create(entityData);
+        return repo.save(purchase);
     }
-    findAll(companyId) {
+    async findAll(companyId) {
+        const repo = await this.getPurchaseRepo();
         const where = {};
         if (companyId) {
             where.companyId = companyId;
         }
-        return this.purchaseRepository.find({ where, relations: ['lines'] });
+        return repo.find({ where, relations: ['lines'] });
     }
-    findOne(id) {
-        return this.purchaseRepository.findOne({ where: { id }, relations: ['lines'] });
+    async findOne(id) {
+        const repo = await this.getPurchaseRepo();
+        return repo.findOne({ where: { id }, relations: ['lines'] });
     }
-    update(id, updatePurchaseDto) {
-        return this.purchaseRepository.update(id, updatePurchaseDto);
+    async update(id, updatePurchaseDto) {
+        const repo = await this.getPurchaseRepo();
+        return repo.update(id, updatePurchaseDto);
     }
     async findByNumber(companyId, type, series, number) {
-        return this.purchaseRepository.findOne({
+        const repo = await this.getPurchaseRepo();
+        return repo.findOne({
             where: {
                 companyId,
                 type,
@@ -91,14 +108,16 @@ let PurchasesService = class PurchasesService {
             relations: ['lines']
         });
     }
-    remove(id) {
-        return this.purchaseRepository.delete(id);
+    async remove(id) {
+        const repo = await this.getPurchaseRepo();
+        return repo.delete(id);
     }
 };
 exports.PurchasesService = PurchasesService;
 exports.PurchasesService = PurchasesService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(purchase_entity_1.PurchaseDocument)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __param(1, (0, typeorm_1.InjectRepository)(purchase_entity_1.PurchaseDocument)),
+    __metadata("design:paramtypes", [tenancy_service_1.TenancyService,
+        typeorm_2.Repository])
 ], PurchasesService);
 //# sourceMappingURL=purchases.service.js.map

@@ -49,6 +49,7 @@ __decorate([
     __metadata("design:type", Boolean)
 ], Journal.prototype, "isActive", void 0);
 exports.Journal = Journal = __decorate([
-    (0, typeorm_1.Entity)('journals')
+    (0, typeorm_1.Entity)('journals'),
+    (0, typeorm_1.Unique)(['companyId', 'code'])
 ], Journal);
 //# sourceMappingURL=journal.entity.js.map

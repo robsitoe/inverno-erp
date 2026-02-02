@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -25,6 +25,10 @@ import { Customer } from './customers/entities/customer.entity';
 import { Supplier } from './suppliers/entities/supplier.entity';
 import { Series } from './companies/entities/series.entity';
 import { GenericEntity } from './common-entities/generic-entity.entity';
+import { DocumentType } from './common-entities/entities/document-type.entity';
+import { PaymentMethod } from './treasury/entities/payment-method.entity';
+import { TenancyModule } from './tenancy/tenancy.module';
+import { TenancyMiddleware } from './tenancy/tenancy.middleware';
 
 @Module({
   imports: [
@@ -44,7 +48,7 @@ import { GenericEntity } from './common-entities/generic-entity.entity';
               Account, JournalEntry, JournalLine, Article, StockMovement,
               SalesDocument, SalesDocumentLine, User, PurchaseDocument,
               PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity
+              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity, DocumentType, PaymentMethod
             ],
             synchronize: true,
           };
@@ -61,7 +65,8 @@ import { GenericEntity } from './common-entities/generic-entity.entity';
             Account, JournalEntry, JournalLine, Article, StockMovement,
             SalesDocument, SalesDocumentLine, User, PurchaseDocument,
             PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-            Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity
+            Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
+            DocumentType, PaymentMethod
           ],
           synchronize: true,
         };
@@ -75,8 +80,15 @@ import { GenericEntity } from './common-entities/generic-entity.entity';
     AuthModule,
     PurchasesModule,
     TreasuryModule,
+    TenancyModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(TenancyMiddleware)
+      .forRoutes('*');
+  }
+}

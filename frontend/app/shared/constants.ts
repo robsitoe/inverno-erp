@@ -63,12 +63,20 @@ export const MENU_ITEMS: MenuItem[] = [
       { label: "Recebimentos", icon: "account_balance" },
       { label: "Caixas", icon: "point_of_sale" },
       { label: "Bancos", icon: "account_balance" },
-      { label: "Reconciliação Bancária", icon: "sync" },
+      { label: "Reconciliação Bancária", icon: "sync", view: "bank-reconciliation" },
       { label: "Cheques", icon: "receipt" },
       { label: "Letras", icon: "description" },
       { label: "Tesouraria Previsional", icon: "calendar_today" },
       { label: "Calculadoras Financeiras", icon: "calculate" },
-      { label: "Exploração", icon: "explore" },
+      {
+        label: "Exploração",
+        icon: "explore",
+        children: [
+          { label: "Extrato de Conta", icon: "history", view: "account-statement" },
+          { label: "Listagem de Movimentos", icon: "list" },
+          { label: "Fluxos de Caixa", icon: "payments" }
+        ]
+      },
       { label: "Utilitários", icon: "build" }
     ]
   },
@@ -320,14 +328,14 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
 ];
 
 export const SALES_DOCUMENT_TYPES = [
-  { code: "FA", description: "Fatura" },
-  { code: "VD", description: "Venda a Dinheiro" },
-  { code: "NC", description: "Nota de Crédito" },
-  { code: "ND", description: "Nota de Débito" },
-  { code: "GR", description: "Guia de Remessa" },
-  { code: "GT", description: "Guia de Transporte" },
-  { code: "EC", description: "Encomenda de Cliente" },
-  { code: "PP", description: "Proforma" }
+  { code: "FA", description: "Fatura", isStandard: true, nature: 'RECEIVE', type: 'Venda' },
+  { code: "VD", description: "Venda a Dinheiro", isStandard: true, nature: 'RECEIVE', type: 'Venda' },
+  { code: "NC", description: "Nota de Crédito", isStandard: true, nature: 'PAY', type: 'Venda' },
+  { code: "ND", description: "Nota de Débito", isStandard: true, nature: 'RECEIVE', type: 'Venda' },
+  { code: "GR", description: "Guia de Remessa", isStandard: true, nature: 'RECEIVE', type: 'Venda' },
+  { code: "GT", description: "Guia de Transporte", isStandard: true, nature: 'RECEIVE', type: 'Venda' },
+  { code: "EC", description: "Encomenda de Cliente", isStandard: true, nature: 'RECEIVE', type: 'Venda' },
+  { code: "PP", description: "Proforma", isStandard: true, nature: 'RECEIVE', type: 'Venda' }
 ];
 
 export const ENTITIES = [
@@ -347,29 +355,30 @@ export const SUPPLIERS = [
 ];
 
 export const PURCHASE_DOCUMENT_TYPES = [
-  { code: "FC", description: "Fatura de Compra" },
-  { code: "NC", description: "Nota de Crédito" },
-  { code: "ND", description: "Nota de Débito" },
-  { code: "GR", description: "Guia de Receção" },
-  { code: "EF", description: "Encomenda a Fornecedor" },
-  { code: "DC", description: "Devolução a Fornecedor" }
+  { code: "FC", description: "Fatura de Compra", isStandard: true, nature: 'PAY', type: 'Compra' },
+  { code: "NC", description: "Nota de Crédito", isStandard: true, nature: 'RECEIVE', type: 'Compra' },
+  { code: "ND", description: "Nota de Débito", isStandard: true, nature: 'PAY', type: 'Compra' },
+  { code: "GR", description: "Guia de Receção", isStandard: true, nature: 'PAY', type: 'Compra' },
+  { code: "EF", description: "Encomenda a Fornecedor", isStandard: true, nature: 'PAY', type: 'Compra' },
+  { code: "DC", description: "Devolução a Fornecedor", isStandard: true, nature: 'PAY', type: 'Compra' }
 ];
 
 export const TREASURY_DOCUMENT_TYPES = [
-  { code: "RE", description: "Recibo de Cliente", nature: "RECEIVE" },
-  { code: "PAG", description: "Pagamento a Fornecedor", nature: "PAY" },
-  { code: "ADC", description: "Adiantamento de Cliente", nature: "RECEIVE" },
-  { code: "ADF", description: "Adiantamento a Fornecedor", nature: "PAY" },
-  { code: "DEP", description: "Depósito Bancário", nature: "INTERNAL" },
-  { code: "LEV", description: "Levantamento Bancário", nature: "INTERNAL" },
-  { code: "TRF", description: "Transferência entre Contas", nature: "INTERNAL" }
+  { code: "RE", description: "Recibo de Cliente", isStandard: true, nature: "RECEIVE", type: "Liquidacoes" },
+  { code: "PAG", description: "Pagamento a Fornecedor", isStandard: true, nature: "PAY", type: "Liquidacoes" },
+  { code: "ADC", description: "Adiantamento de Cliente", isStandard: true, nature: "RECEIVE", type: "Liquidacoes" },
+  { code: "ADF", description: "Adiantamento a Fornecedor", isStandard: true, nature: "PAY", type: "Liquidacoes" },
+  { code: "DEP", description: "Depósito Bancário", isStandard: true, nature: "INTERNAL", type: "Liquidacoes" },
+  { code: "LEV", description: "Levantamento Bancário", isStandard: true, nature: "INTERNAL", type: "Liquidacoes" },
+  { code: "TRF", description: "Transferência entre Contas", isStandard: true, nature: "INTERNAL", type: "Liquidacoes" },
+  { code: "RECON", description: "Reconciliação Bancária", isStandard: true, nature: "INTERNAL", type: "Liquidacoes" }
 ];
 
 export const STOCK_DOCUMENT_TYPES = [
-  { code: "ENT", description: "Entrada de Stock", nature: "IN" },
-  { code: "SAI", description: "Saída de Stock", nature: "OUT" },
-  { code: "TRF", description: "Transferência de Armazém", nature: "TRANSFER" },
-  { code: "INV", description: "Acerto de Inventário", nature: "ADJUSTMENT" }
+  { code: "ENT", description: "Entrada de Stock", isStandard: true, nature: "IN", type: "Stock" },
+  { code: "SAI", description: "Saída de Stock", isStandard: true, nature: "OUT", type: "Stock" },
+  { code: "TRF", description: "Transferência de Armazém", isStandard: true, nature: "TRANSFER", type: "Stock" },
+  { code: "INV", description: "Acerto de Inventário", isStandard: true, nature: "ADJUSTMENT", type: "Stock" }
 ];
 
 export const ARTICLES = [

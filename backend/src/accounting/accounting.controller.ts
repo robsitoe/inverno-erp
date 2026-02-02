@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AccountingService } from './accounting.service';
 import { CreateAccountDto } from './dto/create-account.dto';
@@ -19,9 +19,10 @@ export class AccountingController {
 
   @Get('accounts')
   @ApiOperation({ summary: 'Get all accounts' })
-  findAll() {
-    return this.accountingService.findAll();
+  findAll(@Query('companyId') companyId?: string) {
+    return this.accountingService.findAll(companyId);
   }
+
 
   @Get('accounts/:id')
   @ApiOperation({ summary: 'Get an account by ID' })
@@ -52,13 +53,33 @@ export class AccountingController {
 
   @Get('journal-entries')
   @ApiOperation({ summary: 'Get all journal entries' })
-  findAllJournalEntries() {
-    return this.accountingService.findAllJournalEntries();
+  findAllJournalEntries(@Query('companyId') companyId?: string) {
+    return this.accountingService.findAllJournalEntries(companyId);
   }
+
 
   @Get('journal-entries/:id')
   @ApiOperation({ summary: 'Get a journal entry by ID' })
   findOneJournalEntry(@Param('id') id: string) {
     return this.accountingService.findOneJournalEntry(id);
+  }
+
+  @Get('statements/:accountId')
+  @ApiOperation({ summary: 'Get account statement' })
+  getStatement(
+    @Param('accountId') accountId: string,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
+    @Query('companyId') companyId?: string,
+    @Query('includeDrafts') includeDrafts?: string
+  ) {
+    const drafts = includeDrafts === 'true';
+    return this.accountingService.getAccountStatement(accountId, fromDate, toDate, companyId, drafts);
+  }
+
+  @Post('accounts/presets/:presetName')
+  @ApiOperation({ summary: 'Load a predefined chart of accounts' })
+  loadPreset(@Param('presetName') presetName: string) {
+    return this.accountingService.loadPresetAccountSystem(presetName);
   }
 }

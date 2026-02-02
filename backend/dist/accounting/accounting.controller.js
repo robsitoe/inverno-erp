@@ -26,8 +26,8 @@ let AccountingController = class AccountingController {
     create(createAccountDto) {
         return this.accountingService.create(createAccountDto);
     }
-    findAll() {
-        return this.accountingService.findAll();
+    findAll(companyId) {
+        return this.accountingService.findAll(companyId);
     }
     findOne(id) {
         return this.accountingService.findOne(id);
@@ -41,11 +41,18 @@ let AccountingController = class AccountingController {
     createJournalEntry(createJournalEntryDto) {
         return this.accountingService.createJournalEntry(createJournalEntryDto);
     }
-    findAllJournalEntries() {
-        return this.accountingService.findAllJournalEntries();
+    findAllJournalEntries(companyId) {
+        return this.accountingService.findAllJournalEntries(companyId);
     }
     findOneJournalEntry(id) {
         return this.accountingService.findOneJournalEntry(id);
+    }
+    getStatement(accountId, fromDate, toDate, companyId, includeDrafts) {
+        const drafts = includeDrafts === 'true';
+        return this.accountingService.getAccountStatement(accountId, fromDate, toDate, companyId, drafts);
+    }
+    loadPreset(presetName) {
+        return this.accountingService.loadPresetAccountSystem(presetName);
     }
 };
 exports.AccountingController = AccountingController;
@@ -61,8 +68,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)('accounts'),
     (0, swagger_1.ApiOperation)({ summary: 'Get all accounts' }),
+    __param(0, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AccountingController.prototype, "findAll", null);
 __decorate([
@@ -102,8 +110,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)('journal-entries'),
     (0, swagger_1.ApiOperation)({ summary: 'Get all journal entries' }),
+    __param(0, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AccountingController.prototype, "findAllJournalEntries", null);
 __decorate([
@@ -114,6 +123,26 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AccountingController.prototype, "findOneJournalEntry", null);
+__decorate([
+    (0, common_1.Get)('statements/:accountId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get account statement' }),
+    __param(0, (0, common_1.Param)('accountId')),
+    __param(1, (0, common_1.Query)('fromDate')),
+    __param(2, (0, common_1.Query)('toDate')),
+    __param(3, (0, common_1.Query)('companyId')),
+    __param(4, (0, common_1.Query)('includeDrafts')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String, String]),
+    __metadata("design:returntype", void 0)
+], AccountingController.prototype, "getStatement", null);
+__decorate([
+    (0, common_1.Post)('accounts/presets/:presetName'),
+    (0, swagger_1.ApiOperation)({ summary: 'Load a predefined chart of accounts' }),
+    __param(0, (0, common_1.Param)('presetName')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AccountingController.prototype, "loadPreset", null);
 exports.AccountingController = AccountingController = __decorate([
     (0, swagger_1.ApiTags)('accounting'),
     (0, common_1.Controller)('accounting'),

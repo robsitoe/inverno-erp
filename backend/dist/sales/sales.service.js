@@ -17,15 +17,30 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const sales_document_entity_1 = require("./entities/sales-document.entity");
+const tenancy_service_1 = require("../tenancy/tenancy.service");
+const tenancy_context_1 = require("../tenancy/tenancy.context");
 let SalesService = class SalesService {
-    salesDocumentRepository;
-    salesDocumentLineRepository;
-    constructor(salesDocumentRepository, salesDocumentLineRepository) {
-        this.salesDocumentRepository = salesDocumentRepository;
-        this.salesDocumentLineRepository = salesDocumentLineRepository;
+    tenancyService;
+    defaultSalesDocumentRepo;
+    defaultSalesLineRepo;
+    constructor(tenancyService, defaultSalesDocumentRepo, defaultSalesLineRepo) {
+        this.tenancyService = tenancyService;
+        this.defaultSalesDocumentRepo = defaultSalesDocumentRepo;
+        this.defaultSalesLineRepo = defaultSalesLineRepo;
     }
+    async getRepo(entity, defaultRepo) {
+        const companyId = tenancy_context_1.TenancyContext.getCompanyId();
+        if (!companyId)
+            return defaultRepo;
+        const ds = await this.tenancyService.getTenantDataSource(companyId);
+        return ds.getRepository(entity);
+    }
+    async getSalesDocRepo() { return this.getRepo(sales_document_entity_1.SalesDocument, this.defaultSalesDocumentRepo); }
+    async getSalesLineRepo() { return this.getRepo(sales_document_entity_1.SalesDocumentLine, this.defaultSalesLineRepo); }
     async create(createSalesDocumentDto) {
         const { lines, ...documentData } = createSalesDocumentDto;
+        const sdRepo = await this.getSalesDocRepo();
+        const slRepo = await this.getSalesLineRepo();
         let subtotal = 0;
         let totalIva = 0;
         let discounts = 0;
@@ -42,7 +57,7 @@ let SalesService = class SalesService {
             subtotal += netAmount;
             totalIva += ivaAmount;
             discounts += discountAmount;
-            return this.salesDocumentLineRepository.create({
+            return slRepo.create({
                 ...line,
                 total,
             });
@@ -52,7 +67,7 @@ let SalesService = class SalesService {
         let documentNumber = documentData.documentNumber;
         if (!documentData.id) {
             if (!seriesNumber) {
-                const lastDoc = await this.salesDocumentRepository.findOne({
+                const lastDoc = await sdRepo.findOne({
                     where: {
                         documentType: documentData.documentType,
                         series: documentData.series,
@@ -66,7 +81,7 @@ let SalesService = class SalesService {
                 documentNumber = `${documentData.documentType} ${documentData.series}/${seriesNumber}`;
             }
         }
-        const document = this.salesDocumentRepository.create({
+        const document = sdRepo.create({
             ...documentData,
             documentNumber,
             seriesNumber,
@@ -76,21 +91,25 @@ let SalesService = class SalesService {
             total,
             lines: documentLines,
         });
-        return this.salesDocumentRepository.save(document);
+        return sdRepo.save(document);
     }
-    findAll(companyId) {
-        const where = {};
+    async findAll(companyId) {
+        const sdRepo = await this.getSalesDocRepo();
         if (companyId) {
-            where.companyId = companyId;
+            return sdRepo.find({
+                where: { companyId },
+                order: { date: 'DESC', createdAt: 'DESC' },
+                relations: ['lines']
+            });
         }
-        return this.salesDocumentRepository.find({
-            where,
+        return sdRepo.find({
             order: { date: 'DESC', createdAt: 'DESC' },
             relations: ['lines']
         });
     }
     async findOne(id) {
-        const document = await this.salesDocumentRepository.findOne({
+        const sdRepo = await this.getSalesDocRepo();
+        const document = await sdRepo.findOne({
             where: { id },
             relations: ['lines']
         });
@@ -100,12 +119,14 @@ let SalesService = class SalesService {
         return document;
     }
     async update(id, updateSalesDocumentDto) {
+        const sdRepo = await this.getSalesDocRepo();
         const document = await this.findOne(id);
-        this.salesDocumentRepository.merge(document, updateSalesDocumentDto);
-        return this.salesDocumentRepository.save(document);
+        sdRepo.merge(document, updateSalesDocumentDto);
+        return sdRepo.save(document);
     }
     async findByNumber(companyId, type, series, number) {
-        const document = await this.salesDocumentRepository.findOne({
+        const sdRepo = await this.getSalesDocRepo();
+        const document = await sdRepo.findOne({
             where: {
                 companyId,
                 documentType: type,
@@ -117,16 +138,18 @@ let SalesService = class SalesService {
         return document;
     }
     async remove(id) {
+        const sdRepo = await this.getSalesDocRepo();
         const document = await this.findOne(id);
-        return this.salesDocumentRepository.remove(document);
+        return sdRepo.remove(document);
     }
 };
 exports.SalesService = SalesService;
 exports.SalesService = SalesService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(sales_document_entity_1.SalesDocument)),
-    __param(1, (0, typeorm_1.InjectRepository)(sales_document_entity_1.SalesDocumentLine)),
-    __metadata("design:paramtypes", [typeorm_2.Repository,
+    __param(1, (0, typeorm_1.InjectRepository)(sales_document_entity_1.SalesDocument)),
+    __param(2, (0, typeorm_1.InjectRepository)(sales_document_entity_1.SalesDocumentLine)),
+    __metadata("design:paramtypes", [tenancy_service_1.TenancyService,
+        typeorm_2.Repository,
         typeorm_2.Repository])
 ], SalesService);
 //# sourceMappingURL=sales.service.js.map

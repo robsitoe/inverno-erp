@@ -562,7 +562,7 @@ export class ArticleStatementComponent implements OnInit {
 
   onArticleSelect(article: Article) {
     this.filters.articleCode = article.code;
-    this.filters.articleName = article.description;
+    this.filters.articleName = article.name || article.description;
     this.isArticleSearchOpen = false;
     // Auto-generate statement when article is selected
     this.generateStatement();

@@ -26,8 +26,8 @@ let InventoryController = class InventoryController {
     create(createArticleDto) {
         return this.inventoryService.create(createArticleDto);
     }
-    findAll() {
-        return this.inventoryService.findAll();
+    findAll(companyId) {
+        return this.inventoryService.findAll(companyId);
     }
     findOne(id) {
         return this.inventoryService.findOne(id);
@@ -61,8 +61,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)('articles'),
     (0, swagger_1.ApiOperation)({ summary: 'Get all articles' }),
+    __param(0, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], InventoryController.prototype, "findAll", null);
 __decorate([

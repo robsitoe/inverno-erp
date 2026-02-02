@@ -1,4 +1,3 @@
-import { Company } from './company.entity';
 export declare class FiscalYear {
     id: string;
     year: number;
@@ -7,5 +6,4 @@ export declare class FiscalYear {
     startDate: string;
     endDate: string;
     companyId: string;
-    company: Company;
 }

@@ -9,10 +9,6 @@ export class Series {
     @Column()
     companyId: string;
 
-    @ManyToOne(() => Company, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'companyId' })
-    company: Company;
-
     @Column()
     code: string;
 

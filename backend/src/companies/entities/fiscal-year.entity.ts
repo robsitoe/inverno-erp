@@ -23,8 +23,4 @@ export class FiscalYear {
 
     @Column()
     companyId: string;
-
-    @ManyToOne(() => Company, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'companyId' })
-    company: Company;
 }

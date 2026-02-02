@@ -1,53 +1,126 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityTarget, ObjectLiteral } from 'typeorm';
 import { CreateTreasuryDto } from './dto/create-treasury.dto';
 import { UpdateTreasuryDto } from './dto/update-treasury.dto';
 import { TreasuryDocument, TreasuryDocumentType } from './entities/treasury.entity';
+import { PaymentMethod } from './entities/payment-method.entity';
+import { TenancyService } from '../tenancy/tenancy.service';
+import { TenancyContext } from '../tenancy/tenancy.context';
 
 @Injectable()
 export class TreasuryService {
   constructor(
+    private readonly tenancyService: TenancyService,
     @InjectRepository(TreasuryDocument)
-    private treasuryRepository: Repository<TreasuryDocument>,
+    private readonly defaultTreasuryRepo: Repository<TreasuryDocument>,
+    @InjectRepository(PaymentMethod)
+    private readonly defaultPaymentMethodRepo: Repository<PaymentMethod>,
   ) { }
 
-  create(createTreasuryDto: CreateTreasuryDto) {
-    const treasury = this.treasuryRepository.create(createTreasuryDto);
-    return this.treasuryRepository.save(treasury);
+  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>): Promise<Repository<T>> {
+    const companyId = TenancyContext.getCompanyId();
+    if (!companyId) return defaultRepo;
+
+    const ds = await this.tenancyService.getTenantDataSource(companyId);
+    return ds.getRepository(entity);
   }
 
-  findAll() {
-    return this.treasuryRepository.find({ relations: ['lines'] });
+  private async getTreasuryRepo() { return this.getRepo(TreasuryDocument, this.defaultTreasuryRepo); }
+  private async getPaymentMethodRepo() { return this.getRepo(PaymentMethod, this.defaultPaymentMethodRepo); }
+
+  async create(createTreasuryDto: CreateTreasuryDto) {
+    const repo = await this.getTreasuryRepo();
+    const treasury = repo.create(createTreasuryDto);
+    return repo.save(treasury);
   }
 
-  findOne(id: string) {
-    return this.treasuryRepository.findOne({ where: { id }, relations: ['lines'] });
+  async findAll(companyId?: string) {
+    const repo = await this.getTreasuryRepo();
+    if (companyId) {
+      return repo.find({
+        where: { companyId },
+        relations: ['lines']
+      });
+    }
+    return repo.find({ relations: ['lines'] });
   }
 
-  update(id: string, updateTreasuryDto: UpdateTreasuryDto) {
-    return this.treasuryRepository.update(id, updateTreasuryDto);
+
+  async findOne(id: string) {
+    const repo = await this.getTreasuryRepo();
+    const doc = await repo.findOne({ where: { id }, relations: ['lines'] });
+    if (!doc) throw new NotFoundException('Documento de tesouraria não encontrado');
+    return doc;
   }
 
-  remove(id: string) {
-    return this.treasuryRepository.delete(id);
+  async update(id: string, updateTreasuryDto: UpdateTreasuryDto) {
+    const repo = await this.getTreasuryRepo();
+    return repo.update(id, updateTreasuryDto);
   }
 
-  findAllReceipts() {
-    return this.treasuryRepository.find({ where: { type: TreasuryDocumentType.RECEIPT }, relations: ['lines'] });
+  async remove(id: string) {
+    const repo = await this.getTreasuryRepo();
+    return repo.delete(id);
   }
 
-  createReceipt(data: any) {
-    const receipt = this.treasuryRepository.create({ ...data, type: TreasuryDocumentType.RECEIPT });
-    return this.treasuryRepository.save(receipt);
+  async findAllReceipts(companyId?: string) {
+    const repo = await this.getTreasuryRepo();
+    const where: any = { type: TreasuryDocumentType.RECEIPT };
+    if (companyId) {
+      where.companyId = companyId;
+    }
+    return repo.find({
+      where,
+      relations: ['lines']
+    });
   }
 
-  findAllPayments() {
-    return this.treasuryRepository.find({ where: { type: TreasuryDocumentType.PAYMENT }, relations: ['lines'] });
+
+  async createReceipt(data: any) {
+    const repo = await this.getTreasuryRepo();
+    const receipt = repo.create({ ...data, type: TreasuryDocumentType.RECEIPT });
+    return repo.save(receipt);
   }
 
-  createPayment(data: any) {
-    const payment = this.treasuryRepository.create({ ...data, type: TreasuryDocumentType.PAYMENT });
-    return this.treasuryRepository.save(payment);
+  async findAllPayments(companyId?: string) {
+    const repo = await this.getTreasuryRepo();
+    const where: any = { type: TreasuryDocumentType.PAYMENT };
+    if (companyId) {
+      where.companyId = companyId;
+    }
+    return repo.find({
+      where,
+      relations: ['lines']
+    });
+  }
+
+
+  async createPayment(data: any) {
+    const repo = await this.getTreasuryRepo();
+    const payment = repo.create({ ...data, type: TreasuryDocumentType.PAYMENT });
+    return repo.save(payment);
+  }
+
+  // Payment Methods
+  async savePaymentMethod(data: Partial<PaymentMethod>) {
+    const repo = await this.getPaymentMethodRepo();
+    return repo.save(data);
+  }
+
+  async findAllPaymentMethods(companyId?: string) {
+    const repo = await this.getPaymentMethodRepo();
+    if (companyId) {
+      return repo.find({
+        where: { companyId },
+        order: { sortOrder: 'ASC' }
+      });
+    }
+    return repo.find({ order: { sortOrder: 'ASC' } });
+  }
+
+  async removePaymentMethod(id: string) {
+    const repo = await this.getPaymentMethodRepo();
+    return repo.delete(id);
   }
 }

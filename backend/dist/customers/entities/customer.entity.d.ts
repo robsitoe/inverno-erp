@@ -1,5 +1,6 @@
 export declare class Customer {
     id: string;
+    companyId: string | null;
     code: string;
     name: string;
     nif: string;

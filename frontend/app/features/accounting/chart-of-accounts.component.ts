@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountingService } from '../../shared/accounting.service';
@@ -12,10 +12,51 @@ import { Account } from '../../shared/models';
     <div class="flex flex-col h-full bg-white">
       <!-- Header -->
       <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
-        <h2 class="text-lg font-semibold text-gray-800">Plano de Contas</h2>
+        <div class="flex items-center gap-4">
+          <h2 class="text-lg font-semibold text-gray-800">Plano de Contas</h2>
+          
+          <div class="flex items-center gap-2 ml-4 border-l pl-4">
+            <span class="text-xs text-gray-500 font-bold uppercase">Ações Rápidas:</span>
+            <button 
+              (click)="loadPreset('PGC-NIR')"
+              class="px-2 py-1 text-xs border border-blue-600 text-blue-600 rounded hover:bg-blue-50 transition-colors"
+              [disabled]="accounts.length > 0"
+              [title]="accounts.length > 0 ? 'Plano já inicializado' : 'Carregar PGC-NIR'"
+            >
+              Carregar PGC-NIR
+            </button>
+            <button 
+              (click)="triggerCsvUpload()"
+              class="px-2 py-1 text-xs border border-gray-400 text-gray-600 rounded hover:bg-gray-100 transition-colors flex items-center gap-1"
+            >
+              <span class="material-symbols-outlined text-[14px]">upload_file</span>
+              Importar CSV
+            </button>
+            <div class="flex items-center gap-1 ml-2 border-l pl-2">
+              <button 
+                (click)="exportAccounts(false)"
+                class="px-2 py-1 text-xs bg-gray-100 border border-gray-300 text-gray-700 rounded hover:bg-gray-200 transition-colors flex items-center gap-1"
+                title="Exportar apenas estrutura"
+              >
+                <span class="material-symbols-outlined text-[14px]">table_rows</span>
+                Exportar (Estrutura)
+              </button>
+              <button 
+                (click)="exportAccounts(true)"
+                class="px-2 py-1 text-xs bg-blue-50 border border-blue-200 text-blue-700 rounded hover:bg-blue-100 transition-colors flex items-center gap-1"
+                title="Exportar com saldos e estados"
+              >
+                <span class="material-symbols-outlined text-[14px]">account_balance_wallet</span>
+                Exportar (Saldos)
+              </button>
+            </div>
+            <input type="file" #csvInput class="hidden" (change)="onCsvFileSelected($event)" accept=".csv">
+          </div>
+        </div>
+
         <button 
           (click)="openAddAccountModal()"
-          class="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 flex items-center gap-2"
+          class="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 flex items-center gap-2 shadow-sm shadow-blue-200"
         >
           <span class="material-symbols-outlined text-[18px]">add</span>
           Nova Conta Raiz
@@ -156,9 +197,12 @@ import { Account } from '../../shared/models';
         </div>
       </div>
     </div>
-  `
+  `,
+  styleUrls: []
 })
 export class ChartOfAccountsComponent implements OnInit {
+  @ViewChild('csvInput') csvInput!: ElementRef;
+
   accounts: Account[] = [];
   showAddAccount = false;
   parentAccount: Account | null = null;
@@ -177,15 +221,118 @@ export class ChartOfAccountsComponent implements OnInit {
     isActive: true
   };
 
-  constructor(private accountingService: AccountingService) { }
+  constructor(
+    private accountingService: AccountingService,
+    private cdr: ChangeDetectorRef
+  ) { }
 
   ngOnInit() {
     this.loadAccounts();
   }
 
+  async loadPreset(name: string) {
+    if (confirm(`Tem a certeza que deseja carregar o modelo ${name}? Isso irá inicializar o plano de contas padrão.`)) {
+      try {
+        await this.accountingService.loadAccountsPreset(name);
+        this.loadAccounts();
+        alert('Plano de contas carregado com sucesso!');
+      } catch (e: any) {
+        alert('Erro ao carregar plano: ' + (e.error?.message || e.message));
+      }
+    }
+  }
+
+  triggerCsvUpload() {
+    this.csvInput.nativeElement.click();
+  }
+
+  onCsvFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (e: any) => {
+        const text = e.target.result;
+        await this.processCsv(text);
+      };
+      reader.readAsText(file);
+    }
+  }
+
+  async processCsv(text: string) {
+    const lines = text.split('\n');
+    const accountsToImport: any[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      const [code, name, type, allowPosting] = line.split(',');
+      if (code && name) {
+        accountsToImport.push({
+          code: code.trim(),
+          name: name.trim(),
+          type: type?.trim() || 'ASSET',
+          allowPosting: allowPosting?.trim().toLowerCase() === 'true',
+          isActive: true
+        });
+      }
+    }
+
+    if (accountsToImport.length > 0) {
+      if (confirm(`Deseja importar ${accountsToImport.length} contas do arquivo CSV?`)) {
+        try {
+          for (const acc of accountsToImport) {
+            this.accountingService.addAccount(acc);
+          }
+          setTimeout(() => this.loadAccounts(), 1000);
+          alert('Importação concluída!');
+        } catch (err: any) {
+          alert('Erro na importação: ' + err.message);
+        }
+      }
+    }
+
+    this.csvInput.nativeElement.value = '';
+  }
+
+  exportAccounts(withInfo: boolean) {
+    const headers = withInfo
+      ? ['Código', 'Nome', 'Tipo', 'Saldo (MT)', 'Estado']
+      : ['Código', 'Nome', 'Tipo'];
+
+    const csvRows = [headers.join(';')];
+
+    this.accounts.forEach(acc => {
+      const row = withInfo
+        ? [
+          acc.code,
+          acc.name,
+          this.getTypeLabel(acc.type),
+          acc.balance.toFixed(2),
+          acc.isActive ? 'Ativo' : 'Inativo'
+        ]
+        : [
+          acc.code,
+          acc.name,
+          this.getTypeLabel(acc.type)
+        ];
+      csvRows.push(row.join(';'));
+    });
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const date = new Date().toISOString().split('T')[0];
+    const fileName = withInfo ? `plano_contas_saldos_${date}.csv` : `plano_contas_estrutura_${date}.csv`;
+
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    link.click();
+  }
+
   loadAccounts() {
-    // Sort by code to show hierarchy naturally
     this.accounts = this.accountingService.getAccounts().sort((a, b) => a.code.localeCompare(b.code));
+    this.cdr.detectChanges();
   }
 
   openAddAccountModal() {
@@ -212,9 +359,9 @@ export class ChartOfAccountsComponent implements OnInit {
     this.newAccountCodeSuffix = '';
     this.newAccount = {
       parentId: parent.id,
-      code: '', // Will be calculated
+      code: '',
       name: '',
-      type: parent.type, // Inherit type
+      type: parent.type,
       level: parent.level + 1,
       balance: 0,
       allowPosting: true,
@@ -226,13 +373,8 @@ export class ChartOfAccountsComponent implements OnInit {
   openEditAccountModal(account: Account) {
     this.isEditing = true;
     this.editingAccountId = account.id;
-
-    // Find parent if exists
     this.parentAccount = account.parentId ? this.accounts.find(a => a.id === account.parentId) || null : null;
-
-    // Extract suffix for display (though disabled)
     this.newAccountCodeSuffix = account.code.split('.').pop() || account.code;
-
     this.newAccount = { ...account };
     this.showAddAccount = true;
   }
@@ -244,8 +386,6 @@ export class ChartOfAccountsComponent implements OnInit {
         if (account) {
           account.name = this.newAccount.name;
           account.allowPosting = this.newAccount.allowPosting || false;
-          // We don't update code or type for now to avoid side effects
-
           this.accountingService.updateAccount(account);
           this.loadAccounts();
           this.showAddAccount = false;
@@ -253,8 +393,6 @@ export class ChartOfAccountsComponent implements OnInit {
       }
     } else {
       if (this.newAccount.name && this.newAccount.type && this.newAccountCodeSuffix) {
-
-        // Construct full code
         const fullCode = this.parentAccount
           ? `${this.parentAccount.code}.${this.newAccountCodeSuffix}`
           : this.newAccountCodeSuffix;

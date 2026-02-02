@@ -1,21 +1,38 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityTarget, ObjectLiteral } from 'typeorm';
 import { CreateSalesDocumentDto } from './dto/create-sales-document.dto';
 import { UpdateSalesDocumentDto } from './dto/update-sales-document.dto';
 import { SalesDocument, SalesDocumentLine } from './entities/sales-document.entity';
+import { TenancyService } from '../tenancy/tenancy.service';
+import { TenancyContext } from '../tenancy/tenancy.context';
 
 @Injectable()
 export class SalesService {
   constructor(
+    private readonly tenancyService: TenancyService,
     @InjectRepository(SalesDocument)
-    private readonly salesDocumentRepository: Repository<SalesDocument>,
+    private readonly defaultSalesDocumentRepo: Repository<SalesDocument>,
     @InjectRepository(SalesDocumentLine)
-    private readonly salesDocumentLineRepository: Repository<SalesDocumentLine>,
+    private readonly defaultSalesLineRepo: Repository<SalesDocumentLine>,
   ) { }
+
+  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>): Promise<Repository<T>> {
+    const companyId = TenancyContext.getCompanyId();
+    if (!companyId) return defaultRepo;
+
+    const ds = await this.tenancyService.getTenantDataSource(companyId);
+    return ds.getRepository(entity);
+  }
+
+  private async getSalesDocRepo() { return this.getRepo(SalesDocument, this.defaultSalesDocumentRepo); }
+  private async getSalesLineRepo() { return this.getRepo(SalesDocumentLine, this.defaultSalesLineRepo); }
 
   async create(createSalesDocumentDto: CreateSalesDocumentDto) {
     const { lines, ...documentData } = createSalesDocumentDto;
+
+    const sdRepo = await this.getSalesDocRepo();
+    const slRepo = await this.getSalesLineRepo();
 
     // Calculate totals
     let subtotal = 0;
@@ -38,7 +55,7 @@ export class SalesService {
       totalIva += ivaAmount;
       discounts += discountAmount;
 
-      return this.salesDocumentLineRepository.create({
+      return slRepo.create({
         ...line,
         total,
       });
@@ -50,10 +67,9 @@ export class SalesService {
     let documentNumber = documentData.documentNumber;
 
     // If it's a new document (no ID), we usually want to auto-generate the number
-    // if it wasn't provided or force the next one.
     if (!documentData.id) {
       if (!seriesNumber) {
-        const lastDoc = await this.salesDocumentRepository.findOne({
+        const lastDoc = await sdRepo.findOne({
           where: {
             documentType: documentData.documentType,
             series: documentData.series,
@@ -70,7 +86,7 @@ export class SalesService {
       }
     }
 
-    const document = this.salesDocumentRepository.create({
+    const document = sdRepo.create({
       ...documentData,
       documentNumber,
       seriesNumber,
@@ -81,24 +97,27 @@ export class SalesService {
       lines: documentLines,
     });
 
-    return this.salesDocumentRepository.save(document);
+    return sdRepo.save(document);
   }
 
-  findAll(companyId?: string) {
-    const where: any = {};
+  async findAll(companyId?: string) {
+    const sdRepo = await this.getSalesDocRepo();
     if (companyId) {
-      where.companyId = companyId;
+      return sdRepo.find({
+        where: { companyId },
+        order: { date: 'DESC', createdAt: 'DESC' },
+        relations: ['lines']
+      });
     }
-
-    return this.salesDocumentRepository.find({
-      where,
+    return sdRepo.find({
       order: { date: 'DESC', createdAt: 'DESC' },
       relations: ['lines']
     });
   }
 
   async findOne(id: string) {
-    const document = await this.salesDocumentRepository.findOne({
+    const sdRepo = await this.getSalesDocRepo();
+    const document = await sdRepo.findOne({
       where: { id },
       relations: ['lines']
     });
@@ -109,15 +128,15 @@ export class SalesService {
   }
 
   async update(id: string, updateSalesDocumentDto: UpdateSalesDocumentDto) {
+    const sdRepo = await this.getSalesDocRepo();
     const document = await this.findOne(id);
-    // Note: Updating complex documents with lines requires more logic (re-calculating totals, handling line updates/deletes)
-    // For now, we'll just update the main fields
-    this.salesDocumentRepository.merge(document, updateSalesDocumentDto);
-    return this.salesDocumentRepository.save(document);
+    sdRepo.merge(document, updateSalesDocumentDto);
+    return sdRepo.save(document);
   }
 
   async findByNumber(companyId: string, type: string, series: string, number: number) {
-    const document = await this.salesDocumentRepository.findOne({
+    const sdRepo = await this.getSalesDocRepo();
+    const document = await sdRepo.findOne({
       where: {
         companyId,
         documentType: type,
@@ -130,7 +149,8 @@ export class SalesService {
   }
 
   async remove(id: string) {
+    const sdRepo = await this.getSalesDocRepo();
     const document = await this.findOne(id);
-    return this.salesDocumentRepository.remove(document);
+    return sdRepo.remove(document);
   }
 }

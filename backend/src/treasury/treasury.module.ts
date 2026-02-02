@@ -2,11 +2,13 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TreasuryService } from './treasury.service';
 import { TreasuryController } from './treasury.controller';
+import { PaymentMethodsController } from './payment-methods.controller';
 import { TreasuryDocument, TreasuryDocumentLine } from './entities/treasury.entity';
+import { PaymentMethod } from './entities/payment-method.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TreasuryDocument, TreasuryDocumentLine])],
-  controllers: [TreasuryController],
+  imports: [TypeOrmModule.forFeature([TreasuryDocument, TreasuryDocumentLine, PaymentMethod])],
+  controllers: [TreasuryController, PaymentMethodsController],
   providers: [TreasuryService],
 })
 export class TreasuryModule { }

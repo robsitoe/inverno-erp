@@ -4,7 +4,7 @@ export declare enum ArticleType {
 }
 export declare class Article {
     id: string;
-    companyId: string;
+    companyId: string | null;
     code: string;
     name: string;
     description: string;

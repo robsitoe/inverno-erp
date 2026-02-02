@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, Unique } from 'typeorm';
 
 export enum AccountType {
     ASSET = 'ASSET',
@@ -9,15 +9,18 @@ export enum AccountType {
 }
 
 @Entity('accounts')
+@Unique(['companyId', 'code'])
 export class Account {
+
     @PrimaryColumn()
     id: string;
 
-    @Column({ nullable: true })
-    companyId: string;
+    @Column({ nullable: true, type: 'varchar' })
+    companyId: string | null;
 
-    @Column({ unique: true })
+    @Column()
     code: string;
+
 
     @Column()
     name: string;

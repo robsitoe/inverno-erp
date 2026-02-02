@@ -1,12 +1,17 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, Unique } from 'typeorm';
 
 @Entity('suppliers')
+@Unique(['companyId', 'code'])
 export class Supplier {
     @PrimaryColumn()
     id: string;
 
-    @Column({ unique: true })
+    @Column({ nullable: true, type: 'varchar' })
+    companyId: string | null;
+
+    @Column()
     code: string;
+
 
     @Column()
     name: string;

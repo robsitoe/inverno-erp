@@ -53,9 +53,9 @@ import { Article } from '../../shared/models';
                 class="hover:bg-blue-50 cursor-pointer border-b border-gray-100"
               >
                 <td class="px-2 py-1 font-medium text-blue-700">{{ article.code }}</td>
-                <td class="px-2 py-1">{{ article.description }}</td>
+                <td class="px-2 py-1">{{ article.name || article.description }}</td>
                 <td class="px-2 py-1 text-center">{{ article.unit }}</td>
-                <td class="px-2 py-1 text-right">{{ article.salePrice | number:'1.2-2' }}</td>
+                <td class="px-2 py-1 text-right">{{ (article.salePrice || 0) | number:'1.2-2' }}</td>
                 <td class="px-2 py-1 text-right font-bold" [class.text-red-600]="article.currentStock <= 0" [class.text-green-600]="article.currentStock > 0">
                   {{ article.currentStock }}
                 </td>
@@ -105,7 +105,8 @@ export class ArticleSearchModalComponent implements OnInit {
     const term = this.searchTerm.toLowerCase();
     this.filteredArticles = this.articles.filter(a =>
       a.code.toLowerCase().includes(term) ||
-      a.description.toLowerCase().includes(term)
+      (a.name || '').toLowerCase().includes(term) ||
+      (a.description || '').toLowerCase().includes(term)
     );
   }
 

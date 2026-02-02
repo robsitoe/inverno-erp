@@ -1,12 +1,17 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, Unique } from 'typeorm';
 
 @Entity('customers')
+@Unique(['companyId', 'code'])
 export class Customer {
     @PrimaryColumn()
     id: string;
 
-    @Column({ unique: true })
+    @Column({ nullable: true, type: 'varchar' })
+    companyId: string | null;
+
+    @Column()
     code: string;
+
 
     @Column()
     name: string;

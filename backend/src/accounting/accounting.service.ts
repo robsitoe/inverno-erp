@@ -1,40 +1,82 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
+
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
 import { Account } from './entities/account.entity';
 import { JournalEntry, JournalLine } from './entities/journal-entry.entity';
 
+import { EntityTarget, ObjectLiteral } from 'typeorm';
+import { TenancyService } from '../tenancy/tenancy.service';
+import { TenancyContext } from '../tenancy/tenancy.context';
+import { ACCOUNT_PRESETS } from './accounting-presets';
+
 @Injectable()
 export class AccountingService {
   constructor(
+    private readonly tenancyService: TenancyService,
     @InjectRepository(Account)
-    private readonly accountRepository: Repository<Account>,
+    private readonly defaultAccountRepo: Repository<Account>,
     @InjectRepository(JournalEntry)
-    private readonly journalEntryRepository: Repository<JournalEntry>,
+    private readonly defaultJournalEntryRepo: Repository<JournalEntry>,
     @InjectRepository(JournalLine)
-    private readonly journalLineRepository: Repository<JournalLine>,
+    private readonly defaultJournalLineRepo: Repository<JournalLine>,
   ) { }
+
+  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>): Promise<Repository<T>> {
+    const companyId = TenancyContext.getCompanyId();
+    if (!companyId) {
+      console.warn(`[AccountingService] No companyId in context, using default repository for ${entity.toString()}`);
+      return defaultRepo;
+    }
+
+    try {
+      const ds = await this.tenancyService.getTenantDataSource(companyId);
+      return ds.getRepository(entity);
+    } catch (err: any) {
+      console.error(`[AccountingService] Error getting tenant repository for company ${companyId}:`, err.message);
+      throw err;
+    }
+  }
+
+  private async getAccountRepo() { return this.getRepo(Account, this.defaultAccountRepo); }
+  private async getJournalEntryRepo() { return this.getRepo(JournalEntry, this.defaultJournalEntryRepo); }
+  private async getJournalLineRepo() { return this.getRepo(JournalLine, this.defaultJournalLineRepo); }
 
   // Accounts
 
   async create(createAccountDto: CreateAccountDto | CreateAccountDto[]) {
-    if (Array.isArray(createAccountDto)) {
-      const accounts = this.accountRepository.create(createAccountDto);
-      return this.accountRepository.save(accounts);
+    try {
+      const repo = await this.getAccountRepo();
+      if (Array.isArray(createAccountDto)) {
+        const accounts = repo.create(createAccountDto);
+        return await repo.save(accounts);
+      }
+      const account = repo.create(createAccountDto);
+      return await repo.save(account);
+    } catch (error) {
+      console.error('Error saving account(s):', error);
+      throw new BadRequestException(`Failed to save account: ${error.message}`);
     }
-    const account = this.accountRepository.create(createAccountDto);
-    return this.accountRepository.save(account);
   }
 
-  findAll() {
-    return this.accountRepository.find({ order: { code: 'ASC' } });
+  async findAll(companyId?: string) {
+    const repo = await this.getAccountRepo();
+    if (companyId) {
+      return repo.find({
+        where: { companyId },
+        order: { code: 'ASC' }
+      });
+    }
+    return repo.find({ order: { code: 'ASC' } });
   }
+
 
   async findOne(id: string) {
-    const account = await this.accountRepository.findOne({ where: { id } });
+    const repo = await this.getAccountRepo();
+    const account = await repo.findOne({ where: { id } });
     if (!account) {
       throw new NotFoundException(`Account with ID ${id} not found`);
     }
@@ -42,14 +84,18 @@ export class AccountingService {
   }
 
   async update(id: string, updateAccountDto: UpdateAccountDto) {
+    console.log(`Updating account ${id}:`, updateAccountDto);
+    const repo = await this.getAccountRepo();
     const account = await this.findOne(id);
-    this.accountRepository.merge(account, updateAccountDto);
-    return this.accountRepository.save(account);
+    repo.merge(account, updateAccountDto);
+    return repo.save(account);
   }
 
+
   async remove(id: string) {
+    const repo = await this.getAccountRepo();
     const account = await this.findOne(id);
-    return this.accountRepository.remove(account);
+    return repo.remove(account);
   }
 
   // Journal Entries
@@ -65,23 +111,34 @@ export class AccountingService {
       throw new BadRequestException(`Journal entry is not balanced. Debit: ${totalDebit}, Credit: ${totalCredit}`);
     }
 
-    const journalEntry = this.journalEntryRepository.create({
+    const jeRepo = await this.getJournalEntryRepo();
+    const jlRepo = await this.getJournalLineRepo();
+
+    const journalEntry = jeRepo.create({
       ...createJournalEntryDto,
-      lines: lines.map(line => this.journalLineRepository.create(line)),
+      lines: lines.map(line => jlRepo.create(line)),
     });
 
-    return this.journalEntryRepository.save(journalEntry);
+    return jeRepo.save(journalEntry);
   }
 
-  findAllJournalEntries() {
-    return this.journalEntryRepository.find({
+  async findAllJournalEntries(companyId?: string) {
+    const where: any = {};
+    if (companyId) {
+      where.companyId = companyId;
+    }
+    const repo = await this.getJournalEntryRepo();
+    return repo.find({
+      where,
       relations: ['lines'],
       order: { date: 'DESC', createdAt: 'DESC' }
     });
   }
 
+
   async findOneJournalEntry(id: string) {
-    const entry = await this.journalEntryRepository.findOne({
+    const repo = await this.getJournalEntryRepo();
+    const entry = await repo.findOne({
       where: { id },
       relations: ['lines']
     });
@@ -89,5 +146,109 @@ export class AccountingService {
       throw new NotFoundException(`Journal Entry with ID ${id} not found`);
     }
     return entry;
+  }
+
+  async getAccountStatement(accountId: string, fromDate?: string, toDate?: string, companyId?: string, includeDrafts: boolean = false) {
+    const accRepo = await this.getAccountRepo();
+    const account = await accRepo.findOne({ where: { id: accountId } });
+    if (!account) throw new NotFoundException('Conta não encontrada');
+
+    const isAssetSide = ['ASSET', 'EXPENSE'].includes(account.type);
+    const balanceExpression = isAssetSide
+      ? 'SUM(CAST(line.debit AS DECIMAL) - CAST(line.credit AS DECIMAL))'
+      : 'SUM(CAST(line.credit AS DECIMAL) - CAST(line.debit AS DECIMAL))';
+
+    const statuses = includeDrafts ? ['POSTED', 'DRAFT'] : ['POSTED'];
+
+    const jlRepo = await this.getJournalLineRepo();
+
+    // 1. Calculate Initial Balance
+    const initialBalanceQuery = jlRepo.createQueryBuilder('line')
+      .leftJoin('line.journalEntry', 'entry')
+      .select(balanceExpression, 'balance')
+      .where('line.accountId = :accountId', { accountId })
+      .andWhere('entry.status IN (:...statuses)', { statuses });
+
+    if (companyId) {
+      initialBalanceQuery.andWhere('entry.companyId = :companyId', { companyId });
+    }
+
+    if (fromDate) {
+      initialBalanceQuery.andWhere('entry.date < :fromDate', { fromDate });
+    }
+
+    const initialRes = await initialBalanceQuery.getRawOne();
+    const initialBalance = parseFloat(initialRes?.balance || '0');
+
+    // 2. Fetch movements in period
+    const movementsQuery = jlRepo.createQueryBuilder('line')
+      .leftJoinAndSelect('line.journalEntry', 'entry')
+      .where('line.accountId = :accountId', { accountId })
+      .andWhere('entry.status IN (:...statuses)', { statuses });
+
+    if (companyId) {
+      movementsQuery.andWhere('entry.companyId = :companyId', { companyId });
+    }
+
+    if (fromDate) {
+      movementsQuery.andWhere('entry.date >= :fromDate', { fromDate });
+    }
+    if (toDate) {
+      movementsQuery.andWhere('entry.date <= :toDate', { toDate });
+    }
+
+    const lines = await movementsQuery.orderBy('entry.date', 'ASC').addOrderBy('entry.createdAt', 'ASC').getMany();
+
+    let runningBalance = initialBalance;
+    const movements = lines.map(l => {
+      const movementAmount = isAssetSide
+        ? (Number(l.debit) - Number(l.credit))
+        : (Number(l.credit) - Number(l.debit));
+
+      runningBalance += movementAmount;
+
+      return {
+        date: l.journalEntry.date,
+        docType: l.journalEntry.sourceType || 'JE',
+        docNumber: l.journalEntry.reference,
+        description: l.journalEntry.description || l.description,
+        debit: Number(l.debit),
+        credit: Number(l.credit),
+        balance: runningBalance
+      };
+    });
+
+    return {
+      initialBalance,
+      movements
+    };
+  }
+
+  async loadPresetAccountSystem(presetName: string) {
+    const repo = await this.getAccountRepo();
+    const companyId = TenancyContext.getCompanyId();
+
+    // Check if accounts already exist
+    const count = await repo.count();
+    console.log(`[AccountingService] Checking preset for company ${companyId}. Current account count: ${count}`);
+
+    if (count > 0) {
+      throw new BadRequestException('O sistema de contas já foi inicializado para esta empresa.');
+    }
+
+    const preset = ACCOUNT_PRESETS[presetName];
+
+    if (!preset) {
+      throw new NotFoundException(`Plano de contas '${presetName}' não encontrado.`);
+    }
+
+    // Assign companyId to all accounts
+    const accountsToSave = preset.map(acc => ({
+      ...acc,
+      companyId
+    }));
+
+    console.log(`[AccountingService] Loading ${accountsToSave.length} accounts from preset "${presetName}" for company ${companyId}`);
+    return await repo.save(accountsToSave);
   }
 }

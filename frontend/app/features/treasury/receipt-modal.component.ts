@@ -5,6 +5,8 @@ import { AccountingService } from '../../shared/accounting.service';
 import { AuditService } from '../../shared/audit.service';
 import { PeriodService } from '../../shared/period.service';
 import { EntityListModalComponent } from '../../shared/components/entity-list-modal.component';
+import { DataService } from '../../services/data.service';
+
 
 interface PendingDocRow {
   selected: boolean;
@@ -247,10 +249,8 @@ interface PendingDocRow {
                </div>
                <div>
                   <label class="block font-medium mb-1">Meio de Pagamento</label>
-                  <select [(ngModel)]="paymentMethod" class="w-full border border-gray-300 rounded px-2 py-1">
-                    <option value="CASH">Numerário</option>
-                    <option value="CHECK">Cheque</option>
-                    <option value="TRANSFER">Transferência</option>
+                  <select [(ngModel)]="paymentMethod" (change)="onPaymentMethodChange()" class="w-full border border-gray-300 rounded px-2 py-1">
+                    <option *ngFor="let pm of paymentMethods" [value]="pm.code">{{ pm.description }}</option>
                   </select>
                </div>
              </div>
@@ -299,20 +299,26 @@ export class ReceiptModalComponent implements OnInit {
   selectedTreasuryAccount = '';
   paymentMethod = 'CASH';
   treasuryAccounts: any[] = [];
+  paymentMethods: any[] = [];
 
   showEntityModal = false;
+  selectedEntity: any = null;
   activeCompanyId: string | null = null;
+
 
   constructor(
     private accountingService: AccountingService,
     private auditService: AuditService,
-    private periodService: PeriodService
+    private periodService: PeriodService,
+    private dataService: DataService
   ) { }
+
 
   ngOnInit() {
     this.loadActiveCompany();
     this.loadDocumentTypes();
     this.loadTreasuryAccounts();
+    this.loadPaymentMethods();
 
     if (this.pendingDocument) {
       this.customerName = this.pendingDocument.entity;
@@ -323,24 +329,24 @@ export class ReceiptModalComponent implements OnInit {
   }
 
   loadActiveCompany() {
-    const stored = localStorage.getItem('erp_company_info');
-    if (stored) {
-      this.activeCompanyId = JSON.parse(stored).id;
-    }
+    this.dataService.activeCompany$.subscribe(info => {
+      if (info) {
+        this.activeCompanyId = info.id;
+      }
+    });
   }
 
   loadDocumentTypes() {
-    const stored = localStorage.getItem('erp_treasury_document_types');
-    if (stored) {
-      this.documentTypes = JSON.parse(stored).filter((t: any) => t.nature === 'RECEIVE');
-    }
+    this.dataService.getDocumentTypes('TREASURY').subscribe(allTypes => {
+      this.documentTypes = allTypes.filter((t: any) => t.nature === 'RECEIVE');
 
-    // Default to RE (Recibo) if available, or first one
-    if (this.documentTypes.length > 0) {
-      const re = this.documentTypes.find(t => t.code === 'RE');
-      this.selectedDocType = re ? re.code : this.documentTypes[0].code;
-      this.onDocumentTypeChange();
-    }
+      // Default to RE (Recibo) if available, or first one
+      if (this.documentTypes.length > 0) {
+        const re = this.documentTypes.find(t => t.code === 'RE');
+        this.selectedDocType = re ? re.code : this.documentTypes[0].code;
+        this.onDocumentTypeChange();
+      }
+    });
   }
 
   onDocumentTypeChange() {
@@ -365,19 +371,25 @@ export class ReceiptModalComponent implements OnInit {
   }
 
   loadNextNumber() {
-    const stored = localStorage.getItem('erp_receipts');
-    let nextNum = 1;
-    if (stored) {
-      const receipts = JSON.parse(stored);
-      const relevant = receipts.filter((r: any) =>
-        r.docType === this.selectedDocType && r.series === this.selectedSeries
-      );
-      if (relevant.length > 0) {
-        nextNum = Math.max(...relevant.map((r: any) => r.seriesNumber || 0)) + 1;
+    this.dataService.getReceipts(this.activeCompanyId || undefined).subscribe(receipts => {
+      let nextNum = 1;
+      if (receipts && receipts.length > 0) {
+        const relevant = receipts.filter((r: any) =>
+          r.docType === this.selectedDocType && r.series === this.selectedSeries
+        );
+        if (relevant.length > 0) {
+          nextNum = Math.max(...relevant.map((r: any) => extractNumber(r.seriesNumber))) + 1;
+        }
       }
+      this.currentSeriesNumber = nextNum;
+      this.updateReceiptNumberString();
+    });
+
+    // Helper to safely extract number
+    function extractNumber(val: any): number {
+      const n = Number(val);
+      return isNaN(n) ? 0 : n;
     }
-    this.currentSeriesNumber = nextNum;
-    this.updateReceiptNumberString();
   }
 
   updateReceiptNumberString() {
@@ -398,16 +410,36 @@ export class ReceiptModalComponent implements OnInit {
     }
   }
 
+  loadPaymentMethods() {
+    this.dataService.getPaymentMethods(this.activeCompanyId || undefined).subscribe(methods => {
+      this.paymentMethods = methods;
+      if (this.paymentMethods.length > 0) {
+        const cash = this.paymentMethods.find(pm => pm.code === 'NUM' || pm.code === 'CASH');
+        this.paymentMethod = cash ? cash.code : this.paymentMethods[0].code;
+        this.onPaymentMethodChange();
+      }
+    });
+  }
+
+  onPaymentMethodChange() {
+    const selected = this.paymentMethods.find(pm => pm.code === this.paymentMethod);
+    if (selected && selected.treasuryAccountId) {
+      this.selectedTreasuryAccount = selected.treasuryAccountId;
+    }
+  }
+
   openEntityModal() {
     this.showEntityModal = true;
   }
 
   onEntitySelect(entity: any) {
+    this.selectedEntity = entity;
     this.customerCode = entity.code;
     this.customerName = entity.name;
     this.showEntityModal = false;
     this.loadPendingDocuments();
   }
+
 
   loadPendingDocuments() {
     if (!this.customerName) return;
@@ -430,12 +462,23 @@ export class ReceiptModalComponent implements OnInit {
     );
 
     this.pendingRows = entityDocs.map((doc: any) => {
-      // Calculate already paid amount
-      const relatedReceipts = receipts.filter((r: any) => r.relatedDocument === doc.documentNumber);
-      const paidAmount = relatedReceipts.reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
+      // Calculate already paid amount by checking all receipts and their lines
+      let paidAmount = 0;
+      receipts.forEach((r: any) => {
+        if (r.lines && r.lines.length > 0) {
+          // New logic: check detail lines
+          const line = r.lines.find((l: any) => l.docNumber === doc.documentNumber);
+          if (line) paidAmount += (line.amount || 0);
+        } else if (r.relatedDocument === doc.documentNumber) {
+          // Backward compatibility: check main reference
+          paidAmount += (r.amount || 0);
+        }
+      });
+
       const pending = (doc.total || 0) - paidAmount;
 
-      if (pending <= 1) return null; // Skip fully paid (tolerance 1)
+      if (pending <= 0.01) return null; // Skip fully paid (tolerance 0.01)
+
 
       // Check if this specific doc was passed as pendingDocument to pre-select it
       const isPreSelected = this.pendingDocument && this.pendingDocument.documentNumber === doc.documentNumber;
@@ -599,11 +642,16 @@ export class ReceiptModalComponent implements OnInit {
       }))
     };
 
-    // Save to localStorage
+    // Save to localStorage (Local Cache)
     const stored = localStorage.getItem('erp_receipts');
     const receipts = stored ? JSON.parse(stored) : [];
     receipts.push(receipt);
     localStorage.setItem('erp_receipts', JSON.stringify(receipts));
+
+    // Save to Backend (Permanent Sync)
+    this.dataService.saveReceipt(receipt).subscribe({
+      error: (err) => console.error('Erro ao guardar recibo no servidor:', err)
+    });
 
     // Create Accounting Entry
     this.createAccountingEntry(receipt, selectedRows);
@@ -635,16 +683,20 @@ export class ReceiptModalComponent implements OnInit {
     ];
 
     rows.forEach((row, index) => {
+      const customerAccountId = this.selectedEntity?.receivableAccountId || '18';
+      const customerAccount = this.accountingService.getAccount(customerAccountId);
+
       lines.push({
         id: `${entryId}-${index + 1}`,
-        accountId: '21', // Generic Customer Account
-        accountCode: '21',
-        accountName: 'Clientes',
+        accountId: customerAccountId,
+        accountCode: customerAccount?.code || '18',
+        accountName: customerAccount?.name || 'Clientes',
         debit: 0,
         credit: row.toPay,
         description: `Liq. ${row.docNumber}`
       });
     });
+
 
     const entry: any = {
       id: entryId,

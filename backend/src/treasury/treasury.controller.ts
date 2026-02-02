@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { TreasuryService } from './treasury.service';
 import { CreateTreasuryDto } from './dto/create-treasury.dto';
 import { UpdateTreasuryDto } from './dto/update-treasury.dto';
@@ -13,8 +13,8 @@ export class TreasuryController {
   }
 
   @Get('documents')
-  findAll() {
-    return this.treasuryService.findAll();
+  findAll(@Query('companyId') companyId?: string) {
+    return this.treasuryService.findAll(companyId);
   }
 
   @Get('documents/:id')
@@ -33,8 +33,8 @@ export class TreasuryController {
   }
 
   @Get('receipts')
-  findAllReceipts() {
-    return this.treasuryService.findAllReceipts();
+  findAllReceipts(@Query('companyId') companyId?: string) {
+    return this.treasuryService.findAllReceipts(companyId);
   }
 
   @Post('receipts')
@@ -43,8 +43,8 @@ export class TreasuryController {
   }
 
   @Get('payments')
-  findAllPayments() {
-    return this.treasuryService.findAllPayments();
+  findAllPayments(@Query('companyId') companyId?: string) {
+    return this.treasuryService.findAllPayments(companyId);
   }
 
   @Post('payments')
@@ -52,3 +52,4 @@ export class TreasuryController {
     return this.treasuryService.createPayment(data);
   }
 }
+

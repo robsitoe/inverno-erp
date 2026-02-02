@@ -9,40 +9,64 @@ import { lastValueFrom } from 'rxjs';
 })
 export class SupplierService {
     private suppliers: Supplier[] = [];
-    private readonly STORAGE_KEY = 'erp_suppliers';
+    private activeCompanyId: string | null = null;
 
     constructor(private dataService: DataService) {
-        this.loadSuppliers();
+        this.dataService.activeCompany$.subscribe(company => {
+            if (company) {
+                this.activeCompanyId = company.id;
+
+                const token = localStorage.getItem('access_token');
+                const isLocal = localStorage.getItem('erp_system_config')?.includes('BROWSER');
+
+                if (token || isLocal) {
+                    this.loadSuppliers();
+                }
+            } else {
+                this.activeCompanyId = null;
+                this.suppliers = [];
+            }
+        });
     }
 
     public async loadSuppliers() {
         try {
-            this.suppliers = await lastValueFrom(this.dataService.getSuppliers());
-            if (this.suppliers.length === 0) {
-                // Convert sample data to match Supplier interface if needed
+            const allSuppliers = await lastValueFrom(this.dataService.getSuppliers());
+            // Filter:
+            // 1. Matches current company
+            // 2. No company ID and we are in company 001
+            this.suppliers = allSuppliers.filter(s => {
+                if (s.companyId === this.activeCompanyId) return true;
+                if (!s.companyId && this.activeCompanyId === '001') return true;
+                return false;
+            });
+
+            if (this.suppliers.length === 0 && this.activeCompanyId === '001') {
+                // Convert sample data for company 001 only
                 this.suppliers = SUPPLIERS.map(s => ({
                     id: s.code,
+                    companyId: '001',
                     code: s.code,
                     name: s.name,
                     nif: s.nif,
                     address: s.address,
-                    city: 'Lisboa', // Default
-                    postalCode: '1000-000', // Default
+                    city: 'Lisboa',
+                    postalCode: '1000-000',
                     country: 'PT',
                     phone: '',
                     email: '',
                     paymentTerms: 30,
                     creditLimit: 0,
                     currentBalance: 0,
-                    payableAccountId: '', // To be filled
+                    payableAccountId: '',
                     isActive: true
                 }));
-                this.saveSuppliers();
             }
         } catch (e) {
             this.suppliers = [];
         }
     }
+
 
     private saveSuppliers() {
         this.dataService.saveSupplier(this.suppliers).subscribe();
@@ -65,6 +89,9 @@ export class SupplierService {
     }
 
     createSupplier(supplier: Supplier): void {
+        if (this.activeCompanyId) {
+            supplier.companyId = this.activeCompanyId;
+        }
         this.suppliers.push(supplier);
         this.saveSuppliers();
     }

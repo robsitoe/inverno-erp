@@ -73,15 +73,22 @@ export class SalesDocumentSearchModalComponent implements OnInit {
   documents: any[] = [];
   filteredDocuments: any[] = [];
   searchTerm = '';
+  private activeCompanyId: string | null = null;
 
   constructor(private dataService: DataService) { }
 
   ngOnInit() {
-    this.loadDocuments();
+    // Get active company ID
+    this.dataService.activeCompany$.subscribe(company => {
+      this.activeCompanyId = company?.id || null;
+      this.loadDocuments();
+    });
   }
 
   loadDocuments() {
-    this.dataService.getSalesDocuments().subscribe(docs => {
+    // CRITICAL: Always filter by company ID to prevent data leakage
+    const companyId = this.activeCompanyId || undefined;
+    this.dataService.getSalesDocuments(companyId).subscribe(docs => {
       this.documents = docs;
       // Sort by date desc
       this.documents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

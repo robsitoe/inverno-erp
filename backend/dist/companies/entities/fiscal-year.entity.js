@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FiscalYear = void 0;
 const typeorm_1 = require("typeorm");
-const company_entity_1 = require("./company.entity");
 let FiscalYear = class FiscalYear {
     id;
     year;
@@ -20,7 +19,6 @@ let FiscalYear = class FiscalYear {
     startDate;
     endDate;
     companyId;
-    company;
 };
 exports.FiscalYear = FiscalYear;
 __decorate([
@@ -51,11 +49,6 @@ __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], FiscalYear.prototype, "companyId", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => company_entity_1.Company, { onDelete: 'CASCADE' }),
-    (0, typeorm_1.JoinColumn)({ name: 'companyId' }),
-    __metadata("design:type", company_entity_1.Company)
-], FiscalYear.prototype, "company", void 0);
 exports.FiscalYear = FiscalYear = __decorate([
     (0, typeorm_1.Entity)('fiscal_years')
 ], FiscalYear);

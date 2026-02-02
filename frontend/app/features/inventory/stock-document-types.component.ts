@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StockDocumentType } from '../../shared/models';
+import { DataService } from '../../services/data.service';
 
 @Component({
-    selector: 'app-stock-document-types',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-stock-document-types',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="flex h-full bg-[#F0F0F0]">
       <!-- Left Panel - List -->
       <div class="w-96 bg-white border-r border-gray-300 flex flex-col shrink-0">
@@ -290,313 +291,310 @@ import { StockDocumentType } from '../../shared/models';
   `
 })
 export class StockDocumentTypesComponent implements OnInit {
-    documentTypes: StockDocumentType[] = [];
-    filteredTypes: StockDocumentType[] = [];
-    selectedType: StockDocumentType | null = null;
-    searchTerm = '';
+  documentTypes: StockDocumentType[] = [];
+  filteredTypes: StockDocumentType[] = [];
+  selectedType: StockDocumentType | null = null;
+  searchTerm = '';
 
-    ngOnInit() {
-        this.loadDocumentTypes();
+  constructor(private dataService: DataService) { }
+
+  ngOnInit() {
+    this.loadDocumentTypes();
+  }
+
+  loadDocumentTypes() {
+    this.dataService.getDocumentTypes('STOCK').subscribe(types => {
+      this.documentTypes = types;
+      this.filterTypes();
+    });
+  }
+
+  getDefaultDocumentTypes(): StockDocumentType[] {
+    const now = new Date();
+    return [
+      {
+        id: 'SDT-001',
+        code: 'FI',
+        name: 'Entrada de Stock',
+        description: 'Receção de mercadorias, compras, devoluções de clientes',
+        category: 'ENTRY',
+        movementType: 'IN',
+        affectsStock: true,
+        requiresWarehouse: true,
+        requiresLocation: false,
+        requiresBatch: false,
+        allowsNegativeStock: false,
+        requiresApproval: false,
+        defaultSeries: 'A',
+        numberingSequence: 'AUTO',
+        accountingIntegration: true,
+        defaultDebitAccount: '22',
+        defaultCreditAccount: '21',
+        icon: 'input',
+        color: '#10b981',
+        isActive: true,
+        sortOrder: 1,
+        createdAt: now
+      },
+      {
+        id: 'SDT-002',
+        code: 'FS',
+        name: 'Saída de Stock',
+        description: 'Vendas, consumos, transferências para produção',
+        category: 'EXIT',
+        movementType: 'OUT',
+        affectsStock: true,
+        requiresWarehouse: true,
+        requiresLocation: false,
+        requiresBatch: false,
+        allowsNegativeStock: true,
+        requiresApproval: false,
+        defaultSeries: 'A',
+        numberingSequence: 'AUTO',
+        accountingIntegration: true,
+        defaultDebitAccount: '61',
+        defaultCreditAccount: '22',
+        icon: 'output',
+        color: '#ef4444',
+        isActive: true,
+        sortOrder: 2,
+        createdAt: now
+      },
+      {
+        id: 'SDT-003',
+        code: 'SI',
+        name: 'Stock Inicial',
+        description: 'Abertura de exercício, inventário inicial',
+        category: 'ADJUSTMENT',
+        movementType: 'IN',
+        affectsStock: true,
+        requiresWarehouse: true,
+        requiresLocation: false,
+        requiresBatch: false,
+        allowsNegativeStock: false,
+        requiresApproval: true,
+        defaultSeries: 'A',
+        numberingSequence: 'AUTO',
+        accountingIntegration: true,
+        defaultDebitAccount: '22',
+        defaultCreditAccount: '56',
+        icon: 'inventory_2',
+        color: '#3b82f6',
+        isActive: true,
+        sortOrder: 3,
+        createdAt: now
+      },
+      {
+        id: 'SDT-004',
+        code: 'AIP',
+        name: 'Acertos de Inventário Positivos',
+        description: 'Correções positivas após contagem física',
+        category: 'ADJUSTMENT',
+        movementType: 'IN',
+        affectsStock: true,
+        requiresWarehouse: true,
+        requiresLocation: false,
+        requiresBatch: false,
+        allowsNegativeStock: false,
+        requiresApproval: true,
+        defaultSeries: 'A',
+        numberingSequence: 'AUTO',
+        accountingIntegration: true,
+        defaultDebitAccount: '22',
+        defaultCreditAccount: '78',
+        icon: 'add_circle',
+        color: '#10b981',
+        isActive: true,
+        sortOrder: 4,
+        createdAt: now
+      },
+      {
+        id: 'SDT-005',
+        code: 'AIN',
+        name: 'Acertos de Inventário Negativos',
+        description: 'Correções negativas após contagem física, quebras, perdas',
+        category: 'ADJUSTMENT',
+        movementType: 'OUT',
+        affectsStock: true,
+        requiresWarehouse: true,
+        requiresLocation: false,
+        requiresBatch: false,
+        allowsNegativeStock: true,
+        requiresApproval: true,
+        defaultSeries: 'A',
+        numberingSequence: 'AUTO',
+        accountingIntegration: true,
+        defaultDebitAccount: '68',
+        defaultCreditAccount: '22',
+        icon: 'remove_circle',
+        color: '#ef4444',
+        isActive: true,
+        sortOrder: 5,
+        createdAt: now
+      },
+      {
+        id: 'SDT-006',
+        code: 'LE',
+        name: 'Lançamento de Encargos',
+        description: 'Custos adicionais ao stock (transporte, seguros, etc.)',
+        category: 'ADJUSTMENT',
+        movementType: 'IN',
+        affectsStock: true,
+        requiresWarehouse: true,
+        requiresLocation: false,
+        requiresBatch: false,
+        allowsNegativeStock: false,
+        requiresApproval: false,
+        defaultSeries: 'A',
+        numberingSequence: 'AUTO',
+        accountingIntegration: true,
+        defaultDebitAccount: '22',
+        defaultCreditAccount: '62',
+        icon: 'local_shipping',
+        color: '#f59e0b',
+        isActive: true,
+        sortOrder: 6,
+        createdAt: now
+      },
+      {
+        id: 'SDT-007',
+        code: 'LD',
+        name: 'Lançamento de Descontos',
+        description: 'Descontos que reduzem o valor do stock',
+        category: 'ADJUSTMENT',
+        movementType: 'OUT',
+        affectsStock: true,
+        requiresWarehouse: true,
+        requiresLocation: false,
+        requiresBatch: false,
+        allowsNegativeStock: false,
+        requiresApproval: false,
+        defaultSeries: 'A',
+        numberingSequence: 'AUTO',
+        accountingIntegration: true,
+        defaultDebitAccount: '78',
+        defaultCreditAccount: '22',
+        icon: 'discount',
+        color: '#8b5cf6',
+        isActive: true,
+        sortOrder: 7,
+        createdAt: now
+      },
+      {
+        id: 'SDT-008',
+        code: 'TA',
+        name: 'Transferência entre Armazéns',
+        description: 'Movimentação de stock entre diferentes armazéns',
+        category: 'TRANSFER',
+        movementType: 'NEUTRAL',
+        affectsStock: true,
+        requiresWarehouse: true,
+        requiresLocation: false,
+        requiresBatch: false,
+        allowsNegativeStock: false,
+        requiresApproval: false,
+        defaultSeries: 'A',
+        numberingSequence: 'AUTO',
+        accountingIntegration: false,
+        icon: 'swap_horiz',
+        color: '#06b6d4',
+        isActive: true,
+        sortOrder: 8,
+        createdAt: now
+      }
+    ];
+  }
+
+  filterTypes() {
+    if (!this.searchTerm) {
+      this.filteredTypes = [...this.documentTypes].sort((a, b) => a.sortOrder - b.sortOrder);
+    } else {
+      const term = this.searchTerm.toLowerCase();
+      this.filteredTypes = this.documentTypes
+        .filter(t =>
+          t.code.toLowerCase().includes(term) ||
+          t.name.toLowerCase().includes(term) ||
+          t.description.toLowerCase().includes(term)
+        )
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+    }
+  }
+
+  selectType(type: StockDocumentType) {
+    this.selectedType = { ...type };
+  }
+
+  newDocumentType() {
+    this.selectedType = {
+      id: '',
+      code: '',
+      name: '',
+      description: '',
+      category: 'ENTRY',
+      movementType: 'IN',
+      affectsStock: true,
+      requiresWarehouse: true,
+      requiresLocation: false,
+      requiresBatch: false,
+      allowsNegativeStock: false,
+      requiresApproval: false,
+      defaultSeries: 'A',
+      numberingSequence: 'AUTO',
+      accountingIntegration: false,
+      icon: 'description',
+      color: '#6366f1',
+      isActive: true,
+      sortOrder: this.documentTypes.length + 1,
+      createdAt: new Date()
+    };
+  }
+
+  saveDocumentType() {
+    if (!this.selectedType) return;
+
+    if (!this.selectedType.code || !this.selectedType.name) {
+      alert('Código e Nome são obrigatórios!');
+      return;
     }
 
-    loadDocumentTypes() {
-        const stored = localStorage.getItem('erp_stock_document_types');
-        if (stored) {
-            this.documentTypes = JSON.parse(stored);
-        } else {
-            // Load default types
-            this.documentTypes = this.getDefaultDocumentTypes();
-            this.saveToLocalStorage();
-        }
-        this.filterTypes();
+    if (!this.selectedType.id) {
+      // New type
+      this.selectedType.id = `SDT-${Date.now()}`;
+      this.selectedType.createdAt = new Date();
+      this.documentTypes.push(this.selectedType);
+    } else {
+      // Update existing
+      const index = this.documentTypes.findIndex(t => t.id === this.selectedType!.id);
+      if (index !== -1) {
+        this.selectedType.updatedAt = new Date();
+        this.documentTypes[index] = { ...this.selectedType };
+      }
     }
 
-    getDefaultDocumentTypes(): StockDocumentType[] {
-        const now = new Date();
-        return [
-            {
-                id: 'SDT-001',
-                code: 'FI',
-                name: 'Entrada de Stock',
-                description: 'Receção de mercadorias, compras, devoluções de clientes',
-                category: 'ENTRY',
-                movementType: 'IN',
-                affectsStock: true,
-                requiresWarehouse: true,
-                requiresLocation: false,
-                requiresBatch: false,
-                allowsNegativeStock: false,
-                requiresApproval: false,
-                defaultSeries: 'A',
-                numberingSequence: 'AUTO',
-                accountingIntegration: true,
-                defaultDebitAccount: '22',
-                defaultCreditAccount: '21',
-                icon: 'input',
-                color: '#10b981',
-                isActive: true,
-                sortOrder: 1,
-                createdAt: now
-            },
-            {
-                id: 'SDT-002',
-                code: 'FS',
-                name: 'Saída de Stock',
-                description: 'Vendas, consumos, transferências para produção',
-                category: 'EXIT',
-                movementType: 'OUT',
-                affectsStock: true,
-                requiresWarehouse: true,
-                requiresLocation: false,
-                requiresBatch: false,
-                allowsNegativeStock: true,
-                requiresApproval: false,
-                defaultSeries: 'A',
-                numberingSequence: 'AUTO',
-                accountingIntegration: true,
-                defaultDebitAccount: '61',
-                defaultCreditAccount: '22',
-                icon: 'output',
-                color: '#ef4444',
-                isActive: true,
-                sortOrder: 2,
-                createdAt: now
-            },
-            {
-                id: 'SDT-003',
-                code: 'SI',
-                name: 'Stock Inicial',
-                description: 'Abertura de exercício, inventário inicial',
-                category: 'ADJUSTMENT',
-                movementType: 'IN',
-                affectsStock: true,
-                requiresWarehouse: true,
-                requiresLocation: false,
-                requiresBatch: false,
-                allowsNegativeStock: false,
-                requiresApproval: true,
-                defaultSeries: 'A',
-                numberingSequence: 'AUTO',
-                accountingIntegration: true,
-                defaultDebitAccount: '22',
-                defaultCreditAccount: '56',
-                icon: 'inventory_2',
-                color: '#3b82f6',
-                isActive: true,
-                sortOrder: 3,
-                createdAt: now
-            },
-            {
-                id: 'SDT-004',
-                code: 'AIP',
-                name: 'Acertos de Inventário Positivos',
-                description: 'Correções positivas após contagem física',
-                category: 'ADJUSTMENT',
-                movementType: 'IN',
-                affectsStock: true,
-                requiresWarehouse: true,
-                requiresLocation: false,
-                requiresBatch: false,
-                allowsNegativeStock: false,
-                requiresApproval: true,
-                defaultSeries: 'A',
-                numberingSequence: 'AUTO',
-                accountingIntegration: true,
-                defaultDebitAccount: '22',
-                defaultCreditAccount: '78',
-                icon: 'add_circle',
-                color: '#10b981',
-                isActive: true,
-                sortOrder: 4,
-                createdAt: now
-            },
-            {
-                id: 'SDT-005',
-                code: 'AIN',
-                name: 'Acertos de Inventário Negativos',
-                description: 'Correções negativas após contagem física, quebras, perdas',
-                category: 'ADJUSTMENT',
-                movementType: 'OUT',
-                affectsStock: true,
-                requiresWarehouse: true,
-                requiresLocation: false,
-                requiresBatch: false,
-                allowsNegativeStock: true,
-                requiresApproval: true,
-                defaultSeries: 'A',
-                numberingSequence: 'AUTO',
-                accountingIntegration: true,
-                defaultDebitAccount: '68',
-                defaultCreditAccount: '22',
-                icon: 'remove_circle',
-                color: '#ef4444',
-                isActive: true,
-                sortOrder: 5,
-                createdAt: now
-            },
-            {
-                id: 'SDT-006',
-                code: 'LE',
-                name: 'Lançamento de Encargos',
-                description: 'Custos adicionais ao stock (transporte, seguros, etc.)',
-                category: 'ADJUSTMENT',
-                movementType: 'IN',
-                affectsStock: true,
-                requiresWarehouse: true,
-                requiresLocation: false,
-                requiresBatch: false,
-                allowsNegativeStock: false,
-                requiresApproval: false,
-                defaultSeries: 'A',
-                numberingSequence: 'AUTO',
-                accountingIntegration: true,
-                defaultDebitAccount: '22',
-                defaultCreditAccount: '62',
-                icon: 'local_shipping',
-                color: '#f59e0b',
-                isActive: true,
-                sortOrder: 6,
-                createdAt: now
-            },
-            {
-                id: 'SDT-007',
-                code: 'LD',
-                name: 'Lançamento de Descontos',
-                description: 'Descontos que reduzem o valor do stock',
-                category: 'ADJUSTMENT',
-                movementType: 'OUT',
-                affectsStock: true,
-                requiresWarehouse: true,
-                requiresLocation: false,
-                requiresBatch: false,
-                allowsNegativeStock: false,
-                requiresApproval: false,
-                defaultSeries: 'A',
-                numberingSequence: 'AUTO',
-                accountingIntegration: true,
-                defaultDebitAccount: '78',
-                defaultCreditAccount: '22',
-                icon: 'discount',
-                color: '#8b5cf6',
-                isActive: true,
-                sortOrder: 7,
-                createdAt: now
-            },
-            {
-                id: 'SDT-008',
-                code: 'TA',
-                name: 'Transferência entre Armazéns',
-                description: 'Movimentação de stock entre diferentes armazéns',
-                category: 'TRANSFER',
-                movementType: 'NEUTRAL',
-                affectsStock: true,
-                requiresWarehouse: true,
-                requiresLocation: false,
-                requiresBatch: false,
-                allowsNegativeStock: false,
-                requiresApproval: false,
-                defaultSeries: 'A',
-                numberingSequence: 'AUTO',
-                accountingIntegration: false,
-                icon: 'swap_horiz',
-                color: '#06b6d4',
-                isActive: true,
-                sortOrder: 8,
-                createdAt: now
-            }
-        ];
+    this.saveToLocalStorage();
+    this.filterTypes();
+    alert('Tipo de documento gravado com sucesso!');
+  }
+
+  deleteDocumentType() {
+    if (!this.selectedType || !this.selectedType.id) return;
+
+    if (!confirm(`Tem certeza que deseja eliminar o tipo "${this.selectedType.name}"?`)) {
+      return;
     }
 
-    filterTypes() {
-        if (!this.searchTerm) {
-            this.filteredTypes = [...this.documentTypes].sort((a, b) => a.sortOrder - b.sortOrder);
-        } else {
-            const term = this.searchTerm.toLowerCase();
-            this.filteredTypes = this.documentTypes
-                .filter(t =>
-                    t.code.toLowerCase().includes(term) ||
-                    t.name.toLowerCase().includes(term) ||
-                    t.description.toLowerCase().includes(term)
-                )
-                .sort((a, b) => a.sortOrder - b.sortOrder);
-        }
-    }
+    this.documentTypes = this.documentTypes.filter(t => t.id !== this.selectedType!.id);
+    this.saveToLocalStorage();
+    this.filterTypes();
+    this.selectedType = null;
+    alert('Tipo de documento eliminado com sucesso!');
+  }
 
-    selectType(type: StockDocumentType) {
-        this.selectedType = { ...type };
-    }
+  saveToLocalStorage() {
+    this.dataService.saveDocumentTypes('STOCK', this.documentTypes).subscribe();
+  }
 
-    newDocumentType() {
-        this.selectedType = {
-            id: '',
-            code: '',
-            name: '',
-            description: '',
-            category: 'ENTRY',
-            movementType: 'IN',
-            affectsStock: true,
-            requiresWarehouse: true,
-            requiresLocation: false,
-            requiresBatch: false,
-            allowsNegativeStock: false,
-            requiresApproval: false,
-            defaultSeries: 'A',
-            numberingSequence: 'AUTO',
-            accountingIntegration: false,
-            icon: 'description',
-            color: '#6366f1',
-            isActive: true,
-            sortOrder: this.documentTypes.length + 1,
-            createdAt: new Date()
-        };
-    }
-
-    saveDocumentType() {
-        if (!this.selectedType) return;
-
-        if (!this.selectedType.code || !this.selectedType.name) {
-            alert('Código e Nome são obrigatórios!');
-            return;
-        }
-
-        if (!this.selectedType.id) {
-            // New type
-            this.selectedType.id = `SDT-${Date.now()}`;
-            this.selectedType.createdAt = new Date();
-            this.documentTypes.push(this.selectedType);
-        } else {
-            // Update existing
-            const index = this.documentTypes.findIndex(t => t.id === this.selectedType!.id);
-            if (index !== -1) {
-                this.selectedType.updatedAt = new Date();
-                this.documentTypes[index] = { ...this.selectedType };
-            }
-        }
-
-        this.saveToLocalStorage();
-        this.filterTypes();
-        alert('Tipo de documento gravado com sucesso!');
-    }
-
-    deleteDocumentType() {
-        if (!this.selectedType || !this.selectedType.id) return;
-
-        if (!confirm(`Tem certeza que deseja eliminar o tipo "${this.selectedType.name}"?`)) {
-            return;
-        }
-
-        this.documentTypes = this.documentTypes.filter(t => t.id !== this.selectedType!.id);
-        this.saveToLocalStorage();
-        this.filterTypes();
-        this.selectedType = null;
-        alert('Tipo de documento eliminado com sucesso!');
-    }
-
-    saveToLocalStorage() {
-        localStorage.setItem('erp_stock_document_types', JSON.stringify(this.documentTypes));
-    }
-
-    getActiveCount(): number {
-        return this.documentTypes.filter(t => t.isActive).length;
-    }
+  getActiveCount(): number {
+    return this.documentTypes.filter(t => t.isActive).length;
+  }
 }

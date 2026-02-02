@@ -204,42 +204,14 @@ export class DocumentTypesComponent implements OnInit {
   }
 
   loadTypes() {
-    // Load Sales Types
-    const storedSales = localStorage.getItem('erp_sales_document_types');
-    if (storedSales) {
-      this.salesTypes = JSON.parse(storedSales);
-    } else {
-      this.salesTypes = SALES_DOCUMENT_TYPES.map(t => ({ ...t, module: 'SALES' as const, series: [] }));
-      this.saveToStorage('SALES');
-    }
-
-    // Load Purchase Types
-    const storedPurchases = localStorage.getItem('erp_purchase_document_types');
-    if (storedPurchases) {
-      this.purchaseTypes = JSON.parse(storedPurchases);
-    } else {
-      this.purchaseTypes = PURCHASE_DOCUMENT_TYPES.map(t => ({ ...t, module: 'PURCHASES' as const, series: [] }));
-      this.saveToStorage('PURCHASES');
-    }
-
-    // Load Treasury Types
-    const storedTreasury = localStorage.getItem('erp_treasury_document_types');
-    if (storedTreasury) {
-      this.treasuryTypes = JSON.parse(storedTreasury);
-    } else {
-      this.treasuryTypes = TREASURY_DOCUMENT_TYPES.map(t => ({ ...t, module: 'TREASURY' as const, series: [] }));
-      this.saveToStorage('TREASURY');
-    }
+    this.dataService.getDocumentTypes('SALES').subscribe(types => this.salesTypes = types);
+    this.dataService.getDocumentTypes('PURCHASES').subscribe(types => this.purchaseTypes = types);
+    this.dataService.getDocumentTypes('TREASURY').subscribe(types => this.treasuryTypes = types);
   }
 
   saveToStorage(module: 'SALES' | 'PURCHASES' | 'TREASURY') {
-    if (module === 'SALES') {
-      localStorage.setItem('erp_sales_document_types', JSON.stringify(this.salesTypes));
-    } else if (module === 'PURCHASES') {
-      localStorage.setItem('erp_purchase_document_types', JSON.stringify(this.purchaseTypes));
-    } else {
-      localStorage.setItem('erp_treasury_document_types', JSON.stringify(this.treasuryTypes));
-    }
+    const list = module === 'SALES' ? this.salesTypes : (module === 'PURCHASES' ? this.purchaseTypes : this.treasuryTypes);
+    this.dataService.saveDocumentTypes(module, list).subscribe();
   }
 
   selectType(type: DocumentType) {

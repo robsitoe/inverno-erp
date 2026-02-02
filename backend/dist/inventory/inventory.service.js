@@ -18,61 +18,89 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const article_entity_1 = require("./entities/article.entity");
 const stock_movement_entity_1 = require("./entities/stock-movement.entity");
+const tenancy_service_1 = require("../tenancy/tenancy.service");
+const tenancy_context_1 = require("../tenancy/tenancy.context");
 let InventoryService = class InventoryService {
-    articleRepository;
-    stockMovementRepository;
-    constructor(articleRepository, stockMovementRepository) {
-        this.articleRepository = articleRepository;
-        this.stockMovementRepository = stockMovementRepository;
+    tenancyService;
+    defaultArticleRepo;
+    defaultStockMovementRepo;
+    constructor(tenancyService, defaultArticleRepo, defaultStockMovementRepo) {
+        this.tenancyService = tenancyService;
+        this.defaultArticleRepo = defaultArticleRepo;
+        this.defaultStockMovementRepo = defaultStockMovementRepo;
     }
+    async getRepo(entity, defaultRepo) {
+        const companyId = tenancy_context_1.TenancyContext.getCompanyId();
+        if (!companyId)
+            return defaultRepo;
+        const ds = await this.tenancyService.getTenantDataSource(companyId);
+        return ds.getRepository(entity);
+    }
+    async getArticleRepo() { return this.getRepo(article_entity_1.Article, this.defaultArticleRepo); }
+    async getStockMovementRepo() { return this.getRepo(stock_movement_entity_1.StockMovement, this.defaultStockMovementRepo); }
     async create(createArticleDto) {
+        const repo = await this.getArticleRepo();
         if (Array.isArray(createArticleDto)) {
-            const articles = this.articleRepository.create(createArticleDto);
-            return this.articleRepository.save(articles);
+            const articles = repo.create(createArticleDto);
+            return repo.save(articles);
         }
-        const article = this.articleRepository.create(createArticleDto);
-        return this.articleRepository.save(article);
+        const article = repo.create(createArticleDto);
+        return repo.save(article);
     }
-    findAll() {
-        return this.articleRepository.find({ order: { code: 'ASC' } });
+    async findAll(companyId) {
+        const repo = await this.getArticleRepo();
+        if (companyId) {
+            return repo.find({
+                where: { companyId },
+                order: { code: 'ASC' }
+            });
+        }
+        return repo.find({ order: { code: 'ASC' } });
     }
     async findOne(id) {
-        const article = await this.articleRepository.findOne({ where: { id } });
+        const repo = await this.getArticleRepo();
+        const article = await repo.findOne({ where: { id } });
         if (!article) {
             throw new common_1.NotFoundException(`Article with ID ${id} not found`);
         }
         return article;
     }
     async update(id, updateArticleDto) {
+        const repo = await this.getArticleRepo();
         const article = await this.findOne(id);
-        this.articleRepository.merge(article, updateArticleDto);
-        return this.articleRepository.save(article);
+        repo.merge(article, updateArticleDto);
+        return repo.save(article);
     }
     async remove(id) {
+        const repo = await this.getArticleRepo();
         const article = await this.findOne(id);
-        return this.articleRepository.remove(article);
+        return repo.remove(article);
     }
     async createStockMovement(createStockMovementDto) {
         const { articleId, quantity, movementType } = createStockMovementDto;
+        const artRepo = await this.getArticleRepo();
+        const smRepo = await this.getStockMovementRepo();
         const article = await this.findOne(articleId);
-        const movement = this.stockMovementRepository.create(createStockMovementDto);
-        await this.stockMovementRepository.save(movement);
+        const movement = smRepo.create(createStockMovementDto);
+        await smRepo.save(movement);
         if (movementType === 'IN' || movementType === 'ADJUSTMENT' && Number(quantity) > 0) {
             article.currentStock = Number(article.currentStock) + Number(quantity);
         }
         else {
             article.currentStock = Number(article.currentStock) - Number(quantity);
         }
-        await this.articleRepository.save(article);
+        await artRepo.save(article);
         return movement;
     }
-    findAllStockMovements() {
-        return this.stockMovementRepository.find({
+    async findAllStockMovements() {
+        const repo = await this.getStockMovementRepo();
+        return repo.find({
             order: { date: 'DESC', createdAt: 'DESC' }
         });
     }
     async findOneStockMovement(id) {
-        const movement = await this.stockMovementRepository.findOne({
+        const repo = await this.getStockMovementRepo();
+        const movement = await repo.findOne({
             where: { id }
         });
         if (!movement) {
@@ -84,9 +112,10 @@ let InventoryService = class InventoryService {
 exports.InventoryService = InventoryService;
 exports.InventoryService = InventoryService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(article_entity_1.Article)),
-    __param(1, (0, typeorm_1.InjectRepository)(stock_movement_entity_1.StockMovement)),
-    __metadata("design:paramtypes", [typeorm_2.Repository,
+    __param(1, (0, typeorm_1.InjectRepository)(article_entity_1.Article)),
+    __param(2, (0, typeorm_1.InjectRepository)(stock_movement_entity_1.StockMovement)),
+    __metadata("design:paramtypes", [tenancy_service_1.TenancyService,
+        typeorm_2.Repository,
         typeorm_2.Repository])
 ], InventoryService);
 //# sourceMappingURL=inventory.service.js.map

@@ -1,0 +1,117 @@
+<!-- SIMPLIFIED PAYMENT METHODS CONFIGURATION TABLE -->
+<!-- Replace lines 325-410 in treasury-management.component.ts template -->
+
+<div class="flex-1 overflow-auto">
+  <table class="w-full text-xs border-collapse">
+    <thead class="bg-gray-50 sticky top-0 border-b border-gray-300">
+      <tr>
+        <th class="px-2 py-1 text-left w-20">Código</th>
+        <th class="px-2 py-1 text-left">Descrição</th>
+        <th class="px-2 py-1 text-left w-40">Tipo</th>
+        <th class="px-2 py-1 text-center w-16">Ativo</th>
+        <th class="px-2 py-1 text-center w-16">Ordem</th>
+        <th class="px-2 py-1 text-center w-20">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let pm of paymentMethods; let i = index" 
+          class="border-b border-gray-100 hover:bg-blue-50"
+          [class.bg-yellow-50]="editingPaymentMethod?.id === pm.id">
+        <!-- Code Column -->
+        <td class="px-2 py-1">
+          <input *ngIf="editingPaymentMethod?.id === pm.id" 
+                 [(ngModel)]="editingPaymentMethod.code" 
+                 class="w-full border border-blue-300 rounded-sm px-1 py-0.5 uppercase"
+                 maxlength="10">
+          <span *ngIf="editingPaymentMethod?.id !== pm.id" class="font-mono font-bold text-blue-600">{{ pm.code }}</span>
+        </td>
+        
+        <!-- Description Column -->
+        <td class="px-2 py-1">
+          <input *ngIf="editingPaymentMethod?.id === pm.id" 
+                 [(ngModel)]="editingPaymentMethod.description" 
+                 class="w-full border border-blue-300 rounded-sm px-1 py-0.5">
+          <span *ngIf="editingPaymentMethod?.id !== pm.id">{{ pm.description }}</span>
+        </td>
+        
+        <!-- CATEGORY COLUMN (SIMPLIFIED) -->
+        <td class="px-2 py-1">
+          <!-- Edit Mode: Category Dropdown -->
+          <select *ngIf="editingPaymentMethod?.id === pm.id" 
+                  [(ngModel)]="editingPaymentMethod.category"
+                  (change)="onCategoryChange(editingPaymentMethod)"
+                  class="w-full border border-blue-300 rounded-sm px-1 py-0.5 text-xs">
+            <option *ngFor="let cat of paymentCategories" [value]="cat.id">
+              {{ cat.icon }} {{ cat.name }}
+            </option>
+          </select>
+          
+          <!-- View Mode: Show Category with Account Code -->
+          <span *ngIf="editingPaymentMethod?.id !== pm.id" class="flex items-center gap-1">
+            <span>{{ getCategoryDisplay(pm.category) }}</span>
+            <span class="text-[10px] text-gray-400" [title]="getTreasuryAccountDisplay(pm.treasuryAccountId)">
+              ({{ getTreasuryAccountCode(pm.treasuryAccountId) }})
+            </span>
+          </span>
+        </td>
+        
+        <!-- Active Column -->
+        <td class="px-2 py-1 text-center">
+          <input type="checkbox" 
+                 [(ngModel)]="pm.isActive" 
+                 (change)="savePaymentMethodConfig()"
+                 class="rounded-sm border-gray-300">
+        </td>
+        
+        <!-- Order Column -->
+        <td class="px-2 py-1 text-center">
+          <input *ngIf="editingPaymentMethod?.id === pm.id" 
+                 type="number" 
+                 [(ngModel)]="editingPaymentMethod.sortOrder" 
+                 class="w-12 border border-blue-300 rounded-sm px-1 py-0.5 text-center"
+                 min="1">
+          <span *ngIf="editingPaymentMethod?.id !== pm.id">{{ pm.sortOrder }}</span>
+        </td>
+        
+        <!-- Actions Column -->
+        <td class="px-2 py-1 text-center">
+          <div class="flex justify-center gap-1">
+            <button *ngIf="editingPaymentMethod?.id === pm.id" 
+                    (click)="saveEditingPaymentMethod()" 
+                    class="text-green-600 hover:text-green-800">
+              <span class="material-symbols-outlined text-[16px]">check</span>
+            </button>
+            <button *ngIf="editingPaymentMethod?.id === pm.id" 
+                    (click)="cancelEditPaymentMethod()" 
+                    class="text-red-500 hover:text-red-700">
+              <span class="material-symbols-outlined text-[16px]">close</span>
+            </button>
+            <button *ngIf="editingPaymentMethod?.id !== pm.id" 
+                    (click)="editPaymentMethod(pm)" 
+                    class="text-blue-600 hover:text-blue-800">
+              <span class="material-symbols-outlined text-[16px]">edit</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+      
+      <!-- Empty State -->
+      <tr *ngIf="paymentMethods.length === 0">
+        <td colspan="6" class="px-2 py-8 text-center text-gray-400 italic">
+          Nenhum meio de pagamento configurado. Clique em "Novo Meio" para adicionar.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SIMPLIFIED HELP TEXT -->
+<div class="bg-gray-50 px-3 py-2 border-t border-gray-300 text-[10px] text-gray-600">
+  <p><strong>💡 Dica:</strong> Escolha o tipo de cada meio de pagamento:</p>
+  <ul class="mt-1 ml-4 space-y-0.5">
+    <li>💵 <strong>Dinheiro em Caixa</strong> - Para pagamentos em dinheiro físico</li>
+    <li>🏦 <strong>Banco</strong> - Para transferências, cheques e cartões bancários</li>
+    <li>📱 <strong>Dinheiro Móvel</strong> - Para M-Pesa, E-Mola, etc.</li>
+  </ul>
+  <p class="mt-2 text-gray-500 italic">O sistema configura automaticamente as contas contábeis corretas.</p>
+</div>

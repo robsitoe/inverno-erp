@@ -7,7 +7,7 @@ export declare enum AccountType {
 }
 export declare class Account {
     id: string;
-    companyId: string;
+    companyId: string | null;
     code: string;
     name: string;
     description: string;

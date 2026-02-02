@@ -515,7 +515,7 @@ export class PurchaseDocumentFormComponent {
   }
 
   loadActiveCompany() {
-    this.dataService.getCompanyInfo().subscribe(company => {
+    this.dataService.activeCompany$.subscribe(company => {
       if (company) {
         this.activeCompanyId = company.id;
         this.companyInfo = company;
@@ -533,32 +533,33 @@ export class PurchaseDocumentFormComponent {
   }
 
   loadSeries() {
-    const storedTypes = localStorage.getItem('erp_purchase_document_types');
     this.availableSeries = [];
 
-    if (storedTypes) {
-      const types = JSON.parse(storedTypes);
-      const docType = types.find((t: any) => t.code === this.currentDoc.type);
+    this.dataService.getDocumentTypes('PURCHASES').subscribe(types => {
+      if (types) {
+        const docType = types.find((t: any) => t.code === this.currentDoc.type);
 
-      if (docType && docType.series && docType.series.length > 0) {
-        if (this.activeCompanyId) {
-          this.availableSeries = docType.series.filter((s: any) => s.active && s.companyId == this.activeCompanyId);
-        } else {
-          this.availableSeries = docType.series.filter((s: any) => s.active && !s.companyId);
+        if (docType && docType.series && docType.series.length > 0) {
+          if (this.activeCompanyId) {
+            this.availableSeries = docType.series.filter((s: any) => s.active && s.companyId == this.activeCompanyId);
+          } else {
+            this.availableSeries = docType.series.filter((s: any) => s.active && !s.companyId);
+          }
         }
       }
-    }
 
-    // Ensure current series is in the list, if not select the default one or the first one
-    if (this.availableSeries.length > 0) {
-      const currentExists = this.availableSeries.find(s => s.code === this.currentDoc.series);
-      if (!this.currentDoc.series || !currentExists) {
-        const defaultS = this.availableSeries.find(s => s.isDefault);
-        this.currentDoc.series = defaultS ? defaultS.code : this.availableSeries[0].code;
+      // Ensure current series is in the list, if not select the default one or the first one
+      if (this.availableSeries.length > 0) {
+        const currentExists = this.availableSeries.find(s => s.code === this.currentDoc.series);
+        if (!this.currentDoc.series || !currentExists) {
+          const defaultS = this.availableSeries.find(s => s.isDefault);
+          this.currentDoc.series = defaultS ? defaultS.code : this.availableSeries[0].code;
+        }
+      } else {
+        this.currentDoc.series = '';
       }
-    } else {
-      this.currentDoc.series = '';
-    }
+      this.loadNextNumber(); // Reload next number after series is updated
+    });
   }
 
   createEmptyDocument(): PurchaseDocument {

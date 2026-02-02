@@ -6,7 +6,7 @@ export declare class InventoryController {
     private readonly inventoryService;
     constructor(inventoryService: InventoryService);
     create(createArticleDto: CreateArticleDto | CreateArticleDto[]): Promise<import("./entities/article.entity").Article | import("./entities/article.entity").Article[]>;
-    findAll(): Promise<import("./entities/article.entity").Article[]>;
+    findAll(companyId?: string): Promise<import("./entities/article.entity").Article[]>;
     findOne(id: string): Promise<import("./entities/article.entity").Article>;
     update(id: string, updateArticleDto: UpdateArticleDto): Promise<import("./entities/article.entity").Article>;
     remove(id: string): Promise<import("./entities/article.entity").Article>;

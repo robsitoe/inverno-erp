@@ -1,12 +1,17 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable, of, BehaviorSubject, map, catchError, throwError } from 'rxjs';
+import { SALES_DOCUMENT_TYPES, PURCHASE_DOCUMENT_TYPES, TREASURY_DOCUMENT_TYPES, STOCK_DOCUMENT_TYPES } from '../shared/constants';
+
 
 @Injectable({
     providedIn: 'root'
 })
 export class DataService {
     private config: any;
+    private activeCompanySubject = new BehaviorSubject<any>(this.getStoredCompany());
+    public activeCompany$ = this.activeCompanySubject.asObservable();
+
 
     constructor(private http: HttpClient) {
         this.loadConfig();
@@ -18,15 +23,40 @@ export class DataService {
     }
 
     private get baseUrl() {
-        this.loadConfig();
+        if (!this.config) this.loadConfig();
         return this.config.deploymentMode === 'WEB' ? this.config.apiUrl : 'http://localhost:3000';
     }
 
     private isLocalBrowser(): boolean {
-        // Reload config to ensure we have the latest
-        this.loadConfig();
-        return this.config.deploymentMode === 'LOCAL' && this.config.localStorageType === 'BROWSER';
+        // Check if the user has explicitly selected 'BROWSER' mode
+        if (this.config && this.config.localStorageType === 'BROWSER') {
+            return true;
+        }
+        // DEFAULT: Force Backend Mode to ensure data isolation 
+        return false;
     }
+
+    public checkBackendConnectivity(): Observable<boolean> {
+        return this.http.get(`${this.baseUrl}/test-route`).pipe(
+            map(() => true),
+            catchError(() => of(false))
+        );
+    }
+
+    private getStoredCompany(): any {
+        const stored = localStorage.getItem('erp_company_info');
+        return stored ? JSON.parse(stored) : null;
+    }
+
+    public setActiveCompany(company: any) {
+        if (company) {
+            localStorage.setItem('erp_company_info', JSON.stringify(company));
+        } else {
+            localStorage.removeItem('erp_company_info');
+        }
+        this.activeCompanySubject.next(company);
+    }
+
 
     // --- Company Info ---
     getCompanyInfo(): Observable<any> {
@@ -52,6 +82,8 @@ export class DataService {
     saveCompanyInfo(data: any): Observable<any> {
         if (this.isLocalBrowser()) {
             localStorage.setItem('erp_company_info', JSON.stringify(data));
+            this.activeCompanySubject.next(data);
+
 
             // Update global list (legacy support)
             // Update global list (legacy support)
@@ -221,37 +253,54 @@ export class DataService {
     // --- Articles ---
     getArticles(): Observable<any[]> {
         if (this.isLocalBrowser()) {
-            const stored = localStorage.getItem('erp_articles');
+            const companyId = this.activeCompanySubject.value?.id || '001';
+            const stored = localStorage.getItem(`erp_articles_${companyId}`);
             return of(stored ? JSON.parse(stored) : []);
         } else {
-            return this.http.get<any[]>(`${this.baseUrl}/inventory/articles`);
+            const companyId = this.activeCompanySubject.value?.id || '';
+            return this.http.get<any[]>(`${this.baseUrl}/inventory/articles?companyId=${companyId}`);
         }
     }
 
+
     saveArticle(article: any): Observable<any> {
         if (this.isLocalBrowser()) {
-            const stored = localStorage.getItem('erp_articles');
+            const companyId = this.activeCompanySubject.value?.id || '001';
+            const stored = localStorage.getItem(`erp_articles_${companyId}`);
             const articles = stored ? JSON.parse(stored) : [];
-            const index = articles.findIndex((a: any) => a.id === article.id);
-            if (index !== -1) {
-                articles[index] = article;
+            const dataToSave = Array.isArray(article) ? article : [article];
+
+            // If data is whole array, replace. If single, update.
+            let finalArticles = articles;
+            if (Array.isArray(article)) {
+                finalArticles = article;
             } else {
-                articles.push(article);
+                const index = articles.findIndex((a: any) => a.id === article.id);
+                if (index !== -1) {
+                    articles[index] = article;
+                } else {
+                    articles.push(article);
+                }
             }
-            localStorage.setItem('erp_articles', JSON.stringify(articles));
+            localStorage.setItem(`erp_articles_${companyId}`, JSON.stringify(finalArticles));
             return of(article);
         } else {
             return this.http.post(`${this.baseUrl}/inventory/articles`, article);
         }
     }
 
+
     // --- Accounting ---
-    getAccounts(): Observable<any[]> {
+    getAccounts(companyId?: string): Observable<any[]> {
         if (this.isLocalBrowser()) {
             const stored = localStorage.getItem('erp_accounts_v2');
-            return of(stored ? JSON.parse(stored) : []);
+            const all = stored ? JSON.parse(stored) : [];
+            if (companyId) {
+                return of(all.filter((a: any) => a.companyId === companyId));
+            }
+            return of(all);
         } else {
-            return this.http.get<any[]>(`${this.baseUrl}/accounting/accounts`);
+            return this.http.get<any[]>(`${this.baseUrl}/accounting/accounts?companyId=${companyId || ''}`);
         }
     }
 
@@ -268,16 +317,35 @@ export class DataService {
             localStorage.setItem('erp_accounts_v2', JSON.stringify(accounts));
             return of(account);
         } else {
+            // Use POST for both create and update as backend repo.save() handles both
             return this.http.post(`${this.baseUrl}/accounting/accounts`, account);
         }
     }
 
-    getJournalEntries(): Observable<any[]> {
+
+    loadAccountsPreset(presetName: string): Observable<any> {
         if (this.isLocalBrowser()) {
-            const stored = localStorage.getItem('erp_journal_entries');
-            return of(stored ? JSON.parse(stored) : []);
+            // No local preset logic yet, usually just returns error or does nothing
+            return throwError(() => new Error('Presets not supported in BROWSER mode yet.'));
         } else {
-            return this.http.get<any[]>(`${this.baseUrl}/accounting/journal-entries`);
+            return this.http.post(`${this.baseUrl}/accounting/accounts/presets/${presetName}`, {});
+        }
+    }
+
+
+    getAccountStatement(accountId: string, fromDate?: string, toDate?: string, companyId?: string, includeDrafts: boolean = false): Observable<any> {
+        if (this.isLocalBrowser()) {
+            // Local fallback logic is already handled in AccountStatementComponent 
+            // but for consistency with "aligned with backend" we return empty or just throw
+            // Actually, I'll return empty observable and let component handle local
+            return of({ initialBalance: 0, movements: [] });
+        } else {
+            let params = new HttpParams();
+            if (fromDate) params = params.set('fromDate', fromDate);
+            if (toDate) params = params.set('toDate', toDate);
+            if (companyId) params = params.set('companyId', companyId);
+            if (includeDrafts) params = params.set('includeDrafts', 'true');
+            return this.http.get(`${this.baseUrl}/accounting/statements/${accountId}`, { params });
         }
     }
 
@@ -298,12 +366,29 @@ export class DataService {
         }
     }
 
-    getJournals(): Observable<any[]> {
+    getJournalEntries(companyId?: string): Observable<any[]> {
+        if (this.isLocalBrowser()) {
+            const stored = localStorage.getItem('erp_journal_entries');
+            const all = stored ? JSON.parse(stored) : [];
+            if (companyId) {
+                return of(all.filter((e: any) => e.companyId === companyId));
+            }
+            return of(all);
+        } else {
+            return this.http.get<any[]>(`${this.baseUrl}/accounting/journal-entries?companyId=${companyId || ''}`);
+        }
+    }
+
+    getJournals(companyId?: string): Observable<any[]> {
         if (this.isLocalBrowser()) {
             const stored = localStorage.getItem('erp_journals');
-            return of(stored ? JSON.parse(stored) : []);
+            const all = stored ? JSON.parse(stored) : [];
+            if (companyId) {
+                return of(all.filter((j: any) => j.companyId === companyId));
+            }
+            return of(all);
         } else {
-            return this.http.get<any[]>(`${this.baseUrl}/accounting/journals`);
+            return this.http.get<any[]>(`${this.baseUrl}/accounting/journals?companyId=${companyId || ''}`);
         }
     }
 
@@ -476,40 +561,50 @@ export class DataService {
     // --- Customers ---
     getCustomers(): Observable<any[]> {
         if (this.isLocalBrowser()) {
-            const stored = localStorage.getItem('erp_customers');
+            const companyId = this.activeCompanySubject.value?.id || '001';
+            const stored = localStorage.getItem(`erp_customers_${companyId}`);
             return of(stored ? JSON.parse(stored) : []);
         } else {
-            return this.http.get<any[]>(`${this.baseUrl}/customers`);
+            const companyId = this.activeCompanySubject.value?.id || '';
+            return this.http.get<any[]>(`${this.baseUrl}/customers?companyId=${companyId}`);
         }
     }
 
+
     saveCustomer(customer: any): Observable<any> {
         if (this.isLocalBrowser()) {
-            localStorage.setItem('erp_customers', JSON.stringify(customer));
+            const companyId = this.activeCompanySubject.value?.id || '001';
+            localStorage.setItem(`erp_customers_${companyId}`, JSON.stringify(customer));
             return of(customer);
         } else {
             return this.http.post(`${this.baseUrl}/customers`, customer);
         }
     }
 
+
     // --- Suppliers ---
     getSuppliers(): Observable<any[]> {
         if (this.isLocalBrowser()) {
-            const stored = localStorage.getItem('erp_suppliers');
+            const companyId = this.activeCompanySubject.value?.id || '001';
+            const stored = localStorage.getItem(`erp_suppliers_${companyId}`);
             return of(stored ? JSON.parse(stored) : []);
         } else {
-            return this.http.get<any[]>(`${this.baseUrl}/suppliers`);
+            const companyId = this.activeCompanySubject.value?.id || '';
+            return this.http.get<any[]>(`${this.baseUrl}/suppliers?companyId=${companyId}`);
         }
     }
 
+
     saveSupplier(supplier: any): Observable<any> {
         if (this.isLocalBrowser()) {
-            localStorage.setItem('erp_suppliers', JSON.stringify(supplier));
+            const companyId = this.activeCompanySubject.value?.id || '001';
+            localStorage.setItem(`erp_suppliers_${companyId}`, JSON.stringify(supplier));
             return of(supplier);
         } else {
             return this.http.post(`${this.baseUrl}/suppliers`, supplier);
         }
     }
+
 
     // --- Generic Entities ---
     getGenericEntities(type?: string): Observable<any[]> {
@@ -632,5 +727,87 @@ export class DataService {
         };
 
         return this.http.post(`${this.baseUrl}/sync/push`, data);
+    }
+
+    // --- Document Types ---
+    getDocumentTypes(module: string): Observable<any[]> {
+        // Normalize module name
+        let normalizedModule = module.toUpperCase();
+        if (normalizedModule === 'INVENTORY') normalizedModule = 'STOCK';
+
+        if (this.isLocalBrowser()) {
+            const companyId = this.activeCompanySubject.value?.id || '001';
+            let key = `erp_${normalizedModule.toLowerCase()}_document_types_${companyId}`;
+            let stored = localStorage.getItem(key);
+
+            // Handle transition from 'inventory' to 'stock' key
+            if (!stored && normalizedModule === 'STOCK') {
+                const oldKey = `erp_inventory_document_types_${companyId}`;
+                stored = localStorage.getItem(oldKey);
+                if (stored) localStorage.setItem(key, stored);
+            }
+
+            if (stored) {
+                return of(JSON.parse(stored));
+            }
+
+            // Migration/Fallback: check if there's a global one to clone for this specific company
+            const globalKey = `erp_${normalizedModule.toLowerCase()}_document_types`;
+            let globalStored = localStorage.getItem(globalKey);
+
+            if (!globalStored && normalizedModule === 'STOCK') {
+                globalStored = localStorage.getItem('erp_inventory_document_types');
+            }
+
+            if (globalStored) {
+                const types = JSON.parse(globalStored);
+                localStorage.setItem(key, globalStored);
+                return of(types);
+            }
+
+            // Default from constants if absolutely nothing found
+            let defaults: any[] = [];
+            switch (normalizedModule) {
+                case 'SALES': defaults = SALES_DOCUMENT_TYPES.map(t => ({ ...t, name: t.description, module: 'SALES', series: [], isActive: true })); break;
+                case 'PURCHASES': defaults = PURCHASE_DOCUMENT_TYPES.map(t => ({ ...t, name: t.description, module: 'PURCHASES', series: [], isActive: true })); break;
+                case 'TREASURY': defaults = TREASURY_DOCUMENT_TYPES.map(t => ({ ...t, name: t.description, module: 'TREASURY', series: [], isActive: true })); break;
+                case 'STOCK': defaults = STOCK_DOCUMENT_TYPES.map(t => ({ ...t, name: t.description, module: 'STOCK', series: [], isActive: true })); break;
+            }
+
+            localStorage.setItem(key, JSON.stringify(defaults));
+            return of(defaults);
+        } else {
+            const companyId = this.activeCompanySubject.value?.id || '';
+            return this.http.get<any[]>(`${this.baseUrl}/document-types?module=${normalizedModule}&companyId=${companyId}`).pipe(
+                map(types => {
+                    if (types && types.length > 0) return types;
+
+                    // If no types in backend, generate defaults and send to backend
+                    let defaults: any[] = [];
+                    switch (normalizedModule) {
+                        case 'SALES': defaults = SALES_DOCUMENT_TYPES.map(t => ({ ...t, name: t.description, module: 'SALES', series: [], isActive: true })); break;
+                        case 'PURCHASES': defaults = PURCHASE_DOCUMENT_TYPES.map(t => ({ ...t, name: t.description, module: 'PURCHASES', series: [], isActive: true })); break;
+                        case 'TREASURY': defaults = TREASURY_DOCUMENT_TYPES.map(t => ({ ...t, name: t.description, module: 'TREASURY', series: [], isActive: true })); break;
+                        case 'STOCK': defaults = STOCK_DOCUMENT_TYPES.map(t => ({ ...t, name: t.description, module: 'STOCK', series: [], isActive: true })); break;
+                    }
+                    this.saveDocumentTypes(normalizedModule as any, defaults).subscribe();
+                    return defaults;
+                })
+            );
+        }
+    }
+
+    saveDocumentTypes(module: string, types: any[]): Observable<any> {
+        let normalizedModule = module.toUpperCase();
+        if (normalizedModule === 'INVENTORY') normalizedModule = 'STOCK';
+
+        if (this.isLocalBrowser()) {
+            const companyId = this.activeCompanySubject.value?.id || '001';
+            const key = `erp_${normalizedModule.toLowerCase()}_document_types_${companyId}`;
+            localStorage.setItem(key, JSON.stringify(types));
+            return of(true);
+        } else {
+            return this.http.post(`${this.baseUrl}/document-types`, { module: normalizedModule, types });
+        }
     }
 }

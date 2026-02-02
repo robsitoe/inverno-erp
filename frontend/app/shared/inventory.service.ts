@@ -24,25 +24,64 @@ export class InventoryService {
     private nextMovementId = 1;
     private activeCompanyId: string | null = null;
 
+    private salesDocTypesList: any[] = [];
+    private purchaseDocTypesList: any[] = [];
+    private stockDocTypesList: any[] = [];
+
     constructor(private dataService: DataService) {
-        const storedCompany = localStorage.getItem('erp_company_info');
-        if (storedCompany) {
-            this.activeCompanyId = JSON.parse(storedCompany).id;
-        }
-        this.loadData();
+        this.dataService.activeCompany$.subscribe(company => {
+            if (company) {
+                this.activeCompanyId = company.id;
+                this.clearState();
+
+                // Only load data if logged in or in local browser mode
+                const token = localStorage.getItem('access_token');
+                const isLocal = localStorage.getItem('erp_system_config')?.includes('BROWSER');
+
+                if (token || isLocal) {
+                    this.loadData();
+                }
+            } else {
+                this.activeCompanyId = null;
+                this.clearState();
+            }
+        });
     }
 
+    private clearState() {
+        this.allArticles = [];
+        this.articles = [];
+        this.allWarehouses = [];
+        this.warehouses = [];
+        this.allBatches = [];
+        this.batches = [];
+        this.allStockMovements = [];
+        this.stockMovements = [];
+        this.nextMovementId = 1;
+    }
+
+
     public async loadData() {
+        if (!this.activeCompanyId) return;
+
+        // Load document types
+        try {
+            this.salesDocTypesList = await lastValueFrom(this.dataService.getDocumentTypes('SALES'));
+            this.purchaseDocTypesList = await lastValueFrom(this.dataService.getDocumentTypes('PURCHASES'));
+            this.stockDocTypesList = await lastValueFrom(this.dataService.getDocumentTypes('STOCK'));
+        } catch (e) {
+            console.error('Error loading document types in InventoryService', e);
+        }
+
         // Load articles
         try {
-            this.allArticles = await lastValueFrom(this.dataService.getArticles());
-            if (this.allArticles.length === 0) {
-                this.allArticles = [...SAMPLE_ARTICLES];
-                this.saveArticles();
-            }
+            const allArticles = await lastValueFrom(this.dataService.getArticles());
+            // Filter STRICTLY by active company ID
+            this.allArticles = allArticles.filter(a => a.companyId === this.activeCompanyId);
         } catch (e) {
-            this.allArticles = [...SAMPLE_ARTICLES];
+            this.allArticles = [];
         }
+
         this.articles = this.filterByCompany(this.allArticles);
 
         // Load warehouses (Still from localStorage for now as no backend yet)
@@ -74,8 +113,8 @@ export class InventoryService {
     }
 
     private filterByCompany<T extends { companyId?: string }>(list: T[]): T[] {
-        if (!this.activeCompanyId) return list;
-        return list.filter(item => !item.companyId || item.companyId === this.activeCompanyId);
+        if (!this.activeCompanyId) return [];
+        return list.filter(item => item.companyId === this.activeCompanyId);
     }
 
     private recalculateStockFromDocuments() {
@@ -88,13 +127,8 @@ export class InventoryService {
             const allDocuments = JSON.parse(storedDocuments);
             const documents = this.filterByCompany(allDocuments);
 
-            const storedTypes = localStorage.getItem('erp_stock_document_types');
-            let docTypesMap = new Map<string, any>();
-
-            if (storedTypes) {
-                const docTypes = JSON.parse(storedTypes);
-                docTypes.forEach((t: any) => docTypesMap.set(t.code, t));
-            }
+            const docTypesMap = new Map<string, any>();
+            this.stockDocTypesList.forEach((t: any) => docTypesMap.set(t.code, t));
 
             documents.forEach((doc: any) => {
                 if (doc.date > today) return;
@@ -129,9 +163,7 @@ export class InventoryService {
         if (storedPurchases) {
             const allPurchases = JSON.parse(storedPurchases);
             const purchases = this.filterByCompany(allPurchases);
-            // Load Purchase Types Config
-            const purchaseTypes = JSON.parse(localStorage.getItem('erp_purchase_document_types') || '[]');
-            const purchaseTypesMap = new Map(purchaseTypes.map((t: any) => [t.code, t]));
+            const purchaseTypesMap = new Map(this.purchaseDocTypesList.map((t: any) => [t.code, t]));
 
             purchases.forEach((doc: any) => {
                 if (doc.status !== 'POSTED') return;
@@ -178,9 +210,7 @@ export class InventoryService {
         if (storedSales) {
             const allSales = JSON.parse(storedSales);
             const sales = this.filterByCompany(allSales);
-            // Load Sales Types Config
-            const salesTypes = JSON.parse(localStorage.getItem('erp_sales_document_types') || '[]');
-            const salesTypesMap = new Map(salesTypes.map((t: any) => [t.code, t]));
+            const salesTypesMap = new Map(this.salesDocTypesList.map((t: any) => [t.code, t]));
 
             sales.forEach((doc: any) => {
                 if (doc.status !== 'POSTED' && doc.status !== 'CONFIRMED') return;
@@ -256,7 +286,9 @@ export class InventoryService {
 
     private saveArticles() {
         this.dataService.saveArticle(this.allArticles).subscribe(() => {
-            this.articlesUpdated$.next();
+            this.loadData().then(() => {
+                this.articlesUpdated$.next();
+            });
         });
     }
 
@@ -410,22 +442,18 @@ export class InventoryService {
         // Helper to check warehouse filter
         const matchesWarehouse = (wh: string) => !warehouseFilter || wh === warehouseFilter;
 
-        // Load Document Type Configurations
-        const stockDocTypes = JSON.parse(localStorage.getItem('erp_stock_document_types') || '[]');
-        const salesDocTypes = JSON.parse(localStorage.getItem('erp_sales_document_types') || '[]');
-        const purchaseDocTypes = JSON.parse(localStorage.getItem('erp_purchase_document_types') || '[]');
-
         const getDocConfig = (code: string, source: 'STOCK' | 'SALES' | 'PURCHASE') => {
-            if (source === 'STOCK') return stockDocTypes.find((t: any) => t.code === code);
-            if (source === 'SALES') return salesDocTypes.find((t: any) => t.code === code);
-            if (source === 'PURCHASE') return purchaseDocTypes.find((t: any) => t.code === code);
+            if (source === 'STOCK') return this.stockDocTypesList.find((t: any) => t.code === code);
+            if (source === 'SALES') return this.salesDocTypesList.find((t: any) => t.code === code);
+            if (source === 'PURCHASE') return this.purchaseDocTypesList.find((t: any) => t.code === code);
             return null;
         };
 
         // 1. Process Stock Documents
         const storedStockDocs = localStorage.getItem('erp_stock_documents');
         if (storedStockDocs) {
-            const documents = JSON.parse(storedStockDocs);
+            const allDocuments = JSON.parse(storedStockDocs);
+            const documents = this.filterByCompany(allDocuments);
             documents.forEach((doc: any) => {
                 if (documentTypeFilter && doc.type !== documentTypeFilter) return;
 
@@ -476,7 +504,8 @@ export class InventoryService {
         // 2. Process Sales Documents
         const storedSales = localStorage.getItem('erp_sales_documents');
         if (storedSales) {
-            const salesDocs = JSON.parse(storedSales);
+            const allDocs = JSON.parse(storedSales);
+            const salesDocs = this.filterByCompany(allDocs);
             salesDocs.forEach((doc: any) => {
                 const type = doc.documentType || doc.type;
                 if (doc.status !== 'POSTED' && doc.status !== 'CONFIRMED') return;
@@ -532,7 +561,8 @@ export class InventoryService {
         // 3. Process Purchase Documents
         const storedPurchases = localStorage.getItem('erp_purchase_documents');
         if (storedPurchases) {
-            const purchaseDocs = JSON.parse(storedPurchases);
+            const allDocs = JSON.parse(storedPurchases);
+            const purchaseDocs = this.filterByCompany(allDocs);
             purchaseDocs.forEach((doc: any) => {
                 if (doc.status !== 'POSTED') return;
                 if (documentTypeFilter && doc.type !== documentTypeFilter) return;

@@ -6,16 +6,16 @@ export declare class User {
     id: string;
     username: string;
     password: string;
-    name: string;
-    email: string;
-    phone: string;
+    name?: string;
+    email?: string;
+    phone?: string;
     isAdmin: boolean;
     isSuperAdmin: boolean;
     isTechnical: boolean;
     isActive: boolean;
-    profile: string;
+    profile?: string;
     language: string;
-    permissions: any[];
+    permissions?: any[];
     createdAt: Date;
     updatedAt: Date;
 }

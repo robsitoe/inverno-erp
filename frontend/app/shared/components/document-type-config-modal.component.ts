@@ -69,18 +69,24 @@ import { DataService } from '../../services/data.service';
                   <tr>
                     <th class="border-b border-gray-300 px-2 py-1 w-20">Código</th>
                     <th class="border-b border-gray-300 px-2 py-1">Descrição</th>
-                    <th class="border-b border-gray-300 px-2 py-1 w-32">Tipo</th>
                     <th class="border-b border-gray-300 px-2 py-1 w-24">Natureza</th>
+                    <th class="border-b border-gray-300 px-2 py-1 w-20">Origem</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let doc of documentTypesList" 
                       (click)="selectDocumentType(doc)"
                       class="hover:bg-blue-50 cursor-pointer border-b border-gray-100">
-                    <td class="px-2 py-1 font-bold">{{ doc.code }}</td>
-                    <td class="px-2 py-1">{{ doc.description }}</td>
-                    <td class="px-2 py-1">{{ doc.type }}</td>
-                    <td class="px-2 py-1">{{ doc.nature === 'PAY' ? 'Pagamento' : (doc.nature === 'RECEIVE' ? 'Recebimento' : '-') }}</td>
+                    <td class="px-2 py-1 font-bold flex items-center gap-1">
+                      {{ doc.code }}
+                      <span *ngIf="doc.isStandard" class="text-[8px] bg-blue-100 text-blue-600 px-1 rounded-sm uppercase tracking-tighter">Standard</span>
+                      <span *ngIf="!doc.isStandard" class="text-[8px] bg-green-100 text-green-600 px-1 rounded-sm uppercase tracking-tighter">Custom</span>
+                    </td>
+                    <td class="px-2 py-1 italic text-gray-600">{{ doc.description }}</td>
+                    <td class="px-2 py-1">{{ doc.nature === 'PAY' || doc.nature === 'OUT' ? 'Saída/Pagamento' : (doc.nature === 'RECEIVE' || doc.nature === 'IN' ? 'Entrada/Recebimento' : '-') }}</td>
+                    <td class="px-2 py-1">
+                      <span [class]="doc.isStandard ? 'text-blue-500' : 'text-gray-400'">{{ doc.isStandard ? 'Sistema' : 'Empresa' }}</span>
+                    </td>
                   </tr>
                   <tr *ngIf="documentTypesList.length === 0">
                     <td colspan="4" class="px-2 py-8 text-center text-gray-500">
@@ -884,17 +890,7 @@ export class DocumentTypeConfigModalComponent implements OnInit {
   }
 
   loadDocumentType() {
-    let key = '';
-    switch (this.module) {
-      case 'SALES': key = 'erp_sales_document_types'; break;
-      case 'PURCHASES': key = 'erp_purchase_document_types'; break;
-      case 'INVENTORY': key = 'erp_stock_document_types'; break;
-      case 'TREASURY': key = 'erp_treasury_document_types'; break;
-    }
-
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      const types = JSON.parse(stored);
+    this.dataService.getDocumentTypes(this.module as any).subscribe(types => {
       const found = types.find((t: any) => t.code === this.documentCode);
       if (found) {
         // Merge found config with default config to ensure all fields exist
@@ -912,7 +908,7 @@ export class DocumentTypeConfigModalComponent implements OnInit {
           };
         }
       }
-    }
+    });
 
     // Ensure series array exists
     if (!this.config.series) {
@@ -942,41 +938,15 @@ export class DocumentTypeConfigModalComponent implements OnInit {
   }
 
   loadDocumentTypesList() {
-    let key = '';
-    switch (this.module) {
-      case 'SALES': key = 'erp_sales_document_types'; break;
-      case 'PURCHASES': key = 'erp_purchase_document_types'; break;
-      case 'INVENTORY': key = 'erp_stock_document_types'; break;
-      case 'TREASURY': key = 'erp_treasury_document_types'; break;
-    }
-
-    const stored = localStorage.getItem(key);
-    let list = stored ? JSON.parse(stored) : [];
-
-    if (this.module === 'TREASURY' && list.length === 0) {
-      // Defaults
-      const defaults = [
-        // Receipts
-        { code: 'RE', description: 'Recibo', nature: 'RECEIVE', allowedEntities: { customer: true, supplier: false, state: false, other: false, shareholder: false, bank: false } },
-        { code: 'ADC', description: 'Adiantamento de Cliente', nature: 'RECEIVE', allowedEntities: { customer: true, supplier: false, state: false, other: false, shareholder: false, bank: false } },
-        { code: 'REF', description: 'Recebimento de Fornecedor', nature: 'RECEIVE', allowedEntities: { customer: false, supplier: true, state: false, other: false, shareholder: false, bank: false } },
-        { code: 'OTR', description: 'Outros Recebimentos', nature: 'RECEIVE', allowedEntities: { customer: true, supplier: true, state: true, other: true, shareholder: true, bank: true } },
-
-        // Payments
-        { code: 'PAG', description: 'Pagamento', nature: 'PAY', allowedEntities: { customer: false, supplier: true, state: false, other: false, shareholder: false, bank: false } },
-        { code: 'ADF', description: 'Adiantamento a Fornecedor', nature: 'PAY', allowedEntities: { customer: false, supplier: true, state: false, other: false, shareholder: false, bank: false } },
-        { code: 'PGF', description: 'Pagamento a Funcionários', nature: 'PAY', allowedEntities: { customer: false, supplier: false, state: false, other: true, shareholder: false, bank: false } },
-        { code: 'PGE', description: 'Pagamento ao Estado', nature: 'PAY', allowedEntities: { customer: false, supplier: false, state: true, other: false, shareholder: false, bank: false } },
-        { code: 'OTP', description: 'Outros Pagamentos', nature: 'PAY', allowedEntities: { customer: true, supplier: true, state: true, other: true, shareholder: true, bank: true } }
-      ];
-
-      list = defaults;
-      localStorage.setItem(key, JSON.stringify(list));
-    }
-
-    this.documentTypesList = list;
-    // Sort by code
-    this.documentTypesList.sort((a, b) => a.code.localeCompare(b.code));
+    this.dataService.getDocumentTypes(this.module as any).subscribe(list => {
+      this.documentTypesList = list;
+      // Sort: Standard first, then by code
+      this.documentTypesList.sort((a, b) => {
+        if (a.isStandard && !b.isStandard) return -1;
+        if (!a.isStandard && b.isStandard) return 1;
+        return a.code.localeCompare(b.code);
+      });
+    });
   }
 
   selectDocumentType(doc: any) {
@@ -1064,27 +1034,19 @@ export class DocumentTypeConfigModalComponent implements OnInit {
       return;
     }
 
-    let key = '';
-    switch (this.module) {
-      case 'SALES': key = 'erp_sales_document_types'; break;
-      case 'PURCHASES': key = 'erp_purchase_document_types'; break;
-      case 'INVENTORY': key = 'erp_stock_document_types'; break;
-      case 'TREASURY': key = 'erp_treasury_document_types'; break;
-    }
+    this.dataService.getDocumentTypes(this.module as any).subscribe(types => {
+      const index = types.findIndex((t: any) => t.code === this.config.code);
+      if (index !== -1) {
+        types[index] = { ...types[index], ...this.config };
+      } else {
+        types.push(this.config);
+      }
 
-    const stored = localStorage.getItem(key);
-    let types = stored ? JSON.parse(stored) : [];
-
-    const index = types.findIndex((t: any) => t.code === this.config.code);
-    if (index !== -1) {
-      types[index] = { ...types[index], ...this.config };
-    } else {
-      types.push(this.config);
-    }
-
-    localStorage.setItem(key, JSON.stringify(types));
-    alert('Configuração gravada com sucesso!');
-    this.close.emit();
+      this.dataService.saveDocumentTypes(this.module as any, types).subscribe(() => {
+        alert('Configuração gravada com sucesso!');
+        this.close.emit();
+      });
+    });
   }
 
   delete() {
@@ -1094,28 +1056,19 @@ export class DocumentTypeConfigModalComponent implements OnInit {
       return;
     }
 
-    let key = '';
-    switch (this.module) {
-      case 'SALES': key = 'erp_sales_document_types'; break;
-      case 'PURCHASES': key = 'erp_purchase_document_types'; break;
-      case 'INVENTORY': key = 'erp_stock_document_types'; break;
-      case 'TREASURY': key = 'erp_treasury_document_types'; break;
-    }
-
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      let types = JSON.parse(stored);
+    this.dataService.getDocumentTypes(this.module as any).subscribe(types => {
       const initialLength = types.length;
       types = types.filter((t: any) => t.code !== this.config.code);
 
       if (types.length < initialLength) {
-        localStorage.setItem(key, JSON.stringify(types));
-        alert('Documento removido com sucesso.');
-        this.reset();
+        this.dataService.saveDocumentTypes(this.module as any, types).subscribe(() => {
+          alert('Documento removido com sucesso.');
+          this.reset();
+        });
       } else {
         alert('Documento não encontrado para remover.');
       }
-    }
+    });
   }
 
   reset() {

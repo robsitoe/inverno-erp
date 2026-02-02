@@ -28,6 +28,7 @@ let Company = class Company {
     currency;
     logoUrl;
     seriesConfig;
+    dbConfig;
     documentNameFormat;
     createdAt;
     updatedAt;
@@ -97,6 +98,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'json', nullable: true }),
     __metadata("design:type", Object)
 ], Company.prototype, "seriesConfig", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Object)
+], Company.prototype, "dbConfig", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

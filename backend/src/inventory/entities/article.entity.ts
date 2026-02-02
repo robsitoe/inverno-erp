@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, Unique } from 'typeorm';
 
 export enum ArticleType {
     PRODUCT = 'PRODUCT',
@@ -6,15 +6,17 @@ export enum ArticleType {
 }
 
 @Entity('articles')
+@Unique(['companyId', 'code'])
 export class Article {
     @PrimaryColumn()
     id: string;
 
-    @Column({ nullable: true })
-    companyId: string;
+    @Column({ nullable: true, type: 'varchar' })
+    companyId: string | null;
 
-    @Column({ unique: true })
+    @Column()
     code: string;
+
 
     @Column()
     name: string;

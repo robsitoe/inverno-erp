@@ -13,6 +13,7 @@ exports.Customer = void 0;
 const typeorm_1 = require("typeorm");
 let Customer = class Customer {
     id;
+    companyId;
     code;
     name;
     nif;
@@ -36,7 +37,11 @@ __decorate([
     __metadata("design:type", String)
 ], Customer.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ unique: true }),
+    (0, typeorm_1.Column)({ nullable: true, type: 'varchar' }),
+    __metadata("design:type", Object)
+], Customer.prototype, "companyId", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], Customer.prototype, "code", void 0);
 __decorate([
@@ -100,6 +105,7 @@ __decorate([
     __metadata("design:type", Date)
 ], Customer.prototype, "updatedAt", void 0);
 exports.Customer = Customer = __decorate([
-    (0, typeorm_1.Entity)('customers')
+    (0, typeorm_1.Entity)('customers'),
+    (0, typeorm_1.Unique)(['companyId', 'code'])
 ], Customer);
 //# sourceMappingURL=customer.entity.js.map

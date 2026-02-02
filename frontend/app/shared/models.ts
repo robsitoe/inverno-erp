@@ -5,6 +5,7 @@ export interface Account {
     companyId?: string;
     code: string;
     name: string;
+    description?: string;
     type: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE';
     parentId?: string;
     level: number;
@@ -12,6 +13,7 @@ export interface Account {
     allowPosting: boolean;
     isActive: boolean;
 }
+
 
 export interface Journal {
     id: string;

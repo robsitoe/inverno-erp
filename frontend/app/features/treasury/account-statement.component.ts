@@ -1,0 +1,562 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { AccountingService } from '../../shared/accounting.service';
+import { CustomerService } from '../../shared/customer.service';
+import { SupplierService } from '../../shared/supplier.service';
+import { DataService } from '../../services/data.service';
+
+import { Account, JournalEntry } from '../../shared/models';
+import { EntityListModalComponent } from '../../shared/components/entity-list-modal.component';
+import { SupplierListModalComponent } from '../../shared/components/supplier-list-modal.component';
+import { AccountListModalComponent } from '../../shared/components/account-list-modal.component';
+
+interface StatementMovement {
+    date: Date;
+    docType: string;
+    docNumber: string;
+    description: string;
+    debit: number;
+    credit: number;
+    balance: number;
+}
+
+@Component({
+    selector: 'app-account-statement',
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        EntityListModalComponent,
+        SupplierListModalComponent,
+        AccountListModalComponent
+    ],
+    template: `
+    <div class="flex h-full bg-[#F0F0F0] no-print">
+        <!-- Sidebar Filters -->
+        <div class="w-80 bg-white border-r border-gray-300 flex flex-col shrink-0 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-700 to-blue-800 text-white px-4 py-3 flex items-center gap-2 shrink-0 shadow">
+                <span class="material-symbols-outlined">history</span>
+                <h2 class="font-bold text-sm uppercase tracking-tighter">Extrato de Conta</h2>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-5 text-xs">
+                <!-- Entity Type Selection -->
+                <div class="space-y-1.5">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Tipo de Entidade</label>
+                    <select 
+                        [(ngModel)]="entityType"
+                        (ngModelChange)="setEntityType($event)"
+                        class="w-full px-3 py-1.5 border border-gray-300 rounded text-[11px] font-medium transition-all focus:ring-1 focus:ring-blue-500 outline-none hover:border-gray-400"
+                    >
+                        <option value="CUSTOMER">Clientes (Class 21)</option>
+                        <option value="SUPPLIER">Fornecedores (Class 22)</option>
+                        <option value="ACCOUNT">Contas Gerais (Todas)</option>
+                    </select>
+                </div>
+
+                <!-- Entity Selection with F4 List -->
+                <div class="space-y-1.5">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                        {{ getEntityLabel() }}
+                    </label>
+                    <div class="flex items-center gap-1">
+                        <div class="flex items-center border border-gray-300 bg-white rounded-sm h-6 w-24 relative overflow-hidden group">
+                            <input 
+                                class="w-full h-full px-2 focus:outline-none text-[11px] font-mono font-bold" 
+                                [(ngModel)]="entityCode"
+                                (blur)="onCodeBlur()"
+                                [placeholder]="'Código'"
+                            />
+                            <button 
+                                (click)="openEntityModal()"
+                                class="absolute right-0 top-0 bottom-0 px-1 bg-gray-100 border-l hover:bg-blue-600 hover:text-white text-blue-600 text-[10px] font-black cursor-pointer transition-colors"
+                            >F4</button>
+                        </div>
+                        <div class="flex-1 h-6 border border-gray-300 bg-gray-50 rounded-sm px-2 flex items-center overflow-hidden">
+                            <span class="text-[11px] text-gray-700 truncate font-medium">{{ entityName || 'Selecione uma conta ou entidade...' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date Range -->
+                <div class="space-y-1.5 pt-2 border-t border-gray-100">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase">Intervalo de Datas</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="space-y-1">
+                            <input type="date" [(ngModel)]="dateFrom" class="w-full px-2 py-1.5 border border-gray-300 rounded shadow-sm hover:border-gray-400" />
+                        </div>
+                        <div class="space-y-1">
+                            <input type="date" [(ngModel)]="dateTo" class="w-full px-2 py-1.5 border border-gray-300 rounded shadow-sm hover:border-gray-400" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Options -->
+                <div class="space-y-2 pt-2">
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <input type="checkbox" [(ngModel)]="showOnlyPending" class="rounded text-blue-600 focus:ring-blue-500" />
+                        <span class="text-gray-600 group-hover:text-blue-700 transition-colors">Apenas movimentos em aberto</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <input type="checkbox" [(ngModel)]="includeDrafts" class="rounded text-blue-600 focus:ring-blue-500" />
+                        <span class="text-gray-600 group-hover:text-blue-700 transition-colors">Incluir Rascunhos (Previsional)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="p-4 border-t border-gray-200 bg-gray-50 shrink-0 space-y-2">
+                <button 
+                    (click)="generateStatement()"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded shadow-lg hover:shadow-xl active:transform active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                    <span class="material-symbols-outlined text-[18px]">play_circle</span>
+                    VISUALIZAR EXTRATO
+                </button>
+                <button 
+                    (click)="resetFilters()"
+                    class="w-full bg-white hover:bg-gray-100 text-gray-500 font-bold py-2 rounded border border-gray-200 transition-all flex items-center justify-center gap-2"
+                >
+                    <span class="material-symbols-outlined text-[18px]">refresh</span>
+                    LIMPAR FILTROS
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Display Area -->
+        <div class="flex-1 flex flex-col overflow-hidden relative">
+            <!-- Toolbar -->
+            <div class="bg-white border-b border-gray-300 px-4 py-2.5 flex justify-between items-center shrink-0 shadow-sm z-10">
+                <div class="flex items-center gap-6">
+                    <button class="flex items-center gap-1.5 text-gray-600 hover:text-blue-700 text-[11px] font-bold uppercase tracking-tight" (click)="windowPrint()">
+                        <span class="material-symbols-outlined text-lg">print</span> Imprimir
+                    </button>
+                    <button class="flex items-center gap-1.5 text-gray-600 hover:text-green-700 text-[11px] font-bold uppercase tracking-tight">
+                        <span class="material-symbols-outlined text-lg">table_view</span> Excel
+                    </button>
+                    <button class="flex items-center gap-1.5 text-gray-600 hover:text-red-700 text-[11px] font-bold uppercase tracking-tight">
+                        <span class="material-symbols-outlined text-lg">picture_as_pdf</span> PDF
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-gray-400 font-mono bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+                    <span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                    {{ currentDate | date:'dd/MM/yyyy HH:mm' }}
+                </div>
+            </div>
+
+            <!-- Statement Content -->
+            <div class="flex-1 overflow-auto bg-[#E5E7EB] p-8" id="statement-area">
+                <div *ngIf="!movements.length" class="h-full flex flex-col items-center justify-center text-gray-400">
+                    <div class="bg-white p-12 rounded-full shadow-inner mb-6">
+                        <span class="material-symbols-outlined text-[120px] opacity-20">description</span>
+                    </div>
+                    <p *ngIf="!selectedAccountId" class="text-2xl font-light tracking-widest uppercase opacity-40 text-center">Selecione uma conta para gerar o extrato</p>
+                    <div *ngIf="selectedAccountId" class="text-center space-y-2">
+                        <p class="text-2xl font-light tracking-widest uppercase opacity-40">Nenhum movimento encontrado</p>
+                        <p class="text-xs opacity-60 italic">Verifique se as faturas estão rascunho ou tente marcar "Incluir Rascunhos".</p>
+                    </div>
+                </div>
+
+
+                <!-- Template Content (Paper format) -->
+                <div *ngIf="movements.length > 0" class="max-w-4xl mx-auto bg-white p-10 shadow-2xl border border-gray-200 rounded-sm min-h-[1120px] flex flex-col">
+                    <!-- Document Header -->
+                    <div class="border-b-2 border-gray-900 pb-4 mb-6 flex justify-between items-start">
+                        <div>
+                            <h1 class="text-2xl font-black text-gray-900 tracking-tighter">EXTRATO DE CONTA CORRENTE</h1>
+                            <p class="text-xs text-gray-500 font-mono uppercase">Inverno ERP - Sistema de Gestão</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs font-bold text-gray-400">PERÍODO</div>
+                            <div class="text-sm font-black">{{ dateFrom | date:'dd MMM yyyy' }} - {{ dateTo | date:'dd MMM yyyy' }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Entity Info -->
+                    <div class="grid grid-cols-2 gap-8 mb-8">
+                        <div>
+                            <div class="text-[10px] font-bold text-gray-400 uppercase mb-1">Entidade / Conta</div>
+                            <div class="text-lg font-bold text-blue-900 leading-tight">{{ getEntityDisplay() }}</div>
+                            <div class="text-xs text-gray-600">{{ getEntityDetails() }}</div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded flex flex-col justify-center border border-gray-100 italic">
+                            <div class="text-[10px] font-bold text-gray-400 uppercase mb-1 text-center">Resumo de Saldos</div>
+                            <div class="flex justify-between text-xs px-4">
+                                <span>Saldo Inicial:</span>
+                                <span class="font-mono">{{ initialBalance | number:'1.2-2' }}</span>
+                            </div>
+                            <div class="flex justify-between text-xs px-4 border-t border-gray-200 mt-1 pt-1">
+                                <span>Saldo Final:</span>
+                                <span class="font-mono font-bold" [class.text-red-600]="finalBalance < 0">{{ finalBalance | number:'1.2-2' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Movements Table -->
+                    <table class="w-full text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-gray-900 text-white">
+                                <th class="px-3 py-2 text-left w-20">Data</th>
+                                <th class="px-3 py-2 text-left">Documento / Descrição</th>
+                                <th class="px-3 py-2 text-right w-24">Débito</th>
+                                <th class="px-3 py-2 text-right w-24">Crédito</th>
+                                <th class="px-3 py-2 text-right w-28">Saldo Acum.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Initial Balance Row -->
+                            <tr class="bg-blue-50/50 border-b border-gray-200 italic font-medium">
+                                <td class="px-3 py-2 text-gray-400">{{ dateFrom | date:'dd/MM/yy' }}</td>
+                                <td class="px-3 py-2">Saldo à data de {{ dateFrom | date:'dd/MM/yyyy' }}</td>
+                                <td class="px-3 py-2 text-right">-</td>
+                                <td class="px-3 py-2 text-right">-</td>
+                                <td class="px-3 py-2 text-right font-mono">{{ initialBalance | number:'1.2-2' }}</td>
+                            </tr>
+                            <!-- Movement Rows -->
+                            <tr *ngFor="let m of movements" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                <td class="px-3 py-2 text-gray-500">{{ m.date | date:'dd/MM/yy' }}</td>
+                                <td class="px-3 py-2">
+                                    <div class="font-bold text-gray-800">{{ m.docType }} {{ m.docNumber }}</div>
+                                    <div class="text-[10px] text-gray-500 uppercase">{{ m.description }}</div>
+                                </td>
+                                <td class="px-3 py-2 text-right font-mono font-medium text-green-700">
+                                    {{ m.debit > 0 ? (m.debit | number:'1.2-2') : '-' }}
+                                </td>
+                                <td class="px-3 py-2 text-right font-mono font-medium text-red-700">
+                                    {{ m.credit > 0 ? (m.credit | number:'1.2-2') : '-' }}
+                                </td>
+                                <td class="px-3 py-2 text-right font-mono font-bold" [class.text-blue-700]="m.balance >= 0" [class.text-red-600]="m.balance < 0">
+                                    {{ m.balance | number:'1.2-2' }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-gray-50 font-black text-[13px]">
+                            <tr>
+                                <td colspan="2" class="px-3 py-3 text-right uppercase text-gray-500">Totais do Período</td>
+                                <td class="px-3 py-3 text-right font-mono text-green-700">{{ totalDebit | number:'1.2-2' }}</td>
+                                <td class="px-3 py-3 text-right font-mono text-red-700">{{ totalCredit | number:'1.2-2' }}</td>
+                                <td class="px-3 py-3 text-right font-mono bg-gray-900 text-white">{{ finalBalance | number:'1.2-2' }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <!-- Footer Note -->
+                    <div class="mt-8 pt-4 border-t border-dashed border-gray-300 flex justify-between text-[10px] text-gray-400 uppercase font-mono">
+                        <div>Emitido por: {{ currentUser }}</div>
+                        <div>Folha 1 de 1</div>
+                        <div>Assinatura do Responsável: ___________________________</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <app-entity-list-modal 
+        *ngIf="showEntityModal" 
+        (close)="showEntityModal = false" 
+        (select)="onEntitySelect($event)"
+    ></app-entity-list-modal>
+
+    <app-supplier-list-modal 
+        *ngIf="showSupplierModal" 
+        (close)="showSupplierModal = false" 
+        (select)="onSupplierSelect($event)"
+    ></app-supplier-list-modal>
+
+    <app-account-list-modal 
+        *ngIf="showAccountModal" 
+        [selectedId]="selectedAccountId"
+        (close)="showAccountModal = false" 
+        (select)="onAccountSelect($event)"
+    ></app-account-list-modal>
+    `,
+    styles: [`
+        @media print {
+            .no-print { display: none !important; }
+            #statement-area { padding: 0 !important; bg: white !important; }
+            .shadow-sm, .shadow-2xl { box-shadow: none !important; }
+            .border { border: 1px solid #111 !important; }
+            .max-w-4xl { max-width: 100% !important; border: none !important; }
+        }
+    `]
+})
+export class AccountStatementComponent implements OnInit {
+    // Selection state
+    entityType: 'CUSTOMER' | 'SUPPLIER' | 'ACCOUNT' = 'CUSTOMER';
+    selectedAccountId: string = '';
+    entityCode: string = '';
+    entityName: string = '';
+    selectedEntity: any = null;
+
+    // Modal state
+    showEntityModal = false;
+    showSupplierModal = false;
+    showAccountModal = false;
+
+    // Filters
+    dateFrom: string = '';
+    dateTo: string = '';
+    showOnlyPending: boolean = false;
+    includeDrafts: boolean = false;
+
+    // Data
+    availableAccounts: Account[] = [];
+    currentDate: Date = new Date();
+
+    // Statement Data
+    initialBalance: number = 0;
+    movements: StatementMovement[] = [];
+    totalDebit: number = 0;
+    totalCredit: number = 0;
+    finalBalance: number = 0;
+
+    currentUser = 'admin';
+
+    constructor(
+        private accountingService: AccountingService,
+        private customerService: CustomerService,
+        private supplierService: SupplierService,
+        private dataService: DataService
+    ) { }
+
+
+    ngOnInit() {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        this.dateFrom = firstDay.toISOString().split('T')[0];
+        this.dateTo = today.toISOString().split('T')[0];
+
+        this.dataService.activeCompany$.subscribe(company => {
+            if (company) {
+                this.resetSelection();
+                this.loadAccounts();
+                this.movements = [];
+                this.initialBalance = 0;
+                this.finalBalance = 0;
+            }
+        });
+    }
+
+
+    loadAccounts() {
+        this.availableAccounts = this.accountingService.getAccounts()
+            .filter(a => a.allowPosting)
+            .sort((a, b) => a.code.localeCompare(b.code));
+    }
+
+    getEntityLabel(): string {
+        switch (this.entityType) {
+            case 'CUSTOMER': return 'Cliente';
+            case 'SUPPLIER': return 'Fornecedor';
+            case 'ACCOUNT': return 'Conta do PGC';
+            default: return 'Entidade';
+        }
+    }
+
+    setEntityType(type: 'CUSTOMER' | 'SUPPLIER' | 'ACCOUNT') {
+        this.entityType = type;
+        this.resetSelection();
+    }
+
+    resetSelection() {
+        this.selectedAccountId = '';
+        this.entityCode = '';
+        this.entityName = '';
+        this.selectedEntity = null;
+        this.movements = [];
+    }
+
+    openEntityModal() {
+        if (this.entityType === 'CUSTOMER') this.showEntityModal = true;
+        else if (this.entityType === 'SUPPLIER') this.showSupplierModal = true;
+        else if (this.entityType === 'ACCOUNT') this.showAccountModal = true;
+    }
+
+    onEntitySelect(entity: any) {
+        this.showEntityModal = false;
+        this.selectedEntity = entity;
+        this.entityCode = entity.code;
+        this.entityName = entity.name;
+        this.selectedAccountId = entity.receivableAccountId;
+    }
+
+    onSupplierSelect(supplier: any) {
+        this.showSupplierModal = false;
+        this.selectedEntity = supplier;
+        this.entityCode = supplier.code;
+        this.entityName = supplier.name;
+        this.selectedAccountId = supplier.payableAccountId;
+    }
+
+    onAccountSelect(acc: Account) {
+        this.showAccountModal = false;
+        this.selectedEntity = null;
+        this.entityCode = acc.code;
+        this.entityName = acc.name;
+        this.selectedAccountId = acc.id;
+    }
+
+    onCodeBlur() {
+        if (!this.entityCode) {
+            this.resetSelection();
+            return;
+        }
+
+        // Try to find entity by code
+        if (this.entityType === 'CUSTOMER') {
+            const customer = this.customerService.getCustomers().find(c => c.code === this.entityCode);
+            if (customer) this.onEntitySelect(customer);
+        } else if (this.entityType === 'SUPPLIER') {
+            const supplier = this.supplierService.getSuppliers().find(s => s.code === this.entityCode);
+            if (supplier) this.onSupplierSelect(supplier);
+        } else {
+            const acc = this.accountingService.getAccounts().find(a => a.code === this.entityCode);
+            if (acc) this.onAccountSelect(acc);
+        }
+    }
+
+    generateStatement() {
+        if (!this.selectedAccountId) {
+            alert('Por favor, selecione uma conta ou entidade primeiro.');
+            return;
+        }
+
+        const companyInfo = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
+        const companyId = companyInfo.id;
+
+        const account = this.accountingService.getAccount(this.selectedAccountId);
+        const isAssetSide = account ? ['ASSET', 'EXPENSE'].includes(account.type) : true;
+
+        this.accountingService.getAccountStatement(this.selectedAccountId, this.dateFrom, this.dateTo, companyId, this.includeDrafts).subscribe({
+            next: (data) => {
+                if (data && data.movements && data.movements.length > 0) {
+                    this.initialBalance = data.initialBalance;
+                    this.totalDebit = 0;
+                    this.totalCredit = 0;
+
+                    this.movements = data.movements.map((m: any) => {
+                        this.totalDebit += Number(m.debit) || 0;
+                        this.totalCredit += Number(m.credit) || 0;
+
+                        // Use backend balance if provided, otherwise calculate
+                        const calculatedBalance = m.balance !== undefined ? m.balance :
+                            (isAssetSide ? (m.debit - m.credit) : (m.credit - m.debit));
+
+                        return {
+                            ...m,
+                            date: new Date(m.date),
+                            balance: calculatedBalance
+                        };
+                    });
+
+                    const lastMovement = this.movements[this.movements.length - 1];
+                    this.finalBalance = lastMovement ? lastMovement.balance : this.initialBalance;
+                } else {
+                    this.generateStatementLocally();
+                }
+
+                if (this.movements.length === 0) {
+                    this.finalBalance = this.initialBalance;
+                }
+
+            },
+            error: () => this.generateStatementLocally()
+        });
+    }
+
+    generateStatementLocally() {
+        const journalEntries = this.accountingService.getJournalEntries();
+        const startDate = new Date(this.dateFrom);
+        const endDate = new Date(this.dateTo);
+        endDate.setHours(23, 59, 59);
+
+        const account = this.accountingService.getAccount(this.selectedAccountId);
+        const isAssetSide = account ? ['ASSET', 'EXPENSE'].includes(account.type) : true;
+
+        // 1. Calculate Initial Balance
+        this.initialBalance = 0;
+        journalEntries.forEach(entry => {
+            if (entry.status !== 'POSTED' && !this.includeDrafts) return;
+            const entryDate = new Date(entry.date);
+            if (entryDate < startDate) {
+                entry.lines.filter(l => l.accountId === this.selectedAccountId).forEach(line => {
+                    const amount = isAssetSide
+                        ? (line.debit || 0) - (line.credit || 0)
+                        : (line.credit || 0) - (line.debit || 0);
+                    this.initialBalance += amount;
+                });
+            }
+        });
+
+        // 2. Fetch Movements
+        const periodMovements: any[] = [];
+        journalEntries.forEach(entry => {
+            if (entry.status !== 'POSTED' && !this.includeDrafts) return;
+            const entryDate = new Date(entry.date);
+            if (entryDate >= startDate && entryDate <= endDate) {
+                const line = entry.lines.find(l => l.accountId === this.selectedAccountId);
+                if (line) {
+                    periodMovements.push({
+                        date: entryDate,
+                        docType: entry.sourceType || 'JE',
+                        docNumber: entry.reference || entry.id,
+                        description: entry.description || line.description,
+                        debit: line.debit || 0,
+                        credit: line.credit || 0
+                    });
+                }
+            }
+        });
+
+        periodMovements.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+        let running = this.initialBalance;
+        this.totalDebit = 0;
+        this.totalCredit = 0;
+
+        this.movements = periodMovements.map(m => {
+            const movementAmount = isAssetSide
+                ? (m.debit - m.credit)
+                : (m.credit - m.debit);
+
+            running += movementAmount;
+            this.totalDebit += m.debit;
+            this.totalCredit += m.credit;
+            return {
+                ...m,
+                balance: running
+            };
+        });
+
+        this.finalBalance = running;
+    }
+
+    getEntityDisplay(): string {
+        if (this.selectedEntity) return `${this.selectedEntity.code} - ${this.selectedEntity.name}`;
+        const acc = this.availableAccounts.find(a => a.id === this.selectedAccountId);
+        return acc ? `${acc.code} - ${acc.name}` : 'SELCIONE UMA CONTA';
+    }
+
+    getEntityDetails(): string {
+        if (this.selectedEntity) {
+            return `NIF: ${this.selectedEntity.nif || '---'} | Endereço: ${this.selectedEntity.address || '---'}`;
+        }
+        return 'Detalhamento geral da conta contabilística selecionada';
+    }
+
+    resetFilters() {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        this.dateFrom = firstDay.toISOString().split('T')[0];
+        this.dateTo = today.toISOString().split('T')[0];
+        this.showOnlyPending = false;
+        this.includeDrafts = false;
+        this.resetSelection();
+    }
+
+    windowPrint() {
+        window.print();
+    }
+}

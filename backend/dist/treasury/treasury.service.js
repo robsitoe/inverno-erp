@@ -17,46 +17,115 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const treasury_entity_1 = require("./entities/treasury.entity");
+const payment_method_entity_1 = require("./entities/payment-method.entity");
+const tenancy_service_1 = require("../tenancy/tenancy.service");
+const tenancy_context_1 = require("../tenancy/tenancy.context");
 let TreasuryService = class TreasuryService {
-    treasuryRepository;
-    constructor(treasuryRepository) {
-        this.treasuryRepository = treasuryRepository;
+    tenancyService;
+    defaultTreasuryRepo;
+    defaultPaymentMethodRepo;
+    constructor(tenancyService, defaultTreasuryRepo, defaultPaymentMethodRepo) {
+        this.tenancyService = tenancyService;
+        this.defaultTreasuryRepo = defaultTreasuryRepo;
+        this.defaultPaymentMethodRepo = defaultPaymentMethodRepo;
     }
-    create(createTreasuryDto) {
-        const treasury = this.treasuryRepository.create(createTreasuryDto);
-        return this.treasuryRepository.save(treasury);
+    async getRepo(entity, defaultRepo) {
+        const companyId = tenancy_context_1.TenancyContext.getCompanyId();
+        if (!companyId)
+            return defaultRepo;
+        const ds = await this.tenancyService.getTenantDataSource(companyId);
+        return ds.getRepository(entity);
     }
-    findAll() {
-        return this.treasuryRepository.find({ relations: ['lines'] });
+    async getTreasuryRepo() { return this.getRepo(treasury_entity_1.TreasuryDocument, this.defaultTreasuryRepo); }
+    async getPaymentMethodRepo() { return this.getRepo(payment_method_entity_1.PaymentMethod, this.defaultPaymentMethodRepo); }
+    async create(createTreasuryDto) {
+        const repo = await this.getTreasuryRepo();
+        const treasury = repo.create(createTreasuryDto);
+        return repo.save(treasury);
     }
-    findOne(id) {
-        return this.treasuryRepository.findOne({ where: { id }, relations: ['lines'] });
+    async findAll(companyId) {
+        const repo = await this.getTreasuryRepo();
+        if (companyId) {
+            return repo.find({
+                where: { companyId },
+                relations: ['lines']
+            });
+        }
+        return repo.find({ relations: ['lines'] });
     }
-    update(id, updateTreasuryDto) {
-        return this.treasuryRepository.update(id, updateTreasuryDto);
+    async findOne(id) {
+        const repo = await this.getTreasuryRepo();
+        const doc = await repo.findOne({ where: { id }, relations: ['lines'] });
+        if (!doc)
+            throw new common_1.NotFoundException('Documento de tesouraria não encontrado');
+        return doc;
     }
-    remove(id) {
-        return this.treasuryRepository.delete(id);
+    async update(id, updateTreasuryDto) {
+        const repo = await this.getTreasuryRepo();
+        return repo.update(id, updateTreasuryDto);
     }
-    findAllReceipts() {
-        return this.treasuryRepository.find({ where: { type: treasury_entity_1.TreasuryDocumentType.RECEIPT }, relations: ['lines'] });
+    async remove(id) {
+        const repo = await this.getTreasuryRepo();
+        return repo.delete(id);
     }
-    createReceipt(data) {
-        const receipt = this.treasuryRepository.create({ ...data, type: treasury_entity_1.TreasuryDocumentType.RECEIPT });
-        return this.treasuryRepository.save(receipt);
+    async findAllReceipts(companyId) {
+        const repo = await this.getTreasuryRepo();
+        const where = { type: treasury_entity_1.TreasuryDocumentType.RECEIPT };
+        if (companyId) {
+            where.companyId = companyId;
+        }
+        return repo.find({
+            where,
+            relations: ['lines']
+        });
     }
-    findAllPayments() {
-        return this.treasuryRepository.find({ where: { type: treasury_entity_1.TreasuryDocumentType.PAYMENT }, relations: ['lines'] });
+    async createReceipt(data) {
+        const repo = await this.getTreasuryRepo();
+        const receipt = repo.create({ ...data, type: treasury_entity_1.TreasuryDocumentType.RECEIPT });
+        return repo.save(receipt);
     }
-    createPayment(data) {
-        const payment = this.treasuryRepository.create({ ...data, type: treasury_entity_1.TreasuryDocumentType.PAYMENT });
-        return this.treasuryRepository.save(payment);
+    async findAllPayments(companyId) {
+        const repo = await this.getTreasuryRepo();
+        const where = { type: treasury_entity_1.TreasuryDocumentType.PAYMENT };
+        if (companyId) {
+            where.companyId = companyId;
+        }
+        return repo.find({
+            where,
+            relations: ['lines']
+        });
+    }
+    async createPayment(data) {
+        const repo = await this.getTreasuryRepo();
+        const payment = repo.create({ ...data, type: treasury_entity_1.TreasuryDocumentType.PAYMENT });
+        return repo.save(payment);
+    }
+    async savePaymentMethod(data) {
+        const repo = await this.getPaymentMethodRepo();
+        return repo.save(data);
+    }
+    async findAllPaymentMethods(companyId) {
+        const repo = await this.getPaymentMethodRepo();
+        if (companyId) {
+            return repo.find({
+                where: { companyId },
+                order: { sortOrder: 'ASC' }
+            });
+        }
+        return repo.find({ order: { sortOrder: 'ASC' } });
+    }
+    async removePaymentMethod(id) {
+        const repo = await this.getPaymentMethodRepo();
+        return repo.delete(id);
     }
 };
 exports.TreasuryService = TreasuryService;
 exports.TreasuryService = TreasuryService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(treasury_entity_1.TreasuryDocument)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __param(1, (0, typeorm_1.InjectRepository)(treasury_entity_1.TreasuryDocument)),
+    __param(2, (0, typeorm_1.InjectRepository)(payment_method_entity_1.PaymentMethod)),
+    __metadata("design:paramtypes", [tenancy_service_1.TenancyService,
+        typeorm_2.Repository,
+        typeorm_2.Repository])
 ], TreasuryService);
 //# sourceMappingURL=treasury.service.js.map

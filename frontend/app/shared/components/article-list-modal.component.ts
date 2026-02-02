@@ -1,12 +1,13 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ARTICLES } from '../constants';
+import { InventoryService } from '../inventory.service';
+import { Article } from '../models';
 
 @Component({
-    selector: 'app-article-list-modal',
-    standalone: true,
-    imports: [CommonModule],
-    template: `
+  selector: 'app-article-list-modal',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
     <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" (click)="onClose()">
       <div class="bg-white rounded-sm shadow-lg w-[800px] max-h-[80vh] flex flex-col" (click)="$event.stopPropagation()">
         <!-- Header -->
@@ -48,10 +49,10 @@ import { ARTICLES } from '../constants';
                   class="hover:bg-blue-50 cursor-pointer transition-colors"
                   (click)="onSelect(article)">
                 <td class="px-2 py-1.5 border-b border-gray-100 font-medium text-blue-600">{{ article.code }}</td>
-                <td class="px-2 py-1.5 border-b border-gray-100 text-gray-700">{{ article.description }}</td>
+                <td class="px-2 py-1.5 border-b border-gray-100 text-gray-700">{{ article.name || article.description }}</td>
                 <td class="px-2 py-1.5 border-b border-gray-100 text-gray-600">{{ article.unit }}</td>
-                <td class="px-2 py-1.5 border-b border-gray-100 text-gray-600 text-right">{{ article.price | number:'1.2-2' }}</td>
-                <td class="px-2 py-1.5 border-b border-gray-100 text-gray-600 text-right">{{ article.iva }}</td>
+                <td class="px-2 py-1.5 border-b border-gray-100 text-gray-600 text-right">{{ (article.salePrice || 0) | number:'1.2-2' }}</td>
+                <td class="px-2 py-1.5 border-b border-gray-100 text-gray-600 text-right">{{ (article.ivaRate || 0) }}%</td>
               </tr>
               <tr *ngIf="filteredArticles.length === 0">
                 <td colspan="5" class="px-2 py-4 text-center text-gray-400 italic">
@@ -73,35 +74,46 @@ import { ARTICLES } from '../constants';
     </div>
   `
 })
-export class ArticleListModalComponent {
-    @Output() close = new EventEmitter<void>();
-    @Output() select = new EventEmitter<any>();
+export class ArticleListModalComponent implements OnInit {
+  @Output() close = new EventEmitter<void>();
+  @Output() select = new EventEmitter<any>();
 
-    articles = ARTICLES;
-    filteredArticles = ARTICLES;
-    searchQuery = '';
+  articles: any[] = [];
+  filteredArticles: any[] = [];
+  searchQuery = '';
 
-    onSearchChange(event: Event) {
-        const input = event.target as HTMLInputElement;
-        this.searchQuery = input.value;
-        const query = this.searchQuery.toLowerCase().trim();
+  constructor(private inventoryService: InventoryService) { }
 
-        if (!query) {
-            this.filteredArticles = this.articles;
-            return;
-        }
+  ngOnInit() {
+    this.loadArticles();
+  }
 
-        this.filteredArticles = this.articles.filter(article =>
-            article.code.toLowerCase().includes(query) ||
-            article.description.toLowerCase().includes(query)
-        );
+  loadArticles() {
+    this.articles = this.inventoryService.getArticles();
+    this.filteredArticles = [...this.articles];
+  }
+
+  onSearchChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.searchQuery = input.value;
+    const query = this.searchQuery.toLowerCase().trim();
+
+    if (!query) {
+      this.filteredArticles = this.articles;
+      return;
     }
 
-    onClose() {
-        this.close.emit();
-    }
+    this.filteredArticles = this.articles.filter(article =>
+      article.code.toLowerCase().includes(query) ||
+      article.description.toLowerCase().includes(query)
+    );
+  }
 
-    onSelect(article: any) {
-        this.select.emit(article);
-    }
+  onClose() {
+    this.close.emit();
+  }
+
+  onSelect(article: any) {
+    this.select.emit(article);
+  }
 }

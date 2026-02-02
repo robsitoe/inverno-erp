@@ -32,6 +32,8 @@ import { AdminFiscalYearsComponent } from '../features/admin/admin-fiscal-years.
 import { AdminUsersComponent } from '../features/admin/admin-users.component';
 import { AdminSeriesComponent } from '../features/admin/admin-series.component';
 import { EntityManagementComponent } from '../features/admin/entity-management.component';
+import { BankReconciliationComponent } from '../features/treasury/bank-reconciliation.component';
+import { AccountStatementComponent } from '../features/treasury/account-statement.component';
 
 @Component({
   selector: 'app-main-content',
@@ -68,7 +70,9 @@ import { EntityManagementComponent } from '../features/admin/entity-management.c
     AdminFiscalYearsComponent,
     AdminUsersComponent,
     AdminSeriesComponent,
-    EntityManagementComponent
+    EntityManagementComponent,
+    BankReconciliationComponent,
+    AccountStatementComponent
   ],
   template: `
     <!-- Sales Forms -->
@@ -217,6 +221,16 @@ import { EntityManagementComponent } from '../features/admin/entity-management.c
       <app-stock-document-types class="w-full h-full block"></app-stock-document-types>
     </ng-container>
 
+    <!-- Treasury: Bank Reconciliation -->
+    <ng-container *ngIf="activeView === 'bank-reconciliation'">
+      <app-bank-reconciliation class="w-full h-full block"></app-bank-reconciliation>
+    </ng-container>
+
+    <!-- Treasury: Account Statement -->
+    <ng-container *ngIf="activeView === 'account-statement'">
+      <app-account-statement class="w-full h-full block"></app-account-statement>
+    </ng-container>
+
     <!-- Document Types (Sales/Purchases) -->
     <ng-container *ngIf="activeView === 'document-types'">
       <app-document-types class="w-full h-full block"></app-document-types>
@@ -306,6 +320,8 @@ export class MainContentComponent {
       'article-management',
       'stock-movements',
       'treasury-management',
+      'bank-reconciliation',
+      'account-statement',
       'warehouse-management',
       'unit-management',
       'inventory-count',

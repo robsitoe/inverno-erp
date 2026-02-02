@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DataService } from '../../services/data.service';
 
 @Component({
   selector: 'app-purchase-document-type-modal',
@@ -53,27 +54,15 @@ export class PurchaseDocumentTypeModalComponent {
 
   documentTypes: any[] = [];
 
+  constructor(private dataService: DataService) { }
+
   ngOnInit() {
     this.loadTypes();
   }
 
   loadTypes() {
-    const stored = localStorage.getItem('erp_purchase_document_types');
-    if (stored) {
-      this.documentTypes = JSON.parse(stored);
-    } else {
-      // Fallback to defaults if not configured
-      this.documentTypes = [
-        { code: 'FC', description: 'Fatura de Compra' },
-        { code: 'NC', description: 'Nota de Crédito de Fornecedor' },
-        { code: 'ND', description: 'Nota de Débito de Fornecedor' },
-        { code: 'GR', description: 'Guia de Receção' },
-        { code: 'EF', description: 'Encomenda a Fornecedor' },
-        { code: 'DC', description: 'Devolução a Fornecedor' },
-        { code: 'VGP', description: 'Vossa Guia de Transporte' }
-      ];
-      // Optionally save defaults to storage so user can edit them later
-      localStorage.setItem('erp_purchase_document_types', JSON.stringify(this.documentTypes));
-    }
+    this.dataService.getDocumentTypes('PURCHASES').subscribe(types => {
+      this.documentTypes = types;
+    });
   }
 }

@@ -5,6 +5,8 @@ import { InventoryService } from '../../shared/inventory.service';
 import { ArticleSearchModalComponent } from './article-search-modal.component';
 import { DocumentTypeConfigModalComponent } from '../../shared/components/document-type-config-modal.component';
 import { Article } from '../../shared/models';
+import { DataService } from '../../services/data.service';
+import { lastValueFrom } from 'rxjs';
 
 interface StockDocumentLine {
   id: string;
@@ -402,7 +404,10 @@ export class StockMovementsComponent implements OnInit {
   documentTypes: any[] = []; // Stock document types
   activeCompanyId: string | null = null;
 
-  constructor(private inventoryService: InventoryService) { }
+  constructor(
+    private inventoryService: InventoryService,
+    private dataService: DataService
+  ) { }
 
   ngOnInit() {
     this.loadActiveCompany();
@@ -415,10 +420,11 @@ export class StockMovementsComponent implements OnInit {
   }
 
   loadActiveCompany() {
-    const stored = localStorage.getItem('erp_company_info');
-    if (stored) {
-      this.activeCompanyId = JSON.parse(stored).id;
-    }
+    this.dataService.activeCompany$.subscribe(company => {
+      if (company) {
+        this.activeCompanyId = company.id;
+      }
+    });
   }
 
   openDocConfigModal() {
@@ -432,20 +438,9 @@ export class StockMovementsComponent implements OnInit {
   }
 
   loadDocumentTypes() {
-    const stored = localStorage.getItem('erp_stock_document_types');
-    if (stored) {
-      // Treat undefined isActive as true
-      this.documentTypes = JSON.parse(stored).filter((t: any) => t.isActive !== false);
-    } else {
-      // Fallback to default types if none configured
-      this.documentTypes = [
-        { code: 'FI', name: 'Entrada de Stock', isActive: true, movementType: 'IN' },
-        { code: 'FS', name: 'Saída de Stock', isActive: true, movementType: 'OUT' },
-        { code: 'SI', name: 'Stock Inicial', isActive: true, movementType: 'IN' },
-        { code: 'AIP', name: 'Acertos Positivos', isActive: true, movementType: 'IN' },
-        { code: 'AIN', name: 'Acertos Negativos', isActive: true, movementType: 'OUT' }
-      ];
-    }
+    this.dataService.getDocumentTypes('STOCK').subscribe(types => {
+      this.documentTypes = types.filter((t: any) => t.isActive !== false);
+    });
   }
 
   onDocumentTypeChange() {
@@ -639,8 +634,8 @@ export class StockMovementsComponent implements OnInit {
     if (this.activeLine) {
       this.activeLine.articleId = article.id;
       this.activeLine.articleCode = article.code;
-      this.activeLine.articleName = article.description;
-      this.activeLine.description = article.description;
+      this.activeLine.articleName = article.name || article.description;
+      this.activeLine.description = article.description || article.name;
       this.activeLine.unit = article.unit;
       this.activeLine.unitPrice = article.purchasePrice || 0; // Use purchase price for stock docs usually
       this.calculateLine(this.activeLine);
@@ -668,10 +663,17 @@ export class StockMovementsComponent implements OnInit {
     return this.currentDoc.lines.reduce((sum, line) => sum + (line.total || 0), 0);
   }
 
-  saveDocument() {
+  async saveDocument() {
     // Validate Series Date
-    const allSeries = JSON.parse(localStorage.getItem('erp_series_definitions') || '[]');
-    const seriesDef = allSeries.find((s: any) => s.code === this.currentDoc.series && s.companyId === this.activeCompanyId);
+    const allSeries = await lastValueFrom(this.dataService.getSeries(this.activeCompanyId || undefined));
+    const docTypes = await lastValueFrom(this.dataService.getDocumentTypes('STOCK'));
+    const docTypeConfig = docTypes.find((t: any) => t.code === this.currentDoc.type);
+
+    // Check series in docType first, then global
+    const docTypeSeries = docTypeConfig?.series || [];
+    const seriesDef = docTypeSeries.find((s: any) => s.code === this.currentDoc.series && s.companyId === this.activeCompanyId)
+      || allSeries.find((s: any) => s.code === this.currentDoc.series && s.companyId === this.activeCompanyId);
+
     const series = seriesDef || this.availableSeries.find(s => s.code === this.currentDoc.series);
 
     if (series && series.startDate && series.endDate) {
@@ -777,9 +779,16 @@ export class StockMovementsComponent implements OnInit {
     // Prepare for next document
     this.newDocument();
   }
-  validateSeriesDate() {
-    const allSeries = JSON.parse(localStorage.getItem('erp_series_definitions') || '[]');
-    const seriesDef = allSeries.find((s: any) => s.code === this.currentDoc.series && s.companyId === this.activeCompanyId);
+  async validateSeriesDate() {
+    const allSeries = await lastValueFrom(this.dataService.getSeries(this.activeCompanyId || undefined));
+    const docTypes = await lastValueFrom(this.dataService.getDocumentTypes('STOCK'));
+    const docTypeConfig = docTypes.find((t: any) => t.code === this.currentDoc.type);
+
+    // Check series in docType first, then global
+    const docTypeSeries = docTypeConfig?.series || [];
+    const seriesDef = docTypeSeries.find((s: any) => s.code === this.currentDoc.series && s.companyId === this.activeCompanyId)
+      || allSeries.find((s: any) => s.code === this.currentDoc.series && s.companyId === this.activeCompanyId);
+
     const series = seriesDef || this.availableSeries.find(s => s.code === this.currentDoc.series);
 
     if (series && series.startDate && series.endDate) {

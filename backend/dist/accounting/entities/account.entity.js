@@ -40,11 +40,11 @@ __decorate([
     __metadata("design:type", String)
 ], Account.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", String)
+    (0, typeorm_1.Column)({ nullable: true, type: 'varchar' }),
+    __metadata("design:type", Object)
 ], Account.prototype, "companyId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ unique: true }),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], Account.prototype, "code", void 0);
 __decorate([
@@ -91,6 +91,7 @@ __decorate([
     __metadata("design:type", Date)
 ], Account.prototype, "updatedAt", void 0);
 exports.Account = Account = __decorate([
-    (0, typeorm_1.Entity)('accounts')
+    (0, typeorm_1.Entity)('accounts'),
+    (0, typeorm_1.Unique)(['companyId', 'code'])
 ], Account);
 //# sourceMappingURL=account.entity.js.map

@@ -17,13 +17,13 @@ export class User {
     password: string;
 
     @Column({ nullable: true })
-    name: string;
+    name?: string;
 
     @Column({ nullable: true })
-    email: string;
+    email?: string;
 
     @Column({ nullable: true })
-    phone: string;
+    phone?: string;
 
     @Column({ default: false })
     isAdmin: boolean;
@@ -38,13 +38,13 @@ export class User {
     isActive: boolean;
 
     @Column({ nullable: true })
-    profile: string;
+    profile?: string;
 
     @Column({ default: 'pt' })
     language: string;
 
     @Column({ type: 'jsonb', nullable: true })
-    permissions: any[];
+    permissions?: any[];
 
     @CreateDateColumn()
     createdAt: Date;

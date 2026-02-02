@@ -1,5 +1,6 @@
 export declare class Supplier {
     id: string;
+    companyId: string | null;
     code: string;
     name: string;
     nif: string;

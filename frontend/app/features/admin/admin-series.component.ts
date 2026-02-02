@@ -294,80 +294,69 @@ export class AdminSeriesComponent implements OnInit {
   }
 
   private propagateToDocumentTypes(series: Series) {
-    const modules = [
-      { key: 'erp_sales_document_types' },
-      { key: 'erp_purchase_document_types' },
-      { key: 'erp_stock_document_types' },
-      { key: 'erp_treasury_document_types' }
-    ];
+    const modules: ('SALES' | 'PURCHASES' | 'STOCK' | 'TREASURY')[] = ['SALES', 'PURCHASES', 'STOCK', 'TREASURY'];
 
-    modules.forEach(mod => {
-      const stored = localStorage.getItem(mod.key);
-      if (stored) {
-        const docTypes = JSON.parse(stored);
-        let updated = false;
+    modules.forEach(module => {
+      this.dataService.getDocumentTypes(module).subscribe(docTypes => {
+        if (docTypes) {
+          let updated = false;
 
-        docTypes.forEach((dt: any) => {
-          if (!dt.series) dt.series = [];
+          docTypes.forEach((dt: any) => {
+            if (!dt.series) dt.series = [];
 
-          // Check if exists (match by code and company)
-          const existing = dt.series.find((s: any) => s.code === series.code && s.companyId === series.companyId);
+            // Check if exists (match by code and company)
+            const existing = dt.series.find((s: any) => s.code === series.code && s.companyId === series.companyId);
 
-          if (existing) {
-            // Update details
-            existing.description = series.description;
-            existing.startDate = series.startDate;
-            existing.endDate = series.endDate;
-            existing.active = series.active;
-            // Don't reset currentNumber if it exists
-          } else {
-            // Add new
-            dt.series.unshift({
-              code: series.code,
-              description: series.description,
-              startDate: series.startDate,
-              endDate: series.endDate,
-              active: series.active,
-              companyId: series.companyId,
-              currentNumber: 1 // Initialize counter
-            });
+            if (existing) {
+              // Update details
+              existing.description = series.description;
+              existing.startDate = series.startDate;
+              existing.endDate = series.endDate;
+              existing.active = series.active;
+            } else {
+              // Add new
+              dt.series.unshift({
+                code: series.code,
+                description: series.description,
+                startDate: series.startDate,
+                endDate: series.endDate,
+                active: series.active,
+                companyId: series.companyId,
+                currentNumber: 1 // Initialize counter
+              });
+            }
+            updated = true;
+          });
+
+          if (updated) {
+            this.dataService.saveDocumentTypes(module, docTypes).subscribe();
           }
-          updated = true;
-        });
-
-        if (updated) {
-          localStorage.setItem(mod.key, JSON.stringify(docTypes));
         }
-      }
+      });
     });
   }
 
   private removeFromDocumentTypes(series: Series) {
-    const modules = [
-      { key: 'erp_sales_document_types' },
-      { key: 'erp_purchase_document_types' },
-      { key: 'erp_stock_document_types' },
-      { key: 'erp_treasury_document_types' }
-    ];
+    const modules: ('SALES' | 'PURCHASES' | 'STOCK' | 'TREASURY')[] = ['SALES', 'PURCHASES', 'STOCK', 'TREASURY'];
 
-    modules.forEach(mod => {
-      const stored = localStorage.getItem(mod.key);
-      if (stored) {
-        const docTypes = JSON.parse(stored);
-        let updated = false;
+    modules.forEach(module => {
+      this.dataService.getDocumentTypes(module).subscribe(docTypes => {
+        if (docTypes) {
+          let updated = false;
 
-        docTypes.forEach((dt: any) => {
-          if (dt.series) {
-            const initialLength = dt.series.length;
-            dt.series = dt.series.filter((s: any) => !(s.code === series.code && s.companyId === series.companyId));
-            if (dt.series.length !== initialLength) updated = true;
+          docTypes.forEach((dt: any) => {
+            if (dt.series) {
+              const initialLength = dt.series.length;
+              dt.series = dt.series.filter((s: any) => !(s.code === series.code && s.companyId === series.companyId));
+              if (dt.series.length !== initialLength) updated = true;
+            }
+          });
+
+          if (updated) {
+            this.dataService.saveDocumentTypes(module, docTypes).subscribe();
           }
-        });
-
-        if (updated) {
-          localStorage.setItem(mod.key, JSON.stringify(docTypes));
         }
-      }
+      });
     });
   }
 }

@@ -9,49 +9,59 @@ export class Company {
     name: string;
 
     @Column({ nullable: true })
-    nif: string;
+    nif?: string;
 
     @Column({ nullable: true })
-    address: string;
+    address?: string;
 
     @Column({ nullable: true })
-    email: string;
+    email?: string;
 
     @Column({ nullable: true })
-    phone: string;
+    phone?: string;
 
     @Column({ nullable: true })
-    website: string;
+    website?: string;
 
     @Column({ nullable: true })
-    currentYear: number;
+    currentYear?: number;
 
     @Column({ nullable: true })
-    type: string;
+    type?: string;
 
     @Column({ nullable: true })
-    category: string;
+    category?: string;
 
     @Column({ nullable: true })
-    country: string;
+    country?: string;
 
     @Column({ nullable: true })
-    location: string;
+    location?: string;
 
     @Column({ nullable: true })
-    chartOfAccounts: string;
+    chartOfAccounts?: string;
 
     @Column({ nullable: true })
-    currency: string;
+    currency?: string;
 
     @Column({ type: 'text', nullable: true })
-    logoUrl: string;
+    logoUrl?: string;
 
     @Column({ type: 'json', nullable: true })
-    seriesConfig: any;
+    seriesConfig?: any;
+
+    @Column({ type: 'json', nullable: true })
+    dbConfig?: {
+        host?: string;
+        port?: number;
+        username?: string;
+        password?: string;
+        database?: string;
+        type?: 'postgres' | 'sqlite';
+    };
 
     @Column({ nullable: true })
-    documentNameFormat: string;
+    documentNameFormat?: string;
 
     @CreateDateColumn()
     createdAt: Date;

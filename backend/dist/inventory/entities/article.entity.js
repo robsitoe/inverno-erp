@@ -46,11 +46,11 @@ __decorate([
     __metadata("design:type", String)
 ], Article.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", String)
+    (0, typeorm_1.Column)({ nullable: true, type: 'varchar' }),
+    __metadata("design:type", Object)
 ], Article.prototype, "companyId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ unique: true }),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], Article.prototype, "code", void 0);
 __decorate([
@@ -134,6 +134,7 @@ __decorate([
     __metadata("design:type", Date)
 ], Article.prototype, "updatedAt", void 0);
 exports.Article = Article = __decorate([
-    (0, typeorm_1.Entity)('articles')
+    (0, typeorm_1.Entity)('articles'),
+    (0, typeorm_1.Unique)(['companyId', 'code'])
 ], Article);
 //# sourceMappingURL=article.entity.js.map

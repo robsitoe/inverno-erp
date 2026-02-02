@@ -1,7 +1,9 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, Unique } from 'typeorm';
 
 @Entity('journals')
+@Unique(['companyId', 'code'])
 export class Journal {
+
     @PrimaryColumn()
     id: string;
 

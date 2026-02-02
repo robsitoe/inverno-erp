@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Account, JournalEntry, JournalLine, SalesDocument, Article, AuditLog, Journal, FinancialReportConfig } from './models';
 import { DEFAULT_ACCOUNTS, DEFAULT_JOURNALS } from './sample-data';
 import { DataService } from '../services/data.service';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, Observable } from 'rxjs';
 
 @Injectable({
     providedIn: 'root'
@@ -27,12 +27,39 @@ export class AccountingService {
     private activeCompanyId: string | null = null;
 
     constructor(private dataService: DataService) {
-        const storedCompany = localStorage.getItem('erp_company_info');
-        if (storedCompany) {
-            this.activeCompanyId = JSON.parse(storedCompany).id;
-        }
-        this.loadData();
+        this.dataService.activeCompany$.subscribe(company => {
+            if (company) {
+                this.activeCompanyId = company.id;
+                this.clearState();
+
+                // Only load data if logged in or in local browser mode
+                const token = localStorage.getItem('access_token');
+                const isLocal = localStorage.getItem('erp_system_config')?.includes('BROWSER');
+
+                if (token || isLocal) {
+                    this.loadData();
+                }
+            } else {
+                this.activeCompanyId = null;
+                this.clearState();
+            }
+        });
     }
+
+    private clearState() {
+        this.allAccounts = [];
+        this.accounts = [];
+        this.allJournalEntries = [];
+        this.journalEntries = [];
+        this.allJournals = [];
+        this.journals = [];
+        this.allAuditLogs = [];
+        this.auditLogs = [];
+        this.allReportConfigs = [];
+        this.reportConfigs = [];
+        this.nextJournalId = 1;
+    }
+
 
     public async loadData() {
         await this.loadAccounts();
@@ -44,33 +71,106 @@ export class AccountingService {
 
     private async loadAccounts() {
         try {
-            this.allAccounts = await lastValueFrom(this.dataService.getAccounts());
-            if (this.allAccounts.length === 0) {
-                // this.saveAccounts(); // Don't save default accounts immediately to backend? Or iterate.
-                // Assuming defaults are fine or will be saved on demand.
+            const rawAccounts = await lastValueFrom(this.dataService.getAccounts(this.activeCompanyId || undefined));
+
+            // Cast balances to numbers to prevent numeric pipe errors and concatenation issues
+            this.allAccounts = rawAccounts.map(acc => ({
+                ...acc,
+                balance: Number(acc.balance) || 0
+            }));
+
+            // If no accounts exist for this company, initialize with defaults
+            if (this.allAccounts.length === 0 && this.activeCompanyId) {
+                await this.initializeCompanyAccounts();
             }
         } catch (e) {
-            this.allAccounts = [...DEFAULT_ACCOUNTS];
+            console.error('Failed to load accounts from backend:', e);
+            this.allAccounts = [];
+            throw e; // Propagate error so UI can handle it
         }
         this.accounts = this.filterByCompany(this.allAccounts);
     }
 
+    async loadAccountsPreset(presetName: string) {
+        if (!this.activeCompanyId) return;
+        try {
+            await lastValueFrom(this.dataService.loadAccountsPreset(presetName));
+            await this.loadAccounts(); // Refresh
+            await this.loadJournals(); // Refresh journals as well just in case
+        } catch (e) {
+            console.error('Failed to load accounts preset:', e);
+            throw e;
+        }
+    }
+
+    private async initializeCompanyAccounts() {
+        console.log(`Initializing default accounts for company: ${this.activeCompanyId}`);
+        // If we are in real backend mode, let the backend handle it via its own preset logic
+        // if supported, or use the loop if LOCAL.
+
+        // Actually, the previous implementation was doing a loop. 
+        // Let's try to use the backend preset "PGC-NIR" by default if it's the first time.
+        try {
+            await this.loadAccountsPreset('PGC-NIR');
+        } catch (e) {
+            // Fallback to manual loop if backend endpoint fails or doesn't exist
+            const newAccounts: Account[] = DEFAULT_ACCOUNTS.map(acc => ({
+                ...acc,
+                id: `ACC${this.activeCompanyId}${acc.code.replace(/\./g, '')}`, // Unique ID per company
+                companyId: this.activeCompanyId!,
+                balance: 0
+            }));
+
+            // Fix parentId references for the new unique IDs
+            newAccounts.forEach(acc => {
+                if (acc.parentId) {
+                    const parent = DEFAULT_ACCOUNTS.find(p => p.id === acc.parentId);
+                    if (parent) {
+                        acc.parentId = `ACC${this.activeCompanyId}${parent.code.replace(/\./g, '')}`;
+                    }
+                }
+            });
+
+            // Save to backend
+            for (const acc of newAccounts) {
+                await lastValueFrom(this.dataService.saveAccount(acc));
+            }
+            this.allAccounts = newAccounts;
+        }
+    }
+
+    private async initializeCompanyJournals() {
+        console.log(`Initializing default journals for company: ${this.activeCompanyId}`);
+        const newJournals: Journal[] = DEFAULT_JOURNALS.map(j => ({
+            ...j,
+            id: `JNL-${j.code}-${this.activeCompanyId}`,
+            companyId: this.activeCompanyId!
+        }));
+
+        for (const j of newJournals) {
+            await lastValueFrom(this.dataService.saveJournal(j));
+        }
+
+        this.allJournals = newJournals;
+    }
+
     private async loadJournals() {
         try {
-            this.allJournals = await lastValueFrom(this.dataService.getJournals());
-            if (this.allJournals.length === 0) {
-                this.allJournals = [...DEFAULT_JOURNALS];
-                // this.saveJournals();
+            this.allJournals = await lastValueFrom(this.dataService.getJournals(this.activeCompanyId || undefined));
+            if (this.allJournals.length === 0 && this.activeCompanyId) {
+                await this.initializeCompanyJournals();
             }
         } catch (e) {
-            this.allJournals = [...DEFAULT_JOURNALS];
+            console.error('Failed to load journals from backend:', e);
+            this.allJournals = [];
+            throw e;
         }
         this.journals = this.filterByCompany(this.allJournals);
     }
 
     private async loadJournalEntries() {
         try {
-            this.allJournalEntries = await lastValueFrom(this.dataService.getJournalEntries());
+            this.allJournalEntries = await lastValueFrom(this.dataService.getJournalEntries(this.activeCompanyId || undefined));
             const maxId = Math.max(...this.allJournalEntries.map(e => parseInt(e.id.replace('JE', '')) || 0), 0);
             this.nextJournalId = maxId + 1;
         } catch (e) {
@@ -104,9 +204,10 @@ export class AccountingService {
         }
     }
 
-    private filterByCompany<T extends { companyId?: string }>(list: T[]): T[] {
-        if (!this.activeCompanyId) return list;
-        return list.filter(item => !item.companyId || item.companyId === this.activeCompanyId);
+    private filterByCompany<T extends { companyId?: string | null }>(list: T[]): T[] {
+        if (!this.activeCompanyId) return [];
+        // Strict isolation: only return items belonging specifically to this company
+        return list.filter(item => item.companyId === this.activeCompanyId);
     }
 
     private initializeDefaultReports() {
@@ -389,7 +490,7 @@ export class AccountingService {
             sourceDocument: salesDoc.id,
             sourceType: 'SALE',
             lines: lines,
-            status: 'DRAFT',
+            status: (salesDoc.documentType === 'VD' || paymentCondition === 'PRONTO' || salesDoc.status === 'CONFIRMED' || salesDoc.status === 'INVOICED') ? 'POSTED' : 'DRAFT',
             createdBy: 'Sistema',
             createdAt: new Date()
         };
@@ -397,7 +498,10 @@ export class AccountingService {
         this.allJournalEntries.push(entry);
         this.journalEntries = this.filterByCompany(this.allJournalEntries);
         this.dataService.saveJournalEntry(entry).subscribe();
-        this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, 'Automatic sales journal entry created in DRAFT status');
+
+        const statusMsg = entry.status === 'POSTED' ? 'posted' : 'DRAFT status';
+        this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, `Automatic sales journal entry created in ${statusMsg}`);
+
 
         return entry;
     }
@@ -515,8 +619,26 @@ export class AccountingService {
             this.updateAccountBalances(entry.lines);
         }
 
-        this.dataService.saveJournalEntry(entry).subscribe();
-        this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, 'Manual journal entry created', entry.createdBy);
+        // Clean object for backend (remove auto-generated fields that might be rejected)
+        const entryToSave = { ...entry };
+        delete (entryToSave as any).createdAt;
+        delete (entryToSave as any).createdBy;
+        delete (entryToSave as any).updatedAt;
+        delete (entryToSave as any).updatedBy;
+
+        this.dataService.saveJournalEntry(entryToSave).subscribe({
+            next: (saved) => {
+                // Update with backend response (e.g. valid ID)
+                Object.assign(entry, saved);
+                this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, 'Manual journal entry created', entry.createdBy);
+            },
+            error: (err) => {
+                console.error('Failed to save manual journal entry:', err);
+                if (err.error && err.error.message) {
+                    console.error('Server validation error:', err.error.message);
+                }
+            }
+        });
     }
 
     createJournalEntry(entry: JournalEntry): void {
@@ -724,8 +846,30 @@ export class AccountingService {
         });
 
         modifiedAccounts.forEach(acc => {
-            this.dataService.saveAccount(acc).subscribe();
+            // ONLY send fields defined in CreateAccountDto/UpdateAccountDto
+            // This prevents "Bad Request" errors due to unexpected frontend-only fields like 'children'
+            const dtoFields = {
+                id: acc.id,
+                companyId: acc.companyId || null,
+                code: acc.code,
+                name: acc.name,
+                description: acc.description || '',
+                type: acc.type,
+                level: acc.level,
+                parentId: acc.parentId || null,
+                allowPosting: acc.allowPosting,
+                balance: isNaN(Number(acc.balance)) ? 0 : Number(acc.balance),
+                isActive: acc.isActive
+            };
+
+            this.dataService.saveAccount(dtoFields).subscribe({
+                error: (err) => {
+                    console.error(`Failed to update balance for account ${acc.code}:`, err);
+                }
+            });
         });
+
+
     }
 
     getSubAccounts(parentId: string): Account[] {
@@ -734,6 +878,10 @@ export class AccountingService {
 
     getJournalEntries(): JournalEntry[] {
         return this.journalEntries;
+    }
+
+    getAccountStatement(accountId: string, fromDate?: string, toDate?: string, companyId?: string, includeDrafts: boolean = false): Observable<any> {
+        return this.dataService.getAccountStatement(accountId, fromDate, toDate, companyId, includeDrafts);
     }
 
     getAuditLogs(): AuditLog[] {

@@ -5,6 +5,7 @@ import { AccountingService } from '../../shared/accounting.service';
 import { AuditService } from '../../shared/audit.service';
 import { PeriodService } from '../../shared/period.service';
 import { SupplierListModalComponent } from '../../shared/components/supplier-list-modal.component';
+import { DataService } from '../../services/data.service';
 
 interface PendingDocRow {
   selected: boolean;
@@ -247,10 +248,8 @@ interface PendingDocRow {
                </div>
                <div>
                   <label class="block font-medium mb-1">Meio de Pagamento</label>
-                  <select [(ngModel)]="paymentMethod" class="w-full border border-gray-300 rounded px-2 py-1">
-                    <option value="CASH">Numerário</option>
-                    <option value="CHECK">Cheque</option>
-                    <option value="TRANSFER">Transferência</option>
+                  <select [(ngModel)]="paymentMethod" (change)="onPaymentMethodChange()" class="w-full border border-gray-300 rounded px-2 py-1">
+                    <option *ngFor="let pm of paymentMethods" [value]="pm.code">{{ pm.description }}</option>
                   </select>
                </div>
              </div>
@@ -297,8 +296,9 @@ export class PaymentModalComponent implements OnInit {
 
   // Liquidation Data
   selectedTreasuryAccount = '';
-  paymentMethod = 'TRANSFER';
+  paymentMethod = 'CASH';
   treasuryAccounts: any[] = [];
+  paymentMethods: any[] = [];
 
   showSupplierModal = false;
   activeCompanyId: string | null = null;
@@ -306,13 +306,15 @@ export class PaymentModalComponent implements OnInit {
   constructor(
     private accountingService: AccountingService,
     private auditService: AuditService,
-    private periodService: PeriodService
+    private periodService: PeriodService,
+    private dataService: DataService
   ) { }
 
   ngOnInit() {
     this.loadActiveCompany();
     this.loadDocumentTypes();
     this.loadTreasuryAccounts();
+    this.loadPaymentMethods();
 
     if (this.pendingDocument) {
       this.supplierName = this.pendingDocument.entity;
@@ -321,23 +323,23 @@ export class PaymentModalComponent implements OnInit {
   }
 
   loadActiveCompany() {
-    const stored = localStorage.getItem('erp_company_info');
-    if (stored) {
-      this.activeCompanyId = JSON.parse(stored).id;
-    }
+    this.dataService.activeCompany$.subscribe(company => {
+      if (company) {
+        this.activeCompanyId = company.id;
+      }
+    });
   }
 
   loadDocumentTypes() {
-    const stored = localStorage.getItem('erp_treasury_document_types');
-    if (stored) {
-      this.documentTypes = JSON.parse(stored).filter((t: any) => t.nature === 'PAY');
-    }
+    this.dataService.getDocumentTypes('TREASURY').subscribe(allTypes => {
+      this.documentTypes = allTypes.filter((t: any) => t.nature === 'PAY');
 
-    if (this.documentTypes.length > 0) {
-      const pag = this.documentTypes.find(t => t.code === 'PAG');
-      this.selectedDocType = pag ? pag.code : this.documentTypes[0].code;
-      this.onDocumentTypeChange();
-    }
+      if (this.documentTypes.length > 0) {
+        const pag = this.documentTypes.find(t => t.code === 'PAG');
+        this.selectedDocType = pag ? pag.code : this.documentTypes[0].code;
+        this.onDocumentTypeChange();
+      }
+    });
   }
 
   onDocumentTypeChange() {
@@ -392,6 +394,24 @@ export class PaymentModalComponent implements OnInit {
 
     if (this.treasuryAccounts.length > 0) {
       this.selectedTreasuryAccount = this.treasuryAccounts[0].id;
+    }
+  }
+
+  loadPaymentMethods() {
+    this.dataService.getPaymentMethods(this.activeCompanyId || undefined).subscribe(methods => {
+      this.paymentMethods = methods;
+      if (this.paymentMethods.length > 0) {
+        const cash = this.paymentMethods.find(pm => pm.code === 'NUM' || pm.code === 'CASH');
+        this.paymentMethod = cash ? cash.code : this.paymentMethods[0].code;
+        this.onPaymentMethodChange();
+      }
+    });
+  }
+
+  onPaymentMethodChange() {
+    const selected = this.paymentMethods.find(pm => pm.code === this.paymentMethod);
+    if (selected && selected.treasuryAccountId) {
+      this.selectedTreasuryAccount = selected.treasuryAccountId;
     }
   }
 
