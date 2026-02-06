@@ -1,5 +1,27 @@
 // Core Data Models for the ERP System
 
+export interface SystemConfig {
+    deploymentMode: 'LOCAL' | 'WEB';
+    localStorageType: 'BROWSER' | 'POSTGRES';
+    apiUrl: string;
+}
+
+export interface CompanyInfo {
+    id?: string;
+    name: string;
+    nif: string;
+    address: string;
+    email: string;
+    phone: string;
+    website: string;
+}
+
+export interface FiscalYear {
+    companyId: string;
+    year: number;
+    isCurrent?: boolean;
+}
+
 export interface Account {
     id: string;
     companyId?: string;

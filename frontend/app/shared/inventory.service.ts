@@ -3,6 +3,9 @@ import { Subject, lastValueFrom } from 'rxjs';
 import { Article, StockMovement, Warehouse, Batch } from './models';
 import { SAMPLE_ARTICLES, SAMPLE_WAREHOUSES } from './sample-data';
 import { DataService } from '../services/data.service';
+import { InventoryApiService } from '../services/inventory-api.service';
+import { CompanyContextService } from '../services/company-context.service';
+import { ConfigService } from '../services/config.service';
 
 @Injectable({
     providedIn: 'root'
@@ -28,15 +31,15 @@ export class InventoryService {
     private purchaseDocTypesList: any[] = [];
     private stockDocTypesList: any[] = [];
 
-    constructor(private dataService: DataService) {
-        this.dataService.activeCompany$.subscribe(company => {
+    constructor(private dataService: DataService, private inventoryApi: InventoryApiService, private companyContext: CompanyContextService, private configService: ConfigService) {
+        this.companyContext.activeCompany$.subscribe(company => {
             if (company) {
                 this.activeCompanyId = company.id;
                 this.clearState();
 
                 // Only load data if logged in or in local browser mode
                 const token = localStorage.getItem('access_token');
-                const isLocal = localStorage.getItem('erp_system_config')?.includes('BROWSER');
+                const isLocal = this.configService.isLocalBrowser();
 
                 if (token || isLocal) {
                     this.loadData();
@@ -75,7 +78,7 @@ export class InventoryService {
 
         // Load articles
         try {
-            const allArticles = await lastValueFrom(this.dataService.getArticles());
+            const allArticles = await lastValueFrom(this.inventoryApi.getArticles());
             // Filter STRICTLY by active company ID
             this.allArticles = allArticles.filter(a => a.companyId === this.activeCompanyId);
         } catch (e) {
@@ -285,7 +288,7 @@ export class InventoryService {
     }
 
     private saveArticles() {
-        this.dataService.saveArticle(this.allArticles).subscribe(() => {
+        this.inventoryApi.saveArticle(this.allArticles).subscribe(() => {
             this.loadData().then(() => {
                 this.articlesUpdated$.next();
             });

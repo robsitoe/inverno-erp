@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { Account, JournalEntry, JournalLine, SalesDocument, Article, AuditLog, Journal, FinancialReportConfig } from './models';
 import { DEFAULT_ACCOUNTS, DEFAULT_JOURNALS } from './sample-data';
 import { DataService } from '../services/data.service';
+import { CompanyContextService } from '../services/company-context.service';
+import { ConfigService } from '../services/config.service';
 import { lastValueFrom, Observable } from 'rxjs';
 
 @Injectable({
@@ -26,15 +28,15 @@ export class AccountingService {
     private nextJournalId = 1;
     private activeCompanyId: string | null = null;
 
-    constructor(private dataService: DataService) {
-        this.dataService.activeCompany$.subscribe(company => {
+    constructor(private dataService: DataService, private companyContext: CompanyContextService, private configService: ConfigService) {
+        this.companyContext.activeCompany$.subscribe(company => {
             if (company) {
                 this.activeCompanyId = company.id;
                 this.clearState();
 
                 // Only load data if logged in or in local browser mode
                 const token = localStorage.getItem('access_token');
-                const isLocal = localStorage.getItem('erp_system_config')?.includes('BROWSER');
+                const isLocal = this.configService.isLocalBrowser();
 
                 if (token || isLocal) {
                     this.loadData();

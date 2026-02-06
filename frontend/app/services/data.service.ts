@@ -1,89 +1,49 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, of, BehaviorSubject, map, catchError, throwError } from 'rxjs';
+import { Observable, of, throwError, map } from 'rxjs';
 import { SALES_DOCUMENT_TYPES, PURCHASE_DOCUMENT_TYPES, TREASURY_DOCUMENT_TYPES, STOCK_DOCUMENT_TYPES } from '../shared/constants';
+import { ConfigService } from './config.service';
+import { CompanyContextService } from './company-context.service';
 
 
 @Injectable({
     providedIn: 'root'
 })
 export class DataService {
-    private config: any;
-    private activeCompanySubject = new BehaviorSubject<any>(this.getStoredCompany());
-    public activeCompany$ = this.activeCompanySubject.asObservable();
+    public activeCompany$ = this.companyContext.activeCompany$;
 
-
-    constructor(private http: HttpClient) {
-        this.loadConfig();
-    }
-
-    private loadConfig() {
-        const stored = localStorage.getItem('erp_system_config');
-        if (stored) {
-            this.config = JSON.parse(stored);
-        } else {
-            // Point 1: Definir política por ambiente
-            // Default to LOCAL with POSTGRES (Development)
-            this.config = {
-                deploymentMode: 'LOCAL',
-                localStorageType: 'POSTGRES',
-                apiUrl: 'http://localhost:3000'
-            };
-            localStorage.setItem('erp_system_config', JSON.stringify(this.config));
-        }
-    }
+    constructor(
+        private http: HttpClient,
+        private configService: ConfigService,
+        private companyContext: CompanyContextService
+    ) {}
 
     public getSystemConfig() {
-        if (!this.config) this.loadConfig();
-        return this.config;
+        return this.configService.getSystemConfig();
     }
 
     private get baseUrl() {
-        if (!this.config) this.loadConfig();
-        return this.config.deploymentMode === 'WEB' ? this.config.apiUrl : 'http://localhost:3000';
+        return this.configService.baseUrl;
     }
 
     public isLocalBrowser(): boolean {
-        // Point 1: policy check
-        if (!this.config) this.loadConfig();
-        return this.config.localStorageType === 'BROWSER';
+        return this.configService.isLocalBrowser();
     }
 
     public getDataSourceLabel(): string {
-        if (this.isLocalBrowser()) return 'OFFLINE / LOCAL';
-        return this.config.deploymentMode === 'WEB' ? 'BACKEND (NUVEM)' : 'BACKEND (LOCAL)';
+        return this.configService.getDataSourceLabel();
     }
 
     public checkBackendConnectivity(): Observable<boolean> {
-        return this.http.get(`${this.baseUrl}/test-route`).pipe(
-            map(() => true),
-            catchError(() => of(false))
-        );
+        return this.configService.checkBackendConnectivity();
     }
 
-    // Point 6 & 7: Autenticação e contexto consistentes
-    // Se faltar empresa ativa, não deveria permitir certas escritas no modo backend
     public checkActiveCompanyContext(): boolean {
-        const company = this.activeCompanySubject.value;
-        if (!company || !company.id) {
-            console.error('[Security] Operação bloqueada: Nenhuma empresa ativa selecionada.');
-            return false;
-        }
-        return true;
-    }
-
-    private getStoredCompany(): any {
-        const stored = localStorage.getItem('erp_company_info');
-        return stored ? JSON.parse(stored) : null;
+        return this.companyContext.checkActiveCompanyContext();
     }
 
     public setActiveCompany(company: any) {
-        if (company) {
-            localStorage.setItem('erp_company_info', JSON.stringify(company));
-        } else {
-            localStorage.removeItem('erp_company_info');
-        }
-        this.activeCompanySubject.next(company);
+        this.companyContext.setActiveCompany(company);
     }
 
 
@@ -111,7 +71,7 @@ export class DataService {
     saveCompanyInfo(data: any): Observable<any> {
         if (this.isLocalBrowser()) {
             localStorage.setItem('erp_company_info', JSON.stringify(data));
-            this.activeCompanySubject.next(data);
+            this.companyContext.setActiveCompany(data);
 
 
             // Update global list (legacy support)
@@ -282,11 +242,11 @@ export class DataService {
     // --- Articles ---
     getArticles(): Observable<any[]> {
         if (this.isLocalBrowser()) {
-            const companyId = this.activeCompanySubject.value?.id || '001';
+            const companyId = this.companyContext.activeCompany?.id || '001';
             const stored = localStorage.getItem(`erp_articles_${companyId}`);
             return of(stored ? JSON.parse(stored) : []);
         } else {
-            const companyId = this.activeCompanySubject.value?.id || '';
+            const companyId = this.companyContext.activeCompany?.id || '';
             return this.http.get<any[]>(`${this.baseUrl}/inventory/articles?companyId=${companyId}`);
         }
     }
@@ -294,7 +254,7 @@ export class DataService {
 
     saveArticle(article: any): Observable<any> {
         if (this.isLocalBrowser()) {
-            const companyId = this.activeCompanySubject.value?.id || '001';
+            const companyId = this.companyContext.activeCompany?.id || '001';
             const stored = localStorage.getItem(`erp_articles_${companyId}`);
             const articles = stored ? JSON.parse(stored) : [];
             const dataToSave = Array.isArray(article) ? article : [article];
@@ -590,11 +550,11 @@ export class DataService {
     // --- Customers ---
     getCustomers(): Observable<any[]> {
         if (this.isLocalBrowser()) {
-            const companyId = this.activeCompanySubject.value?.id || '001';
+            const companyId = this.companyContext.activeCompany?.id || '001';
             const stored = localStorage.getItem(`erp_customers_${companyId}`);
             return of(stored ? JSON.parse(stored) : []);
         } else {
-            const companyId = this.activeCompanySubject.value?.id || '';
+            const companyId = this.companyContext.activeCompany?.id || '';
             return this.http.get<any[]>(`${this.baseUrl}/customers?companyId=${companyId}`);
         }
     }
@@ -602,7 +562,7 @@ export class DataService {
 
     saveCustomer(customer: any): Observable<any> {
         if (this.isLocalBrowser()) {
-            const companyId = this.activeCompanySubject.value?.id || '001';
+            const companyId = this.companyContext.activeCompany?.id || '001';
             localStorage.setItem(`erp_customers_${companyId}`, JSON.stringify(customer));
             return of(customer);
         } else {
@@ -614,11 +574,11 @@ export class DataService {
     // --- Suppliers ---
     getSuppliers(): Observable<any[]> {
         if (this.isLocalBrowser()) {
-            const companyId = this.activeCompanySubject.value?.id || '001';
+            const companyId = this.companyContext.activeCompany?.id || '001';
             const stored = localStorage.getItem(`erp_suppliers_${companyId}`);
             return of(stored ? JSON.parse(stored) : []);
         } else {
-            const companyId = this.activeCompanySubject.value?.id || '';
+            const companyId = this.companyContext.activeCompany?.id || '';
             return this.http.get<any[]>(`${this.baseUrl}/suppliers?companyId=${companyId}`);
         }
     }
@@ -626,7 +586,7 @@ export class DataService {
 
     saveSupplier(supplier: any): Observable<any> {
         if (this.isLocalBrowser()) {
-            const companyId = this.activeCompanySubject.value?.id || '001';
+            const companyId = this.companyContext.activeCompany?.id || '001';
             localStorage.setItem(`erp_suppliers_${companyId}`, JSON.stringify(supplier));
             return of(supplier);
         } else {
@@ -765,7 +725,7 @@ export class DataService {
         if (normalizedModule === 'INVENTORY') normalizedModule = 'STOCK';
 
         if (this.isLocalBrowser()) {
-            const companyId = this.activeCompanySubject.value?.id || '001';
+            const companyId = this.companyContext.activeCompany?.id || '001';
             let key = `erp_${normalizedModule.toLowerCase()}_document_types_${companyId}`;
             let stored = localStorage.getItem(key);
 
@@ -806,7 +766,7 @@ export class DataService {
             localStorage.setItem(key, JSON.stringify(defaults));
             return of(defaults);
         } else {
-            const companyId = this.activeCompanySubject.value?.id || '';
+            const companyId = this.companyContext.activeCompany?.id || '';
             return this.http.get<any[]>(`${this.baseUrl}/document-types?module=${normalizedModule}&companyId=${companyId}`).pipe(
                 map(types => {
                     if (types && types.length > 0) return types;
@@ -831,12 +791,12 @@ export class DataService {
         if (normalizedModule === 'INVENTORY') normalizedModule = 'STOCK';
 
         if (this.isLocalBrowser()) {
-            const companyId = this.activeCompanySubject.value?.id || '001';
+            const companyId = this.companyContext.activeCompany?.id || '001';
             const key = `erp_${normalizedModule.toLowerCase()}_document_types_${companyId}`;
             localStorage.setItem(key, JSON.stringify(types));
             return of(true);
         } else {
-            const companyId = this.activeCompanySubject.value?.id || '';
+            const companyId = this.companyContext.activeCompany?.id || '';
             // Pass companyId in query so middleware picks it up
             return this.http.post(`${this.baseUrl}/document-types?companyId=${companyId}`, { module: normalizedModule, types });
         }
@@ -854,7 +814,7 @@ export class DataService {
         return JSON.stringify({
             timestamp: new Date().toISOString(),
             user: localStorage.getItem('erp_current_user'),
-            config: this.config,
+            config: this.getSystemConfig(),
             data: data
         }, null, 2);
     }
@@ -881,7 +841,7 @@ export class DataService {
 
         if (confirm(`Confirmar mudança para ${modeLabel}?`)) {
             const newConfig = {
-                ...this.config,
+                ...this.getSystemConfig(),
                 deploymentMode: deployment,
                 localStorageType: type
             };

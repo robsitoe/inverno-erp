@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SalesDocument } from '../../shared/models';
 import { DataService } from '../../services/data.service';
+import { SalesApiService } from '../../services/sales-api.service';
 
 @Component({
   selector: 'app-sales-document-search-modal',
@@ -75,7 +76,7 @@ export class SalesDocumentSearchModalComponent implements OnInit {
   searchTerm = '';
   private activeCompanyId: string | null = null;
 
-  constructor(private dataService: DataService) { }
+  constructor(private salesApi: SalesApiService, private dataService: DataService) { }
 
   ngOnInit() {
     // Get active company ID
@@ -88,7 +89,7 @@ export class SalesDocumentSearchModalComponent implements OnInit {
   loadDocuments() {
     // CRITICAL: Always filter by company ID to prevent data leakage
     const companyId = this.activeCompanyId || undefined;
-    this.dataService.getSalesDocuments(companyId).subscribe(docs => {
+    this.salesApi.getSalesDocuments(companyId).subscribe(docs => {
       this.documents = docs;
       // Sort by date desc
       this.documents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
