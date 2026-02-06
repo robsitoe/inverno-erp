@@ -1,133 +1,148 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+  Unique,
+} from 'typeorm';
 
 export enum SalesDocumentType {
-    INVOICE = 'INVOICE',
-    RECEIPT = 'RECEIPT',
-    CREDIT_NOTE = 'CREDIT_NOTE',
-    DEBIT_NOTE = 'DEBIT_NOTE',
-    QUOTE = 'QUOTE',
-    ORDER = 'ORDER',
+  INVOICE = 'INVOICE',
+  RECEIPT = 'RECEIPT',
+  CREDIT_NOTE = 'CREDIT_NOTE',
+  DEBIT_NOTE = 'DEBIT_NOTE',
+  QUOTE = 'QUOTE',
+  ORDER = 'ORDER',
 }
 
 export enum SalesDocumentStatus {
-    DRAFT = 'DRAFT',
-    POSTED = 'POSTED',
-    CANCELED = 'CANCELED',
-    PAID = 'PAID',
+  DRAFT = 'DRAFT',
+  POSTED = 'POSTED',
+  CANCELED = 'CANCELED',
+  PAID = 'PAID',
 }
 
 @Entity('sales_documents')
+@Unique(['companyId', 'documentType', 'series', 'seriesNumber'])
 export class SalesDocument {
-    @PrimaryColumn()
-    id: string;
+  @PrimaryColumn()
+  id: string;
 
-    @Column({ nullable: true, type: 'varchar' })
-    companyId: string;
+  @Column({ nullable: true, type: 'varchar' })
+  companyId: string;
 
-    @Column()
-    documentType: string;
+  @Column()
+  documentType: string;
 
-    @Column()
-    documentNumber: string;
+  @Column()
+  documentNumber: string;
 
-    @Column({ nullable: true })
-    series: string;
+  @Column({ nullable: true })
+  series: string;
 
-    @Column({ nullable: true })
-    seriesNumber: number;
+  @Column({ nullable: true })
+  seriesNumber: number;
 
-    @Column({ type: 'date' })
-    date: string;
+  @Column({ type: 'date' })
+  date: string;
 
-    @Column({ type: 'date' })
-    dueDate: string;
+  @Column({ type: 'date' })
+  dueDate: string;
 
-    @Column({ nullable: true })
-    customerId: string;
+  @Column({ nullable: true })
+  customerId: string;
 
-    @Column({ nullable: true })
-    customerName: string;
+  @Column({ nullable: true })
+  customerName: string;
 
-    @Column({ nullable: true })
-    customerNif: string;
+  @Column({ nullable: true })
+  customerNif: string;
 
-    @Column({ nullable: true })
-    customerAddress: string;
+  @Column({ nullable: true })
+  customerAddress: string;
 
-    @OneToMany(() => SalesDocumentLine, (line) => line.document, { cascade: true })
-    lines: SalesDocumentLine[];
+  @OneToMany(() => SalesDocumentLine, (line) => line.document, {
+    cascade: true,
+  })
+  lines: SalesDocumentLine[];
 
-    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
-    subtotal: number;
+  @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
+  subtotal: number;
 
-    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
-    discounts: number;
+  @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
+  discounts: number;
 
-    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
-    totalIva: number;
+  @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
+  totalIva: number;
 
-    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
-    total: number;
+  @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
+  total: number;
 
-    @Column({
-        type: 'simple-enum',
-        enum: ['DRAFT', 'CONFIRMED', 'INVOICED', 'CANCELLED'],
-        default: 'DRAFT',
-    })
-    status: string;
+  @Column({
+    type: 'simple-enum',
+    enum: ['DRAFT', 'CONFIRMED', 'INVOICED', 'CANCELLED'],
+    default: 'DRAFT',
+  })
+  status: string;
 
-    @Column({ nullable: true })
-    journalEntryId: string;
+  @Column({ nullable: true })
+  journalEntryId: string;
 
-    @Column({ nullable: true })
-    notes: string;
+  @Column({ nullable: true })
+  notes: string;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 }
 
 @Entity('sales_document_lines')
 export class SalesDocumentLine {
-    @PrimaryColumn()
-    id: string;
+  @PrimaryColumn()
+  id: string;
 
-    @ManyToOne(() => SalesDocument, (document) => document.lines, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'documentId' })
-    document: SalesDocument;
+  @ManyToOne(() => SalesDocument, (document) => document.lines, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'documentId' })
+  document: SalesDocument;
 
-    @Column()
-    articleId: string;
+  @Column()
+  articleId: string;
 
-    @Column()
-    articleCode: string;
+  @Column()
+  articleCode: string;
 
-    @Column()
-    articleName: string;
+  @Column()
+  articleName: string;
 
-    @Column({ type: 'decimal', precision: 14, scale: 2 })
-    quantity: number;
+  @Column({ type: 'decimal', precision: 14, scale: 2 })
+  quantity: number;
 
-    @Column({ type: 'decimal', precision: 14, scale: 2 })
-    unitPrice: number;
+  @Column({ type: 'decimal', precision: 14, scale: 2 })
+  unitPrice: number;
 
-    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
-    discount: number;
+  @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
+  discount: number;
 
-    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
-    ivaRate: number;
+  @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
+  ivaRate: number;
 
-    @Column({ nullable: true })
-    ivaCode: string;
+  @Column({ nullable: true })
+  ivaCode: string;
 
-    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
-    subtotal: number;
+  @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
+  subtotal: number;
 
-    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
-    ivaAmount: number;
+  @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
+  ivaAmount: number;
 
-    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
-    total: number;
+  @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
+  total: number;
 }

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityTarget, ObjectLiteral } from 'typeorm';
 import { CreateArticleDto } from './dto/create-article.dto';
@@ -17,9 +21,12 @@ export class InventoryService {
     private readonly defaultArticleRepo: Repository<Article>,
     @InjectRepository(StockMovement)
     private readonly defaultStockMovementRepo: Repository<StockMovement>,
-  ) { }
+  ) {}
 
-  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>): Promise<Repository<T>> {
+  private async getRepo<T extends ObjectLiteral>(
+    entity: EntityTarget<T>,
+    defaultRepo: Repository<T>,
+  ): Promise<Repository<T>> {
     const companyId = TenancyContext.getCompanyId();
     if (!companyId) return defaultRepo;
 
@@ -27,8 +34,12 @@ export class InventoryService {
     return ds.getRepository(entity);
   }
 
-  private async getArticleRepo() { return this.getRepo(Article, this.defaultArticleRepo); }
-  private async getStockMovementRepo() { return this.getRepo(StockMovement, this.defaultStockMovementRepo); }
+  private async getArticleRepo() {
+    return this.getRepo(Article, this.defaultArticleRepo);
+  }
+  private async getStockMovementRepo() {
+    return this.getRepo(StockMovement, this.defaultStockMovementRepo);
+  }
 
   // Articles
 
@@ -47,13 +58,12 @@ export class InventoryService {
     if (companyId) {
       return repo.find({
         where: { companyId },
-        order: { code: 'ASC' }
+        order: { code: 'ASC' },
       });
     }
     // If no companyId specified in query, we still use the context one for the repo
     return repo.find({ order: { code: 'ASC' } });
   }
-
 
   async findOne(id: string) {
     const repo = await this.getArticleRepo();
@@ -83,37 +93,76 @@ export class InventoryService {
     const { articleId, quantity, movementType } = createStockMovementDto;
 
     const artRepo = await this.getArticleRepo();
-    const smRepo = await this.getStockMovementRepo();
+    return artRepo.manager.transaction(async (manager) => {
+      const transactionalArtRepo = manager.getRepository(Article);
+      const transactionalSmRepo = manager.getRepository(StockMovement);
 
-    // Check if article exists
-    const article = await this.findOne(articleId);
+      const article = await transactionalArtRepo.findOne({
+        where: { id: articleId },
+        lock: { mode: 'pessimistic_write' },
+      });
 
-    // Create movement
-    const movement = smRepo.create(createStockMovementDto);
-    await smRepo.save(movement);
+      if (!article) {
+        throw new NotFoundException(`Article with ID ${articleId} not found`);
+      }
 
-    // Update article stock
-    if (movementType === ('IN' as any) || movementType === ('ADJUSTMENT' as any) && Number(quantity) > 0) {
-      article.currentStock = Number(article.currentStock) + Number(quantity);
-    } else {
-      article.currentStock = Number(article.currentStock) - Number(quantity);
-    }
-    await artRepo.save(article);
+      const numericQuantity = Number(quantity);
+      if (!Number.isFinite(numericQuantity) || numericQuantity === 0) {
+        throw new BadRequestException('Quantity must be a non-zero number');
+      }
 
-    return movement;
+      const normalizedMovementType = String(movementType || '').toUpperCase();
+      let stockDelta = 0;
+
+      switch (normalizedMovementType) {
+        case 'IN':
+          stockDelta = Math.abs(numericQuantity);
+          break;
+        case 'OUT':
+        case 'TRANSFER':
+          stockDelta = -Math.abs(numericQuantity);
+          break;
+        case 'ADJUSTMENT':
+          stockDelta = numericQuantity;
+          break;
+        default:
+          throw new BadRequestException(
+            `Invalid movementType: ${movementType}`,
+          );
+      }
+
+      const nextStock = Number(article.currentStock) + stockDelta;
+      if (nextStock < 0) {
+        throw new BadRequestException(
+          'Stock movement would result in negative stock',
+        );
+      }
+
+      const movement = transactionalSmRepo.create({
+        ...createStockMovementDto,
+        articleCode: createStockMovementDto.articleCode || article.code,
+        articleName: createStockMovementDto.articleName || article.name,
+      });
+      await transactionalSmRepo.save(movement);
+
+      article.currentStock = nextStock;
+      await transactionalArtRepo.save(article);
+
+      return movement;
+    });
   }
 
   async findAllStockMovements() {
     const repo = await this.getStockMovementRepo();
     return repo.find({
-      order: { date: 'DESC', createdAt: 'DESC' }
+      order: { date: 'DESC', createdAt: 'DESC' },
     });
   }
 
   async findOneStockMovement(id: string) {
     const repo = await this.getStockMovementRepo();
     const movement = await repo.findOne({
-      where: { id }
+      where: { id },
     });
     if (!movement) {
       throw new NotFoundException(`Stock Movement with ID ${id} not found`);

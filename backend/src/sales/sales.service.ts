@@ -1,9 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityTarget, ObjectLiteral } from 'typeorm';
+import {
+  QueryFailedError,
+  Repository,
+  EntityTarget,
+  ObjectLiteral,
+} from 'typeorm';
 import { CreateSalesDocumentDto } from './dto/create-sales-document.dto';
 import { UpdateSalesDocumentDto } from './dto/update-sales-document.dto';
-import { SalesDocument, SalesDocumentLine } from './entities/sales-document.entity';
+import {
+  SalesDocument,
+  SalesDocumentLine,
+} from './entities/sales-document.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
 import { PeriodControlService } from '../periods/period-control.service';
@@ -15,11 +27,12 @@ export class SalesService {
     private readonly periodControlService: PeriodControlService,
     @InjectRepository(SalesDocument)
     private readonly defaultSalesDocumentRepo: Repository<SalesDocument>,
-    @InjectRepository(SalesDocumentLine)
-    private readonly defaultSalesLineRepo: Repository<SalesDocumentLine>,
-  ) { }
+  ) {}
 
-  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>): Promise<Repository<T>> {
+  private async getRepo<T extends ObjectLiteral>(
+    entity: EntityTarget<T>,
+    defaultRepo: Repository<T>,
+  ): Promise<Repository<T>> {
     const companyId = TenancyContext.getCompanyId();
     if (!companyId) return defaultRepo;
 
@@ -27,22 +40,22 @@ export class SalesService {
     return ds.getRepository(entity);
   }
 
-  private async getSalesDocRepo() { return this.getRepo(SalesDocument, this.defaultSalesDocumentRepo); }
-  private async getSalesLineRepo() { return this.getRepo(SalesDocumentLine, this.defaultSalesLineRepo); }
+  private async getSalesDocRepo() {
+    return this.getRepo(SalesDocument, this.defaultSalesDocumentRepo);
+  }
 
   async create(createSalesDocumentDto: CreateSalesDocumentDto) {
     await this.periodControlService.ensureDateInOpenPeriod(createSalesDocumentDto.date, createSalesDocumentDto.companyId);
     const { lines, ...documentData } = createSalesDocumentDto;
 
     const sdRepo = await this.getSalesDocRepo();
-    const slRepo = await this.getSalesLineRepo();
 
     // Calculate totals
     let subtotal = 0;
     let totalIva = 0;
     let discounts = 0;
 
-    const documentLines = lines.map(line => {
+    const normalizedLines = lines.map((line) => {
       const quantity = Number(line.quantity);
       const unitPrice = Number(line.unitPrice);
       const discount = Number(line.discount || 0);
@@ -58,49 +71,109 @@ export class SalesService {
       totalIva += ivaAmount;
       discounts += discountAmount;
 
-      return slRepo.create({
+      return {
         ...line,
         total,
-      });
+      };
     });
 
     const total = subtotal + totalIva;
+    const maxRetries = 5;
+    let attempt = 0;
 
-    let seriesNumber = documentData.seriesNumber;
-    let documentNumber = documentData.documentNumber;
+    while (attempt < maxRetries) {
+      try {
+        return await sdRepo.manager.transaction(async (manager) => {
+          const transactionalSdRepo = manager.getRepository(SalesDocument);
+          const transactionalSlRepo = manager.getRepository(SalesDocumentLine);
 
-    // If it's a new document (no ID), we usually want to auto-generate the number
-    if (!documentData.id) {
-      if (!seriesNumber) {
-        const lastDoc = await sdRepo.findOne({
-          where: {
-            documentType: documentData.documentType,
-            series: documentData.series,
-            companyId: documentData.companyId
-          },
-          order: { seriesNumber: 'DESC' } as any,
+          let seriesNumber = documentData.seriesNumber;
+          let documentNumber = documentData.documentNumber;
+
+          // If it's a new document (no ID), we usually want to auto-generate the number
+          if (!documentData.id) {
+            if (!seriesNumber) {
+              const lastDoc = await transactionalSdRepo
+                .createQueryBuilder('salesDocument')
+                .where('salesDocument.documentType = :documentType', {
+                  documentType: documentData.documentType,
+                })
+                .andWhere('salesDocument.series = :series', {
+                  series: documentData.series,
+                })
+                .andWhere('salesDocument.companyId = :companyId', {
+                  companyId: documentData.companyId,
+                })
+                .orderBy('salesDocument.seriesNumber', 'DESC')
+                .setLock('pessimistic_write')
+                .getOne();
+
+              seriesNumber = (lastDoc?.seriesNumber || 0) + 1;
+            }
+
+            // Enforce documentNumber format
+            if (!documentNumber || documentNumber.includes('undefined')) {
+              documentNumber = `${documentData.documentType} ${documentData.series}/${seriesNumber}`;
+            }
+          }
+
+          const documentLines = normalizedLines.map((line) =>
+            transactionalSlRepo.create(line),
+          );
+
+          const document = transactionalSdRepo.create({
+            ...documentData,
+            documentNumber,
+            seriesNumber,
+            subtotal,
+            totalIva,
+            discounts,
+            total,
+            lines: documentLines,
+          });
+
+          return transactionalSdRepo.save(document);
         });
-        seriesNumber = (lastDoc?.seriesNumber || 0) + 1;
-      }
+      } catch (error) {
+        const isNumberingConflict =
+          this.isUniqueViolation(error) &&
+          !documentData.id &&
+          !documentData.seriesNumber;
 
-      // Enforce documentNumber format
-      if (!documentNumber || documentNumber.includes('undefined')) {
-        documentNumber = `${documentData.documentType} ${documentData.series}/${seriesNumber}`;
+        if (isNumberingConflict) {
+          attempt += 1;
+          if (attempt < maxRetries) {
+            continue;
+          }
+          throw new ConflictException(
+            'Unable to generate a unique document number after multiple retries',
+          );
+        }
+        throw error;
       }
     }
 
-    const document = sdRepo.create({
-      ...documentData,
-      documentNumber,
-      seriesNumber,
-      subtotal,
-      totalIva,
-      discounts,
-      total,
-      lines: documentLines,
-    });
+    throw new ConflictException('Unable to generate a unique document number');
+  }
 
-    return sdRepo.save(document);
+  private isUniqueViolation(error: unknown) {
+    if (!(error instanceof QueryFailedError)) {
+      return false;
+    }
+
+    const queryError = error as QueryFailedError & {
+      driverError?: {
+        code?: string;
+      };
+    };
+    const code = queryError.driverError?.code;
+
+    return (
+      code === '23505' ||
+      code === 'ER_DUP_ENTRY' ||
+      code === 'SQLITE_CONSTRAINT' ||
+      code === 'SQLITE_CONSTRAINT_UNIQUE'
+    );
   }
 
   async findAll(companyId?: string) {
@@ -109,12 +182,12 @@ export class SalesService {
       return sdRepo.find({
         where: { companyId },
         order: { date: 'DESC', createdAt: 'DESC' },
-        relations: ['lines']
+        relations: ['lines'],
       });
     }
     return sdRepo.find({
       order: { date: 'DESC', createdAt: 'DESC' },
-      relations: ['lines']
+      relations: ['lines'],
     });
   }
 
@@ -122,7 +195,7 @@ export class SalesService {
     const sdRepo = await this.getSalesDocRepo();
     const document = await sdRepo.findOne({
       where: { id },
-      relations: ['lines']
+      relations: ['lines'],
     });
     if (!document) {
       throw new NotFoundException(`Sales Document with ID ${id} not found`);
@@ -140,16 +213,21 @@ export class SalesService {
     return sdRepo.save(document);
   }
 
-  async findByNumber(companyId: string, type: string, series: string, number: number) {
+  async findByNumber(
+    companyId: string,
+    type: string,
+    series: string,
+    number: number,
+  ) {
     const sdRepo = await this.getSalesDocRepo();
     const document = await sdRepo.findOne({
       where: {
         companyId,
         documentType: type,
         series,
-        seriesNumber: number
+        seriesNumber: number,
       },
-      relations: ['lines']
+      relations: ['lines'],
     });
     return document;
   }
