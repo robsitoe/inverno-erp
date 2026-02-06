@@ -28,6 +28,8 @@ import { GenericEntity } from './common-entities/generic-entity.entity';
 import { DocumentType } from './common-entities/entities/document-type.entity';
 import { PaymentMethod } from './treasury/entities/payment-method.entity';
 import { TenancyModule } from './tenancy/tenancy.module';
+import { PeriodAuditLog } from './companies/entities/period-audit-log.entity';
+import { PeriodsModule } from './periods/periods.module';
 import { TenancyMiddleware } from './tenancy/tenancy.middleware';
 import { WorkflowHistory } from './common/entities/workflow-history.entity';
 import { WorkflowModule } from './common/workflow.module';
@@ -50,7 +52,7 @@ import { WorkflowModule } from './common/workflow.module';
               Account, JournalEntry, JournalLine, Article, StockMovement,
               SalesDocument, SalesDocumentLine, User, PurchaseDocument,
               PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity, DocumentType, PaymentMethod, WorkflowHistory
+              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity, DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog
             ],
             synchronize: true,
           };
@@ -68,7 +70,7 @@ import { WorkflowModule } from './common/workflow.module';
             SalesDocument, SalesDocumentLine, User, PurchaseDocument,
             PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
             Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-            DocumentType, PaymentMethod, WorkflowHistory
+            DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog
           ],
           synchronize: true,
         };
@@ -84,6 +86,7 @@ import { WorkflowModule } from './common/workflow.module';
     TreasuryModule,
     TenancyModule,
     WorkflowModule,
+    PeriodsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

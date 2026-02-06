@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { DataService } from '../services/data.service';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 import { SalesDocumentForm } from '../features/sales/sales-document-form.component';
@@ -148,7 +149,10 @@ import { AccountStatementComponent } from '../features/treasury/account-statemen
 
     <!-- Accounting: Other features (placeholder) -->
     <ng-container *ngIf="['cost-centers', 'vat', 'period-close', 'exploration', 'utilities'].includes(activeView)">
-      <app-accounting-placeholder class="w-full h-full block"></app-accounting-placeholder>
+      <div class="bg-yellow-100 border-b border-yellow-300 px-4 py-2 text-sm text-yellow-900 font-medium">
+        Módulo Beta: funcionalidades em validação de produção.
+      </div>
+      <app-accounting-placeholder [viewKey]="activeView" class="w-full h-full block"></app-accounting-placeholder>
     </ng-container>
 
     <!-- Inventory: Article Management -->
@@ -298,8 +302,13 @@ import { AccountStatementComponent } from '../features/treasury/account-statemen
 export class MainContentComponent {
   @Input() activeView: string = 'dashboard';
 
-  constructor(private sanitizer: DomSanitizer) { }
+  constructor(private sanitizer: DomSanitizer, private dataService: DataService) { }
 
+
+  isProductionMode(): boolean {
+    const config = this.dataService.getSystemConfig();
+    return config.deploymentMode === 'WEB';
+  }
   isKnownView(): boolean {
     const knownViews = [
       'sales-form',

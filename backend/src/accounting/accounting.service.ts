@@ -12,11 +12,30 @@ import { EntityTarget, ObjectLiteral } from 'typeorm';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
 import { ACCOUNT_PRESETS } from './accounting-presets';
+import { PeriodControlService } from '../periods/period-control.service';
+
+interface AccountingMvpRecord {
+  id: string;
+  code?: string;
+  description?: string;
+  active?: boolean;
+  period?: { fromDate?: string; toDate?: string };
+  createdAt: string;
+}
+
+interface PeriodCloseRecord {
+  id: string;
+  year: number;
+  month: number;
+  status: 'CLOSED';
+  createdAt: string;
+}
 
 @Injectable()
 export class AccountingService {
   constructor(
     private readonly tenancyService: TenancyService,
+    private readonly periodControlService: PeriodControlService,
     @InjectRepository(Account)
     private readonly defaultAccountRepo: Repository<Account>,
     @InjectRepository(JournalEntry)
@@ -24,6 +43,11 @@ export class AccountingService {
     @InjectRepository(JournalLine)
     private readonly defaultJournalLineRepo: Repository<JournalLine>,
   ) { }
+
+
+  private readonly costCenters: AccountingMvpRecord[] = [];
+  private readonly periodClosures: PeriodCloseRecord[] = [];
+
 
   private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>): Promise<Repository<T>> {
     const companyId = TenancyContext.getCompanyId();
@@ -102,6 +126,8 @@ export class AccountingService {
 
   async createJournalEntry(createJournalEntryDto: CreateJournalEntryDto) {
     const { lines } = createJournalEntryDto;
+
+    await this.periodControlService.ensureDateInOpenPeriod(createJournalEntryDto.date, createJournalEntryDto.companyId);
 
     // Validate that debits equal credits
     const totalDebit = lines.reduce((sum, line) => sum + Number(line.debit), 0);
@@ -250,5 +276,106 @@ export class AccountingService {
 
     console.log(`[AccountingService] Loading ${accountsToSave.length} accounts from preset "${presetName}" for company ${companyId}`);
     return await repo.save(accountsToSave);
+  }
+
+  // MVP endpoints for placeholder accounting modules
+  async listCostCenters() {
+    return this.costCenters;
+  }
+
+  async createCostCenter(payload: { code: string; description: string; active?: boolean }) {
+    if (!payload.code?.trim() || !payload.description?.trim()) {
+      throw new BadRequestException('Código e descrição são obrigatórios.');
+    }
+
+    const exists = this.costCenters.some(item => item.code === payload.code.trim());
+    if (exists) {
+      throw new BadRequestException('Código de centro de custo já existe.');
+    }
+
+    const item: AccountingMvpRecord = {
+      id: `cc-${Date.now()}`,
+      code: payload.code.trim(),
+      description: payload.description.trim(),
+      active: payload.active ?? true,
+      createdAt: new Date().toISOString()
+    };
+
+    this.costCenters.push(item);
+    return item;
+  }
+
+  async getVatSummary(fromDate?: string, toDate?: string) {
+    if (fromDate && toDate && fromDate > toDate) {
+      throw new BadRequestException('Data inicial deve ser menor ou igual à data final.');
+    }
+
+    return {
+      fromDate,
+      toDate,
+      vatSettled: 0,
+      vatDeductible: 0,
+      generatedAt: new Date().toISOString()
+    };
+  }
+
+  async closePeriod(payload: { year: number; month: number }) {
+    const { year, month } = payload;
+    if (!year || !month) {
+      throw new BadRequestException('Ano e mês são obrigatórios.');
+    }
+    if (month < 1 || month > 12) {
+      throw new BadRequestException('Mês inválido.');
+    }
+
+    const now = new Date();
+    const futurePeriod = year > now.getFullYear() || (year === now.getFullYear() && month > now.getMonth() + 1);
+    if (futurePeriod) {
+      throw new BadRequestException('Não é permitido fechar períodos futuros.');
+    }
+
+    const alreadyClosed = this.periodClosures.find(item => item.year === year && item.month === month);
+    if (alreadyClosed) {
+      throw new BadRequestException('Período já encerrado.');
+    }
+
+    const closure: PeriodCloseRecord = {
+      id: `pc-${Date.now()}`,
+      year,
+      month,
+      status: 'CLOSED',
+      createdAt: new Date().toISOString()
+    };
+
+    this.periodClosures.push(closure);
+    return closure;
+  }
+
+  async getExplorationSummary(fromDate?: string, toDate?: string) {
+    return {
+      period: { fromDate, toDate },
+      totalDebit: 0,
+      totalCredit: 0,
+      topVariations: [],
+      generatedAt: new Date().toISOString()
+    };
+  }
+
+  async getUtilitiesAuditLog(page: number = 1, limit: number = 50) {
+    const boundedLimit = Math.min(Math.max(limit, 1), 500);
+    const start = (Math.max(page, 1) - 1) * boundedLimit;
+    const records = this.periodClosures.slice(start, start + boundedLimit).map(item => ({
+      id: item.id,
+      action: 'PERIOD_CLOSE',
+      reference: `${item.year}-${String(item.month).padStart(2, '0')}`,
+      createdAt: item.createdAt
+    }));
+
+    return {
+      page,
+      limit: boundedLimit,
+      total: this.periodClosures.length,
+      records
+    };
   }
 }

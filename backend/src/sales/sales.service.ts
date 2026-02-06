@@ -7,11 +7,13 @@ import { SalesDocument, SalesDocumentLine } from './entities/sales-document.enti
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
 import { WorkflowService, WorkflowTarget } from '../common/workflow.service';
+import { PeriodControlService } from '../periods/period-control.service';
 
 @Injectable()
 export class SalesService {
   constructor(
     private readonly tenancyService: TenancyService,
+    private readonly periodControlService: PeriodControlService,
     @InjectRepository(SalesDocument)
     private readonly defaultSalesDocumentRepo: Repository<SalesDocument>,
     @InjectRepository(SalesDocumentLine)
@@ -31,6 +33,7 @@ export class SalesService {
   private async getSalesLineRepo() { return this.getRepo(SalesDocumentLine, this.defaultSalesLineRepo); }
 
   async create(createSalesDocumentDto: CreateSalesDocumentDto) {
+    await this.periodControlService.ensureDateInOpenPeriod(createSalesDocumentDto.date, createSalesDocumentDto.companyId);
     const { lines, ...documentData } = createSalesDocumentDto;
 
     const sdRepo = await this.getSalesDocRepo();
@@ -130,6 +133,9 @@ export class SalesService {
   }
 
   async update(id: string, updateSalesDocumentDto: UpdateSalesDocumentDto, user?: any) {
+    if (updateSalesDocumentDto.date) {
+      await this.periodControlService.ensureDateInOpenPeriod(updateSalesDocumentDto.date, updateSalesDocumentDto.companyId);
+    }
     const sdRepo = await this.getSalesDocRepo();
     const document = await this.findOne(id);
 

@@ -7,11 +7,13 @@ import { PurchaseDocument } from './entities/purchase.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
 import { WorkflowService, WorkflowTarget } from '../common/workflow.service';
+import { PeriodControlService } from '../periods/period-control.service';
 
 @Injectable()
 export class PurchasesService {
   constructor(
     private readonly tenancyService: TenancyService,
+    private readonly periodControlService: PeriodControlService,
     @InjectRepository(PurchaseDocument)
     private readonly defaultPurchaseRepo: Repository<PurchaseDocument>,
     private readonly workflowService: WorkflowService,
@@ -28,6 +30,7 @@ export class PurchasesService {
   private async getPurchaseRepo() { return this.getRepo(PurchaseDocument, this.defaultPurchaseRepo); }
 
   async create(createPurchaseDto: CreatePurchaseDto) {
+    await this.periodControlService.ensureDateInOpenPeriod(createPurchaseDto.date, createPurchaseDto.companyId);
     const { lines, ...documentData } = createPurchaseDto;
     const repo = await this.getPurchaseRepo();
 
@@ -98,6 +101,9 @@ export class PurchasesService {
   }
 
   async update(id: string, updatePurchaseDto: UpdatePurchaseDto, user?: any) {
+    if ((updatePurchaseDto as any).date) {
+      await this.periodControlService.ensureDateInOpenPeriod((updatePurchaseDto as any).date, (updatePurchaseDto as any).companyId);
+    }
     const repo = await this.getPurchaseRepo();
     const document = await this.findOne(id);
 

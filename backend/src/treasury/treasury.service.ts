@@ -8,11 +8,13 @@ import { PaymentMethod } from './entities/payment-method.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
 import { WorkflowService, WorkflowTarget } from '../common/workflow.service';
+import { PeriodControlService } from '../periods/period-control.service';
 
 @Injectable()
 export class TreasuryService {
   constructor(
     private readonly tenancyService: TenancyService,
+    private readonly periodControlService: PeriodControlService,
     @InjectRepository(TreasuryDocument)
     private readonly defaultTreasuryRepo: Repository<TreasuryDocument>,
     @InjectRepository(PaymentMethod)
@@ -32,6 +34,7 @@ export class TreasuryService {
   private async getPaymentMethodRepo() { return this.getRepo(PaymentMethod, this.defaultPaymentMethodRepo); }
 
   async create(createTreasuryDto: CreateTreasuryDto) {
+    await this.periodControlService.ensureDateInOpenPeriod(createTreasuryDto.date, createTreasuryDto.companyId);
     const repo = await this.getTreasuryRepo();
     const treasury = repo.create(createTreasuryDto);
     return repo.save(treasury);
@@ -57,6 +60,9 @@ export class TreasuryService {
   }
 
   async update(id: string, updateTreasuryDto: UpdateTreasuryDto, user?: any) {
+    if ((updateTreasuryDto as any).date) {
+      await this.periodControlService.ensureDateInOpenPeriod((updateTreasuryDto as any).date, (updateTreasuryDto as any).companyId);
+    }
     const repo = await this.getTreasuryRepo();
     const document = await this.findOne(id);
 
@@ -111,6 +117,7 @@ export class TreasuryService {
 
 
   async createReceipt(data: any) {
+    await this.periodControlService.ensureDateInOpenPeriod(data.date, data.companyId);
     const repo = await this.getTreasuryRepo();
     const receipt = repo.create({ ...data, type: TreasuryDocumentType.RECEIPT });
     return repo.save(receipt);
@@ -130,6 +137,7 @@ export class TreasuryService {
 
 
   async createPayment(data: any) {
+    await this.periodControlService.ensureDateInOpenPeriod(data.date, data.companyId);
     const repo = await this.getTreasuryRepo();
     const payment = repo.create({ ...data, type: TreasuryDocumentType.PAYMENT });
     return repo.save(payment);

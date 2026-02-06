@@ -16,6 +16,7 @@ import { Series } from '../companies/entities/series.entity';
 import { GenericEntity } from '../common-entities/generic-entity.entity';
 import { PaymentMethod } from '../treasury/entities/payment-method.entity';
 import { DocumentType } from '../common-entities/entities/document-type.entity';
+import { PeriodAuditLog } from '../companies/entities/period-audit-log.entity';
 import {
     SALES_DOCUMENT_TYPES,
     PURCHASE_DOCUMENT_TYPES,
@@ -87,7 +88,7 @@ export class TenancyService implements OnModuleDestroy {
                     SalesDocument, SalesDocumentLine, PurchaseDocument,
                     PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
                     FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-                    DocumentType, PaymentMethod
+                    DocumentType, PaymentMethod, PeriodAuditLog
                 ],
                 synchronize: true,
                 logging: ['error', 'warn'],
