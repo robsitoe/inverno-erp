@@ -18,6 +18,7 @@ const swagger_1 = require("@nestjs/swagger");
 const sales_service_1 = require("./sales.service");
 const create_sales_document_dto_1 = require("./dto/create-sales-document.dto");
 const update_sales_document_dto_1 = require("./dto/update-sales-document.dto");
+const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 let SalesController = class SalesController {
     salesService;
     constructor(salesService) {
@@ -40,6 +41,12 @@ let SalesController = class SalesController {
     }
     remove(id) {
         return this.salesService.remove(id);
+    }
+    processWorkflow(id, data, req) {
+        return this.salesService.processWorkflow(id, data.action, req.user, data.notes);
+    }
+    getHistory(id) {
+        return this.salesService.getWorkflowHistory(id);
     }
 };
 exports.SalesController = SalesController;
@@ -98,9 +105,28 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], SalesController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Patch)('documents/:id/workflow'),
+    (0, swagger_1.ApiOperation)({ summary: 'Process document workflow transition' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], SalesController.prototype, "processWorkflow", null);
+__decorate([
+    (0, common_1.Get)('documents/:id/history'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get document workflow history' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], SalesController.prototype, "getHistory", null);
 exports.SalesController = SalesController = __decorate([
     (0, swagger_1.ApiTags)('sales'),
     (0, common_1.Controller)('sales'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [sales_service_1.SalesService])
 ], SalesController);
 //# sourceMappingURL=sales.controller.js.map

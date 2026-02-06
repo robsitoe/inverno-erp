@@ -1,4 +1,4 @@
-ï»¿import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -12,6 +12,7 @@ import { SupplierListModalComponent } from '../../shared/components/supplier-lis
 import { DocumentTypeConfigModalComponent } from '../../shared/components/document-type-config-modal.component';
 import { EntityTypeConfigModalComponent, EntityType } from '../../shared/components/entity-type-config-modal.component';
 import { GenericEntityListModalComponent } from '../../shared/components/generic-entity-list-modal.component';
+import { WorkflowStatus, WorkflowHistory } from '../../shared/models';
 
 interface PendingDocRow {
   selected: boolean;
@@ -58,10 +59,30 @@ interface PendingDocRow {
 
       <!-- Toolbar -->
       <div class="flex items-center gap-1 px-2 py-1 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0">
-        <button (click)="confirmSave()" *ngIf="!isLocked" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 disabled:opacity-50" [disabled]="isSaving">
+        <button (click)="confirmSave()" *ngIf="!isLocked && status === 'DRAFT'" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 disabled:opacity-50" [disabled]="isSaving">
           <span class="material-symbols-outlined text-[18px] text-blue-600" [class.spinner]="isSaving">{{ isSaving ? 'sync' : 'save' }}</span>
           <span>Confirmar</span>
         </button>
+
+        <!-- Workflow Actions -->
+        <ng-container *ngIf="currentDocId">
+          <button (click)="onWorkflowAction('SUBMIT')" *ngIf="status === 'DRAFT' || status === 'REJECTED'" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+            <span class="material-symbols-outlined text-[18px] text-orange-500">send</span>
+            <span>Submeter</span>
+          </button>
+          <button (click)="onWorkflowAction('APPROVE')" *ngIf="status === 'SUBMITTED'" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+            <span class="material-symbols-outlined text-[18px] text-green-600">how_to_reg</span>
+            <span>Aprovar</span>
+          </button>
+          <button (click)="onWorkflowAction('REJECT')" *ngIf="status === 'SUBMITTED'" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+            <span class="material-symbols-outlined text-[18px] text-red-600">block</span>
+            <span>Rejeitar</span>
+          </button>
+          <button (click)="onWorkflowAction('POST')" *ngIf="status === 'APPROVED'" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+            <span class="material-symbols-outlined text-[18px] text-purple-600">account_balance</span>
+            <span>Lançar</span>
+          </button>
+        </ng-container>
         <button (click)="resetForm()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
           <span class="material-symbols-outlined text-[18px] text-green-600">add_circle</span>
           <span>Novo</span>
@@ -136,12 +157,12 @@ interface PendingDocRow {
               </div>
 
               <div class="flex items-center gap-2">
-                <label class="w-24 text-right font-medium text-gray-700">Data Doc. atÃ©:</label>
+                <label class="w-24 text-right font-medium text-gray-700">Data Doc. até:</label>
                 <input type="date" [(ngModel)]="filterDateUntil" class="w-32 border border-gray-300 rounded-sm px-1 py-0.5 bg-white focus:outline-none focus:border-blue-500">
                 
                 <div class="flex items-center gap-1 ml-8">
                   <input type="checkbox" id="onlyOverdue" class="rounded-sm border-gray-300 text-blue-600 focus:ring-0">
-                  <label for="onlyOverdue" class="text-gray-700">SÃ³ vencidos atÃ©</label>
+                  <label for="onlyOverdue" class="text-gray-700">Só vencidos até</label>
                 </div>
                 <input type="date" class="w-32 border border-gray-300 rounded-sm px-1 py-0.5 bg-white focus:outline-none focus:border-blue-500 ml-2">
               </div>
@@ -156,7 +177,7 @@ interface PendingDocRow {
                 <span>Descontos:</span>
                 <span class="font-mono">0,00</span>
                 
-                <span>RetenÃ§Ãµes:</span>
+                <span>Retenções:</span>
                 <span class="font-mono">0,00</span>
                 
                 <span>V. Excesso:</span>
@@ -172,7 +193,7 @@ interface PendingDocRow {
                 <span>Moeda:</span>
                 <span>Metical</span>
                 
-                <span>CÃ¢mbio:</span>
+                <span>Câmbio:</span>
                 <span>1,0000000</span>
               </div>
             </div>
@@ -223,12 +244,12 @@ interface PendingDocRow {
               </div>
             </div>
             <div class="mt-2">
-              <label class="block text-[10px] font-medium text-gray-700 mb-1">ObservaÃ§Ãµes</label>
+              <label class="block text-[10px] font-medium text-gray-700 mb-1">Observações</label>
               <textarea [(ngModel)]="advanceObservations" rows="2" class="w-full border border-gray-300 rounded-sm px-2 py-1 text-sm resize-none" placeholder="Motivo do adiantamento..."></textarea>
             </div>
             <div class="mt-2 text-[10px] text-yellow-700 bg-yellow-100 border border-yellow-200 rounded-sm px-2 py-1">
-              <strong>Nota:</strong> O adiantamento serÃ¡ lanÃ§ado diretamente sem documento pendente. 
-              {{ entityType === 'CUSTOMER' ? 'DÃ©bito: Tesouraria â†’ CrÃ©dito: Adiantamentos de Clientes (21.9)' : 'DÃ©bito: Adiantamentos a Fornecedores (22.9) â†’ CrÃ©dito: Tesouraria' }}
+              <strong>Nota:</strong> O adiantamento será lançado diretamente sem documento pendente. 
+              {{ entityType === 'CUSTOMER' ? 'Débito: Tesouraria ? Crédito: Adiantamentos de Clientes (21.9)' : 'Débito: Adiantamentos a Fornecedores (22.9) ? Crédito: Tesouraria' }}
             </div>
           </div>
 
@@ -242,7 +263,7 @@ interface PendingDocRow {
                   <th class="w-20 py-1 border-r border-gray-200 text-left px-1 text-red-600">Data Venc.</th>
                   <th class="w-12 py-1 border-r border-gray-200 text-center">Moeda</th>
                   <th class="w-24 py-1 border-r border-gray-200 text-left px-1 text-blue-600">Documento</th>
-                  <th class="w-16 py-1 border-r border-gray-200 text-left px-1 text-blue-600">N.Âº Doc.</th>
+                  <th class="w-16 py-1 border-r border-gray-200 text-left px-1 text-blue-600">N.º Doc.</th>
                   <th class="w-24 py-1 border-r border-gray-200 text-right px-1">Total</th>
                   <th class="w-24 py-1 border-r border-gray-200 text-right px-1 text-blue-600">Pendente</th>
                   <th class="w-24 py-1 border-r border-gray-200 text-right px-1 font-bold">A Pagar</th>
@@ -290,8 +311,8 @@ interface PendingDocRow {
 
           <!-- Observations Area -->
           <div class="h-24 bg-white border border-gray-300 mt-1 p-1 flex flex-col">
-            <label class="text-[10px] font-bold text-gray-700 mb-0.5">ObservaÃ§Ãµes:</label>
-            <textarea [(ngModel)]="observations" [readOnly]="isLocked" class="flex-1 w-full border-none resize-none focus:ring-0 text-xs font-sans bg-transparent outline-none" placeholder="Insira observaÃ§Ãµes aqui..."></textarea>
+            <label class="text-[10px] font-bold text-gray-700 mb-0.5">Observações:</label>
+            <textarea [(ngModel)]="observations" [readOnly]="isLocked" class="flex-1 w-full border-none resize-none focus:ring-0 text-xs font-sans bg-transparent outline-none" placeholder="Insira observações aqui..."></textarea>
           </div>
 
           <!-- Status Bar -->
@@ -301,22 +322,22 @@ interface PendingDocRow {
           </div>
         </div>
 
-        <!-- Tab: Dados LiquidaÃ§Ã£o -->
+        <!-- Tab: Dados Liquidação -->
         <div *ngIf="activeTab === 1" class="flex flex-col gap-3 p-3 h-full overflow-auto">
-           <!-- Conta de Tesouraria PadrÃ£o -->
+           <!-- Conta de Tesouraria Padrão -->
            <div class="bg-white border border-gray-300 p-3 rounded-sm">
-              <label class="block font-medium mb-2 text-gray-700">Conta de Tesouraria PadrÃ£o</label>
+              <label class="block font-medium mb-2 text-gray-700">Conta de Tesouraria Padrão</label>
               <select [(ngModel)]="selectedTreasuryAccount" class="w-full border border-gray-300 rounded-sm px-2 py-1 text-xs">
                 <option value="">Selecione...</option>
                 <option *ngFor="let acc of treasuryAccounts" [value]="acc.id">{{ acc.code }} - {{ acc.name }}</option>
               </select>
-              <p class="text-[10px] text-gray-500 mt-1">Esta conta serÃ¡ usada quando nenhum meio de pagamento especÃ­fico for selecionado.</p>
+              <p class="text-[10px] text-gray-500 mt-1">Esta conta será usada quando nenhum meio de pagamento específico for selecionado.</p>
            </div>
 
            <!-- Meios de Pagamento -->
            <div class="bg-white border border-gray-300 rounded-sm flex-1 flex flex-col overflow-hidden">
               <div class="bg-gray-100 px-3 py-2 border-b border-gray-300 flex justify-between items-center">
-                 <h3 class="font-bold text-gray-700">ConfiguraÃ§Ã£o de Meios de Pagamento</h3>
+                 <h3 class="font-bold text-gray-700">Configuração de Meios de Pagamento</h3>
                  <button (click)="addPaymentMethod()" class="bg-green-600 text-white px-2 py-1 rounded-sm text-[10px] hover:bg-green-700 flex items-center gap-1">
                     <span class="material-symbols-outlined text-[14px]">add</span> Novo Meio
                  </button>
@@ -326,12 +347,12 @@ interface PendingDocRow {
                  <table class="w-full text-xs border-collapse">
                     <thead class="bg-gray-50 sticky top-0 border-b border-gray-300">
                        <tr>
-                          <th class="px-2 py-1 text-left w-20">CÃ³digo</th>
-                          <th class="px-2 py-1 text-left">DescriÃ§Ã£o</th>
+                          <th class="px-2 py-1 text-left w-20">Código</th>
+                          <th class="px-2 py-1 text-left">Descrição</th>
                           <th class="px-2 py-1 text-left w-40">Tipo</th>
                           <th class="px-2 py-1 text-center w-16">Ativo</th>
                           <th class="px-2 py-1 text-center w-16">Ordem</th>
-                          <th class="px-2 py-1 text-center w-20">AÃ§Ãµes</th>
+                          <th class="px-2 py-1 text-center w-20">Ações</th>
                        </tr>
                     </thead>
                     <tbody>
@@ -407,13 +428,63 @@ interface PendingDocRow {
 
               <div class="bg-gray-50 px-3 py-2 border-t border-gray-300 text-[10px] text-gray-600">
                  <p><strong>Dica:</strong> Configure cada meio de pagamento com a conta de tesouraria correspondente. 
-                 Exemplo: NumerÃ¡rio â†’ Caixa (11.1.1), TransferÃªncia â†’ Banco (12.1.1)</p>
+                 Exemplo: Numerário ? Caixa (11.1.1), Transferência ? Banco (12.1.1)</p>
               </div>
            </div>
         </div>
       </div>
 
-      <!-- Payment Mode Modal -->
+
+
+        <!-- Tab: Workflow/Estado (HistÃ³rico) -->
+<div *ngIf="activeTab === 5" class="flex flex-col gap-2 p-3 h-full overflow-hidden">
+    <div class="flex items-center gap-3 mb-2 bg-white p-2 border border-gray-200 rounded shadow-sm shrink-0 font-sans">
+        <span class="font-bold text-gray-700 text-[11px] text-blue-600">Estado Atual:</span>
+        <span class="px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider shadow-sm"
+            [class.bg-gray-100]="status === 'DRAFT'" [class.bg-blue-50]="status === 'SUBMITTED'"
+            [class.bg-green-50]="status === 'APPROVED'" [class.bg-red-50]="status === 'REJECTED'"
+            [class.bg-purple-50]="status === 'POSTED'" [class.text-gray-600]="status === 'DRAFT'"
+            [class.text-blue-600]="status === 'SUBMITTED'" [class.text-green-600]="status === 'APPROVED'"
+            [class.text-red-600]="status === 'REJECTED'" [class.text-purple-600]="status === 'POSTED'">{{ status
+            }}</span>
+    </div>
+
+    <div class="flex-1 overflow-auto border border-gray-300 rounded shadow-sm bg-white">
+        <table class="w-full text-[11px] font-sans">
+            <thead class="bg-gray-50 sticky top-0 border-b border-gray-300 text-gray-500 uppercase text-[9px]">
+                <tr>
+                    <th class="px-3 py-2 text-left font-semibold">Data/Hora</th>
+                    <th class="px-3 py-2 text-left font-semibold">De</th>
+                    <th class="px-3 py-2 text-left font-semibold">Para</th>
+                    <th class="px-3 py-2 text-left font-semibold">Utilizador</th>
+                    <th class="px-3 py-2 text-left font-semibold">Notas</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                <tr *ngFor="let h of workflowHistory" class="hover:bg-gray-50 transition-colors">
+                    <td class="px-3 py-2 whitespace-nowrap text-gray-600">{{ h.createdAt | date:'yyyy-MM-dd HH:mm' }}
+                    </td>
+                    <td class="px-3 py-2">
+                        <span class="px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-500 text-[9px]">{{ h.fromStatus
+                            }}</span>
+                    </td>
+                    <td class="px-3 py-2">
+                        <span class="px-1.5 py-0.5 rounded-sm bg-blue-50 text-blue-600 text-[9px] font-medium">{{
+                            h.toStatus }}</span>
+                    </td>
+                    <td class="px-3 py-2 font-medium text-gray-700">{{ h.userName }}</td>
+                    <td class="px-3 py-2 italic text-gray-500 max-w-[250px] truncate">{{ h.notes || '-' }}</td>
+                </tr>
+                <tr *ngIf="workflowHistory.length === 0">
+                    <td colspan="5" class="px-3 py-10 text-center text-gray-400 italic">
+                        <span class="material-symbols-outlined text-4xl block mb-2 opacity-20">history</span>
+                        Nenhum histÃ³rico de workflow registrado para este documento.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>      <!-- Payment Mode Modal -->
       <div *ngIf="showPaymentModeModal" class="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-20">
         <div class="bg-white rounded shadow-lg border border-gray-300 w-80 flex flex-col">
           <div class="bg-gray-100 px-2 py-1 border-b border-gray-300 flex justify-between items-center">
@@ -424,8 +495,8 @@ interface PendingDocRow {
             <table class="w-full text-[11px] border-collapse">
               <thead class="bg-gray-50 text-left">
                 <tr>
-                  <th class="border-b border-gray-200 px-2 py-1">CÃ³digo</th>
-                  <th class="border-b border-gray-200 px-2 py-1">DescriÃ§Ã£o</th>
+                  <th class="border-b border-gray-200 px-2 py-1">Código</th>
+                  <th class="border-b border-gray-200 px-2 py-1">Descrição</th>
                 </tr>
               </thead>
               <tbody>
@@ -477,7 +548,7 @@ interface PendingDocRow {
   `
 })
 export class TreasuryManagementComponent implements OnInit {
-  tabs = ['Gerais', 'Dados LiquidaÃ§Ã£o', 'DistribuiÃ§Ã£o AutomÃ¡tica', 'RestriÃ§Ãµes', 'RestriÃ§Ãµes das Atividades'];
+  tabs = ['Gerais', 'Dados Liquidação', 'Distribuição Automática', 'Restrições', 'Restrições das Atividades', 'Workflow/Estado'];
   activeTab = 0;
 
   // Filters
@@ -488,15 +559,15 @@ export class TreasuryManagementComponent implements OnInit {
   employeeSubTypes = [
     'Alertas Diuturnidades Vencidas',
     'Alertas Fim de Contrato',
-    'Alertas Fim de PerÃ­odo Experimental',
+    'Alertas Fim de Período Experimental',
     'Alertas Validade do BI',
-    'Cadastro FuncionÃ¡rios Ativos',
-    'FuncionÃ¡rios Ativos',
-    'FuncionÃ¡rios admitidos entre 2 datas',
-    'FuncionÃ¡rios demitidos entre 2 datas',
-    'FuncionÃ¡rios'
+    'Cadastro Funcionários Ativos',
+    'Funcionários Ativos',
+    'Funcionários admitidos entre 2 datas',
+    'Funcionários demitidos entre 2 datas',
+    'Funcionários'
   ];
-  selectedEmployeeSubType = 'FuncionÃ¡rios';
+  selectedEmployeeSubType = 'Funcionários';
 
   entityCode = '';
   entityName = '';
@@ -511,6 +582,9 @@ export class TreasuryManagementComponent implements OnInit {
   docDate = new Date().toISOString().split('T')[0];
   docNumberString = '';
   observations = '';
+  status: WorkflowStatus = WorkflowStatus.DRAFT;
+  workflowHistory: WorkflowHistory[] = [];
+  currentDocId: string | null = null;
 
   // Grid
   pendingRows: PendingDocRow[] = [];
@@ -523,7 +597,9 @@ export class TreasuryManagementComponent implements OnInit {
   treasuryAccounts: any[] = [];
 
   isSaving = false;
-  isLocked = false;
+  get isLocked(): boolean {
+    return this.status === WorkflowStatus.APPROVED || this.status === WorkflowStatus.POSTED;
+  }
 
   showCustomerModal = false;
   showSupplierModal = false;
@@ -540,7 +616,7 @@ export class TreasuryManagementComponent implements OnInit {
 
     // Validate Period Closure
     if (!this.periodService.isPeriodOpen(this.docDate)) {
-      alert('O perÃ­odo para esta data estÃ¡ fechado. NÃ£o Ã© possÃ­vel gravar documentos nesta data.');
+      alert('O período para esta data está fechado. Não é possível gravar documentos nesta data.');
       return;
     }
 
@@ -552,7 +628,7 @@ export class TreasuryManagementComponent implements OnInit {
     const balanceCheck = this.accountingService.checkBalanceFeasibility(this.selectedTreasuryAccount, this.docDate, amountChange);
 
     if (!balanceCheck.valid) {
-      const confirmMsg = `AtenÃ§Ã£o: Este movimento retroativo farÃ¡ com que o saldo da conta de tesouraria fique negativo em ${balanceCheck.dateOfMinBalance?.toLocaleDateString()}.\n\nSaldo MÃ­nimo Projetado: ${balanceCheck.minBalance.toLocaleString('pt-PT', { style: 'currency', currency: 'MZN' })}\n\nDeseja continuar mesmo assim?`;
+      const confirmMsg = `Atenção: Este movimento retroativo fará com que o saldo da conta de tesouraria fique negativo em ${balanceCheck.dateOfMinBalance?.toLocaleDateString()}.\n\nSaldo Mínimo Projetado: ${balanceCheck.minBalance.toLocaleString('pt-PT', { style: 'currency', currency: 'MZN' })}\n\nDeseja continuar mesmo assim?`;
 
       if (!confirm(confirmMsg)) {
         return;
@@ -654,26 +730,26 @@ export class TreasuryManagementComponent implements OnInit {
     {
       id: 'CASH',
       name: 'Dinheiro em Caixa',
-      icon: 'ðŸ’µ',
-      description: 'Pagamentos em dinheiro fÃ­sico',
+      icon: '??',
+      description: 'Pagamentos em dinheiro físico',
       accountCode: '11.1.1',
       accountName: 'Caixa'
     },
     {
       id: 'BANK',
       name: 'Banco',
-      icon: 'ðŸ¦',
-      description: 'TransferÃªncias, cheques, cartÃµes bancÃ¡rios',
+      icon: '??',
+      description: 'Transferências, cheques, cartões bancários',
       accountCode: '12.1.1',
-      accountName: 'DepÃ³sitos Ã  Ordem'
+      accountName: 'Depósitos à Ordem'
     },
     {
       id: 'MOBILE',
-      name: 'Dinheiro MÃ³vel',
-      icon: 'ðŸ“±',
+      name: 'Dinheiro Móvel',
+      icon: '??',
       description: 'M-Pesa, E-Mola, etc.',
       accountCode: '11.1.2',
-      accountName: 'Caixa - Dinheiro MÃ³vel'
+      accountName: 'Caixa - Dinheiro Móvel'
     }
   ];
 
@@ -731,10 +807,10 @@ export class TreasuryManagementComponent implements OnInit {
   showPaymentModeModal = false;
   activeRow: PendingDocRow | null = null;
   paymentModes = [
-    { code: 'NUM', description: 'NumerÃ¡rio' },
+    { code: 'NUM', description: 'Numerário' },
     { code: 'CHQ', description: 'Cheque' },
-    { code: 'TRA', description: 'TransferÃªncia BancÃ¡ria' },
-    { code: 'POS', description: 'CartÃ£o de DÃ©bito/CrÃ©dito' },
+    { code: 'TRA', description: 'Transferência Bancária' },
+    { code: 'POS', description: 'Cartão de Débito/Crédito' },
     { code: 'OUT', description: 'Outros' }
   ];
 
@@ -762,8 +838,8 @@ export class TreasuryManagementComponent implements OnInit {
       const defaults: EntityType[] = [
         { id: '1', code: 'CLIENTE', description: 'Cliente', category: 'CUSTOMER', active: true },
         { id: '2', code: 'FORNECEDOR', description: 'Fornecedor', category: 'SUPPLIER', active: true },
-        { id: '3', code: 'SOCIO', description: 'SÃ³cio', category: 'OTHER', active: true },
-        { id: '4', code: 'ESTADO', description: 'Estado/Ente PÃºblico', category: 'OTHER', active: true },
+        { id: '3', code: 'SOCIO', description: 'Sócio', category: 'OTHER', active: true },
+        { id: '4', code: 'ESTADO', description: 'Estado/Ente Público', category: 'OTHER', active: true },
         { id: '5', code: 'OUTRO_CREDOR', description: 'Outro Credor', category: 'OTHER', active: true },
         { id: '6', code: 'OUTRO_DEVEDOR', description: 'Outro Devedor', category: 'OTHER', active: true },
         { id: '7', code: 'FORNEC_IMOB', description: 'Fornecedor de Imobilizado', category: 'SUPPLIER', active: true },
@@ -771,8 +847,8 @@ export class TreasuryManagementComponent implements OnInit {
         { id: '9', code: 'CREDOR_SUBS', description: 'Credor subs. n/liberadas', category: 'OTHER', active: true },
         { id: '10', code: 'OBRIGACIONISTA', description: 'Obrigacionista', category: 'OTHER', active: true },
         { id: '11', code: 'CONSULTOR', description: 'Consultor', category: 'OTHER', active: true },
-        { id: '12', code: 'CONTA_BANCARIA', description: 'Conta bancÃ¡ria', category: 'OTHER', active: true },
-        { id: '13', code: 'FUNCIONARIO', description: 'FuncionÃ¡rio', category: 'OTHER', active: true },
+        { id: '12', code: 'CONTA_BANCARIA', description: 'Conta bancária', category: 'OTHER', active: true },
+        { id: '13', code: 'FUNCIONARIO', description: 'Funcionário', category: 'OTHER', active: true },
         { id: '14', code: 'SINDICATO', description: 'Sindicato', category: 'OTHER', active: true }
       ];
       localStorage.setItem('erp_entity_types', JSON.stringify(defaults));
@@ -825,7 +901,7 @@ export class TreasuryManagementComponent implements OnInit {
       {
         id: 'PM-1',
         code: 'NUM',
-        description: 'ðŸ’µ NumerÃ¡rio (Dinheiro)',
+        description: '?? Numerário (Dinheiro)',
         category: 'CASH',
         treasuryAccountId: this.getTreasuryAccountFromCategory('CASH'),
         isActive: true,
@@ -834,7 +910,7 @@ export class TreasuryManagementComponent implements OnInit {
       {
         id: 'PM-2',
         code: 'TRF',
-        description: 'ðŸ¦ TransferÃªncia BancÃ¡ria',
+        description: '?? Transferência Bancária',
         category: 'BANK',
         treasuryAccountId: this.getTreasuryAccountFromCategory('BANK'),
         isActive: true,
@@ -843,7 +919,7 @@ export class TreasuryManagementComponent implements OnInit {
       {
         id: 'PM-3',
         code: 'CHQ',
-        description: 'ðŸ¦ Cheque',
+        description: '?? Cheque',
         category: 'BANK',
         treasuryAccountId: this.getTreasuryAccountFromCategory('BANK'),
         isActive: true,
@@ -852,7 +928,7 @@ export class TreasuryManagementComponent implements OnInit {
       {
         id: 'PM-4',
         code: 'MB',
-        description: 'ðŸ¦ Multibanco/TPA',
+        description: '?? Multibanco/TPA',
         category: 'BANK',
         treasuryAccountId: this.getTreasuryAccountFromCategory('BANK'),
         isActive: true,
@@ -861,7 +937,7 @@ export class TreasuryManagementComponent implements OnInit {
       {
         id: 'PM-5',
         code: 'MPESA',
-        description: 'ðŸ“± M-Pesa',
+        description: '?? M-Pesa',
         category: 'MOBILE',
         treasuryAccountId: this.getTreasuryAccountFromCategory('MOBILE'),
         isActive: true,
@@ -870,7 +946,7 @@ export class TreasuryManagementComponent implements OnInit {
       {
         id: 'PM-6',
         code: 'EMOLA',
-        description: 'ðŸ“± E-Mola',
+        description: '?? E-Mola',
         category: 'MOBILE',
         treasuryAccountId: this.getTreasuryAccountFromCategory('MOBILE'),
         isActive: true,
@@ -909,7 +985,7 @@ export class TreasuryManagementComponent implements OnInit {
 
   saveEditingPaymentMethod() {
     if (!this.editingPaymentMethod.code || !this.editingPaymentMethod.description || !this.editingPaymentMethod.treasuryAccountId) {
-      alert('Por favor preencha todos os campos obrigatÃ³rios.');
+      alert('Por favor preencha todos os campos obrigatórios.');
       return;
     }
 
@@ -938,7 +1014,7 @@ export class TreasuryManagementComponent implements OnInit {
   // Helper methods for category-based configuration
   getCategoryDisplay(categoryId: string): string {
     const category = this.paymentCategories.find(c => c.id === categoryId);
-    return category ? `${category.icon} ${category.name}` : 'NÃ£o definido';
+    return category ? `${category.icon} ${category.name}` : 'Não definido';
   }
 
   getTreasuryAccountCode(accountId: string): string {
@@ -1014,7 +1090,7 @@ export class TreasuryManagementComponent implements OnInit {
 
     // Reset sub-type if switching to employee
     if (this.entityTypeCode === 'FUNCIONARIO') {
-      this.selectedEmployeeSubType = 'FuncionÃ¡rios';
+      this.selectedEmployeeSubType = 'Funcionários';
     }
 
     this.loadDocumentTypes();
@@ -1168,8 +1244,7 @@ export class TreasuryManagementComponent implements OnInit {
       this.ngZone.run(() => {
         if (doc) {
           this.loadExistingDocument(doc);
-        } else if (this.isLocked) {
-          this.isLocked = false;
+        } else if (this.currentDocId) {
           this.resetForm();
         }
       });
@@ -1177,7 +1252,9 @@ export class TreasuryManagementComponent implements OnInit {
   }
 
   loadExistingDocument(doc: any) {
-    this.isLocked = true;
+    this.currentDocId = doc.id;
+    this.status = doc.status || WorkflowStatus.DRAFT;
+    this.loadWorkflowHistory();
     this.entityCode = doc.entityCode || doc.customerCode || doc.beneficiaryCode || '';
     this.entityName = doc.entityName || doc.customerName || doc.beneficiaryName || '';
     this.docDate = new Date(doc.date).toISOString().split('T')[0];
@@ -1398,15 +1475,45 @@ export class TreasuryManagementComponent implements OnInit {
   resetForm() {
     this.entityCode = '';
     this.entityName = '';
-    this.selectedEntity = null;
     this.pendingRows = [];
     this.totalSelected = 0;
     this.totalExcess = 0;
     this.observations = '';
-    this.isLocked = false;
+    this.currentDocId = null;
+    this.status = WorkflowStatus.DRAFT;
+    this.workflowHistory = [];
     this.ngZone.run(() => {
       this.loadNextNumber();
       this.cdr.detectChanges();
+    });
+  }
+
+  loadWorkflowHistory() {
+    if (!this.currentDocId) return;
+    this.dataService.getWorkflowHistory('treasury', this.currentDocId).subscribe(history => {
+      this.workflowHistory = history;
+      this.cdr.detectChanges();
+    });
+  }
+
+  onWorkflowAction(action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST') {
+    if (!this.currentDocId) {
+      alert('Grave o documento antes de processar o workflow.');
+      return;
+    }
+
+    const notes = prompt('Notas/Justificação (Opcional):');
+    if (notes === null) return;
+
+    this.dataService.processWorkflow('treasury', this.currentDocId, action, notes).subscribe({
+      next: (res) => {
+        this.status = res.status;
+        this.loadWorkflowHistory();
+        alert(`Documento ${action === 'SUBMIT' ? 'submetido' : action === 'APPROVE' ? 'aprovado' : action === 'REJECT' ? 'rejeitado' : 'lançado'} com sucesso.`);
+      },
+      error: (err) => {
+        alert('Erro ao processar workflow: ' + (err.error?.message || err.message));
+      }
     });
   }
 
@@ -1427,7 +1534,7 @@ export class TreasuryManagementComponent implements OnInit {
         end.setHours(0, 0, 0, 0);
 
         if (docDate < start || docDate > end) {
-          alert(`A data do documento estÃ¡ fora do intervalo de validade da sÃ©rie ${series.code} (${series.startDate} a ${series.endDate}).\n\nPor favor altere a data ou selecione outra sÃ©rie.`);
+          alert(`A data do documento está fora do intervalo de validade da série ${series.code} (${series.startDate} a ${series.endDate}).\n\nPor favor altere a data ou selecione outra série.`);
           return;
         }
       }
@@ -1444,7 +1551,7 @@ export class TreasuryManagementComponent implements OnInit {
     if (this.isAdvanceMode) {
       // Validate ADC fields
       if (!this.advanceAmount || this.advanceAmount <= 0) {
-        alert('Por favor insira um valor vÃ¡lido para o adiantamento.');
+        alert('Por favor insira um valor válido para o adiantamento.');
         return;
       }
 
@@ -1459,7 +1566,7 @@ export class TreasuryManagementComponent implements OnInit {
       }
 
       const total = this.advanceAmount.toLocaleString('pt-PT', { style: 'currency', currency: 'MZN' });
-      const confirmMsg = `Confirma o ${typeLabel} de Adiantamento ${this.docNumberString}?\n\nEntidade: ${this.entityName}\nValor: ${total}\nMeio: ${this.advancePaymentMethod}\n\nEsta operaÃ§Ã£o Ã© irreversÃ­vel.`;
+      const confirmMsg = `Confirma o ${typeLabel} de Adiantamento ${this.docNumberString}?\n\nEntidade: ${this.entityName}\nValor: ${total}\nMeio: ${this.advancePaymentMethod}\n\nEsta operação é irreversível.`;
 
       if (confirm(confirmMsg)) {
         this.saveAdvancePayment(isReceipt);
@@ -1476,7 +1583,7 @@ export class TreasuryManagementComponent implements OnInit {
     }
 
     if (!this.selectedTreasuryAccount) {
-      alert('Selecione a conta de tesouraria na aba "Dados LiquidaÃ§Ã£o".');
+      alert('Selecione a conta de tesouraria na aba "Dados Liquidação".');
       this.activeTab = 1;
       return;
     }
@@ -1484,7 +1591,7 @@ export class TreasuryManagementComponent implements OnInit {
     const total = this.totalSelected.toLocaleString('pt-PT', { style: 'currency', currency: 'MZN' });
 
     // Professional confirmation dialog
-    if (confirm(`Confirma a emissÃ£o do ${typeLabel} ${this.docNumberString}?\n\nEntidade: ${this.entityName}\nValor Total: ${total}\n\nEsta operaÃ§Ã£o Ã© irreversÃ­vel.`)) {
+    if (confirm(`Confirma a emissão do ${typeLabel} ${this.docNumberString}?\n\nEntidade: ${this.entityName}\nValor Total: ${total}\n\nEsta operação é irreversível.`)) {
       this.saveDocument(selectedRows, isReceipt);
     }
   }
@@ -1623,7 +1730,7 @@ export class TreasuryManagementComponent implements OnInit {
 
     // Validate Period Closure
     if (!this.periodService.isPeriodOpen(this.docDate)) {
-      alert('O perÃ­odo para esta data estÃ¡ fechado. NÃ£o Ã© possÃ­vel gravar documentos nesta data.');
+      alert('O período para esta data está fechado. Não é possível gravar documentos nesta data.');
       return;
     }
 
@@ -1637,7 +1744,7 @@ export class TreasuryManagementComponent implements OnInit {
       const balanceCheck = this.accountingService.checkBalanceFeasibility(treasuryAccountId, this.docDate, amountChange);
 
       if (!balanceCheck.valid) {
-        const confirmMsg = `AtenÃ§Ã£o: Este movimento retroativo farÃ¡ com que o saldo da conta de tesouraria fique negativo em ${balanceCheck.dateOfMinBalance?.toLocaleDateString()}.\n\nSaldo MÃ­nimo Projetado: ${balanceCheck.minBalance.toLocaleString('pt-PT', { style: 'currency', currency: 'MZN' })}\n\nDeseja continuar mesmo assim?`;
+        const confirmMsg = `Atenção: Este movimento retroativo fará com que o saldo da conta de tesouraria fique negativo em ${balanceCheck.dateOfMinBalance?.toLocaleDateString()}.\n\nSaldo Mínimo Projetado: ${balanceCheck.minBalance.toLocaleString('pt-PT', { style: 'currency', currency: 'MZN' })}\n\nDeseja continuar mesmo assim?`;
 
         if (!confirm(confirmMsg)) {
           return;
@@ -1825,7 +1932,7 @@ export class TreasuryManagementComponent implements OnInit {
         end.setHours(0, 0, 0, 0);
 
         if (docDate < start || docDate > end) {
-          alert(`A data do documento estÃ¡ fora do intervalo de validade da sÃ©rie ${series.code} (${series.startDate} a ${series.endDate}).\n\nPor favor altere a data ou selecione outra sÃ©rie.`);
+          alert(`A data do documento está fora do intervalo de validade da série ${series.code} (${series.startDate} a ${series.endDate}).\n\nPor favor altere a data ou selecione outra série.`);
         }
       }
     });

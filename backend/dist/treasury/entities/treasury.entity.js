@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TreasuryDocumentLine = exports.TreasuryDocument = exports.TreasuryDocumentType = void 0;
 const typeorm_1 = require("typeorm");
+const workflow_status_enum_1 = require("../../common/enums/workflow-status.enum");
 var TreasuryDocumentType;
 (function (TreasuryDocumentType) {
     TreasuryDocumentType["RECEIPT"] = "RECEIPT";
@@ -37,6 +38,8 @@ let TreasuryDocument = class TreasuryDocument {
     description;
     observations;
     relatedDocument;
+    status;
+    statusNotes;
     lines;
     createdAt;
     updatedAt;
@@ -125,6 +128,17 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], TreasuryDocument.prototype, "relatedDocument", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        type: 'varchar',
+        default: workflow_status_enum_1.WorkflowStatus.DRAFT,
+    }),
+    __metadata("design:type", String)
+], TreasuryDocument.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], TreasuryDocument.prototype, "statusNotes", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => TreasuryDocumentLine, (line) => line.document, { cascade: true }),
     __metadata("design:type", Array)

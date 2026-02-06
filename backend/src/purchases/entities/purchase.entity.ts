@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { WorkflowStatus } from '../../common/enums/workflow-status.enum';
 
 export enum PurchaseDocumentType {
     INVOICE = 'INVOICE',
@@ -9,12 +10,6 @@ export enum PurchaseDocumentType {
     QUOTE = 'QUOTE', // Cotação de fornecedor
 }
 
-export enum PurchaseDocumentStatus {
-    DRAFT = 'DRAFT',
-    POSTED = 'POSTED',
-    CANCELED = 'CANCELED',
-    PAID = 'PAID',
-}
 
 @Entity('purchase_documents')
 export class PurchaseDocument {
@@ -67,11 +62,13 @@ export class PurchaseDocument {
     currency: string;
 
     @Column({
-        type: 'simple-enum',
-        enum: ['DRAFT', 'POSTED', 'CANCELLED', 'PAID'],
-        default: 'DRAFT',
+        type: 'varchar',
+        default: WorkflowStatus.DRAFT,
     })
-    status: string;
+    status: WorkflowStatus;
+
+    @Column({ nullable: true })
+    statusNotes: string;
 
     @OneToMany(() => PurchaseDocumentLine, (line) => line.document, { cascade: true })
     lines: PurchaseDocumentLine[];

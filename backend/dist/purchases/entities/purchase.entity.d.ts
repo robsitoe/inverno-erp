@@ -1,3 +1,4 @@
+import { WorkflowStatus } from '../../common/enums/workflow-status.enum';
 export declare enum PurchaseDocumentType {
     INVOICE = "INVOICE",
     RECEIPT = "RECEIPT",
@@ -5,12 +6,6 @@ export declare enum PurchaseDocumentType {
     DEBIT_NOTE = "DEBIT_NOTE",
     ORDER = "ORDER",
     QUOTE = "QUOTE"
-}
-export declare enum PurchaseDocumentStatus {
-    DRAFT = "DRAFT",
-    POSTED = "POSTED",
-    CANCELED = "CANCELED",
-    PAID = "PAID"
 }
 export declare class PurchaseDocument {
     id: string;
@@ -29,7 +24,8 @@ export declare class PurchaseDocument {
     paymentCondition: string;
     paymentDays: number;
     currency: string;
-    status: string;
+    status: WorkflowStatus;
+    statusNotes: string;
     lines: PurchaseDocumentLine[];
     merchandiseTotal: number;
     discountValue: number;

@@ -13,6 +13,7 @@ exports.CreateSalesDocumentDto = exports.CreateSalesDocumentLineDto = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const swagger_1 = require("@nestjs/swagger");
+const workflow_status_enum_1 = require("../../common/enums/workflow-status.enum");
 class CreateSalesDocumentLineDto {
     articleId;
     articleCode;
@@ -225,8 +226,8 @@ __decorate([
     __metadata("design:type", String)
 ], CreateSalesDocumentDto.prototype, "notes", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Status', default: 'DRAFT' }),
-    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({ enum: workflow_status_enum_1.WorkflowStatus, default: workflow_status_enum_1.WorkflowStatus.DRAFT }),
+    (0, class_validator_1.IsEnum)(workflow_status_enum_1.WorkflowStatus),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateSalesDocumentDto.prototype, "status", void 0);

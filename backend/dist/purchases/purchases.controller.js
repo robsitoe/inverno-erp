@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const purchases_service_1 = require("./purchases.service");
 const create_purchase_dto_1 = require("./dto/create-purchase.dto");
 const update_purchase_dto_1 = require("./dto/update-purchase.dto");
+const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 let PurchasesController = class PurchasesController {
     purchasesService;
     constructor(purchasesService) {
@@ -39,6 +40,12 @@ let PurchasesController = class PurchasesController {
     }
     remove(id) {
         return this.purchasesService.remove(id);
+    }
+    processWorkflow(id, data, req) {
+        return this.purchasesService.processWorkflow(id, data.action, req.user, data.notes);
+    }
+    getHistory(id) {
+        return this.purchasesService.getWorkflowHistory(id);
     }
 };
 exports.PurchasesController = PurchasesController;
@@ -88,8 +95,25 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], PurchasesController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Patch)('documents/:id/workflow'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], PurchasesController.prototype, "processWorkflow", null);
+__decorate([
+    (0, common_1.Get)('documents/:id/history'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], PurchasesController.prototype, "getHistory", null);
 exports.PurchasesController = PurchasesController = __decorate([
     (0, common_1.Controller)('purchases'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [purchases_service_1.PurchasesService])
 ], PurchasesController);
 //# sourceMappingURL=purchases.controller.js.map

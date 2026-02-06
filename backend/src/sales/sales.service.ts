@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityTarget, ObjectLiteral } from 'typeorm';
 import { CreateSalesDocumentDto } from './dto/create-sales-document.dto';
@@ -6,6 +6,7 @@ import { UpdateSalesDocumentDto } from './dto/update-sales-document.dto';
 import { SalesDocument, SalesDocumentLine } from './entities/sales-document.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
+import { WorkflowService, WorkflowTarget } from '../common/workflow.service';
 
 @Injectable()
 export class SalesService {
@@ -15,6 +16,7 @@ export class SalesService {
     private readonly defaultSalesDocumentRepo: Repository<SalesDocument>,
     @InjectRepository(SalesDocumentLine)
     private readonly defaultSalesLineRepo: Repository<SalesDocumentLine>,
+    private readonly workflowService: WorkflowService,
   ) { }
 
   private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>): Promise<Repository<T>> {
@@ -127,9 +129,14 @@ export class SalesService {
     return document;
   }
 
-  async update(id: string, updateSalesDocumentDto: UpdateSalesDocumentDto) {
+  async update(id: string, updateSalesDocumentDto: UpdateSalesDocumentDto, user?: any) {
     const sdRepo = await this.getSalesDocRepo();
     const document = await this.findOne(id);
+
+    if (user) {
+      this.workflowService.checkEditLock(document.status, user);
+    }
+
     sdRepo.merge(document, updateSalesDocumentDto);
     return sdRepo.save(document);
   }
@@ -148,9 +155,32 @@ export class SalesService {
     return document;
   }
 
-  async remove(id: string) {
+  async remove(id: string, user?: any) {
     const sdRepo = await this.getSalesDocRepo();
     const document = await this.findOne(id);
+
+    if (user) {
+      this.workflowService.checkEditLock(document.status, user);
+    }
+
     return sdRepo.remove(document);
+  }
+
+  async processWorkflow(id: string, action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST', user: any, notes?: string) {
+    const document = await this.findOne(id);
+    const sdRepo = await this.getSalesDocRepo();
+
+    return this.workflowService.transition(
+      document as unknown as WorkflowTarget,
+      action,
+      user,
+      sdRepo,
+      'SALES',
+      notes
+    );
+  }
+
+  async getWorkflowHistory(id: string) {
+    return this.workflowService.getHistory(id);
   }
 }

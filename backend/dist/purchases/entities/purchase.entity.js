@@ -9,8 +9,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PurchaseDocumentLine = exports.PurchaseDocument = exports.PurchaseDocumentStatus = exports.PurchaseDocumentType = void 0;
+exports.PurchaseDocumentLine = exports.PurchaseDocument = exports.PurchaseDocumentType = void 0;
 const typeorm_1 = require("typeorm");
+const workflow_status_enum_1 = require("../../common/enums/workflow-status.enum");
 var PurchaseDocumentType;
 (function (PurchaseDocumentType) {
     PurchaseDocumentType["INVOICE"] = "INVOICE";
@@ -20,13 +21,6 @@ var PurchaseDocumentType;
     PurchaseDocumentType["ORDER"] = "ORDER";
     PurchaseDocumentType["QUOTE"] = "QUOTE";
 })(PurchaseDocumentType || (exports.PurchaseDocumentType = PurchaseDocumentType = {}));
-var PurchaseDocumentStatus;
-(function (PurchaseDocumentStatus) {
-    PurchaseDocumentStatus["DRAFT"] = "DRAFT";
-    PurchaseDocumentStatus["POSTED"] = "POSTED";
-    PurchaseDocumentStatus["CANCELED"] = "CANCELED";
-    PurchaseDocumentStatus["PAID"] = "PAID";
-})(PurchaseDocumentStatus || (exports.PurchaseDocumentStatus = PurchaseDocumentStatus = {}));
 let PurchaseDocument = class PurchaseDocument {
     id;
     companyId;
@@ -45,6 +39,7 @@ let PurchaseDocument = class PurchaseDocument {
     paymentDays;
     currency;
     status;
+    statusNotes;
     lines;
     merchandiseTotal;
     discountValue;
@@ -121,12 +116,15 @@ __decorate([
 ], PurchaseDocument.prototype, "currency", void 0);
 __decorate([
     (0, typeorm_1.Column)({
-        type: 'simple-enum',
-        enum: ['DRAFT', 'POSTED', 'CANCELLED', 'PAID'],
-        default: 'DRAFT',
+        type: 'varchar',
+        default: workflow_status_enum_1.WorkflowStatus.DRAFT,
     }),
     __metadata("design:type", String)
 ], PurchaseDocument.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], PurchaseDocument.prototype, "statusNotes", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => PurchaseDocumentLine, (line) => line.document, { cascade: true }),
     __metadata("design:type", Array)

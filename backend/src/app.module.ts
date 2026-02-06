@@ -29,6 +29,8 @@ import { DocumentType } from './common-entities/entities/document-type.entity';
 import { PaymentMethod } from './treasury/entities/payment-method.entity';
 import { TenancyModule } from './tenancy/tenancy.module';
 import { TenancyMiddleware } from './tenancy/tenancy.middleware';
+import { WorkflowHistory } from './common/entities/workflow-history.entity';
+import { WorkflowModule } from './common/workflow.module';
 
 @Module({
   imports: [
@@ -48,7 +50,7 @@ import { TenancyMiddleware } from './tenancy/tenancy.middleware';
               Account, JournalEntry, JournalLine, Article, StockMovement,
               SalesDocument, SalesDocumentLine, User, PurchaseDocument,
               PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity, DocumentType, PaymentMethod
+              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity, DocumentType, PaymentMethod, WorkflowHistory
             ],
             synchronize: true,
           };
@@ -66,7 +68,7 @@ import { TenancyMiddleware } from './tenancy/tenancy.middleware';
             SalesDocument, SalesDocumentLine, User, PurchaseDocument,
             PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
             Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-            DocumentType, PaymentMethod
+            DocumentType, PaymentMethod, WorkflowHistory
           ],
           synchronize: true,
         };
@@ -81,6 +83,7 @@ import { TenancyMiddleware } from './tenancy/tenancy.middleware';
     PurchasesModule,
     TreasuryModule,
     TenancyModule,
+    WorkflowModule,
   ],
   controllers: [AppController],
   providers: [AppService],

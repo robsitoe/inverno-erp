@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req } from '@nestjs/common';
 import { TreasuryService } from './treasury.service';
 import { CreateTreasuryDto } from './dto/create-treasury.dto';
 import { UpdateTreasuryDto } from './dto/update-treasury.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('treasury')
+@UseGuards(JwtAuthGuard)
 export class TreasuryController {
   constructor(private readonly treasuryService: TreasuryService) { }
 
@@ -30,6 +32,20 @@ export class TreasuryController {
   @Delete('documents/:id')
   remove(@Param('id') id: string) {
     return this.treasuryService.remove(id);
+  }
+
+  @Patch('documents/:id/workflow')
+  processWorkflow(
+    @Param('id') id: string,
+    @Body() data: { action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST', notes?: string },
+    @Req() req: any
+  ) {
+    return this.treasuryService.processWorkflow(id, data.action, req.user, data.notes);
+  }
+
+  @Get('documents/:id/history')
+  getHistory(@Param('id') id: string) {
+    return this.treasuryService.getWorkflowHistory(id);
   }
 
   @Get('receipts')

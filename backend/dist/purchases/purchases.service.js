@@ -19,12 +19,15 @@ const typeorm_2 = require("typeorm");
 const purchase_entity_1 = require("./entities/purchase.entity");
 const tenancy_service_1 = require("../tenancy/tenancy.service");
 const tenancy_context_1 = require("../tenancy/tenancy.context");
+const workflow_service_1 = require("../common/workflow.service");
 let PurchasesService = class PurchasesService {
     tenancyService;
     defaultPurchaseRepo;
-    constructor(tenancyService, defaultPurchaseRepo) {
+    workflowService;
+    constructor(tenancyService, defaultPurchaseRepo, workflowService) {
         this.tenancyService = tenancyService;
         this.defaultPurchaseRepo = defaultPurchaseRepo;
+        this.workflowService = workflowService;
     }
     async getRepo(entity, defaultRepo) {
         const companyId = tenancy_context_1.TenancyContext.getCompanyId();
@@ -90,11 +93,19 @@ let PurchasesService = class PurchasesService {
     }
     async findOne(id) {
         const repo = await this.getPurchaseRepo();
-        return repo.findOne({ where: { id }, relations: ['lines'] });
+        const doc = await repo.findOne({ where: { id }, relations: ['lines'] });
+        if (!doc)
+            throw new common_1.NotFoundException(`Purchase document ${id} not found`);
+        return doc;
     }
-    async update(id, updatePurchaseDto) {
+    async update(id, updatePurchaseDto, user) {
         const repo = await this.getPurchaseRepo();
-        return repo.update(id, updatePurchaseDto);
+        const document = await this.findOne(id);
+        if (user) {
+            this.workflowService.checkEditLock(document.status, user);
+        }
+        repo.merge(document, updatePurchaseDto);
+        return repo.save(document);
     }
     async findByNumber(companyId, type, series, number) {
         const repo = await this.getPurchaseRepo();
@@ -108,9 +119,21 @@ let PurchasesService = class PurchasesService {
             relations: ['lines']
         });
     }
-    async remove(id) {
+    async remove(id, user) {
         const repo = await this.getPurchaseRepo();
-        return repo.delete(id);
+        const document = await this.findOne(id);
+        if (user) {
+            this.workflowService.checkEditLock(document.status, user);
+        }
+        return repo.remove(document);
+    }
+    async processWorkflow(id, action, user, notes) {
+        const document = await this.findOne(id);
+        const repo = await this.getPurchaseRepo();
+        return this.workflowService.transition(document, action, user, repo, 'PURCHASES', notes);
+    }
+    async getWorkflowHistory(id) {
+        return this.workflowService.getHistory(id);
     }
 };
 exports.PurchasesService = PurchasesService;
@@ -118,6 +141,7 @@ exports.PurchasesService = PurchasesService = __decorate([
     (0, common_1.Injectable)(),
     __param(1, (0, typeorm_1.InjectRepository)(purchase_entity_1.PurchaseDocument)),
     __metadata("design:paramtypes", [tenancy_service_1.TenancyService,
-        typeorm_2.Repository])
+        typeorm_2.Repository,
+        workflow_service_1.WorkflowService])
 ], PurchasesService);
 //# sourceMappingURL=purchases.service.js.map

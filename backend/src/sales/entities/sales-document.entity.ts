@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { WorkflowStatus } from '../../common/enums/workflow-status.enum';
 
 export enum SalesDocumentType {
     INVOICE = 'INVOICE',
@@ -9,12 +10,6 @@ export enum SalesDocumentType {
     ORDER = 'ORDER',
 }
 
-export enum SalesDocumentStatus {
-    DRAFT = 'DRAFT',
-    POSTED = 'POSTED',
-    CANCELED = 'CANCELED',
-    PAID = 'PAID',
-}
 
 @Entity('sales_documents')
 export class SalesDocument {
@@ -70,11 +65,13 @@ export class SalesDocument {
     total: number;
 
     @Column({
-        type: 'simple-enum',
-        enum: ['DRAFT', 'CONFIRMED', 'INVOICED', 'CANCELLED'],
-        default: 'DRAFT',
+        type: 'varchar',
+        default: WorkflowStatus.DRAFT,
     })
-    status: string;
+    status: WorkflowStatus;
+
+    @Column({ nullable: true })
+    statusNotes: string;
 
     @Column({ nullable: true })
     journalEntryId: string;

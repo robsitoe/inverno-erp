@@ -1,3 +1,4 @@
+import { WorkflowStatus } from '../../common/enums/workflow-status.enum';
 export declare enum SalesDocumentType {
     INVOICE = "INVOICE",
     RECEIPT = "RECEIPT",
@@ -5,12 +6,6 @@ export declare enum SalesDocumentType {
     DEBIT_NOTE = "DEBIT_NOTE",
     QUOTE = "QUOTE",
     ORDER = "ORDER"
-}
-export declare enum SalesDocumentStatus {
-    DRAFT = "DRAFT",
-    POSTED = "POSTED",
-    CANCELED = "CANCELED",
-    PAID = "PAID"
 }
 export declare class SalesDocument {
     id: string;
@@ -30,7 +25,8 @@ export declare class SalesDocument {
     discounts: number;
     totalIva: number;
     total: number;
-    status: string;
+    status: WorkflowStatus;
+    statusNotes: string;
     journalEntryId: string;
     notes: string;
     createdAt: Date;

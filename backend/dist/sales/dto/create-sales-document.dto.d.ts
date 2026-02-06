@@ -1,3 +1,4 @@
+import { WorkflowStatus } from '../../common/enums/workflow-status.enum';
 export declare class CreateSalesDocumentLineDto {
     articleId: string;
     articleCode: string;
@@ -30,6 +31,6 @@ export declare class CreateSalesDocumentDto {
     totalIva?: number;
     total?: number;
     notes?: string;
-    status?: string;
+    status?: WorkflowStatus;
     lines: CreateSalesDocumentLineDto[];
 }

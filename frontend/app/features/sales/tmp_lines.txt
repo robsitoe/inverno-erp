@@ -1,0 +1,10 @@
+﻿           </div>
+         </div>
+       </div>
+
+       <!-- Outras abas (placeholder) -->
+       <div *ngIf="activeTab > 1" class="flex items-center justify-center p-8 text-gray-400">
+         <p class="text-sm">ConteÃºdo da aba "{{ tabs[activeTab] }}" em desenvolvimento...</p>
+       </div>
+     </div>
+

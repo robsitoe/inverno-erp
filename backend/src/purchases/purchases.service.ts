@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityTarget, ObjectLiteral } from 'typeorm';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
@@ -6,6 +6,7 @@ import { UpdatePurchaseDto } from './dto/update-purchase.dto';
 import { PurchaseDocument } from './entities/purchase.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
+import { WorkflowService, WorkflowTarget } from '../common/workflow.service';
 
 @Injectable()
 export class PurchasesService {
@@ -13,6 +14,7 @@ export class PurchasesService {
     private readonly tenancyService: TenancyService,
     @InjectRepository(PurchaseDocument)
     private readonly defaultPurchaseRepo: Repository<PurchaseDocument>,
+    private readonly workflowService: WorkflowService,
   ) { }
 
   private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>): Promise<Repository<T>> {
@@ -90,12 +92,21 @@ export class PurchasesService {
 
   async findOne(id: string) {
     const repo = await this.getPurchaseRepo();
-    return repo.findOne({ where: { id }, relations: ['lines'] });
+    const doc = await repo.findOne({ where: { id }, relations: ['lines'] });
+    if (!doc) throw new NotFoundException(`Purchase document ${id} not found`);
+    return doc;
   }
 
-  async update(id: string, updatePurchaseDto: UpdatePurchaseDto) {
+  async update(id: string, updatePurchaseDto: UpdatePurchaseDto, user?: any) {
     const repo = await this.getPurchaseRepo();
-    return repo.update(id, updatePurchaseDto);
+    const document = await this.findOne(id);
+
+    if (user) {
+      this.workflowService.checkEditLock(document.status as any, user);
+    }
+
+    repo.merge(document, updatePurchaseDto as any);
+    return repo.save(document);
   }
 
   async findByNumber(companyId: string, type: string, series: string, number: number) {
@@ -111,8 +122,32 @@ export class PurchasesService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, user?: any) {
     const repo = await this.getPurchaseRepo();
-    return repo.delete(id);
+    const document = await this.findOne(id);
+
+    if (user) {
+      this.workflowService.checkEditLock(document.status as any, user);
+    }
+
+    return repo.remove(document);
+  }
+
+  async processWorkflow(id: string, action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST', user: any, notes?: string) {
+    const document = await this.findOne(id);
+    const repo = await this.getPurchaseRepo();
+
+    return this.workflowService.transition(
+      document as unknown as WorkflowTarget,
+      action,
+      user,
+      repo,
+      'PURCHASES',
+      notes
+    );
+  }
+
+  async getWorkflowHistory(id: string) {
+    return this.workflowService.getHistory(id);
   }
 }

@@ -1,5 +1,25 @@
 // Core Data Models for the ERP System
 
+export enum WorkflowStatus {
+    DRAFT = 'DRAFT',
+    SUBMITTED = 'SUBMITTED',
+    APPROVED = 'APPROVED',
+    REJECTED = 'REJECTED',
+    POSTED = 'POSTED'
+}
+
+export interface WorkflowHistory {
+    id: string;
+    documentId: string;
+    documentType: string;
+    fromStatus: WorkflowStatus;
+    toStatus: WorkflowStatus;
+    userId: string;
+    userName: string;
+    notes: string;
+    createdAt: Date;
+}
+
 export interface Account {
     id: string;
     companyId?: string;
@@ -107,7 +127,8 @@ export interface SalesDocument {
     discounts: number;
     totalIva: number;
     total: number;
-    status: 'DRAFT' | 'CONFIRMED' | 'INVOICED' | 'CANCELLED';
+    status: WorkflowStatus;
+    statusNotes?: string;
     journalEntryId?: string;
     notes: string;
 }

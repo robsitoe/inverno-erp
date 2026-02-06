@@ -1,11 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SalesService } from './sales.service';
 import { CreateSalesDocumentDto } from './dto/create-sales-document.dto';
 import { UpdateSalesDocumentDto } from './dto/update-sales-document.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('sales')
 @Controller('sales')
+@UseGuards(JwtAuthGuard)
 export class SalesController {
   constructor(private readonly salesService: SalesService) { }
 
@@ -54,5 +56,21 @@ export class SalesController {
   @ApiOperation({ summary: 'Delete a sales document' })
   remove(@Param('id') id: string) {
     return this.salesService.remove(id);
+  }
+
+  @Patch('documents/:id/workflow')
+  @ApiOperation({ summary: 'Process document workflow transition' })
+  processWorkflow(
+    @Param('id') id: string,
+    @Body() data: { action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST', notes?: string },
+    @Req() req: any
+  ) {
+    return this.salesService.processWorkflow(id, data.action, req.user, data.notes);
+  }
+
+  @Get('documents/:id/history')
+  @ApiOperation({ summary: 'Get document workflow history' })
+  getHistory(@Param('id') id: string) {
+    return this.salesService.getWorkflowHistory(id);
   }
 }

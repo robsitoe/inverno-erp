@@ -15,6 +15,7 @@ import { InventoryService } from '../../shared/inventory.service';
 import { AuditService } from '../../shared/audit.service';
 import { PeriodService } from '../../shared/period.service';
 import { DataService } from '../../services/data.service';
+import { WorkflowStatus, WorkflowHistory } from '../../shared/models';
 
 interface PurchaseDocumentLine {
   id: string;
@@ -56,13 +57,14 @@ interface PurchaseDocument {
   paymentCondition: 'PRONTO' | 'PRAZO';
   paymentDays: number;
   currency: string;
-  status: 'DRAFT' | 'POSTED' | 'CANCELLED';
+  status: WorkflowStatus;
   lines: PurchaseDocumentLine[];
   merchandiseTotal: number;
   discountValue: number;
   taxTotal: number;
   totalValue: number;
   notes: string;
+  statusNotes?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -101,12 +103,29 @@ interface CompanyInfo {
       <div class="flex flex-col h-full w-full bg-[#F0F0F0] text-xs overflow-hidden relative no-print">
         <!-- Toolbar -->
         <div class="flex items-center gap-1 px-2 py-1.5 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0 overflow-x-auto">
-          <button *ngFor="let item of toolbarItems"
-            (click)="handleToolbarClick(item.label)"
-            class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 whitespace-nowrap group">
-            <span class="material-symbols-outlined text-[18px] text-gray-600 group-hover:text-green-600">{{ item.icon }}</span>
             <span>{{ item.label }}</span>
           </button>
+          
+          <!-- Workflow Actions -->
+          <ng-container *ngIf="currentDoc.id">
+            <div class="w-px h-4 bg-gray-300 mx-1"></div>
+            <button *ngIf="currentDoc.status === 'DRAFT' || currentDoc.status === 'REJECTED'" (click)="onWorkflowAction('SUBMIT')" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 border border-transparent hover:border-blue-200 rounded-sm transition-all text-blue-700 group">
+              <span class="material-symbols-outlined text-[18px]">send</span>
+              <span>Submeter</span>
+            </button>
+            <button *ngIf="currentDoc.status === 'SUBMITTED'" (click)="onWorkflowAction('APPROVE')" class="flex items-center gap-1 px-2 py-1 hover:bg-green-50 border border-transparent hover:border-green-200 rounded-sm transition-all text-green-700 group">
+              <span class="material-symbols-outlined text-[18px]">check_circle</span>
+              <span>Aprovar</span>
+            </button>
+            <button *ngIf="currentDoc.status === 'SUBMITTED'" (click)="onWorkflowAction('REJECT')" class="flex items-center gap-1 px-2 py-1 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-sm transition-all text-red-700 group">
+              <span class="material-symbols-outlined text-[18px]">cancel</span>
+              <span>Rejeitar</span>
+            </button>
+            <button *ngIf="currentDoc.status === 'APPROVED'" (click)="onWorkflowAction('POST')" class="flex items-center gap-1 px-2 py-1 hover:bg-purple-50 border border-transparent hover:border-purple-200 rounded-sm transition-all text-purple-700 group">
+              <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+              <span>Lançar</span>
+            </button>
+          </ng-container>
         </div>
 
         <!-- Tabs -->
@@ -124,7 +143,7 @@ interface CompanyInfo {
           <!-- Locked Overlay -->
           <div *ngIf="isLocked" class="absolute inset-0 bg-gray-100/50 z-20 flex items-center justify-center pointer-events-none">
             <div class="bg-red-600 text-white px-4 py-2 rounded shadow-lg font-bold text-lg transform -rotate-12 opacity-80 border-4 border-white">
-              {{ currentDoc.status === 'CANCELLED' ? 'ANULADO' : 'FECHADO' }}
+              {{ currentDoc.status === 'POSTED' ? 'LANÇADO' : currentDoc.status === 'APPROVED' ? 'APROVADO' : currentDoc.status === 'REJECTED' ? 'REJEITADO' : 'BLOQUEADO' }}
             </div>
           </div>
 
@@ -215,7 +234,52 @@ interface CompanyInfo {
             </div>
           </div>
 
-          <div *ngIf="activeTab > 1" class="flex items-center justify-center p-8 text-gray-400">
+          <!-- Aba Estado (Histórico Workflow) -->
+          <div *ngIf="activeTab === 5" class="flex flex-col gap-2 p-3 h-full overflow-hidden">
+             <div class="flex items-center gap-3 mb-2 bg-white p-2 border border-gray-200 rounded shadow-sm shrink-0">
+               <span class="font-bold text-gray-700 text-xs">Estado Atual:</span>
+               <span class="px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider" 
+                 [class.bg-gray-100]="currentDoc.status === 'DRAFT'"
+                 [class.bg-blue-50]="currentDoc.status === 'SUBMITTED'"
+                 [class.bg-green-50]="currentDoc.status === 'APPROVED'"
+                 [class.bg-red-50]="currentDoc.status === 'REJECTED'"
+                 [class.bg-purple-50]="currentDoc.status === 'POSTED'"
+                 [class.text-gray-600]="currentDoc.status === 'DRAFT'"
+                 [class.text-blue-600]="currentDoc.status === 'SUBMITTED'"
+                 [class.text-green-600]="currentDoc.status === 'APPROVED'"
+                 [class.text-red-600]="currentDoc.status === 'REJECTED'"
+                 [class.text-purple-600]="currentDoc.status === 'POSTED'"
+               >{{ currentDoc.status }}</span>
+             </div>
+             
+             <div class="flex-1 overflow-auto border border-gray-300 rounded shadow-sm bg-white">
+               <table class="w-full text-xs">
+                 <thead class="bg-gray-50 sticky top-0 border-b border-gray-300 text-gray-500 uppercase text-[9px]">
+                   <tr>
+                     <th class="px-3 py-2 text-left font-semibold">Data/Hora</th>
+                     <th class="px-3 py-2 text-left font-semibold">De</th>
+                     <th class="px-3 py-2 text-left font-semibold">Para</th>
+                     <th class="px-3 py-2 text-left font-semibold">Utilizador</th>
+                     <th class="px-3 py-2 text-left font-semibold">Notas</th>
+                   </tr>
+                 </thead>
+                 <tbody class="divide-y divide-gray-100">
+                   <tr *ngFor="let h of workflowHistory" class="hover:bg-gray-50 transition-colors italic text-gray-600">
+                     <td class="px-3 py-2 whitespace-nowrap">{{ h.createdAt | date:'yyyy-MM-dd HH:mm' }}</td>
+                     <td class="px-3 py-2"><span class="px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-500 text-[9px]">{{ h.fromStatus }}</span></td>
+                     <td class="px-3 py-2"><span class="px-1.5 py-0.5 rounded-sm bg-blue-50 text-blue-600 text-[9px] font-medium">{{ h.toStatus }}</span></td>
+                     <td class="px-3 py-2 font-medium">{{ h.userName }}</td>
+                     <td class="px-3 py-2">{{ h.notes || '-' }}</td>
+                   </tr>
+                   <tr *ngIf="workflowHistory.length === 0">
+                     <td colspan="5" class="px-3 py-10 text-center text-gray-400">Sem histórico de workflow registrado.</td>
+                   </tr>
+                 </tbody>
+               </table>
+             </div>
+          </div>
+
+          <div *ngIf="activeTab > 1 && activeTab !== 5" class="flex items-center justify-center p-8 text-gray-400">
             <p class="text-sm">Conteúdo da aba "{{ tabs[activeTab] }}" em desenvolvimento...</p>
           </div>
         </div>
@@ -454,7 +518,8 @@ export class PurchaseDocumentFormComponent {
   companyInfo: CompanyInfo | null = null;
 
   activeTab = 0;
-  tabs = ["Geral", "Condições", "Transação", "Recepção", "Observações", "Estado", "Anexos"];
+  tabs = ["Geral", "Condições", "Transação", "Recepção", "Observações", "Workflow/Estado", "Anexos"];
+  workflowHistory: WorkflowHistory[] = [];
 
 
 
@@ -496,6 +561,10 @@ export class PurchaseDocumentFormComponent {
   // Active line for modals
   activeLineForModal: PurchaseDocumentLine | null = null;
   activeLineIndex = -1;
+  get isLocked(): boolean {
+    if (!this.currentDoc) return false;
+    return this.currentDoc.status === WorkflowStatus.APPROVED || this.currentDoc.status === WorkflowStatus.POSTED;
+  }
 
   availableSeries: any[] = [];
   currentDoc!: PurchaseDocument;
@@ -582,7 +651,7 @@ export class PurchaseDocumentFormComponent {
       paymentCondition: 'PRAZO',
       paymentDays: 30,
       currency: 'MZN',
-      status: 'DRAFT',
+      status: WorkflowStatus.DRAFT,
       lines: this.createEmptyLines(15),
       merchandiseTotal: 0,
       discountValue: 0,
@@ -644,6 +713,7 @@ export class PurchaseDocumentFormComponent {
     this.dataService.getPurchaseDocumentByNumber(this.activeCompanyId, type, series, num).subscribe(found => {
       if (found) {
         this.currentDoc = found;
+        this.loadWorkflowHistory();
       } else {
         // If not found, treat as new document with this number
         this.currentDoc = this.createEmptyDocument();
@@ -930,10 +1000,6 @@ export class PurchaseDocumentFormComponent {
   }
 
   // Toolbar actions
-  get isLocked(): boolean {
-    if (!this.currentDoc) return false;
-    return this.currentDoc.status === 'POSTED' || this.currentDoc.status === 'CANCELLED';
-  }
 
   // Toolbar actions
   handleToolbarClick(action: string) {
@@ -978,15 +1044,16 @@ export class PurchaseDocumentFormComponent {
   }
 
   voidDocument() {
-    if (this.currentDoc.status === 'CANCELLED') return;
+    if (this.currentDoc.status === WorkflowStatus.REJECTED) return;
     if (!this.currentDoc.id) {
       alert('Não é possível anular um documento não gravado.');
       return;
     }
     if (confirm('Tem a certeza que deseja anular este documento?')) {
-      this.currentDoc.status = 'CANCELLED';
+      this.currentDoc.status = WorkflowStatus.REJECTED;
       this.dataService.savePurchaseDocument(this.currentDoc).subscribe(() => {
         alert('Documento anulado com sucesso.');
+        this.loadWorkflowHistory();
       });
     }
   }
@@ -995,7 +1062,7 @@ export class PurchaseDocumentFormComponent {
     // Create a copy without ID and with new number
     const copy = JSON.parse(JSON.stringify(this.currentDoc));
     copy.id = '';
-    copy.status = 'DRAFT';
+    copy.status = WorkflowStatus.DRAFT;
     copy.date = new Date().toISOString().split('T')[0];
     copy.dueDate = new Date().toISOString().split('T')[0];
 
@@ -1129,9 +1196,9 @@ export class PurchaseDocumentFormComponent {
 
     // Update status
     if (post) {
-      this.currentDoc.status = 'POSTED';
-    } else if (this.currentDoc.status === 'DRAFT') {
-      this.currentDoc.status = 'DRAFT';
+      this.currentDoc.status = WorkflowStatus.POSTED;
+    } else if (this.currentDoc.status === WorkflowStatus.DRAFT) {
+      this.currentDoc.status = WorkflowStatus.DRAFT;
     }
 
     this.currentDoc.updatedAt = new Date().toISOString();
@@ -1180,6 +1247,8 @@ export class PurchaseDocumentFormComponent {
     // Save via DataService
     this.dataService.savePurchaseDocument(backendPayload).subscribe({
       next: (savedDoc) => {
+        this.currentDoc = savedDoc || this.currentDoc;
+        this.loadWorkflowHistory();
         if (post) {
           // Create stock movements and accounting ONLY when posting
           this.createStockMovements();
@@ -1310,5 +1379,36 @@ export class PurchaseDocumentFormComponent {
         alert(`A data do documento está fora do intervalo de validade da série ${series.code} (${series.startDate} a ${series.endDate}).\n\nPor favor altere a data ou selecione outra série.`);
       }
     }
+  }
+
+  loadWorkflowHistory() {
+    if (!this.currentDoc?.id) return;
+    this.dataService.getWorkflowHistory('purchases', this.currentDoc.id).subscribe({
+      next: (history) => {
+        this.workflowHistory = history;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  onWorkflowAction(action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST') {
+    if (!this.currentDoc?.id) {
+      alert('Grave o documento antes de processar o workflow.');
+      return;
+    }
+
+    const notes = prompt('Notas/Justificação (Opcional):');
+    if (notes === null) return;
+
+    this.dataService.processWorkflow('purchases', this.currentDoc.id, action, notes).subscribe({
+      next: (res) => {
+        this.currentDoc.status = res.status;
+        this.loadWorkflowHistory();
+        alert(`Documento ${action === 'SUBMIT' ? 'submetido' : action === 'APPROVE' ? 'aprovado' : action === 'REJECT' ? 'rejeitado' : 'lançado'} com sucesso.`);
+      },
+      error: (err) => {
+        alert('Erro ao processar workflow: ' + (err.error?.message || err.message));
+      }
+    });
   }
 }

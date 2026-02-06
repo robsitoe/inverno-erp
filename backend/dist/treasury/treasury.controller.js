@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const treasury_service_1 = require("./treasury.service");
 const create_treasury_dto_1 = require("./dto/create-treasury.dto");
 const update_treasury_dto_1 = require("./dto/update-treasury.dto");
+const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 let TreasuryController = class TreasuryController {
     treasuryService;
     constructor(treasuryService) {
@@ -36,6 +37,12 @@ let TreasuryController = class TreasuryController {
     }
     remove(id) {
         return this.treasuryService.remove(id);
+    }
+    processWorkflow(id, data, req) {
+        return this.treasuryService.processWorkflow(id, data.action, req.user, data.notes);
+    }
+    getHistory(id) {
+        return this.treasuryService.getWorkflowHistory(id);
     }
     findAllReceipts(companyId) {
         return this.treasuryService.findAllReceipts(companyId);
@@ -88,6 +95,22 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], TreasuryController.prototype, "remove", null);
 __decorate([
+    (0, common_1.Patch)('documents/:id/workflow'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], TreasuryController.prototype, "processWorkflow", null);
+__decorate([
+    (0, common_1.Get)('documents/:id/history'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], TreasuryController.prototype, "getHistory", null);
+__decorate([
     (0, common_1.Get)('receipts'),
     __param(0, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
@@ -117,6 +140,7 @@ __decorate([
 ], TreasuryController.prototype, "createPayment", null);
 exports.TreasuryController = TreasuryController = __decorate([
     (0, common_1.Controller)('treasury'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __metadata("design:paramtypes", [treasury_service_1.TreasuryService])
 ], TreasuryController);
 //# sourceMappingURL=treasury.controller.js.map

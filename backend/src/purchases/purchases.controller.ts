@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { UpdatePurchaseDto } from './dto/update-purchase.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('purchases')
+@UseGuards(JwtAuthGuard)
 export class PurchasesController {
   constructor(private readonly purchasesService: PurchasesService) { }
 
@@ -40,5 +42,19 @@ export class PurchasesController {
   @Delete('documents/:id')
   remove(@Param('id') id: string) {
     return this.purchasesService.remove(id);
+  }
+
+  @Patch('documents/:id/workflow')
+  processWorkflow(
+    @Param('id') id: string,
+    @Body() data: { action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST', notes?: string },
+    @Req() req: any
+  ) {
+    return this.purchasesService.processWorkflow(id, data.action, req.user, data.notes);
+  }
+
+  @Get('documents/:id/history')
+  getHistory(@Param('id') id: string) {
+    return this.purchasesService.getWorkflowHistory(id);
   }
 }

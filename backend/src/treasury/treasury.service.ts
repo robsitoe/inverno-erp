@@ -7,6 +7,7 @@ import { TreasuryDocument, TreasuryDocumentType } from './entities/treasury.enti
 import { PaymentMethod } from './entities/payment-method.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
+import { WorkflowService, WorkflowTarget } from '../common/workflow.service';
 
 @Injectable()
 export class TreasuryService {
@@ -16,6 +17,7 @@ export class TreasuryService {
     private readonly defaultTreasuryRepo: Repository<TreasuryDocument>,
     @InjectRepository(PaymentMethod)
     private readonly defaultPaymentMethodRepo: Repository<PaymentMethod>,
+    private readonly workflowService: WorkflowService,
   ) { }
 
   private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>): Promise<Repository<T>> {
@@ -54,14 +56,45 @@ export class TreasuryService {
     return doc;
   }
 
-  async update(id: string, updateTreasuryDto: UpdateTreasuryDto) {
+  async update(id: string, updateTreasuryDto: UpdateTreasuryDto, user?: any) {
     const repo = await this.getTreasuryRepo();
-    return repo.update(id, updateTreasuryDto);
+    const document = await this.findOne(id);
+
+    if (user) {
+      this.workflowService.checkEditLock(document.status as any, user);
+    }
+
+    repo.merge(document, updateTreasuryDto as any);
+    return repo.save(document);
   }
 
-  async remove(id: string) {
+  async remove(id: string, user?: any) {
     const repo = await this.getTreasuryRepo();
-    return repo.delete(id);
+    const document = await this.findOne(id);
+
+    if (user) {
+      this.workflowService.checkEditLock(document.status as any, user);
+    }
+
+    return repo.remove(document);
+  }
+
+  async processWorkflow(id: string, action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST', user: any, notes?: string) {
+    const document = await this.findOne(id);
+    const repo = await this.getTreasuryRepo();
+
+    return this.workflowService.transition(
+      document as unknown as WorkflowTarget,
+      action,
+      user,
+      repo,
+      'TREASURY',
+      notes
+    );
+  }
+
+  async getWorkflowHistory(id: string) {
+    return this.workflowService.getHistory(id);
   }
 
   async findAllReceipts(companyId?: string) {

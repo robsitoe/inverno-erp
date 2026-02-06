@@ -19,14 +19,17 @@ const typeorm_2 = require("typeorm");
 const sales_document_entity_1 = require("./entities/sales-document.entity");
 const tenancy_service_1 = require("../tenancy/tenancy.service");
 const tenancy_context_1 = require("../tenancy/tenancy.context");
+const workflow_service_1 = require("../common/workflow.service");
 let SalesService = class SalesService {
     tenancyService;
     defaultSalesDocumentRepo;
     defaultSalesLineRepo;
-    constructor(tenancyService, defaultSalesDocumentRepo, defaultSalesLineRepo) {
+    workflowService;
+    constructor(tenancyService, defaultSalesDocumentRepo, defaultSalesLineRepo, workflowService) {
         this.tenancyService = tenancyService;
         this.defaultSalesDocumentRepo = defaultSalesDocumentRepo;
         this.defaultSalesLineRepo = defaultSalesLineRepo;
+        this.workflowService = workflowService;
     }
     async getRepo(entity, defaultRepo) {
         const companyId = tenancy_context_1.TenancyContext.getCompanyId();
@@ -118,9 +121,12 @@ let SalesService = class SalesService {
         }
         return document;
     }
-    async update(id, updateSalesDocumentDto) {
+    async update(id, updateSalesDocumentDto, user) {
         const sdRepo = await this.getSalesDocRepo();
         const document = await this.findOne(id);
+        if (user) {
+            this.workflowService.checkEditLock(document.status, user);
+        }
         sdRepo.merge(document, updateSalesDocumentDto);
         return sdRepo.save(document);
     }
@@ -137,10 +143,21 @@ let SalesService = class SalesService {
         });
         return document;
     }
-    async remove(id) {
+    async remove(id, user) {
         const sdRepo = await this.getSalesDocRepo();
         const document = await this.findOne(id);
+        if (user) {
+            this.workflowService.checkEditLock(document.status, user);
+        }
         return sdRepo.remove(document);
+    }
+    async processWorkflow(id, action, user, notes) {
+        const document = await this.findOne(id);
+        const sdRepo = await this.getSalesDocRepo();
+        return this.workflowService.transition(document, action, user, sdRepo, 'SALES', notes);
+    }
+    async getWorkflowHistory(id) {
+        return this.workflowService.getHistory(id);
     }
 };
 exports.SalesService = SalesService;
@@ -150,6 +167,7 @@ exports.SalesService = SalesService = __decorate([
     __param(2, (0, typeorm_1.InjectRepository)(sales_document_entity_1.SalesDocumentLine)),
     __metadata("design:paramtypes", [tenancy_service_1.TenancyService,
         typeorm_2.Repository,
-        typeorm_2.Repository])
+        typeorm_2.Repository,
+        workflow_service_1.WorkflowService])
 ], SalesService);
 //# sourceMappingURL=sales.service.js.map

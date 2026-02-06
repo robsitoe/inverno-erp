@@ -10,4 +10,13 @@ export declare class SalesController {
     findOne(id: string): Promise<import("./entities/sales-document.entity").SalesDocument>;
     update(id: string, updateSalesDocumentDto: UpdateSalesDocumentDto): Promise<import("./entities/sales-document.entity").SalesDocument>;
     remove(id: string): Promise<import("./entities/sales-document.entity").SalesDocument>;
+    processWorkflow(id: string, data: {
+        action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST';
+        notes?: string;
+    }, req: any): Promise<{
+        success: boolean;
+        status: import("../common/enums/workflow-status.enum").WorkflowStatus.SUBMITTED | import("../common/enums/workflow-status.enum").WorkflowStatus.APPROVED | import("../common/enums/workflow-status.enum").WorkflowStatus.REJECTED | import("../common/enums/workflow-status.enum").WorkflowStatus.POSTED;
+        history: import("../common/entities/workflow-history.entity").WorkflowHistory;
+    }>;
+    getHistory(id: string): Promise<import("../common/entities/workflow-history.entity").WorkflowHistory[]>;
 }

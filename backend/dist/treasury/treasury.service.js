@@ -20,14 +20,17 @@ const treasury_entity_1 = require("./entities/treasury.entity");
 const payment_method_entity_1 = require("./entities/payment-method.entity");
 const tenancy_service_1 = require("../tenancy/tenancy.service");
 const tenancy_context_1 = require("../tenancy/tenancy.context");
+const workflow_service_1 = require("../common/workflow.service");
 let TreasuryService = class TreasuryService {
     tenancyService;
     defaultTreasuryRepo;
     defaultPaymentMethodRepo;
-    constructor(tenancyService, defaultTreasuryRepo, defaultPaymentMethodRepo) {
+    workflowService;
+    constructor(tenancyService, defaultTreasuryRepo, defaultPaymentMethodRepo, workflowService) {
         this.tenancyService = tenancyService;
         this.defaultTreasuryRepo = defaultTreasuryRepo;
         this.defaultPaymentMethodRepo = defaultPaymentMethodRepo;
+        this.workflowService = workflowService;
     }
     async getRepo(entity, defaultRepo) {
         const companyId = tenancy_context_1.TenancyContext.getCompanyId();
@@ -60,13 +63,30 @@ let TreasuryService = class TreasuryService {
             throw new common_1.NotFoundException('Documento de tesouraria não encontrado');
         return doc;
     }
-    async update(id, updateTreasuryDto) {
+    async update(id, updateTreasuryDto, user) {
         const repo = await this.getTreasuryRepo();
-        return repo.update(id, updateTreasuryDto);
+        const document = await this.findOne(id);
+        if (user) {
+            this.workflowService.checkEditLock(document.status, user);
+        }
+        repo.merge(document, updateTreasuryDto);
+        return repo.save(document);
     }
-    async remove(id) {
+    async remove(id, user) {
         const repo = await this.getTreasuryRepo();
-        return repo.delete(id);
+        const document = await this.findOne(id);
+        if (user) {
+            this.workflowService.checkEditLock(document.status, user);
+        }
+        return repo.remove(document);
+    }
+    async processWorkflow(id, action, user, notes) {
+        const document = await this.findOne(id);
+        const repo = await this.getTreasuryRepo();
+        return this.workflowService.transition(document, action, user, repo, 'TREASURY', notes);
+    }
+    async getWorkflowHistory(id) {
+        return this.workflowService.getHistory(id);
     }
     async findAllReceipts(companyId) {
         const repo = await this.getTreasuryRepo();
@@ -126,6 +146,7 @@ exports.TreasuryService = TreasuryService = __decorate([
     __param(2, (0, typeorm_1.InjectRepository)(payment_method_entity_1.PaymentMethod)),
     __metadata("design:paramtypes", [tenancy_service_1.TenancyService,
         typeorm_2.Repository,
-        typeorm_2.Repository])
+        typeorm_2.Repository,
+        workflow_service_1.WorkflowService])
 ], TreasuryService);
 //# sourceMappingURL=treasury.service.js.map

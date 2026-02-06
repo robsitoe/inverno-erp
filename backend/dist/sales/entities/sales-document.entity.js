@@ -9,8 +9,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SalesDocumentLine = exports.SalesDocument = exports.SalesDocumentStatus = exports.SalesDocumentType = void 0;
+exports.SalesDocumentLine = exports.SalesDocument = exports.SalesDocumentType = void 0;
 const typeorm_1 = require("typeorm");
+const workflow_status_enum_1 = require("../../common/enums/workflow-status.enum");
 var SalesDocumentType;
 (function (SalesDocumentType) {
     SalesDocumentType["INVOICE"] = "INVOICE";
@@ -20,13 +21,6 @@ var SalesDocumentType;
     SalesDocumentType["QUOTE"] = "QUOTE";
     SalesDocumentType["ORDER"] = "ORDER";
 })(SalesDocumentType || (exports.SalesDocumentType = SalesDocumentType = {}));
-var SalesDocumentStatus;
-(function (SalesDocumentStatus) {
-    SalesDocumentStatus["DRAFT"] = "DRAFT";
-    SalesDocumentStatus["POSTED"] = "POSTED";
-    SalesDocumentStatus["CANCELED"] = "CANCELED";
-    SalesDocumentStatus["PAID"] = "PAID";
-})(SalesDocumentStatus || (exports.SalesDocumentStatus = SalesDocumentStatus = {}));
 let SalesDocument = class SalesDocument {
     id;
     companyId;
@@ -46,6 +40,7 @@ let SalesDocument = class SalesDocument {
     totalIva;
     total;
     status;
+    statusNotes;
     journalEntryId;
     notes;
     createdAt;
@@ -122,12 +117,15 @@ __decorate([
 ], SalesDocument.prototype, "total", void 0);
 __decorate([
     (0, typeorm_1.Column)({
-        type: 'simple-enum',
-        enum: ['DRAFT', 'CONFIRMED', 'INVOICED', 'CANCELLED'],
-        default: 'DRAFT',
+        type: 'varchar',
+        default: workflow_status_enum_1.WorkflowStatus.DRAFT,
     }),
     __metadata("design:type", String)
 ], SalesDocument.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], SalesDocument.prototype, "statusNotes", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

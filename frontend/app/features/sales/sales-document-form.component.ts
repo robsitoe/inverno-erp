@@ -10,7 +10,7 @@ import { DocumentTypeConfigModalComponent } from '../../shared/components/docume
 import { IVA_RATES } from '../../shared/constants';
 import { AccountingService } from '../../shared/accounting.service';
 import { InventoryService } from '../../shared/inventory.service';
-import { SalesDocument, SalesDocumentLine } from '../../shared/models';
+import { SalesDocument, SalesDocumentLine, WorkflowStatus, WorkflowHistory } from '../../shared/models';
 import { AuditService } from '../../shared/audit.service';
 import { PeriodService } from '../../shared/period.service';
 import { DataService } from '../../services/data.service';
@@ -78,6 +78,27 @@ interface GridRow {
           </button>
           <div *ngIf="shouldRenderDivider(i)" class="w-px h-4 bg-gray-300 mx-1"></div>
         </ng-container>
+
+        <!-- Workflow Actions -->
+        <ng-container *ngIf="currentId">
+          <div class="w-px h-4 bg-gray-300 mx-1"></div>
+          <button *ngIf="status === 'DRAFT' || status === 'REJECTED'" (click)="onWorkflowAction('SUBMIT')" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 border border-transparent hover:border-blue-200 rounded-sm transition-all text-blue-700 group">
+            <span class="material-symbols-outlined text-[18px]">send</span>
+            <span>Submeter</span>
+          </button>
+          <button *ngIf="status === 'SUBMITTED'" (click)="onWorkflowAction('APPROVE')" class="flex items-center gap-1 px-2 py-1 hover:bg-green-50 border border-transparent hover:border-green-200 rounded-sm transition-all text-green-700 group">
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            <span>Aprovar</span>
+          </button>
+          <button *ngIf="status === 'SUBMITTED'" (click)="onWorkflowAction('REJECT')" class="flex items-center gap-1 px-2 py-1 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-sm transition-all text-red-700 group">
+            <span class="material-symbols-outlined text-[18px]">cancel</span>
+            <span>Rejeitar</span>
+          </button>
+          <button *ngIf="status === 'APPROVED'" (click)="onWorkflowAction('POST')" class="flex items-center gap-1 px-2 py-1 hover:bg-purple-50 border border-transparent hover:border-purple-200 rounded-sm transition-all text-purple-700 group">
+            <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+            <span>Lançar</span>
+          </button>
+        </ng-container>
       </div>
 
       <!-- Tabs -->
@@ -96,7 +117,7 @@ interface GridRow {
         <!-- Locked Overlay -->
         <div *ngIf="isLocked" class="absolute inset-0 bg-gray-100/50 z-20 flex items-center justify-center pointer-events-none">
           <div class="bg-red-600 text-white px-4 py-2 rounded shadow-lg font-bold text-lg transform -rotate-12 opacity-80 border-4 border-white">
-            {{ status === 'CANCELLED' ? 'ANULADO' : 'FECHADO' }}
+            {{ status === 'POSTED' ? 'LANÇADO' : status === 'APPROVED' ? 'APROVADO' : status === 'REJECTED' ? 'REJEITADO' : 'BLOQUEADO' }}
           </div>
         </div>
 
@@ -599,6 +620,8 @@ export class SalesDocumentForm {
   selectedEntityNif = '';
   selectedEntityAddress = '';
   selectedCustomer: any = null;
+  currentId: string | undefined;
+  workflowHistory: WorkflowHistory[] = [];
 
   showArticleModal = false;
   activeRowIndex = -1;
@@ -764,7 +787,7 @@ export class SalesDocumentForm {
 
   tabs = [
     "Geral", "Condições", "Transação", "Fatura", "Impressão",
-    "Carga/Descarga", "Observações", "Estado", "Anexos"
+    "Carga/Descarga", "Observações", "Workflow/Estado", "Anexos"
   ];
 
   totals = {
@@ -1189,10 +1212,11 @@ export class SalesDocumentForm {
   documentDate: string = new Date().toISOString().split('T')[0];
   dueDate: string = new Date().toISOString().split('T')[0];
 
-  status: 'DRAFT' | 'CONFIRMED' | 'INVOICED' | 'CANCELLED' = 'DRAFT';
+  status: WorkflowStatus = WorkflowStatus.DRAFT;
 
   get isLocked(): boolean {
-    return this.status === 'CONFIRMED' || this.status === 'INVOICED' || this.status === 'CANCELLED';
+    // Only approved or posted docs are locked for editing
+    return this.status === WorkflowStatus.APPROVED || this.status === WorkflowStatus.POSTED;
   }
 
   handleToolbarClick(action: string) {
@@ -1273,10 +1297,10 @@ export class SalesDocumentForm {
   }
 
   cancelDocument() {
-    if (this.status === 'CANCELLED') return;
+    if (this.status === WorkflowStatus.REJECTED) return; // Allow cancelling rejected docs? Or maybe REJECTED is already a stop.
     if (!confirm('Tem a certeza que deseja anular este documento?')) return;
 
-    this.status = 'CANCELLED';
+    this.status = WorkflowStatus.REJECTED; // Using REJECTED as CANCELLED for now or we could add CANCELLED
     this.saveDocument(false, true); // Save as cancelled
   }
 
@@ -1375,7 +1399,9 @@ export class SalesDocumentForm {
     this.currentSeriesNumber = doc.seriesNumber || 0;
     this.documentDate = new Date(doc.date).toISOString().split('T')[0];
     this.dueDate = new Date(doc.dueDate || doc.date).toISOString().split('T')[0];
-    this.status = doc.status || 'DRAFT';
+    this.status = doc.status || WorkflowStatus.DRAFT;
+    this.currentId = doc.id;
+    this.loadWorkflowHistory();
 
     this.selectedEntityCode = doc.customerId;
     this.selectedEntityName = doc.customerName;
@@ -1432,7 +1458,7 @@ export class SalesDocumentForm {
     setTimeout(() => {
       this.ngZone.run(() => {
         // Keep context (Type/Series) when resetting for "Novo"
-        this.status = 'DRAFT';
+        this.status = WorkflowStatus.DRAFT;
         this.clearForm(true);
         this.loadNextNumber();
         this.cdr.detectChanges();
@@ -1607,19 +1633,19 @@ export class SalesDocumentForm {
     });
 
     // Determine status
-    let newStatus: 'DRAFT' | 'CONFIRMED' | 'INVOICED' | 'CANCELLED' = this.status;
-    if (isPrinting) newStatus = 'CONFIRMED';
-    if (isCancelling) newStatus = 'CANCELLED';
+    let newStatus: WorkflowStatus = this.status;
+    if (isPrinting) newStatus = WorkflowStatus.APPROVED; // Using APPROVED for CONFIRMED/INVOICED
+    if (isCancelling) newStatus = WorkflowStatus.REJECTED;
 
     const salesDoc: SalesDocument = {
-      id: `DOC${Date.now()}`,
+      id: this.currentId as any,
       companyId: this.activeCompanyId || undefined,
       documentType: this.selectedDocType,
       documentNumber: documentNumber,
       series: this.currentSeries,
       seriesNumber: this.currentSeriesNumber,
-      date: this.documentDate as any, // Already in YYYY-MM-DD format
-      dueDate: this.dueDate as any, // Already in YYYY-MM-DD format
+      date: this.documentDate as any,
+      dueDate: this.dueDate as any,
       customerId: this.selectedEntityCode,
       customerName: this.selectedEntityName,
       customerNif: this.selectedEntityNif,
@@ -1629,7 +1655,7 @@ export class SalesDocumentForm {
       discounts: this.discountValue,
       totalIva: this.totalIva,
       total: this.totalValue,
-      status: newStatus as any, // Cast to match interface if needed
+      status: newStatus,
       notes: ''
     };
 
@@ -1664,9 +1690,10 @@ export class SalesDocumentForm {
             this.ngZone.run(() => {
               // Update local status
               this.status = newStatus;
-              const finalId = savedDoc?.id || salesDoc.id;
+              this.currentId = savedDoc?.id || this.currentId;
+              this.loadWorkflowHistory();
 
-              this.processPostSaveActions(salesDoc, finalId, documentNumber, isPrinting, isCancelling);
+              this.processPostSaveActions(savedDoc || salesDoc, this.currentId || '', documentNumber, isPrinting, isCancelling);
               this.cdr.detectChanges();
             });
           },
@@ -1782,6 +1809,36 @@ export class SalesDocumentForm {
     this.discountValue = 0;
     this.totalIva = 0;
     this.totalValue = 0;
+    this.currentId = undefined;
+    this.workflowHistory = [];
+  }
+
+  loadWorkflowHistory() {
+    if (!this.currentId) return;
+    this.dataService.getWorkflowHistory('sales', this.currentId).subscribe(history => {
+      this.workflowHistory = history;
+    });
+  }
+
+  onWorkflowAction(action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST') {
+    if (!this.currentId) {
+      alert('Grave o documento antes de processar o workflow.');
+      return;
+    }
+
+    const notes = prompt('Notas/Justificação (Opcional):');
+    if (notes === null) return; // Cancelled prompt
+
+    this.dataService.processWorkflow('sales', this.currentId, action, notes).subscribe({
+      next: (res) => {
+        this.status = res.status;
+        this.loadWorkflowHistory();
+        alert(`Documento ${action === 'SUBMIT' ? 'submetido' : action === 'APPROVE' ? 'aprovado' : action === 'REJECT' ? 'rejeitado' : 'lançado'} com sucesso.`);
+      },
+      error: (err) => {
+        alert('Erro ao processar workflow: ' + (err.error?.message || err.message));
+      }
+    });
   }
 
   // Close context menu on click outside

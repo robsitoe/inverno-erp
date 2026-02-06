@@ -72,6 +72,36 @@ export class DataService {
         return true;
     }
 
+    // --- Workflow Methods ---
+    processWorkflow(module: 'sales' | 'purchases' | 'treasury', id: string, action: string, notes?: string): Observable<any> {
+        if (this.isLocalBrowser()) {
+            // Local fallback logic (minimal)
+            const key = `erp_${module}_documents`;
+            const stored = localStorage.getItem(key);
+            if (stored) {
+                const docs = JSON.parse(stored);
+                const doc = docs.find((d: any) => d.id === id);
+                if (doc) {
+                    const fromStatus = doc.status || 'DRAFT';
+                    doc.status = action === 'SUBMIT' ? 'SUBMITTED' : action === 'APPROVE' ? 'APPROVED' : action === 'REJECT' ? 'REJECTED' : action === 'POST' ? 'POSTED' : doc.status;
+                    doc.statusNotes = notes;
+                    localStorage.setItem(key, JSON.stringify(docs));
+                    return of({ success: true, status: doc.status });
+                }
+            }
+            return throwError(() => new Error('Document not found locally'));
+        }
+
+        const url = `/${module}/documents/${id}/workflow`;
+        return this.http.patch(`${this.baseUrl}${url}`, { action, notes });
+    }
+
+    getWorkflowHistory(module: 'sales' | 'purchases' | 'treasury', id: string): Observable<any[]> {
+        if (this.isLocalBrowser()) return of([]);
+        const url = `/${module}/documents/${id}/history`;
+        return this.http.get<any[]>(`${this.baseUrl}${url}`);
+    }
+
     private getStoredCompany(): any {
         const stored = localStorage.getItem('erp_company_info');
         return stored ? JSON.parse(stored) : null;

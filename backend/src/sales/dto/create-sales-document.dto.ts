@@ -1,7 +1,8 @@
 import { IsArray, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { SalesDocumentStatus, SalesDocumentType } from '../entities/sales-document.entity';
+import { SalesDocumentType } from '../entities/sales-document.entity';
+import { WorkflowStatus } from '../../common/enums/workflow-status.enum';
 
 export class CreateSalesDocumentLineDto {
     @ApiProperty({ example: 'article-id', description: 'Article ID' })
@@ -150,10 +151,10 @@ export class CreateSalesDocumentDto {
     @IsOptional()
     notes?: string;
 
-    @ApiProperty({ description: 'Status', default: 'DRAFT' })
-    @IsString()
+    @ApiProperty({ enum: WorkflowStatus, default: WorkflowStatus.DRAFT })
+    @IsEnum(WorkflowStatus)
     @IsOptional()
-    status?: string;
+    status?: WorkflowStatus;
 
     @ApiProperty({ type: [CreateSalesDocumentLineDto], description: 'Document Lines' })
     @IsArray()

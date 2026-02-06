@@ -1,3 +1,4 @@
+import { WorkflowStatus } from '../../common/enums/workflow-status.enum';
 export declare enum TreasuryDocumentType {
     RECEIPT = "RECEIPT",
     PAYMENT = "PAYMENT"
@@ -23,6 +24,8 @@ export declare class TreasuryDocument {
     description: string;
     observations: string;
     relatedDocument: string;
+    status: WorkflowStatus;
+    statusNotes: string;
     lines: TreasuryDocumentLine[];
     createdAt: Date;
     updatedAt: Date;

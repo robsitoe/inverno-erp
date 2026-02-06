@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { WorkflowStatus } from '../../common/enums/workflow-status.enum';
 
 export enum TreasuryDocumentType {
     RECEIPT = 'RECEIPT',
@@ -71,6 +72,15 @@ export class TreasuryDocument {
 
     @Column({ nullable: true })
     relatedDocument: string;
+
+    @Column({
+        type: 'varchar',
+        default: WorkflowStatus.DRAFT,
+    })
+    status: WorkflowStatus;
+
+    @Column({ nullable: true })
+    statusNotes: string;
 
     @OneToMany(() => TreasuryDocumentLine, (line) => line.document, { cascade: true })
     lines: TreasuryDocumentLine[];
