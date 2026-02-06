@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AccountingService } from './accounting.service';
 import { CreateAccountDto } from './dto/create-account.dto';
@@ -72,7 +72,7 @@ export class AccountingController {
     @Query('toDate') toDate?: string,
     @Query('companyId') companyId?: string,
     @Query('includeDrafts') includeDrafts?: string
-  ) {
+  ): Promise<any> {
     const drafts = includeDrafts === 'true';
     return this.accountingService.getAccountStatement(accountId, fromDate, toDate, companyId, drafts);
   }
@@ -81,5 +81,45 @@ export class AccountingController {
   @ApiOperation({ summary: 'Load a predefined chart of accounts' })
   loadPreset(@Param('presetName') presetName: string) {
     return this.accountingService.loadPresetAccountSystem(presetName);
+  }
+
+
+  @Get('cost-centers')
+  @ApiOperation({ summary: 'List cost centers (MVP)' })
+  listCostCenters(): Promise<any> {
+    return this.accountingService.listCostCenters();
+  }
+
+  @Post('cost-centers')
+  @ApiOperation({ summary: 'Create cost center (MVP)' })
+  createCostCenter(@Body() payload: { code: string; description: string; active?: boolean }): Promise<any> {
+    return this.accountingService.createCostCenter(payload);
+  }
+
+  @Get('vat/summary')
+  @ApiOperation({ summary: 'Get VAT summary (MVP)' })
+  getVatSummary(@Query('fromDate') fromDate?: string, @Query('toDate') toDate?: string): Promise<any> {
+    return this.accountingService.getVatSummary(fromDate, toDate);
+  }
+
+  @Post('period-close')
+  @ApiOperation({ summary: 'Close accounting period (MVP)' })
+  closePeriod(@Body() payload: { year: number; month: number }): Promise<any> {
+    return this.accountingService.closePeriod(payload);
+  }
+
+  @Get('exploration/summary')
+  @ApiOperation({ summary: 'Get exploration summary (MVP)' })
+  getExplorationSummary(@Query('fromDate') fromDate?: string, @Query('toDate') toDate?: string): Promise<any> {
+    return this.accountingService.getExplorationSummary(fromDate, toDate);
+  }
+
+  @Get('utilities/audit-log')
+  @ApiOperation({ summary: 'Get accounting audit log (MVP)' })
+  getUtilitiesAuditLog(
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number
+  ): Promise<any> {
+    return this.accountingService.getUtilitiesAuditLog(page, limit);
   }
 }
