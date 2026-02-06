@@ -44,6 +44,18 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+## Migrações de base de dados
+
+```bash
+# gerar migração da base principal
+npm run migration:generate --name=NomeDaMigracao
+
+# executar migrações da base principal
+npm run migration:run
+```
+
+Consulte também `../docs/ESTRATEGIA_MIGRACOES_TYPEORM.md` para estratégia completa (main + tenant).
+
 ## Run tests
 
 ```bash
