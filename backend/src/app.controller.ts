@@ -24,13 +24,16 @@ import { CreateCustomerDto } from './customers/dto/create-customer.dto';
 import { CreateSupplierDto } from './suppliers/dto/create-supplier.dto';
 import { TenancyService } from './tenancy/tenancy.service';
 import { TenancyContext } from './tenancy/tenancy.context';
+import { PeriodControlService } from './periods/period-control.service';
+import { PeriodAuditLog } from './companies/entities/period-audit-log.entity';
 
 @Controller()
 export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly dataSource: DataSource,
-    private readonly tenancyService: TenancyService
+    private readonly tenancyService: TenancyService,
+    private readonly periodControlService: PeriodControlService
   ) { }
 
   private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>): Promise<Repository<T>> {
@@ -138,6 +141,7 @@ export class AppController {
 
       // Cleanup company-specific data in MAIN db (if any remains)
       await queryRunner.manager.delete(FiscalYear, { companyId: id });
+      await queryRunner.manager.delete(PeriodAuditLog, { companyId: id });
       await queryRunner.manager.delete(Series, { companyId: id });
       await queryRunner.manager.delete(Journal, { companyId: id });
       await queryRunner.manager.delete(Customer, { companyId: id });
@@ -184,6 +188,43 @@ export class AppController {
     await repo.update({ companyId: data.companyId }, { isCurrent: false });
     await repo.update({ companyId: data.companyId, year: data.year }, { isCurrent: true });
     return { success: true };
+  }
+
+
+  @Get('fiscal-years/:id/checklist')
+  async getFiscalYearChecklist(@Param('id') id: string, @Query('companyId') companyId?: string) {
+    return this.periodControlService.getClosureChecklist(id, companyId);
+  }
+
+  @Post('fiscal-years/:id/close')
+  async closeFiscalYear(
+    @Param('id') id: string,
+    @Body() body: { reason: string; userId?: string; username?: string; companyId?: string },
+  ) {
+    return this.periodControlService.closeFiscalYear(id, body?.reason, { id: body?.userId, username: body?.username }, body?.companyId);
+  }
+
+  @Post('fiscal-years/:id/reopen')
+  async reopenFiscalYear(
+    @Param('id') id: string,
+    @Body() body: { reason: string; userId: string; username?: string; companyId?: string },
+  ) {
+    return this.periodControlService.reopenFiscalYear(
+      id,
+      body?.reason,
+      { userId: body?.userId, username: body?.username, requireElevatedPermission: true },
+      body?.companyId,
+    );
+  }
+
+  @Get('fiscal-years/:id/audit-logs')
+  async getFiscalYearAuditLogs(@Param('id') id: string, @Query('companyId') companyId?: string) {
+    const repo = await this.getRepo(PeriodAuditLog);
+    const resolvedCompanyId = companyId || TenancyContext.getCompanyId();
+    return repo.find({
+      where: { fiscalYearId: id, companyId: resolvedCompanyId },
+      order: { createdAt: 'DESC' },
+    });
   }
 
   // --- Series Endpoints ---
@@ -362,7 +403,7 @@ export class AppController {
             username: config.username,
             password: config.password,
             database: dbName,
-            entities: [Account, JournalEntry, Article, StockMovement, SalesDocument, PurchaseDocument, TreasuryDocument, Company, FiscalYear, Journal, Customer, Supplier, User, GenericEntity],
+            entities: [Account, JournalEntry, Article, StockMovement, SalesDocument, PurchaseDocument, TreasuryDocument, Company, FiscalYear, Journal, Customer, Supplier, User, GenericEntity, PeriodAuditLog],
             synchronize: true,
           });
 
@@ -451,6 +492,7 @@ export class AppController {
       else if (data.companyInfo) await queryRunner.manager.save(Company, data.companyInfo);
 
       if (data.fiscalYears && data.fiscalYears.length > 0) await queryRunner.manager.save(FiscalYear, data.fiscalYears);
+      if (data.periodAuditLogs && data.periodAuditLogs.length > 0) await queryRunner.manager.save(PeriodAuditLog, data.periodAuditLogs);
       if (data.articles && data.articles.length > 0) await queryRunner.manager.save(Article, data.articles);
       if (data.accounts && data.accounts.length > 0) await queryRunner.manager.save(Account, data.accounts);
       if (data.journals && data.journals.length > 0) await queryRunner.manager.save(Journal, data.journals);
