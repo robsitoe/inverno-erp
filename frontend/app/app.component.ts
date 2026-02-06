@@ -55,7 +55,7 @@ import { ToasterComponent } from './shared/toaster.component';
       <div @fadeSlideIn class="flex flex-col h-screen w-screen overflow-hidden bg-[#F0F0F0]">
         <app-header (onLogout)="handleLogout()"></app-header>
         <div class="flex flex-1 overflow-hidden relative">
-          <app-sidebar (onNavigate)="setActiveView($event)" [currentView]="activeView" [mode]="currentMode"></app-sidebar>
+          <app-sidebar (onNavigate)="setActiveView($event)" [currentView]="activeView" [mode]="currentMode" [productionMode]="isProductionMode"></app-sidebar>
           <app-main-content [activeView]="activeView" class="flex-1 w-full h-full overflow-hidden"></app-main-content>
         </div>
         <app-footer></app-footer>
@@ -74,6 +74,7 @@ export class AppComponent {
   isLoggedIn: boolean = false;
   currentMode: string = 'ERP';
   backendError: boolean = false;
+  isProductionMode: boolean = false;
 
   constructor(
     private startupService: StartupService,
@@ -92,6 +93,7 @@ export class AppComponent {
 
   async checkConnectionAndInit() {
     const config = this.dataService.getSystemConfig();
+    this.isProductionMode = config.deploymentMode === 'WEB';
     console.log(`[Startup] Modo de Depuração: ${config.deploymentMode} | Tipo Storage: ${config.localStorageType}`);
 
     this.dataService.checkBackendConnectivity().subscribe(connected => {

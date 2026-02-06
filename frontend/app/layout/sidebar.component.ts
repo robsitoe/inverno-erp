@@ -90,6 +90,7 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
                       </span>
                       <span class="material-symbols-outlined text-[14px]">{{ child.icon }}</span>
                       <span>{{ child.label }}</span>
+                      <span *ngIf="child.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
                     </button>
                     
                     <!-- Submenu Level 2 -->
@@ -106,6 +107,7 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
                             </span>
                             <span class="material-symbols-outlined text-[12px]">{{ subChild.icon }}</span>
                             <span class="text-xs">{{ subChild.label }}</span>
+                            <span *ngIf="subChild.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
                           </button>
                           
                           <!-- Submenu Level 3 -->
@@ -118,6 +120,7 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
                             >
                               <span class="material-symbols-outlined text-[12px]">{{ subSubChild.icon }}</span>
                               <span>{{ subSubChild.label }}</span>
+                              <span *ngIf="subSubChild.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
                             </a>
                           </div>
                         </div>
@@ -130,6 +133,7 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
                           >
                             <span class="material-symbols-outlined text-[14px]">{{ subChild.icon }}</span>
                             <span>{{ subChild.label }}</span>
+                            <span *ngIf="subChild.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
                           </a>
                         </ng-template>
                       </div>
@@ -144,6 +148,7 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
                     >
                       <span class="material-symbols-outlined text-[14px]">{{ child.icon }}</span>
                       <span>{{ child.label }}</span>
+                      <span *ngIf="child.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
                     </a>
                   </ng-template>
                 </div>
@@ -175,6 +180,7 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
 export class SidebarComponent {
   @Input() currentView: string = 'dashboard';
   @Input() mode: string = 'ERP';
+  @Input() productionMode: boolean = false;
   @Output() onNavigate = new EventEmitter<string>();
 
   menuItems = MENU_ITEMS;
@@ -189,10 +195,21 @@ export class SidebarComponent {
   get displayedMenuItems() {
     let items = this.mode === 'ADMIN' ? this.adminMenuItems : this.menuItems;
 
-    // Filter based on mode (legacy check removed as we switch arrays now)
     if (this.mode !== 'ADMIN') {
       items = items.filter(item => item.label !== 'Administração');
     }
+
+    const filterProduction = (menu: MenuItem[]): MenuItem[] => menu
+      .map(item => {
+        const children = item.children ? filterProduction(item.children) : undefined;
+        const hiddenInProduction = this.productionMode && item.productionReady === false;
+        if (hiddenInProduction) return null;
+        if (item.children && (!children || children.length === 0) && !item.view) return null;
+        return { ...item, children };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null) as MenuItem[];
+
+    items = filterProduction(items);
 
     if (!this.searchQuery) return items;
 

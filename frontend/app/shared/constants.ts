@@ -2,6 +2,8 @@ export interface MenuItem {
   label: string;
   icon: string;
   view?: string;
+  beta?: boolean;
+  productionReady?: boolean;
   children?: MenuItem[];
 }
 
@@ -24,11 +26,11 @@ export const MENU_ITEMS: MenuItem[] = [
       { label: "Diários", icon: "book", view: "diaries" },
       { label: "Balancetes", icon: "balance", view: "trial-balance" },
       { label: "Demonstrações Financeiras", icon: "assessment", view: "financial-statements" },
-      { label: "Centros de Custo", icon: "business_center", view: "cost-centers" },
-      { label: "IVA", icon: "receipt_long", view: "vat" },
-      { label: "Fecho de Período", icon: "lock_clock", view: "period-close" },
-      { label: "Exploração", icon: "explore", view: "exploration" },
-      { label: "Utilitários", icon: "build", view: "utilities" }
+      { label: "Centros de Custo", icon: "business_center", view: "cost-centers", beta: true, productionReady: false },
+      { label: "IVA", icon: "receipt_long", view: "vat", beta: true, productionReady: false },
+      { label: "Fecho de Período", icon: "lock_clock", view: "period-close", beta: true, productionReady: false },
+      { label: "Exploração", icon: "explore", view: "exploration", beta: true, productionReady: false },
+      { label: "Utilitários", icon: "build", view: "utilities", beta: true, productionReady: false }
     ]
   },
   {
