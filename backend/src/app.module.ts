@@ -29,6 +29,9 @@ import { DocumentType } from './common-entities/entities/document-type.entity';
 import { PaymentMethod } from './treasury/entities/payment-method.entity';
 import { TenancyModule } from './tenancy/tenancy.module';
 import { TenancyMiddleware } from './tenancy/tenancy.middleware';
+import { AuditModule } from './audit/audit.module';
+import { AuditMiddleware } from './audit/audit.middleware';
+import { AuditLog } from './audit/entities/audit-log.entity';
 
 @Module({
   imports: [
@@ -48,7 +51,7 @@ import { TenancyMiddleware } from './tenancy/tenancy.middleware';
               Account, JournalEntry, JournalLine, Article, StockMovement,
               SalesDocument, SalesDocumentLine, User, PurchaseDocument,
               PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity, DocumentType, PaymentMethod
+              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity, DocumentType, PaymentMethod, AuditLog
             ],
             synchronize: true,
           };
@@ -66,7 +69,7 @@ import { TenancyMiddleware } from './tenancy/tenancy.middleware';
             SalesDocument, SalesDocumentLine, User, PurchaseDocument,
             PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
             Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-            DocumentType, PaymentMethod
+            DocumentType, PaymentMethod, AuditLog
           ],
           synchronize: true,
         };
@@ -81,6 +84,7 @@ import { TenancyMiddleware } from './tenancy/tenancy.middleware';
     PurchasesModule,
     TreasuryModule,
     TenancyModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -88,7 +92,7 @@ import { TenancyMiddleware } from './tenancy/tenancy.middleware';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(TenancyMiddleware)
+      .apply(TenancyMiddleware, AuditMiddleware)
       .forRoutes('*');
   }
 }
