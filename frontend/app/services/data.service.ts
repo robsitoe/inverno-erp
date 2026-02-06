@@ -19,7 +19,23 @@ export class DataService {
 
     private loadConfig() {
         const stored = localStorage.getItem('erp_system_config');
-        this.config = stored ? JSON.parse(stored) : { deploymentMode: 'LOCAL', localStorageType: 'BROWSER' };
+        if (stored) {
+            this.config = JSON.parse(stored);
+        } else {
+            // Point 1: Definir política por ambiente
+            // Default to LOCAL with POSTGRES (Development)
+            this.config = {
+                deploymentMode: 'LOCAL',
+                localStorageType: 'POSTGRES',
+                apiUrl: 'http://localhost:3000'
+            };
+            localStorage.setItem('erp_system_config', JSON.stringify(this.config));
+        }
+    }
+
+    public getSystemConfig() {
+        if (!this.config) this.loadConfig();
+        return this.config;
     }
 
     private get baseUrl() {
@@ -27,13 +43,15 @@ export class DataService {
         return this.config.deploymentMode === 'WEB' ? this.config.apiUrl : 'http://localhost:3000';
     }
 
-    private isLocalBrowser(): boolean {
-        // Check if the user has explicitly selected 'BROWSER' mode
-        if (this.config && this.config.localStorageType === 'BROWSER') {
-            return true;
-        }
-        // DEFAULT: Force Backend Mode to ensure data isolation 
-        return false;
+    public isLocalBrowser(): boolean {
+        // Point 1: policy check
+        if (!this.config) this.loadConfig();
+        return this.config.localStorageType === 'BROWSER';
+    }
+
+    public getDataSourceLabel(): string {
+        if (this.isLocalBrowser()) return 'OFFLINE / LOCAL';
+        return this.config.deploymentMode === 'WEB' ? 'BACKEND (NUVEM)' : 'BACKEND (LOCAL)';
     }
 
     public checkBackendConnectivity(): Observable<boolean> {
@@ -41,6 +59,17 @@ export class DataService {
             map(() => true),
             catchError(() => of(false))
         );
+    }
+
+    // Point 6 & 7: Autenticação e contexto consistentes
+    // Se faltar empresa ativa, não deveria permitir certas escritas no modo backend
+    public checkActiveCompanyContext(): boolean {
+        const company = this.activeCompanySubject.value;
+        if (!company || !company.id) {
+            console.error('[Security] Operação bloqueada: Nenhuma empresa ativa selecionada.');
+            return false;
+        }
+        return true;
     }
 
     private getStoredCompany(): any {
@@ -807,7 +836,57 @@ export class DataService {
             localStorage.setItem(key, JSON.stringify(types));
             return of(true);
         } else {
-            return this.http.post(`${this.baseUrl}/document-types`, { module: normalizedModule, types });
+            const companyId = this.activeCompanySubject.value?.id || '';
+            // Pass companyId in query so middleware picks it up
+            return this.http.post(`${this.baseUrl}/document-types?companyId=${companyId}`, { module: normalizedModule, types });
+        }
+    }
+
+    // --- Backup & Mode Switch (Points 4, 5) ---
+    public exportData(): string {
+        const data: any = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('erp_')) {
+                data[key] = localStorage.getItem(key);
+            }
+        }
+        return JSON.stringify({
+            timestamp: new Date().toISOString(),
+            user: localStorage.getItem('erp_current_user'),
+            config: this.config,
+            data: data
+        }, null, 2);
+    }
+
+    public downloadBackup() {
+        const backupData = this.exportData();
+        const blob = new Blob([backupData], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        a.href = url;
+        a.download = `inverno_erp_backup_${timestamp}.json`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    public switchMode(type: 'BROWSER' | 'POSTGRES', deployment: 'LOCAL' | 'WEB' = 'LOCAL') {
+        // Point 4: Ritual de troca
+        const modeLabel = type === 'BROWSER' ? 'Modo Local (Browser)' : 'Modo Backend';
+
+        if (confirm(`Atenção: A aplicação será reiniciada para mudar para ${modeLabel}. Deseja fazer um backup dos dados locais antes de mudar?`)) {
+            this.downloadBackup();
+        }
+
+        if (confirm(`Confirmar mudança para ${modeLabel}?`)) {
+            const newConfig = {
+                ...this.config,
+                deploymentMode: deployment,
+                localStorageType: type
+            };
+            localStorage.setItem('erp_system_config', JSON.stringify(newConfig));
+            window.location.reload();
         }
     }
 }

@@ -323,6 +323,80 @@ interface FiscalYear {
           </div>
         </div>
 
+        <!-- Tab: Manutenção -->
+        <div *ngIf="activeTab === 'maintenance'" class="max-w-4xl mx-auto space-y-6">
+          <!-- Backup Card -->
+          <div class="bg-white border border-gray-300 rounded-lg shadow-sm overflow-hidden">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+              <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-green-600">backup</span>
+                Cópia de Segurança & Recuperação
+              </h2>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="p-4 border border-gray-100 bg-gray-50 rounded-lg">
+                <h3 class="font-bold text-gray-800 mb-2">Exportar Dados Locais</h3>
+                <p class="text-sm text-gray-600 mb-4">Cria um ficheiro JSON com todos os dados armazenados localmente no browser (erp_*).</p>
+                <button (click)="exportBackup()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium flex items-center justify-center gap-2 transition-all">
+                  <span class="material-symbols-outlined text-[18px]">download</span>
+                  Descarregar Backup (.json)
+                </button>
+              </div>
+
+              <div class="p-4 border border-red-100 bg-red-50 rounded-lg">
+                <h3 class="font-bold text-red-800 mb-2 underline">ZONA DE PERIGO: Reset</h3>
+                <p class="text-sm text-red-600 mb-4">Apaga permanentemente todos os dados erp_* deste browser e restaura as definições de fábrica.</p>
+                <button (click)="dangerReset()" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-medium flex items-center justify-center gap-2 transition-all">
+                  <span class="material-symbols-outlined text-[18px]">delete_forever</span>
+                  LIMPAR TUDO
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Runbook / Status Card (Point 8, 9) -->
+          <div class="bg-white border border-gray-300 rounded-lg shadow-sm overflow-hidden">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+              <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-blue-600">troubleshoot</span>
+                Diagnóstico & Runbook (Dados "Sumidos")
+              </h2>
+            </div>
+            <div class="p-6">
+              <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="p-3 bg-gray-50 rounded border border-gray-200">
+                  <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Modo Atual</p>
+                  <p class="text-sm font-bold text-gray-800">{{ dataSourceLabel }}</p>
+                </div>
+                <div class="p-3 bg-gray-50 rounded border border-gray-200">
+                  <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Empresa Ativa</p>
+                  <p class="text-sm font-bold text-gray-800">{{ companyInfo.name || '---' }}</p>
+                </div>
+                <div class="p-3 bg-gray-50 rounded border border-gray-200">
+                  <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Status Backend</p>
+                  <p class="text-sm font-bold flex items-center gap-1.5" [ngClass]="backendStatus === 'online' ? 'text-green-600' : 'text-red-600'">
+                    <span class="size-2 rounded-full" [ngClass]="backendStatus === 'online' ? 'bg-green-500' : 'bg-red-500'"></span>
+                    {{ backendStatus.toUpperCase() }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <h4 class="font-bold text-blue-800 text-sm mb-2 flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[18px]">info</span>
+                  Procedimento de Recuperação
+                </h4>
+                <ul class="text-xs text-blue-700 space-y-1.5 list-decimal list-inside">
+                  <li>Confirme no indicador acima se está no modo correto (Local vs Backend).</li>
+                  <li>Se usa LOCAL, verifique se mudou de browser ou limpou a cache recentemente.</li>
+                  <li>Se usa BACKEND, confirme se o tenant (X-Company-Id) está correto nos cabeçalhos.</li>
+                  <li>Em caso de perda total local, utilize o ficheiro descarregado para restaurar dados.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Tab: Sistema -->
         <div *ngIf="activeTab === 'system'" class="max-w-4xl mx-auto">
           <app-admin-tools></app-admin-tools>
@@ -371,6 +445,7 @@ export class AdminPageComponent implements OnInit {
     { id: 'years', label: 'Exercícios', icon: 'calendar_month' },
     { id: 'series', label: 'Séries', icon: 'format_list_numbered' },
     { id: 'parameters', label: 'Parâmetros', icon: 'settings_applications' },
+    { id: 'maintenance', label: 'Manutenção', icon: 'build_circle' },
     { id: 'system', label: 'Sistema', icon: 'settings_system_daydream' }
   ];
 
@@ -388,7 +463,10 @@ export class AdminPageComponent implements OnInit {
   newYearModel = { year: new Date().getFullYear() + 1 };
   periodLockDate: string = '';
 
+  dataSourceLabel = '';
+
   ngOnInit() {
+    this.dataSourceLabel = this.dataService.getDataSourceLabel();
     this.loadSystemConfig(); // Load config first
     this.loadCompanyInfo();
     this.loadFiscalYears();
@@ -594,8 +672,23 @@ export class AdminPageComponent implements OnInit {
   }
 
   saveSystemConfig() {
-    localStorage.setItem('erp_system_config', JSON.stringify(this.systemConfig));
-    alert('Configurações do sistema gravadas com sucesso!');
+    // Point 4: Ritual de troca centralizado no DataService
+    this.dataService.switchMode(this.systemConfig.localStorageType as any, this.systemConfig.deploymentMode as any);
+  }
+
+  exportBackup() {
+    this.dataService.downloadBackup();
+  }
+
+  dangerReset() {
+    if (confirm('!!! AVISO CRÍTICO !!!\n\nEstá prestes a APAGAR TODOS OS DADOS deste browser. Esta operação é irreversível.\n\nTem a certeza absoluta?')) {
+      if (confirm('Último aviso: Deseja realmente continuar com a destruição dos dados locais?')) {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('erp_')) localStorage.removeItem(key);
+        });
+        window.location.reload();
+      }
+    }
   }
 
   async testConnection() {

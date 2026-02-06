@@ -15,10 +15,12 @@ import { SupplierService } from './shared/supplier.service';
 import { DataService } from './services/data.service';
 import { AuthService } from './services/auth.service';
 
+import { ToasterComponent } from './shared/toaster.component';
+
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, SidebarComponent, FooterComponent, MainContentComponent, LoginComponent],
+  imports: [CommonModule, HeaderComponent, SidebarComponent, FooterComponent, MainContentComponent, LoginComponent, ToasterComponent],
   animations: [
     trigger('fadeSlideIn', [
       transition(':enter', [
@@ -59,9 +61,12 @@ import { AuthService } from './services/auth.service';
         <app-footer></app-footer>
       </div>
     </ng-container>
+    
     <ng-template #loginTpl>
       <app-login @fadeOut (onLogin)="handleLogin($event)"></app-login>
     </ng-template>
+
+    <app-toaster></app-toaster>
   `
 })
 export class AppComponent {
@@ -86,10 +91,21 @@ export class AppComponent {
   }
 
   async checkConnectionAndInit() {
+    const config = this.dataService.getSystemConfig();
+    console.log(`[Startup] Modo de Depuração: ${config.deploymentMode} | Tipo Storage: ${config.localStorageType}`);
+
     this.dataService.checkBackendConnectivity().subscribe(connected => {
-      if (!connected && !this.isOfflineMode()) {
+      // Point 3: "Pre-flight check" no arranque
+      if (!connected && !this.dataService.isLocalBrowser()) {
+        console.error('[Startup] Falha crítica: Backend inacessível em modo operacional.');
         this.backendError = true;
       } else {
+        if (!connected && this.dataService.isLocalBrowser()) {
+          console.warn('[Startup] Backend inacessível, mas operando em MODO OFFLINE/LOCAL.');
+        } else {
+          console.info('[Startup] Conexão estável com o Backend.');
+        }
+
         this.backendError = false;
         this.startupService.init();
         this.validateStoredSession();
@@ -97,22 +113,13 @@ export class AppComponent {
     });
   }
 
-  private isOfflineMode(): boolean {
-    const config = localStorage.getItem('erp_system_config');
-    if (config) {
-      return JSON.parse(config).localStorageType === 'BROWSER';
-    }
-    return false;
-  }
 
   retryConnection() {
     this.checkConnectionAndInit();
   }
 
   switchToOfflineMode() {
-    const config = { deploymentMode: 'LOCAL', localStorageType: 'BROWSER' };
-    localStorage.setItem('erp_system_config', JSON.stringify(config));
-    window.location.reload();
+    this.dataService.switchMode('BROWSER', 'LOCAL');
   }
 
   validateStoredSession() {

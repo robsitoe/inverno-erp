@@ -70,8 +70,47 @@ export class AppController {
 
   @Post('company')
   async saveCompany(@Body() company: any) {
-    return await this.dataSource.getRepository(Company).save(company);
+    try {
+      const repo = this.dataSource.getRepository(Company);
+
+      // 1. Check for duplicates (Name and NIF) if creating a new company
+      // or if changing these values in an existing one.
+      const isNew = !company.id || !(await repo.findOne({ where: { id: company.id } }));
+
+      if (isNew) {
+        const existingName = await repo.findOne({ where: { name: company.name } });
+        if (existingName) {
+          throw new BadRequestException(`Já existe uma empresa registrada com o nome "${company.name}".`);
+        }
+
+        if (company.nif) {
+          const existingNif = await repo.findOne({ where: { nif: company.nif } });
+          if (existingNif) {
+            throw new BadRequestException(`O NIF "${company.nif}" já está associado a outra empresa.`);
+          }
+        }
+      }
+
+      // 2. Save company info in main DB
+      const savedCompany = await repo.save(company);
+
+      // 3. Always trigger tenant DB initialization check.
+      try {
+        await this.tenancyService.getTenantDataSource(savedCompany.id);
+      } catch (tenancyError) {
+        console.error(`[Tenancy Error] Failed to initialize DB for ${savedCompany.name}:`, tenancyError.message);
+      }
+
+      return savedCompany;
+    } catch (err) {
+      if (err instanceof BadRequestException) throw err;
+      console.error('Error saving company:', err);
+      throw new BadRequestException(err.message || 'Erro interno ao gravar empresa.');
+    }
   }
+
+
+
 
   @Delete('companies/:id')
   async deleteCompany(@Param('id') id: string) {

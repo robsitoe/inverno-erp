@@ -191,34 +191,84 @@ export class TenancyService implements OnModuleDestroy {
             // Fetch company from MAIN database to see its config
             const company = await this.mainDataSource.getRepository(Company).findOne({ where: { id: companyId } });
 
+            // 1. Ensure Fiscal Year and Series exist
+            // This logic was moved from AppController to ensure it runs on the correct tenant DB
+            const currentYear = new Date().getFullYear();
+            let yearToUse = currentYear;
+            let seriesCode = `${currentYear}`;
+            let seriesDesc = `Série ${currentYear}`;
+            let startDate = `${currentYear}-01-01`;
+            let endDate = `${currentYear}-12-31`;
+
+            if (company?.seriesConfig) {
+                const sc = company.seriesConfig;
+                seriesCode = sc.code || seriesCode;
+                seriesDesc = sc.description || seriesDesc;
+                startDate = sc.startDate || startDate;
+                endDate = sc.endDate || endDate;
+                if (startDate) yearToUse = new Date(startDate).getFullYear();
+            } else if (company?.currentYear) {
+                yearToUse = company.currentYear;
+                seriesCode = yearToUse.toString();
+                seriesDesc = `Série ${yearToUse}`;
+                startDate = `${yearToUse}-01-01`;
+                endDate = `${yearToUse}-12-31`;
+            }
+
+            // Fiscal Year
+            const fiscalYearRepo = ds.getRepository(FiscalYear);
+            let fiscalYear = await fiscalYearRepo.findOne({ where: { companyId, year: yearToUse } });
+
+            if (!fiscalYear) {
+                fiscalYear = new FiscalYear();
+                fiscalYear.id = `${yearToUse}-${companyId}`;
+                fiscalYear.year = yearToUse;
+                fiscalYear.companyId = companyId;
+                fiscalYear.isCurrent = true;
+                fiscalYear.status = 'OPEN';
+                fiscalYear.startDate = startDate;
+                fiscalYear.endDate = endDate;
+                await fiscalYearRepo.save(fiscalYear);
+                console.log(`[Tenancy] Initialized Fiscal Year ${yearToUse} for Company ${companyId}`);
+            }
+
+            // Series
+            const seriesRepo = ds.getRepository(Series);
+            // Default active series for this year
+            let series = await seriesRepo.findOne({ where: { companyId, code: seriesCode } });
+
+            if (!series) {
+                series = new Series();
+                series.id = company?.seriesConfig ? `SERIES-${seriesCode}-${companyId}` : `${yearToUse}-${companyId}`;
+                series.companyId = companyId;
+                series.code = seriesCode;
+                series.description = seriesDesc;
+                series.startDate = startDate;
+                series.endDate = endDate;
+                series.active = true;
+                series.module = 'GLOBAL'; // Ensure consistency
+                await seriesRepo.save(series);
+                console.log(`[Tenancy] Initialized Series ${seriesCode} for Company ${companyId}`);
+            }
+
+            // 2. Document Types
             const docTypeRepo = ds.getRepository(DocumentType);
             const count = await docTypeRepo.count();
 
             if (count === 0) {
                 console.log(`[Tenancy] Seeding standard document types for company ${companyId}...`);
 
-                // Determine initial series from company config or current year
-                const initialSeries = company?.seriesConfig ? {
-                    code: company.seriesConfig.code,
-                    name: company.seriesConfig.description || `Série ${company.seriesConfig.code}`,
-                    description: company.seriesConfig.description,
-                    startDate: company.seriesConfig.startDate,
-                    endDate: company.seriesConfig.endDate,
+                // Create initial series configuration for the document type JSON structure
+                const initialSeriesConfig = {
+                    code: seriesCode,
+                    description: seriesDesc,
+                    startDate: startDate,
+                    endDate: endDate,
                     active: true,
                     isDefault: true,
                     companyId: companyId,
                     currentNumber: 1
-                } : (company?.currentYear ? {
-                    code: company.currentYear.toString(),
-                    name: `Série ${company.currentYear}`,
-                    description: `Série ${company.currentYear}`,
-                    startDate: `${company.currentYear}-01-01`,
-                    endDate: `${company.currentYear}-12-31`,
-                    active: true,
-                    isDefault: true,
-                    companyId: companyId,
-                    currentNumber: 1
-                } : null);
+                };
 
                 const allDefaults = [
                     ...SALES_DOCUMENT_TYPES.map(t => ({ ...t, module: t.type || 'SALES' })),
@@ -231,14 +281,15 @@ export class TenancyService implements OnModuleDestroy {
                     ...t,
                     id: `${t.module}-${t.code}-${companyId}`,
                     companyId: companyId,
-                    series: initialSeries ? [initialSeries] : []
+                    series: [initialSeriesConfig], // Link to the created series context
+                    isActive: true
                 }));
 
                 await docTypeRepo.save(entities);
-                console.log(`[Tenancy] ✅ Created ${entities.length} document types with series: ${initialSeries?.code || 'None'}`);
+                console.log(`[Tenancy] ✅ Created ${entities.length} document types with series: ${seriesCode}`);
             }
 
-            // Seed Payment Methods
+            // 3. Payment Methods
             const pmRepo = ds.getRepository(PaymentMethod);
             const pmCount = await pmRepo.count();
             if (pmCount === 0) {

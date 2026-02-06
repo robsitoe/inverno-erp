@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChangeDetectorRef } from '@angular/core';
 import { DataService } from '../../services/data.service';
+import { ToasterService } from '../../services/toaster.service';
 
 interface Company {
   id: string;
@@ -512,7 +513,11 @@ export class AdminCompaniesComponent implements OnInit {
   newCompany: Company = this.getEmptyCompany();
   seriesConfig: SeriesConfig = this.getEmptySeriesConfig();
 
-  constructor(private dataService: DataService, private cdr: ChangeDetectorRef) { }
+  constructor(
+    private dataService: DataService,
+    private cdr: ChangeDetectorRef,
+    private toasterService: ToasterService
+  ) { }
 
   ngOnInit() {
     this.loadCompanies();
@@ -613,11 +618,24 @@ export class AdminCompaniesComponent implements OnInit {
       this.companies = companies;
       this.cdr.detectChanges();
 
-      // Migration path: Check for legacy single company if list is empty
+      // Migration path: Check for legacy data if nothing found in backend
       if (this.companies.length === 0) {
-        const legacyStored = localStorage.getItem('erp_company_info');
-        if (legacyStored) {
-          const info = JSON.parse(legacyStored);
+        const legacyCompanies = localStorage.getItem('erp_companies');
+        const legacySingle = localStorage.getItem('erp_company_info');
+
+        if (legacyCompanies) {
+          try {
+            const list = JSON.parse(legacyCompanies);
+            if (Array.isArray(list) && list.length > 0) {
+              console.log(`Migrating ${list.length} companies from local storage...`);
+              this.migrateBulkCompanies(list);
+              return;
+            }
+          } catch (e) { }
+        }
+
+        if (legacySingle) {
+          const info = JSON.parse(legacySingle);
           const fiscalYears = localStorage.getItem('erp_fiscal_years');
           let currentYear = new Date().getFullYear();
 
@@ -628,7 +646,7 @@ export class AdminCompaniesComponent implements OnInit {
           }
 
           const migratedCompany: Company = {
-            id: '001',
+            id: info.id || '001',
             ...info,
             currentYear: currentYear,
             type: info.type || 'STANDARD',
@@ -643,6 +661,27 @@ export class AdminCompaniesComponent implements OnInit {
           });
         }
       }
+    });
+  }
+
+  private migrateBulkCompanies(list: any[]) {
+    if (list.length === 0) {
+      this.loadCompanies();
+      return;
+    }
+
+    const next = list[0];
+    const remaining = list.slice(1);
+
+    const toMigrate: Company = {
+      ...next,
+      id: next.id || String(list.length).padStart(3, '0'),
+      currentYear: next.currentYear || new Date().getFullYear()
+    };
+
+    this.dataService.saveCompanyInfo(toMigrate).subscribe({
+      next: () => this.migrateBulkCompanies(remaining),
+      error: () => this.migrateBulkCompanies(remaining)
     });
   }
 
@@ -707,18 +746,24 @@ export class AdminCompaniesComponent implements OnInit {
 
   deleteCompany(company: Company) {
     if (confirm(`Tem a certeza que deseja eliminar a empresa ${company.name}?`)) {
-      this.dataService.deleteCompany(company.id).subscribe(() => {
-        this.loadCompanies();
+      this.dataService.deleteCompany(company.id).subscribe({
+        next: () => {
+          this.loadCompanies();
+          this.toasterService.showSuccess('Empresa Eliminada', `A empresa ${company.name} foi removida com sucesso.`);
 
-        // If we deleted the active company, clear it (optional, but good practice)
-        const active = localStorage.getItem('erp_company_info');
-        if (active) {
-          const activeCompany = JSON.parse(active);
-          if (activeCompany.id === company.id) {
-            this.dataService.setActiveCompany(null);
+          // If we deleted the active company, clear it (optional, but good practice)
+          const active = localStorage.getItem('erp_company_info');
+          if (active) {
+            const activeCompany = JSON.parse(active);
+            if (activeCompany.id === company.id) {
+              this.dataService.setActiveCompany(null);
+            }
           }
+        },
+        error: (err) => {
+          const errorMsg = err.error?.message || err.message || 'Erro ao eliminar empresa';
+          this.toasterService.showError('Erro', errorMsg);
         }
-
       });
     }
   }
@@ -726,7 +771,15 @@ export class AdminCompaniesComponent implements OnInit {
   resetWizard() {
     this.currentStep = 1;
     this.newCompany = this.getEmptyCompany();
-    this.newCompany.id = String(this.companies.length + 1).padStart(3, '0');
+
+    // Fix ID Generation Strategy: Avoid collisions by using max ID + 1 instead of length
+    const maxId = this.companies.reduce((max, c) => {
+      const num = parseInt(c.id, 10);
+      return !isNaN(num) && num > max ? num : max;
+    }, 0);
+
+    this.newCompany.id = String(maxId + 1).padStart(3, '0');
+
     this.seriesConfig = this.getEmptySeriesConfig();
     this.dateError = '';
     this.isEditing = false;
@@ -806,102 +859,24 @@ export class AdminCompaniesComponent implements OnInit {
     this.newCompany.seriesConfig = { ...this.seriesConfig };
 
     // Save Company via Service
+    console.log('[AdminCompanies] Saving company...', this.newCompany);
     this.dataService.saveCompanyInfo(this.newCompany).subscribe({
-      next: () => {
-        // Setup Fiscal Year based on Series Start Date
-        const startYear = new Date(this.seriesConfig.startDate).getFullYear();
-
-        const newFiscalYear = {
-          year: startYear,
-          status: 'OPEN',
-          isCurrent: true,
-          startDate: this.seriesConfig.startDate,
-          endDate: this.seriesConfig.endDate,
-          companyId: this.newCompany.id
-        };
-
-        this.dataService.saveFiscalYear(newFiscalYear).subscribe({
-          next: () => {
-            // Save Global Series Definition
-            this.saveGlobalSeries({ ...this.seriesConfig, companyId: this.newCompany.id });
-
-            // Create Series for the new year
-            this.createSeriesForYear(this.seriesConfig.code);
-
-            this.isSaving = false;
-            this.showWizard = false;
-            this.loadCompanies();
-            alert(`Empresa ${this.isEditing ? 'atualizada' : 'criada'} com sucesso!`);
-            this.cdr.detectChanges();
-          },
-          error: (err) => {
-            this.isSaving = false;
-            console.error('Error saving fiscal year:', err);
-            alert(`Erro ao configurar exercício fiscal: ${err.message || 'Erro desconhecido'}`);
-            this.cdr.detectChanges();
-          }
-        });
+      next: (res) => {
+        console.log('[AdminCompanies] Save success:', res);
+        this.isSaving = false;
+        this.showWizard = false;
+        this.loadCompanies();
+        const action = this.isEditing ? 'atualizada' : 'criada';
+        this.toasterService.showSuccess('Sucesso', `Empresa ${this.newCompany.name} ${action} com sucesso!`);
+        this.cdr.detectChanges();
       },
       error: (err) => {
+        console.error('[AdminCompanies] Save error:', err);
         this.isSaving = false;
-        console.error('Error saving company:', err);
-        alert(`Erro ao gravar empresa: ${err.message || 'Erro desconhecido'}`);
+        const errorMsg = err.error?.message || err.message || 'Erro desconhecido';
+        this.toasterService.showError('Erro ao Gravar', errorMsg);
         this.cdr.detectChanges();
       }
-    });
-  }
-
-  saveGlobalSeries(config: SeriesConfig) {
-    // We need to adapt SeriesConfig to Series entity structure if they differ, but they seem compatible enough for now
-    // except SeriesConfig might miss some fields like 'active' or 'module' which backend might expect or default.
-    const seriesData: any = {
-      ...config,
-      active: true,
-      module: 'GLOBAL'
-    };
-
-    // If it doesn't have an ID, we might need to generate one or let backend handle it.
-    // Backend saveSeries uses save() which inserts or updates.
-    if (!seriesData.id) {
-      seriesData.id = `SERIES_${config.code}_${config.companyId}_${Date.now()}`;
-    }
-
-    this.dataService.saveSeries(seriesData).subscribe();
-  }
-
-  createSeriesForYear(seriesCode: string) {
-    const modules: ('SALES' | 'PURCHASES' | 'STOCK' | 'TREASURY')[] = ['SALES', 'PURCHASES', 'STOCK', 'TREASURY'];
-
-    modules.forEach(module => {
-      this.dataService.getDocumentTypes(module).subscribe(docTypes => {
-        if (docTypes && docTypes.length > 0) {
-          let updated = false;
-
-          docTypes.forEach((dt: any) => {
-            if (!dt.series) dt.series = [];
-
-            // Check if exists
-            const existing = dt.series.find((s: any) => s.code === seriesCode && s.companyId === this.newCompany.id);
-
-            if (!existing) {
-              dt.series.unshift({
-                code: seriesCode,
-                description: this.seriesConfig.description,
-                active: true,
-                startDate: this.seriesConfig.startDate,
-                endDate: this.seriesConfig.endDate,
-                companyId: this.newCompany.id,
-                currentNumber: 1
-              });
-              updated = true;
-            }
-          });
-
-          if (updated) {
-            this.dataService.saveDocumentTypes(module, docTypes).subscribe();
-          }
-        }
-      });
     });
   }
 }

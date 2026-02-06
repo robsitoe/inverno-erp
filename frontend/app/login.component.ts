@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from './services/auth.service';
 import { HttpClientModule } from '@angular/common/http';
 import { DataService } from './services/data.service';
+import { ToasterService } from './services/toaster.service';
 
 @Component({
   selector: 'app-login',
@@ -188,7 +189,8 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private dataService: DataService
+    private dataService: DataService,
+    private toasterService: ToasterService
   ) { }
 
   ngOnInit() {
@@ -231,7 +233,7 @@ export class LoginComponent implements OnInit {
           // Permission Check for ADMIN mode
           if (this.selectedMode === 'ADMIN') {
             if (!user.isAdmin && !user.isSuperAdmin) {
-              alert('Não tem permissões de administrador.');
+              this.toasterService.showError('Acesso Negado', 'Não tem permissões de administrador para aceder a este painel.');
               return;
             }
             this.finishLogin();
@@ -243,7 +245,8 @@ export class LoginComponent implements OnInit {
         },
         error: (err) => {
           console.error('Login failed', err);
-          alert('Login falhou: ' + (err.error?.message || 'Credenciais inválidas'));
+          const errorMsg = err.error?.message || 'Utilizador ou palavra-passe incorretos.';
+          this.toasterService.showError('Falha no Login', errorMsg);
         }
       });
   }

@@ -168,31 +168,71 @@ let TenancyService = class TenancyService {
     async seedTenantData(ds, companyId) {
         try {
             const company = await this.mainDataSource.getRepository(company_entity_1.Company).findOne({ where: { id: companyId } });
+            const currentYear = new Date().getFullYear();
+            let yearToUse = currentYear;
+            let seriesCode = `${currentYear}`;
+            let seriesDesc = `Série ${currentYear}`;
+            let startDate = `${currentYear}-01-01`;
+            let endDate = `${currentYear}-12-31`;
+            if (company?.seriesConfig) {
+                const sc = company.seriesConfig;
+                seriesCode = sc.code || seriesCode;
+                seriesDesc = sc.description || seriesDesc;
+                startDate = sc.startDate || startDate;
+                endDate = sc.endDate || endDate;
+                if (startDate)
+                    yearToUse = new Date(startDate).getFullYear();
+            }
+            else if (company?.currentYear) {
+                yearToUse = company.currentYear;
+                seriesCode = yearToUse.toString();
+                seriesDesc = `Série ${yearToUse}`;
+                startDate = `${yearToUse}-01-01`;
+                endDate = `${yearToUse}-12-31`;
+            }
+            const fiscalYearRepo = ds.getRepository(fiscal_year_entity_1.FiscalYear);
+            let fiscalYear = await fiscalYearRepo.findOne({ where: { companyId, year: yearToUse } });
+            if (!fiscalYear) {
+                fiscalYear = new fiscal_year_entity_1.FiscalYear();
+                fiscalYear.id = `${yearToUse}-${companyId}`;
+                fiscalYear.year = yearToUse;
+                fiscalYear.companyId = companyId;
+                fiscalYear.isCurrent = true;
+                fiscalYear.status = 'OPEN';
+                fiscalYear.startDate = startDate;
+                fiscalYear.endDate = endDate;
+                await fiscalYearRepo.save(fiscalYear);
+                console.log(`[Tenancy] Initialized Fiscal Year ${yearToUse} for Company ${companyId}`);
+            }
+            const seriesRepo = ds.getRepository(series_entity_1.Series);
+            let series = await seriesRepo.findOne({ where: { companyId, code: seriesCode } });
+            if (!series) {
+                series = new series_entity_1.Series();
+                series.id = company?.seriesConfig ? `SERIES-${seriesCode}-${companyId}` : `${yearToUse}-${companyId}`;
+                series.companyId = companyId;
+                series.code = seriesCode;
+                series.description = seriesDesc;
+                series.startDate = startDate;
+                series.endDate = endDate;
+                series.active = true;
+                series.module = 'GLOBAL';
+                await seriesRepo.save(series);
+                console.log(`[Tenancy] Initialized Series ${seriesCode} for Company ${companyId}`);
+            }
             const docTypeRepo = ds.getRepository(document_type_entity_1.DocumentType);
             const count = await docTypeRepo.count();
             if (count === 0) {
                 console.log(`[Tenancy] Seeding standard document types for company ${companyId}...`);
-                const initialSeries = company?.seriesConfig ? {
-                    code: company.seriesConfig.code,
-                    name: company.seriesConfig.description || `Série ${company.seriesConfig.code}`,
-                    description: company.seriesConfig.description,
-                    startDate: company.seriesConfig.startDate,
-                    endDate: company.seriesConfig.endDate,
+                const initialSeriesConfig = {
+                    code: seriesCode,
+                    description: seriesDesc,
+                    startDate: startDate,
+                    endDate: endDate,
                     active: true,
                     isDefault: true,
                     companyId: companyId,
                     currentNumber: 1
-                } : (company?.currentYear ? {
-                    code: company.currentYear.toString(),
-                    name: `Série ${company.currentYear}`,
-                    description: `Série ${company.currentYear}`,
-                    startDate: `${company.currentYear}-01-01`,
-                    endDate: `${company.currentYear}-12-31`,
-                    active: true,
-                    isDefault: true,
-                    companyId: companyId,
-                    currentNumber: 1
-                } : null);
+                };
                 const allDefaults = [
                     ...initial_data_1.SALES_DOCUMENT_TYPES.map(t => ({ ...t, module: t.type || 'SALES' })),
                     ...initial_data_1.PURCHASE_DOCUMENT_TYPES.map(t => ({ ...t, module: t.type || 'PURCHASES' })),
@@ -203,10 +243,11 @@ let TenancyService = class TenancyService {
                     ...t,
                     id: `${t.module}-${t.code}-${companyId}`,
                     companyId: companyId,
-                    series: initialSeries ? [initialSeries] : []
+                    series: [initialSeriesConfig],
+                    isActive: true
                 }));
                 await docTypeRepo.save(entities);
-                console.log(`[Tenancy] ✅ Created ${entities.length} document types with series: ${initialSeries?.code || 'None'}`);
+                console.log(`[Tenancy] ✅ Created ${entities.length} document types with series: ${seriesCode}`);
             }
             const pmRepo = ds.getRepository(payment_method_entity_1.PaymentMethod);
             const pmCount = await pmRepo.count();

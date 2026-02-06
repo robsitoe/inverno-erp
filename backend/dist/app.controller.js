@@ -102,7 +102,36 @@ let AppController = class AppController {
         return await this.dataSource.getRepository(company_entity_1.Company).findOne({ where: { id: companyId } });
     }
     async saveCompany(company) {
-        return await this.dataSource.getRepository(company_entity_1.Company).save(company);
+        try {
+            const repo = this.dataSource.getRepository(company_entity_1.Company);
+            const isNew = !company.id || !(await repo.findOne({ where: { id: company.id } }));
+            if (isNew) {
+                const existingName = await repo.findOne({ where: { name: company.name } });
+                if (existingName) {
+                    throw new common_1.BadRequestException(`Já existe uma empresa registrada com o nome "${company.name}".`);
+                }
+                if (company.nif) {
+                    const existingNif = await repo.findOne({ where: { nif: company.nif } });
+                    if (existingNif) {
+                        throw new common_1.BadRequestException(`O NIF "${company.nif}" já está associado a outra empresa.`);
+                    }
+                }
+            }
+            const savedCompany = await repo.save(company);
+            try {
+                await this.tenancyService.getTenantDataSource(savedCompany.id);
+            }
+            catch (tenancyError) {
+                console.error(`[Tenancy Error] Failed to initialize DB for ${savedCompany.name}:`, tenancyError.message);
+            }
+            return savedCompany;
+        }
+        catch (err) {
+            if (err instanceof common_1.BadRequestException)
+                throw err;
+            console.error('Error saving company:', err);
+            throw new common_1.BadRequestException(err.message || 'Erro interno ao gravar empresa.');
+        }
     }
     async deleteCompany(id) {
         const queryRunner = this.dataSource.createQueryRunner();
