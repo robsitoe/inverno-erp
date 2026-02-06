@@ -14,6 +14,7 @@ import { SalesDocument, SalesDocumentLine } from '../../shared/models';
 import { AuditService } from '../../shared/audit.service';
 import { PeriodService } from '../../shared/period.service';
 import { DataService } from '../../services/data.service';
+import { SalesApiService } from '../../services/sales-api.service';
 import { SalesDocumentSearchModalComponent } from './sales-document-search-modal.component';
 import { WarehouseSearchModalComponent } from '../inventory/warehouse-search-modal.component';
 import { LocationSearchModalComponent } from '../inventory/location-search-modal.component';
@@ -1141,6 +1142,7 @@ export class SalesDocumentForm {
     private auditService: AuditService,
     private periodService: PeriodService,
     private dataService: DataService,
+    private salesApi: SalesApiService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
   ) {
@@ -1285,7 +1287,7 @@ export class SalesDocumentForm {
   }
 
   loadNextNumber() {
-    this.dataService.getSalesDocuments(this.activeCompanyId || undefined).subscribe(docs => {
+    this.salesApi.getSalesDocuments(this.activeCompanyId || undefined).subscribe(docs => {
       const typeDocs = docs.filter((d: any) =>
         d.documentType === (this.selectedDocType || this.defaultDocValue) &&
         d.series === this.currentSeries
@@ -1348,7 +1350,7 @@ export class SalesDocumentForm {
 
     if (!type || !series || !num || !this.activeCompanyId) return;
 
-    this.dataService.getSalesDocumentByNumber(this.activeCompanyId, type, series, num).subscribe(doc => {
+    this.salesApi.getSalesDocumentByNumber(this.activeCompanyId, type, series, num).subscribe(doc => {
       this.ngZone.run(() => {
         if (doc) {
           this.loadDocument(doc);
@@ -1635,7 +1637,7 @@ export class SalesDocumentForm {
 
     // Save via DataService
     // Check for sequential number gap
-    this.dataService.getSalesDocuments(this.activeCompanyId || undefined).subscribe(docs => {
+    this.salesApi.getSalesDocuments(this.activeCompanyId || undefined).subscribe(docs => {
       this.ngZone.run(() => {
         const typeDocs = docs.filter((d: any) =>
           d.documentType === this.selectedDocType &&
@@ -1659,7 +1661,7 @@ export class SalesDocumentForm {
         }
 
         // Save via DataService
-        this.dataService.saveSalesDocument(salesDoc).subscribe({
+        this.salesApi.saveSalesDocument(salesDoc).subscribe({
           next: (savedDoc) => {
             this.ngZone.run(() => {
               // Update local status

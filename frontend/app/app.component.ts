@@ -12,7 +12,8 @@ import { InventoryService } from './shared/inventory.service';
 import { AccountingService } from './shared/accounting.service';
 import { CustomerService } from './shared/customer.service';
 import { SupplierService } from './shared/supplier.service';
-import { DataService } from './services/data.service';
+import { ConfigService } from './services/config.service';
+import { CompanyContextService } from './services/company-context.service';
 import { AuthService } from './services/auth.service';
 
 import { ToasterComponent } from './shared/toaster.component';
@@ -81,7 +82,8 @@ export class AppComponent {
     private accountingService: AccountingService,
     private customerService: CustomerService,
     private supplierService: SupplierService,
-    private dataService: DataService,
+    private configService: ConfigService,
+    private companyContextService: CompanyContextService,
     private authService: AuthService
   ) { }
 
@@ -91,16 +93,16 @@ export class AppComponent {
   }
 
   async checkConnectionAndInit() {
-    const config = this.dataService.getSystemConfig();
+    const config = this.configService.getSystemConfig();
     console.log(`[Startup] Modo de Depuração: ${config.deploymentMode} | Tipo Storage: ${config.localStorageType}`);
 
-    this.dataService.checkBackendConnectivity().subscribe(connected => {
+    this.configService.checkBackendConnectivity().subscribe(connected => {
       // Point 3: "Pre-flight check" no arranque
-      if (!connected && !this.dataService.isLocalBrowser()) {
+      if (!connected && !this.configService.isLocalBrowser()) {
         console.error('[Startup] Falha crítica: Backend inacessível em modo operacional.');
         this.backendError = true;
       } else {
-        if (!connected && this.dataService.isLocalBrowser()) {
+        if (!connected && this.configService.isLocalBrowser()) {
           console.warn('[Startup] Backend inacessível, mas operando em MODO OFFLINE/LOCAL.');
         } else {
           console.info('[Startup] Conexão estável com o Backend.');
@@ -119,7 +121,7 @@ export class AppComponent {
   }
 
   switchToOfflineMode() {
-    this.dataService.switchMode('BROWSER', 'LOCAL');
+    this.configService.switchMode('BROWSER', 'LOCAL');
   }
 
   validateStoredSession() {
@@ -185,6 +187,6 @@ export class AppComponent {
     this.authService.logout();
 
     // Reset DataService active company
-    this.dataService.setActiveCompany(null);
+    this.companyContextService.setActiveCompany(null);
   }
 }

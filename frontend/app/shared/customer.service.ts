@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { Customer } from './models';
 import { SAMPLE_CUSTOMERS } from './sample-data';
 import { DataService } from '../services/data.service';
+import { CompanyContextService } from '../services/company-context.service';
+import { ConfigService } from '../services/config.service';
 import { lastValueFrom } from 'rxjs';
 
 @Injectable({
@@ -11,13 +13,13 @@ export class CustomerService {
     private customers: Customer[] = [];
     private activeCompanyId: string | null = null;
 
-    constructor(private dataService: DataService) {
-        this.dataService.activeCompany$.subscribe(company => {
+    constructor(private dataService: DataService, private companyContext: CompanyContextService, private configService: ConfigService) {
+        this.companyContext.activeCompany$.subscribe(company => {
             if (company) {
                 this.activeCompanyId = company.id;
 
                 const token = localStorage.getItem('access_token');
-                const isLocal = localStorage.getItem('erp_system_config')?.includes('BROWSER');
+                const isLocal = this.configService.isLocalBrowser();
 
                 if (token || isLocal) {
                     this.loadCustomers();
