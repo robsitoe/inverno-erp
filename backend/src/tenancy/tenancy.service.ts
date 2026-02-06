@@ -1,21 +1,12 @@
 import { Injectable, OnModuleDestroy, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { Company } from '../companies/entities/company.entity';
-import { Account } from '../accounting/entities/account.entity';
-import { JournalEntry, JournalLine } from '../accounting/entities/journal-entry.entity';
-import { Article } from '../inventory/entities/article.entity';
-import { StockMovement } from '../inventory/entities/stock-movement.entity';
-import { SalesDocument, SalesDocumentLine } from '../sales/entities/sales-document.entity';
-import { PurchaseDocument, PurchaseDocumentLine } from '../purchases/entities/purchase.entity';
-import { TreasuryDocument, TreasuryDocumentLine } from '../treasury/entities/treasury.entity';
 import { FiscalYear } from '../companies/entities/fiscal-year.entity';
-import { Journal } from '../accounting/entities/journal.entity';
-import { Customer } from '../customers/entities/customer.entity';
-import { Supplier } from '../suppliers/entities/supplier.entity';
 import { Series } from '../companies/entities/series.entity';
-import { GenericEntity } from '../common-entities/generic-entity.entity';
 import { PaymentMethod } from '../treasury/entities/payment-method.entity';
 import { DocumentType } from '../common-entities/entities/document-type.entity';
+import { TENANT_ENTITIES, TENANT_MIGRATIONS_GLOB, isEnvEnabled } from '../database/typeorm.constants';
 import {
     SALES_DOCUMENT_TYPES,
     PURCHASE_DOCUMENT_TYPES,
@@ -28,7 +19,10 @@ export class TenancyService implements OnModuleDestroy {
     private dataSources: Map<string, DataSource> = new Map();
     private pendingConnections: Map<string, Promise<DataSource>> = new Map();
 
-    constructor(private mainDataSource: DataSource) { }
+    constructor(
+        private mainDataSource: DataSource,
+        private configService: ConfigService,
+    ) { }
 
     async getTenantDataSource(companyId: string): Promise<DataSource> {
         // 1. Check if already initialized and cached
@@ -82,14 +76,10 @@ export class TenancyService implements OnModuleDestroy {
                 username: dbConfig.username || mainOptions.username,
                 password: dbConfig.password || mainOptions.password,
                 database: targetDbName,
-                entities: [
-                    Account, JournalEntry, JournalLine, Article, StockMovement,
-                    SalesDocument, SalesDocumentLine, PurchaseDocument,
-                    PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-                    FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-                    DocumentType, PaymentMethod
-                ],
-                synchronize: true,
+                entities: TENANT_ENTITIES,
+                migrations: [TENANT_MIGRATIONS_GLOB],
+                migrationsRun: isEnvEnabled(this.configService.get<string>('TENANT_DB_RUN_MIGRATIONS'), false),
+                synchronize: isEnvEnabled(this.configService.get<string>('TENANT_DB_SYNCHRONIZE'), false),
                 logging: ['error', 'warn'],
             };
 
