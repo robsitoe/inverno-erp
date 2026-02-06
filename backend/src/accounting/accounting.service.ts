@@ -12,11 +12,13 @@ import { EntityTarget, ObjectLiteral } from 'typeorm';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
 import { ACCOUNT_PRESETS } from './accounting-presets';
+import { PeriodControlService } from '../periods/period-control.service';
 
 @Injectable()
 export class AccountingService {
   constructor(
     private readonly tenancyService: TenancyService,
+    private readonly periodControlService: PeriodControlService,
     @InjectRepository(Account)
     private readonly defaultAccountRepo: Repository<Account>,
     @InjectRepository(JournalEntry)
@@ -102,6 +104,8 @@ export class AccountingService {
 
   async createJournalEntry(createJournalEntryDto: CreateJournalEntryDto) {
     const { lines } = createJournalEntryDto;
+
+    await this.periodControlService.ensureDateInOpenPeriod(createJournalEntryDto.date, createJournalEntryDto.companyId);
 
     // Validate that debits equal credits
     const totalDebit = lines.reduce((sum, line) => sum + Number(line.debit), 0);

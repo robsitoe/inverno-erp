@@ -28,6 +28,8 @@ import { GenericEntity } from './common-entities/generic-entity.entity';
 import { DocumentType } from './common-entities/entities/document-type.entity';
 import { PaymentMethod } from './treasury/entities/payment-method.entity';
 import { TenancyModule } from './tenancy/tenancy.module';
+import { PeriodAuditLog } from './companies/entities/period-audit-log.entity';
+import { PeriodsModule } from './periods/periods.module';
 import { TenancyMiddleware } from './tenancy/tenancy.middleware';
 
 @Module({
@@ -48,7 +50,7 @@ import { TenancyMiddleware } from './tenancy/tenancy.middleware';
               Account, JournalEntry, JournalLine, Article, StockMovement,
               SalesDocument, SalesDocumentLine, User, PurchaseDocument,
               PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity, DocumentType, PaymentMethod
+              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity, DocumentType, PaymentMethod, PeriodAuditLog
             ],
             synchronize: true,
           };
@@ -66,7 +68,7 @@ import { TenancyMiddleware } from './tenancy/tenancy.middleware';
             SalesDocument, SalesDocumentLine, User, PurchaseDocument,
             PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
             Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-            DocumentType, PaymentMethod
+            DocumentType, PaymentMethod, PeriodAuditLog
           ],
           synchronize: true,
         };
@@ -81,6 +83,7 @@ import { TenancyMiddleware } from './tenancy/tenancy.middleware';
     PurchasesModule,
     TreasuryModule,
     TenancyModule,
+    PeriodsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -6,11 +6,13 @@ import { UpdatePurchaseDto } from './dto/update-purchase.dto';
 import { PurchaseDocument } from './entities/purchase.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
+import { PeriodControlService } from '../periods/period-control.service';
 
 @Injectable()
 export class PurchasesService {
   constructor(
     private readonly tenancyService: TenancyService,
+    private readonly periodControlService: PeriodControlService,
     @InjectRepository(PurchaseDocument)
     private readonly defaultPurchaseRepo: Repository<PurchaseDocument>,
   ) { }
@@ -26,6 +28,7 @@ export class PurchasesService {
   private async getPurchaseRepo() { return this.getRepo(PurchaseDocument, this.defaultPurchaseRepo); }
 
   async create(createPurchaseDto: CreatePurchaseDto) {
+    await this.periodControlService.ensureDateInOpenPeriod(createPurchaseDto.date, createPurchaseDto.companyId);
     const { lines, ...documentData } = createPurchaseDto;
     const repo = await this.getPurchaseRepo();
 
@@ -94,6 +97,9 @@ export class PurchasesService {
   }
 
   async update(id: string, updatePurchaseDto: UpdatePurchaseDto) {
+    if ((updatePurchaseDto as any).date) {
+      await this.periodControlService.ensureDateInOpenPeriod((updatePurchaseDto as any).date, (updatePurchaseDto as any).companyId);
+    }
     const repo = await this.getPurchaseRepo();
     return repo.update(id, updatePurchaseDto);
   }
