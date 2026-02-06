@@ -842,6 +842,25 @@ export class DataService {
         }
     }
 
+
+    // --- Audit Logs ---
+    getAuditLogs(filters: { from?: string; to?: string; user?: string; module?: string }): Observable<any[]> {
+        if (this.isLocalBrowser()) {
+            return of([]);
+        }
+
+        let params = new HttpParams();
+        const companyId = this.activeCompanySubject.value?.id || '';
+
+        if (companyId) params = params.set('companyId', companyId);
+        if (filters.from) params = params.set('from', filters.from);
+        if (filters.to) params = params.set('to', filters.to);
+        if (filters.user) params = params.set('user', filters.user);
+        if (filters.module) params = params.set('module', filters.module);
+
+        return this.http.get<any[]>(`${this.baseUrl}/audit-logs`, { params });
+    }
+
     // --- Backup & Mode Switch (Points 4, 5) ---
     public exportData(): string {
         const data: any = {};

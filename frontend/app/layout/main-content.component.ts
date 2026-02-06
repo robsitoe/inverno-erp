@@ -34,6 +34,7 @@ import { AdminSeriesComponent } from '../features/admin/admin-series.component';
 import { EntityManagementComponent } from '../features/admin/entity-management.component';
 import { BankReconciliationComponent } from '../features/treasury/bank-reconciliation.component';
 import { AccountStatementComponent } from '../features/treasury/account-statement.component';
+import { AdminAuditLogComponent } from '../features/admin/admin-audit-log.component';
 
 @Component({
   selector: 'app-main-content',
@@ -72,7 +73,8 @@ import { AccountStatementComponent } from '../features/treasury/account-statemen
     AdminSeriesComponent,
     EntityManagementComponent,
     BankReconciliationComponent,
-    AccountStatementComponent
+    AccountStatementComponent,
+    AdminAuditLogComponent
   ],
   template: `
     <!-- Sales Forms -->
@@ -241,6 +243,11 @@ import { AccountStatementComponent } from '../features/treasury/account-statemen
       <app-admin-tools class="w-full h-full block"></app-admin-tools>
     </ng-container>
 
+    <!-- Admin Audit -->
+    <ng-container *ngIf="activeView === 'admin-audit'">
+      <app-admin-audit-log class="w-full h-full block"></app-admin-audit-log>
+    </ng-container>
+
     <!-- Default Dashboard -->
     <ng-container *ngIf="!isKnownView()">
       <main 
@@ -342,7 +349,8 @@ export class MainContentComponent {
       'admin-users',
       'admin-series',
       'customer-management',
-      'supplier-management'
+      'supplier-management',
+      'admin-audit'
     ];
     return knownViews.includes(this.activeView);
   }

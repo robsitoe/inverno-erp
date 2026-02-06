@@ -293,7 +293,8 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
     icon: "group",
     children: [
       { label: "Gestão de Utilizadores", icon: "manage_accounts", view: "admin-users" },
-      { label: "Permissões", icon: "lock", view: "admin-users" }
+      { label: "Permissões", icon: "lock", view: "admin-users" },
+      { label: "Auditoria", icon: "fact_check", view: "admin-audit" }
     ]
   },
   {
