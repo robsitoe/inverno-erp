@@ -13,17 +13,19 @@ export declare class AccountingController {
     createJournalEntry(createJournalEntryDto: CreateJournalEntryDto): Promise<import("./entities/journal-entry.entity").JournalEntry>;
     findAllJournalEntries(companyId?: string): Promise<import("./entities/journal-entry.entity").JournalEntry[]>;
     findOneJournalEntry(id: string): Promise<import("./entities/journal-entry.entity").JournalEntry>;
-    getStatement(accountId: string, fromDate?: string, toDate?: string, companyId?: string, includeDrafts?: string): Promise<{
-        initialBalance: number;
-        movements: {
-            date: string;
-            docType: string;
-            docNumber: string;
-            description: string;
-            debit: number;
-            credit: number;
-            balance: number;
-        }[];
-    }>;
+    getStatement(accountId: string, fromDate?: string, toDate?: string, companyId?: string, includeDrafts?: string): Promise<any>;
     loadPreset(presetName: string): Promise<any>;
+    listCostCenters(): Promise<any>;
+    createCostCenter(payload: {
+        code: string;
+        description: string;
+        active?: boolean;
+    }): Promise<any>;
+    getVatSummary(fromDate?: string, toDate?: string): Promise<any>;
+    closePeriod(payload: {
+        year: number;
+        month: number;
+    }): Promise<any>;
+    getExplorationSummary(fromDate?: string, toDate?: string): Promise<any>;
+    getUtilitiesAuditLog(page?: number, limit?: number): Promise<any>;
 }

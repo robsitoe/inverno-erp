@@ -19,6 +19,7 @@
             "browser": "main.ts",
             "tsConfig": "tsconfig.json",
             "styles": [
+              "src/assets/fonts/fonts.css",
               "styles.css"
             ]
           },

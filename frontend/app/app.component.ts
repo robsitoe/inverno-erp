@@ -168,12 +168,6 @@ export class AppComponent {
     } else {
       this.activeView = 'dashboard';
     }
-
-    // Reload services to ensure they have the latest data for the logged in user/company
-    this.inventoryService.loadData();
-    this.accountingService.loadData();
-    this.customerService.loadCustomers();
-    this.supplierService.loadSuppliers();
   }
 
   handleLogout() {

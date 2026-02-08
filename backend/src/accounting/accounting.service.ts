@@ -49,25 +49,25 @@ export class AccountingService {
   private readonly periodClosures: PeriodCloseRecord[] = [];
 
 
-  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>): Promise<Repository<T>> {
-    const companyId = TenancyContext.getCompanyId();
-    if (!companyId) {
+  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>, companyId?: string): Promise<Repository<T>> {
+    const targetId = companyId || TenancyContext.getCompanyId();
+    if (!targetId) {
       console.warn(`[AccountingService] No companyId in context, using default repository for ${entity.toString()}`);
       return defaultRepo;
     }
 
     try {
-      const ds = await this.tenancyService.getTenantDataSource(companyId);
+      const ds = await this.tenancyService.getTenantDataSource(targetId);
       return ds.getRepository(entity);
     } catch (err: any) {
-      console.error(`[AccountingService] Error getting tenant repository for company ${companyId}:`, err.message);
+      console.error(`[AccountingService] Error getting tenant repository for company ${targetId}:`, err.message);
       throw err;
     }
   }
 
-  private async getAccountRepo() { return this.getRepo(Account, this.defaultAccountRepo); }
-  private async getJournalEntryRepo() { return this.getRepo(JournalEntry, this.defaultJournalEntryRepo); }
-  private async getJournalLineRepo() { return this.getRepo(JournalLine, this.defaultJournalLineRepo); }
+  private async getAccountRepo(companyId?: string) { return this.getRepo(Account, this.defaultAccountRepo, companyId); }
+  private async getJournalEntryRepo(companyId?: string) { return this.getRepo(JournalEntry, this.defaultJournalEntryRepo, companyId); }
+  private async getJournalLineRepo(companyId?: string) { return this.getRepo(JournalLine, this.defaultJournalLineRepo, companyId); }
 
   // Accounts
 
@@ -87,13 +87,8 @@ export class AccountingService {
   }
 
   async findAll(companyId?: string) {
-    const repo = await this.getAccountRepo();
-    if (companyId) {
-      return repo.find({
-        where: { companyId },
-        order: { code: 'ASC' }
-      });
-    }
+    const listCompanyId = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getAccountRepo(listCompanyId);
     return repo.find({ order: { code: 'ASC' } });
   }
 
@@ -149,13 +144,9 @@ export class AccountingService {
   }
 
   async findAllJournalEntries(companyId?: string) {
-    const where: any = {};
-    if (companyId) {
-      where.companyId = companyId;
-    }
-    const repo = await this.getJournalEntryRepo();
+    const listCompanyId = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getJournalEntryRepo(listCompanyId);
     return repo.find({
-      where,
       relations: ['lines'],
       order: { date: 'DESC', createdAt: 'DESC' }
     });

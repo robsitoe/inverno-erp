@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Article } from './article.entity';
 
 export enum StockMovementType {
@@ -18,7 +18,7 @@ export enum StockDocumentType {
 
 @Entity('stock_movements')
 export class StockMovement {
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @Column({ nullable: true })

@@ -13,7 +13,6 @@ let TenancyMiddleware = class TenancyMiddleware {
     use(req, res, next) {
         const companyId = req.headers['x-company-id'] || req.query.companyId;
         if (companyId) {
-            console.log(`[TenancyMiddleware] Context set for companyId: ${companyId} (${req.method} ${req.url})`);
             tenancy_context_1.TenancyContext.run(companyId, next);
         }
         else {

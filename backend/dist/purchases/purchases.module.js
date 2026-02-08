@@ -12,12 +12,16 @@ const typeorm_1 = require("@nestjs/typeorm");
 const purchases_service_1 = require("./purchases.service");
 const purchases_controller_1 = require("./purchases.controller");
 const purchase_entity_1 = require("./entities/purchase.entity");
+const inventory_module_1 = require("../inventory/inventory.module");
 let PurchasesModule = class PurchasesModule {
 };
 exports.PurchasesModule = PurchasesModule;
 exports.PurchasesModule = PurchasesModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([purchase_entity_1.PurchaseDocument, purchase_entity_1.PurchaseDocumentLine])],
+        imports: [
+            typeorm_1.TypeOrmModule.forFeature([purchase_entity_1.PurchaseDocument, purchase_entity_1.PurchaseDocumentLine]),
+            inventory_module_1.InventoryModule
+        ],
         controllers: [purchases_controller_1.PurchasesController],
         providers: [purchases_service_1.PurchasesService],
     })

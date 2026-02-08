@@ -1,0 +1,2868 @@
+{
+  "timestamp": "2026-02-07T09:51:25.888Z",
+  "path": "/customers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:51:25.903Z",
+  "path": "/suppliers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:51:25.934Z",
+  "path": "/accounting/accounts?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:51:25.995Z",
+  "path": "/document-types?companyId=company-001",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async AppController.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:43:16)\n    at async AppController.saveDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:458:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "module": "SALES",
+    "types": [
+      {
+        "code": "FA",
+        "description": "Fatura",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Fatura",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "VD",
+        "description": "Venda a Dinheiro",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Venda a Dinheiro",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "NC",
+        "description": "Nota de Crédito",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Venda",
+        "name": "Nota de Crédito",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "ND",
+        "description": "Nota de Débito",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Nota de Débito",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "GR",
+        "description": "Guia de Remessa",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Guia de Remessa",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "GT",
+        "description": "Guia de Transporte",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Guia de Transporte",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "EC",
+        "description": "Encomenda de Cliente",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Encomenda de Cliente",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "PP",
+        "description": "Proforma",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Proforma",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      }
+    ]
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:51:26.130Z",
+  "path": "/document-types?companyId=company-001",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async AppController.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:43:16)\n    at async AppController.saveDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:458:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "module": "PURCHASES",
+    "types": [
+      {
+        "code": "FC",
+        "description": "Fatura de Compra",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Fatura de Compra",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "NC",
+        "description": "Nota de Crédito",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Compra",
+        "name": "Nota de Crédito",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "ND",
+        "description": "Nota de Débito",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Nota de Débito",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "GR",
+        "description": "Guia de Receção",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Guia de Receção",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "EF",
+        "description": "Encomenda a Fornecedor",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Encomenda a Fornecedor",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "DC",
+        "description": "Devolução a Fornecedor",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Devolução a Fornecedor",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      }
+    ]
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:51:26.208Z",
+  "path": "/document-types?companyId=company-001",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async AppController.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:43:16)\n    at async AppController.saveDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:458:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "module": "STOCK",
+    "types": [
+      {
+        "code": "ENT",
+        "description": "Entrada de Stock",
+        "isStandard": true,
+        "nature": "IN",
+        "type": "Stock",
+        "name": "Entrada de Stock",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "SAI",
+        "description": "Saída de Stock",
+        "isStandard": true,
+        "nature": "OUT",
+        "type": "Stock",
+        "name": "Saída de Stock",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "TRF",
+        "description": "Transferência de Armazém",
+        "isStandard": true,
+        "nature": "TRANSFER",
+        "type": "Stock",
+        "name": "Transferência de Armazém",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "INV",
+        "description": "Acerto de Inventário",
+        "isStandard": true,
+        "nature": "ADJUSTMENT",
+        "type": "Stock",
+        "name": "Acerto de Inventário",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      }
+    ]
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:51:26.226Z",
+  "path": "/inventory/articles?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:26:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:54:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:51:46.585Z",
+  "path": "/customers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:51:46.594Z",
+  "path": "/suppliers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:51:46.616Z",
+  "path": "/accounting/accounts?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:51:46.648Z",
+  "path": "/document-types?companyId=company-001",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async AppController.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:43:16)\n    at async AppController.saveDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:458:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "module": "SALES",
+    "types": [
+      {
+        "code": "FA",
+        "description": "Fatura",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Fatura",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "VD",
+        "description": "Venda a Dinheiro",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Venda a Dinheiro",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "NC",
+        "description": "Nota de Crédito",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Venda",
+        "name": "Nota de Crédito",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "ND",
+        "description": "Nota de Débito",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Nota de Débito",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "GR",
+        "description": "Guia de Remessa",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Guia de Remessa",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "GT",
+        "description": "Guia de Transporte",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Guia de Transporte",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "EC",
+        "description": "Encomenda de Cliente",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Encomenda de Cliente",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "PP",
+        "description": "Proforma",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Proforma",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      }
+    ]
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:51:46.739Z",
+  "path": "/document-types?companyId=company-001",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async AppController.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:43:16)\n    at async AppController.saveDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:458:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "module": "PURCHASES",
+    "types": [
+      {
+        "code": "FC",
+        "description": "Fatura de Compra",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Fatura de Compra",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "NC",
+        "description": "Nota de Crédito",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Compra",
+        "name": "Nota de Crédito",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "ND",
+        "description": "Nota de Débito",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Nota de Débito",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "GR",
+        "description": "Guia de Receção",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Guia de Receção",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "EF",
+        "description": "Encomenda a Fornecedor",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Encomenda a Fornecedor",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "DC",
+        "description": "Devolução a Fornecedor",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Devolução a Fornecedor",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      }
+    ]
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:51:46.799Z",
+  "path": "/document-types?companyId=company-001",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async AppController.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:43:16)\n    at async AppController.saveDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:458:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "module": "STOCK",
+    "types": [
+      {
+        "code": "ENT",
+        "description": "Entrada de Stock",
+        "isStandard": true,
+        "nature": "IN",
+        "type": "Stock",
+        "name": "Entrada de Stock",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "SAI",
+        "description": "Saída de Stock",
+        "isStandard": true,
+        "nature": "OUT",
+        "type": "Stock",
+        "name": "Saída de Stock",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "TRF",
+        "description": "Transferência de Armazém",
+        "isStandard": true,
+        "nature": "TRANSFER",
+        "type": "Stock",
+        "name": "Transferência de Armazém",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "INV",
+        "description": "Acerto de Inventário",
+        "isStandard": true,
+        "nature": "ADJUSTMENT",
+        "type": "Stock",
+        "name": "Acerto de Inventário",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      }
+    ]
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:51:46.821Z",
+  "path": "/inventory/articles?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:26:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:54:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:52:28.694Z",
+  "path": "/customers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:52:28.699Z",
+  "path": "/suppliers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:52:28.704Z",
+  "path": "/accounting/accounts?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:52:28.721Z",
+  "path": "/document-types?companyId=company-001",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async AppController.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:43:16)\n    at async AppController.saveDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:458:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "module": "SALES",
+    "types": [
+      {
+        "code": "FA",
+        "description": "Fatura",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Fatura",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "VD",
+        "description": "Venda a Dinheiro",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Venda a Dinheiro",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "NC",
+        "description": "Nota de Crédito",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Venda",
+        "name": "Nota de Crédito",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "ND",
+        "description": "Nota de Débito",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Nota de Débito",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "GR",
+        "description": "Guia de Remessa",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Guia de Remessa",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "GT",
+        "description": "Guia de Transporte",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Guia de Transporte",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "EC",
+        "description": "Encomenda de Cliente",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Encomenda de Cliente",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "PP",
+        "description": "Proforma",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Venda",
+        "name": "Proforma",
+        "module": "SALES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      }
+    ]
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:52:28.759Z",
+  "path": "/document-types?companyId=company-001",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async AppController.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:43:16)\n    at async AppController.saveDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:458:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "module": "PURCHASES",
+    "types": [
+      {
+        "code": "FC",
+        "description": "Fatura de Compra",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Fatura de Compra",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "NC",
+        "description": "Nota de Crédito",
+        "isStandard": true,
+        "nature": "RECEIVE",
+        "type": "Compra",
+        "name": "Nota de Crédito",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "ND",
+        "description": "Nota de Débito",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Nota de Débito",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "GR",
+        "description": "Guia de Receção",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Guia de Receção",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "EF",
+        "description": "Encomenda a Fornecedor",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Encomenda a Fornecedor",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "DC",
+        "description": "Devolução a Fornecedor",
+        "isStandard": true,
+        "nature": "PAY",
+        "type": "Compra",
+        "name": "Devolução a Fornecedor",
+        "module": "PURCHASES",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      }
+    ]
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:52:28.792Z",
+  "path": "/document-types?companyId=company-001",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async AppController.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:43:16)\n    at async AppController.saveDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:458:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "module": "STOCK",
+    "types": [
+      {
+        "code": "ENT",
+        "description": "Entrada de Stock",
+        "isStandard": true,
+        "nature": "IN",
+        "type": "Stock",
+        "name": "Entrada de Stock",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "SAI",
+        "description": "Saída de Stock",
+        "isStandard": true,
+        "nature": "OUT",
+        "type": "Stock",
+        "name": "Saída de Stock",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "TRF",
+        "description": "Transferência de Armazém",
+        "isStandard": true,
+        "nature": "TRANSFER",
+        "type": "Stock",
+        "name": "Transferência de Armazém",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      },
+      {
+        "code": "INV",
+        "description": "Acerto de Inventário",
+        "isStandard": true,
+        "nature": "ADJUSTMENT",
+        "type": "Stock",
+        "name": "Acerto de Inventário",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true,
+        "companyId": "company-001"
+      }
+    ]
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T09:52:28.810Z",
+  "path": "/inventory/articles?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:26:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:54:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T11:20:11.715Z",
+  "path": "/sales/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:24.850Z",
+  "path": "/document-types?module=SALES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "SALES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:24.874Z",
+  "path": "/customers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:24.881Z",
+  "path": "/suppliers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:24.888Z",
+  "path": "/accounting/accounts?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:24.906Z",
+  "path": "/document-types?module=PURCHASES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "PURCHASES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:24.945Z",
+  "path": "/document-types?module=STOCK&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "STOCK",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:24.967Z",
+  "path": "/inventory/articles?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:26:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:54:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:32.246Z",
+  "path": "/document-types?module=SALES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "SALES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:32.255Z",
+  "path": "/customers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:32.265Z",
+  "path": "/accounting/accounts?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:32.308Z",
+  "path": "/suppliers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async AppController.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:43:16)\n    at async AppController.getSuppliers (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:304:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:32.488Z",
+  "path": "/document-types?module=PURCHASES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "PURCHASES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:32.535Z",
+  "path": "/document-types?module=STOCK&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "STOCK",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:09:32.570Z",
+  "path": "/inventory/articles?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:26:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:54:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:10:50.870Z",
+  "path": "/document-types?module=SALES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "SALES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:10:50.887Z",
+  "path": "/suppliers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:10:50.936Z",
+  "path": "/customers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:10:50.960Z",
+  "path": "/accounting/accounts?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:10:51.009Z",
+  "path": "/document-types?module=PURCHASES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "PURCHASES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:10:51.045Z",
+  "path": "/document-types?module=STOCK&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "STOCK",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:10:51.093Z",
+  "path": "/inventory/articles?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:26:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:54:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:12:30.188Z",
+  "path": "/document-types?module=SALES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "SALES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:12:30.193Z",
+  "path": "/customers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:12:30.197Z",
+  "path": "/suppliers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:12:30.200Z",
+  "path": "/accounting/accounts?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:12:30.950Z",
+  "path": "/document-types?module=PURCHASES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "PURCHASES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:12:30.980Z",
+  "path": "/document-types?module=STOCK&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "STOCK",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:12:31.019Z",
+  "path": "/inventory/articles?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:26:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:54:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:29:03.559Z",
+  "path": "/sales/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:29:27.201Z",
+  "path": "/sales/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:32:47.808Z",
+  "path": "/sales/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:33:40.003Z",
+  "path": "/purchases/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T12:39:56.199Z",
+  "path": "/sales/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T13:03:31.287Z",
+  "path": "/sales/documents",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"sales_documents\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"sales_documents\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "companyId": "003",
+    "documentType": "FA",
+    "documentNumber": "FA 2026/1",
+    "series": "2026",
+    "seriesNumber": 1,
+    "date": "2026-02-07",
+    "dueDate": "2026-02-07",
+    "customerId": "C001",
+    "customerName": "Roberto",
+    "customerNif": "",
+    "customerAddress": "Bairro Ferroviario Q.66 C.59",
+    "lines": [
+      {
+        "id": "LINE1",
+        "articleId": "A001",
+        "articleCode": "A001",
+        "articleName": "Produto1",
+        "quantity": 1,
+        "unitPrice": 0,
+        "discount": 0,
+        "ivaRate": 16,
+        "ivaCode": "01",
+        "subtotal": 0,
+        "ivaAmount": 0,
+        "total": 0
+      }
+    ],
+    "subtotal": 0,
+    "discounts": 0,
+    "totalIva": 0,
+    "total": 0,
+    "status": "APPROVED",
+    "notes": ""
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-07T14:34:31.426Z",
+  "path": "/inventory/articles/ART1770474866435",
+  "method": "DELETE",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "invalid input syntax for type uuid: \"ART1770474866435\"",
+    "stack": "QueryFailedError: invalid input syntax for type uuid: \"ART1770474866435\"\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async SelectQueryBuilder.loadRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3868:25)\n    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3614:26)\n    at async SelectQueryBuilder.getRawAndEntities (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1671:29)\n    at async SelectQueryBuilder.getOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1698:25)\n    at async InventoryService.findOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:61:21)\n    at async InventoryService.remove (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:77:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-07T14:42:10.468Z",
+  "path": "/inventory/articles/ART1770475322979",
+  "method": "DELETE",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "invalid input syntax for type uuid: \"ART1770475322979\"",
+    "stack": "QueryFailedError: invalid input syntax for type uuid: \"ART1770475322979\"\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async SelectQueryBuilder.loadRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3868:25)\n    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3614:26)\n    at async SelectQueryBuilder.getRawAndEntities (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1671:29)\n    at async SelectQueryBuilder.getOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1698:25)\n    at async InventoryService.findOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:61:21)\n    at async InventoryService.remove (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:77:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-07T14:52:21.158Z",
+  "path": "/document-types?companyId=",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"companyId\" of relation \"document_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"companyId\" of relation \"document_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async AppController.saveDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:470:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "module": "STOCK",
+    "types": [
+      {
+        "code": "ENT",
+        "description": "Entrada de Stock",
+        "isStandard": true,
+        "nature": "IN",
+        "type": "Stock",
+        "name": "Entrada de Stock",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true
+      },
+      {
+        "code": "SAI",
+        "description": "Saída de Stock",
+        "isStandard": true,
+        "nature": "OUT",
+        "type": "Stock",
+        "name": "Saída de Stock",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true
+      },
+      {
+        "code": "TRF",
+        "description": "Transferência de Armazém",
+        "isStandard": true,
+        "nature": "TRANSFER",
+        "type": "Stock",
+        "name": "Transferência de Armazém",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true
+      },
+      {
+        "code": "INV",
+        "description": "Acerto de Inventário",
+        "isStandard": true,
+        "nature": "ADJUSTMENT",
+        "type": "Stock",
+        "name": "Acerto de Inventário",
+        "module": "STOCK",
+        "series": [],
+        "isActive": true
+      }
+    ]
+  },
+  "query": {
+    "companyId": ""
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T16:13:38.498Z",
+  "path": "/sales/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-07T16:14:54.070Z",
+  "path": "/inventory/articles",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"code\" of relation \"articles\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"code\" of relation \"articles\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:467:25)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": [
+    {
+      "id": "67d99bcb-e95e-4175-a23a-681912588c80",
+      "companyId": "003",
+      "code": "A001",
+      "name": "Produto1",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "0.00",
+      "ivaRate": "16.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "0.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T13:38:59.750Z",
+      "updatedAt": "2026-02-07T14:14:45.557Z"
+    },
+    {
+      "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+      "companyId": "003",
+      "code": "GS001",
+      "name": "Produo",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "0.00",
+      "ivaRate": "17.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "0.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T14:09:47.707Z",
+      "updatedAt": "2026-02-07T13:17:38.554Z"
+    },
+    [
+      {
+        "id": "67d99bcb-e95e-4175-a23a-681912588c80",
+        "companyId": "003",
+        "code": "A001",
+        "name": "Produto1",
+        "description": "",
+        "familyId": "",
+        "type": "PRODUCT",
+        "unit": "UN",
+        "purchasePrice": "0.00",
+        "salePrice": 2500,
+        "ivaRate": "16.00",
+        "ivaCode": "01",
+        "stockControl": true,
+        "currentStock": 0,
+        "minStock": "0.00",
+        "maxStock": "100.00",
+        "revenueAccountId": "71",
+        "cogsAccountId": "61",
+        "inventoryAccountId": "31",
+        "isActive": true,
+        "createdAt": "2026-02-06T13:38:59.750Z",
+        "updatedAt": "2026-02-07T13:17:38.554Z"
+      }
+    ]
+  ],
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-07T16:14:56.812Z",
+  "path": "/inventory/articles",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"code\" of relation \"articles\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"code\" of relation \"articles\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:467:25)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": [
+    {
+      "id": "67d99bcb-e95e-4175-a23a-681912588c80",
+      "companyId": "003",
+      "code": "A001",
+      "name": "Produto1",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "0.00",
+      "ivaRate": "16.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "0.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T13:38:59.750Z",
+      "updatedAt": "2026-02-07T14:14:45.557Z"
+    },
+    {
+      "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+      "companyId": "003",
+      "code": "GS001",
+      "name": "Produo",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "0.00",
+      "ivaRate": "17.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": 0,
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T14:09:47.707Z",
+      "updatedAt": "2026-02-07T13:17:38.554Z"
+    },
+    [
+      {
+        "id": "67d99bcb-e95e-4175-a23a-681912588c80",
+        "companyId": "003",
+        "code": "A001",
+        "name": "Produto1",
+        "description": "",
+        "familyId": "",
+        "type": "PRODUCT",
+        "unit": "UN",
+        "purchasePrice": "0.00",
+        "salePrice": 2500,
+        "ivaRate": "16.00",
+        "ivaCode": "01",
+        "stockControl": true,
+        "currentStock": 0,
+        "minStock": "0.00",
+        "maxStock": "100.00",
+        "revenueAccountId": "71",
+        "cogsAccountId": "61",
+        "inventoryAccountId": "31",
+        "isActive": true,
+        "createdAt": "2026-02-06T13:38:59.750Z",
+        "updatedAt": "2026-02-07T13:17:38.554Z"
+      }
+    ]
+  ],
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-07T16:15:07.451Z",
+  "path": "/inventory/articles",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"code\" of relation \"articles\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"code\" of relation \"articles\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:467:25)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": [
+    {
+      "id": "67d99bcb-e95e-4175-a23a-681912588c80",
+      "companyId": "003",
+      "code": "A001",
+      "name": "Produto1",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "0.00",
+      "ivaRate": "16.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "0.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T13:38:59.750Z",
+      "updatedAt": "2026-02-07T14:14:45.557Z"
+    },
+    {
+      "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+      "companyId": "003",
+      "code": "GS001",
+      "name": "Produo",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "0.00",
+      "ivaRate": "17.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": 0,
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T14:09:47.707Z",
+      "updatedAt": "2026-02-07T13:17:38.554Z"
+    },
+    {
+      "0": {
+        "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+        "companyId": "003",
+        "code": "GS001",
+        "name": "Produo",
+        "description": "",
+        "familyId": "",
+        "type": "PRODUCT",
+        "unit": "UN",
+        "purchasePrice": "0.00",
+        "salePrice": 2500,
+        "ivaRate": "17.00",
+        "ivaCode": "01",
+        "stockControl": true,
+        "currentStock": 0,
+        "minStock": "0.00",
+        "maxStock": "100.00",
+        "revenueAccountId": "71",
+        "cogsAccountId": "61",
+        "inventoryAccountId": "31",
+        "isActive": true,
+        "createdAt": "2026-02-06T14:09:47.707Z",
+        "updatedAt": "2026-02-07T14:15:05.814Z"
+      }
+    }
+  ],
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-08T17:05:23.021Z",
+  "path": "/suppliers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:05:23.089Z",
+  "path": "/document-types?module=SALES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "SALES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:05:23.128Z",
+  "path": "/customers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:05:23.133Z",
+  "path": "/accounting/accounts?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:05:23.182Z",
+  "path": "/document-types?module=PURCHASES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "PURCHASES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:05:23.262Z",
+  "path": "/document-types?module=STOCK&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "STOCK",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:05:23.395Z",
+  "path": "/inventory/articles?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:26:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:54:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:05:23.479Z",
+  "path": "/inventory/stock-movements?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:26:16)\n    at async InventoryService.findAllStockMovements (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:108:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:54:34.524Z",
+  "path": "/document-types?module=SALES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "SALES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:54:34.562Z",
+  "path": "/customers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:54:34.584Z",
+  "path": "/suppliers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:54:34.594Z",
+  "path": "/accounting/accounts?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:54:34.628Z",
+  "path": "/document-types?module=PURCHASES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "PURCHASES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:54:34.649Z",
+  "path": "/document-types?module=STOCK&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "STOCK",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:54:34.676Z",
+  "path": "/inventory/articles?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:26:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:54:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:54:34.708Z",
+  "path": "/inventory/stock-movements?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:26:16)\n    at async InventoryService.findAllStockMovements (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:109:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:56:03.103Z",
+  "path": "/document-types?module=SALES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "SALES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:56:03.108Z",
+  "path": "/customers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:56:03.111Z",
+  "path": "/suppliers?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:56:03.119Z",
+  "path": "/accounting/accounts?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:56:03.133Z",
+  "path": "/document-types?module=PURCHASES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "PURCHASES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:56:03.168Z",
+  "path": "/document-types?module=STOCK&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "STOCK",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:56:03.198Z",
+  "path": "/inventory/articles?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:26:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:54:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T17:56:03.223Z",
+  "path": "/inventory/stock-movements?companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:124:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:51:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:26:16)\n    at async InventoryService.findAllStockMovements (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:109:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T18:18:52.205Z",
+  "path": "/document-types?module=SALES&companyId=company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"company-001\" não encontrada na base de dados principal.\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:453:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "SALES",
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T18:18:52.326Z",
+  "path": "/sales/documents?companyId=company-001",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T18:35:45.252Z",
+  "path": "/favicon.ico",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /favicon.ico",
+    "stack": "NotFoundException: Cannot GET /favicon.ico\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:14:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-08T18:38:53.609Z",
+  "path": "/sales/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T19:27:08.391Z",
+  "path": "/inventory/stock-documents?companyId=003",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /inventory/stock-documents?companyId=003",
+    "stack": "NotFoundException: Cannot GET /inventory/stock-documents?companyId=003\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at TenancyContext.run (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.context.ts:7:29)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:11:28)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T19:27:08.405Z",
+  "path": "/inventory/stock-documents?companyId=003",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /inventory/stock-documents?companyId=003",
+    "stack": "NotFoundException: Cannot GET /inventory/stock-documents?companyId=003\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at TenancyContext.run (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.context.ts:7:29)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:11:28)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T19:27:08.686Z",
+  "path": "/inventory/stock-documents?companyId=003",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /inventory/stock-documents?companyId=003",
+    "stack": "NotFoundException: Cannot GET /inventory/stock-documents?companyId=003\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at TenancyContext.run (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.context.ts:7:29)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:11:28)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T19:27:21.229Z",
+  "path": "/inventory/stock-documents?companyId=003",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /inventory/stock-documents?companyId=003",
+    "stack": "NotFoundException: Cannot GET /inventory/stock-documents?companyId=003\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at TenancyContext.run (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.context.ts:7:29)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:11:28)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T19:27:21.262Z",
+  "path": "/inventory/stock-documents?companyId=003",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /inventory/stock-documents?companyId=003",
+    "stack": "NotFoundException: Cannot GET /inventory/stock-documents?companyId=003\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at TenancyContext.run (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.context.ts:7:29)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:11:28)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T19:28:04.230Z",
+  "path": "/inventory/stock-documents?companyId=003",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /inventory/stock-documents?companyId=003",
+    "stack": "NotFoundException: Cannot GET /inventory/stock-documents?companyId=003\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at TenancyContext.run (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.context.ts:7:29)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:11:28)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T19:34:19.479Z",
+  "path": "/inventory/stock-documents",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "DOC1770579259357",
+    "series": "2026",
+    "number": 1,
+    "type": "ENT",
+    "date": "2026-02-08",
+    "time": "21:33",
+    "inputType": "Cód. Artigo",
+    "originAccount": "",
+    "originCostCenter": "",
+    "originProject": "",
+    "originAnalytic": "",
+    "originFunctional": "",
+    "originPep": "",
+    "warehouse": "",
+    "lines": [
+      {
+        "id": "1770579231058",
+        "articleCode": "A001",
+        "articleName": "Produto1",
+        "warehouse": "",
+        "location": "",
+        "batch": "",
+        "description": "Produto1",
+        "unit": "UN",
+        "quantity": 1000,
+        "unitPrice": "0.00",
+        "total": 2500,
+        "generalAccount": "",
+        "costCenter": "",
+        "analytic": "",
+        "functional": "",
+        "project": "",
+        "pepElement": "",
+        "item": "",
+        "articleId": "67d99bcb-e95e-4175-a23a-681912588c80"
+      },
+      {
+        "id": "1770579231112",
+        "articleCode": "",
+        "articleName": "",
+        "warehouse": "",
+        "location": "",
+        "batch": "",
+        "description": "",
+        "unit": "",
+        "quantity": 0,
+        "unitPrice": 0,
+        "total": 0,
+        "generalAccount": "",
+        "costCenter": "",
+        "analytic": "",
+        "functional": "",
+        "project": "",
+        "pepElement": "",
+        "item": ""
+      }
+    ],
+    "status": "POSTED",
+    "movementIn": "Preço Unitário",
+    "componentQty": "Unitária",
+    "reloadComponents": false,
+    "companyId": "003"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-08T19:45:38.203Z",
+  "path": "/inventory/stock-documents",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "companyId": "003",
+    "type": "ENT",
+    "series": "2026",
+    "number": 1,
+    "date": "2026-02-08",
+    "time": "21:45",
+    "warehouse": "",
+    "originAccount": "",
+    "originCostCenter": "",
+    "originProject": "",
+    "originAnalytic": "",
+    "originFunctional": "",
+    "originPep": "",
+    "status": "POSTED",
+    "notes": "",
+    "lines": [
+      {
+        "id": "1770579920317",
+        "articleId": "67d99bcb-e95e-4175-a23a-681912588c80",
+        "articleCode": "A001",
+        "articleName": "Produto1",
+        "warehouse": "",
+        "location": "",
+        "batch": "",
+        "description": "Produto1",
+        "unit": "UN",
+        "quantity": 1000,
+        "unitPrice": "0.00",
+        "total": 2500,
+        "generalAccount": "",
+        "costCenter": "",
+        "analytic": "",
+        "functional": "",
+        "project": "",
+        "pepElement": "",
+        "item": ""
+      }
+    ]
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-08T19:49:03.672Z",
+  "path": "/inventory/stock-documents",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "invalid input syntax for type uuid: \"1770580125365\"",
+    "stack": "QueryFailedError: invalid input syntax for type uuid: \"1770580125365\"\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async SelectQueryBuilder.loadRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3868:25)\n    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3614:26)\n    at async SelectQueryBuilder.getRawAndEntities (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1671:29)\n    at async SelectQueryBuilder.getMany (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1761:25)\n    at async <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectDatabaseEntityLoader.ts:119:32)\n    at async Promise.all (index 1)\n    at async SubjectDatabaseEntityLoader.load (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectDatabaseEntityLoader.ts:148:9)\n    at async <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:116:21)"
+  },
+  "body": {
+    "companyId": "003",
+    "type": "ENT",
+    "series": "2026",
+    "number": 1,
+    "date": "2026-02-08",
+    "time": "21:48",
+    "warehouse": "",
+    "originAccount": "",
+    "originCostCenter": "",
+    "originProject": "",
+    "originAnalytic": "",
+    "originFunctional": "",
+    "originPep": "",
+    "status": "POSTED",
+    "notes": "",
+    "lines": [
+      {
+        "id": "1770580125365",
+        "articleId": "67d99bcb-e95e-4175-a23a-681912588c80",
+        "articleCode": "A001",
+        "articleName": "Produto1",
+        "warehouse": "",
+        "location": "",
+        "batch": "",
+        "description": "Produto1",
+        "unit": "UN",
+        "quantity": 100,
+        "unitPrice": 0,
+        "total": 2500,
+        "generalAccount": "",
+        "costCenter": "",
+        "analytic": "",
+        "functional": "",
+        "project": "",
+        "pepElement": "",
+        "item": ""
+      }
+    ]
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-08T19:51:26.268Z",
+  "path": "/inventory/stock-documents",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "invalid input syntax for type uuid: \"1770580265391\"",
+    "stack": "QueryFailedError: invalid input syntax for type uuid: \"1770580265391\"\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async SelectQueryBuilder.loadRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3868:25)\n    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3614:26)\n    at async SelectQueryBuilder.getRawAndEntities (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1671:29)\n    at async SelectQueryBuilder.getMany (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1761:25)\n    at async <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectDatabaseEntityLoader.ts:119:32)\n    at async Promise.all (index 1)\n    at async SubjectDatabaseEntityLoader.load (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectDatabaseEntityLoader.ts:148:9)\n    at async <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:116:21)"
+  },
+  "body": {
+    "companyId": "003",
+    "type": "ENT",
+    "series": "2026",
+    "number": 1,
+    "date": "2026-02-08",
+    "time": "21:51",
+    "warehouse": "",
+    "originAccount": "",
+    "originCostCenter": "",
+    "originProject": "",
+    "originAnalytic": "",
+    "originFunctional": "",
+    "originPep": "",
+    "status": "POSTED",
+    "notes": "",
+    "lines": [
+      {
+        "id": "1770580265391",
+        "articleId": "67d99bcb-e95e-4175-a23a-681912588c80",
+        "articleCode": "A001",
+        "articleName": "Produto1",
+        "warehouse": "",
+        "location": "",
+        "batch": "",
+        "description": "Produto1",
+        "unit": "UN",
+        "quantity": 10,
+        "unitPrice": 0,
+        "total": 0,
+        "generalAccount": "",
+        "costCenter": "",
+        "analytic": "",
+        "functional": "",
+        "project": "",
+        "pepElement": "",
+        "item": ""
+      }
+    ]
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-08T19:52:45.401Z",
+  "path": "/inventory/stock-documents",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "invalid input syntax for type uuid: \"1770580356074\"",
+    "stack": "QueryFailedError: invalid input syntax for type uuid: \"1770580356074\"\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async SelectQueryBuilder.loadRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3868:25)\n    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3614:26)\n    at async SelectQueryBuilder.getRawAndEntities (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1671:29)\n    at async SelectQueryBuilder.getMany (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1761:25)\n    at async <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectDatabaseEntityLoader.ts:119:32)\n    at async Promise.all (index 1)\n    at async SubjectDatabaseEntityLoader.load (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectDatabaseEntityLoader.ts:148:9)\n    at async <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:116:21)"
+  },
+  "body": {
+    "companyId": "003",
+    "type": "ENT",
+    "series": "2026",
+    "number": 1,
+    "date": "2026-02-08",
+    "time": "21:52",
+    "warehouse": "",
+    "originAccount": "",
+    "originCostCenter": "",
+    "originProject": "",
+    "originAnalytic": "",
+    "originFunctional": "",
+    "originPep": "",
+    "status": "POSTED",
+    "notes": "",
+    "lines": [
+      {
+        "id": "1770580356074",
+        "articleId": "67d99bcb-e95e-4175-a23a-681912588c80",
+        "articleCode": "A001",
+        "articleName": "Produto1",
+        "warehouse": "",
+        "location": "",
+        "batch": "",
+        "description": "Produto1",
+        "unit": "UN",
+        "quantity": 10,
+        "unitPrice": 0,
+        "total": 0,
+        "generalAccount": "",
+        "costCenter": "",
+        "analytic": "",
+        "functional": "",
+        "project": "",
+        "pepElement": "",
+        "item": ""
+      }
+    ]
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-08T20:37:14.418Z",
+  "path": "/sales/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-08T20:37:46.537Z",
+  "path": "/sales/documents",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "invalid input syntax for type uuid: \"LINE1\"",
+    "stack": "QueryFailedError: invalid input syntax for type uuid: \"LINE1\"\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async SelectQueryBuilder.loadRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3868:25)\n    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3614:26)\n    at async SelectQueryBuilder.getRawAndEntities (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1671:29)\n    at async SelectQueryBuilder.getMany (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1761:25)\n    at async <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectDatabaseEntityLoader.ts:119:32)\n    at async Promise.all (index 1)\n    at async SubjectDatabaseEntityLoader.load (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectDatabaseEntityLoader.ts:148:9)\n    at async <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:116:21)"
+  },
+  "body": {
+    "companyId": "003",
+    "documentType": "FA",
+    "documentNumber": "FA 2026/1",
+    "series": "2026",
+    "seriesNumber": 1,
+    "date": "2026-02-08",
+    "dueDate": "2026-02-08",
+    "customerId": "C001",
+    "customerName": "Roberto",
+    "customerNif": "",
+    "customerAddress": "Bairro Ferroviario Q.66 C.59",
+    "lines": [
+      {
+        "id": "LINE1",
+        "articleId": "A001",
+        "articleCode": "A001",
+        "articleName": "Produto1",
+        "quantity": 1,
+        "unitPrice": 2500,
+        "discount": 0,
+        "ivaRate": 16,
+        "ivaCode": "01",
+        "subtotal": 2500,
+        "ivaAmount": 400,
+        "total": 2900
+      }
+    ],
+    "subtotal": 2500,
+    "discounts": 0,
+    "totalIva": 400,
+    "total": 2900,
+    "status": "APPROVED",
+    "notes": ""
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-08T20:43:18.760Z",
+  "path": "/sales/documents",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "invalid input syntax for type uuid: \"LINE1\"",
+    "stack": "QueryFailedError: invalid input syntax for type uuid: \"LINE1\"\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async SelectQueryBuilder.loadRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3868:25)\n    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3614:26)\n    at async SelectQueryBuilder.getRawAndEntities (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1671:29)\n    at async SelectQueryBuilder.getMany (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1761:25)\n    at async <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectDatabaseEntityLoader.ts:119:32)\n    at async Promise.all (index 1)\n    at async SubjectDatabaseEntityLoader.load (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectDatabaseEntityLoader.ts:148:9)\n    at async <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:116:21)"
+  },
+  "body": {
+    "companyId": "003",
+    "documentType": "FA",
+    "documentNumber": "FA 2026/1",
+    "series": "2026",
+    "seriesNumber": 1,
+    "date": "2026-02-08",
+    "dueDate": "2026-02-08",
+    "customerId": "C001",
+    "customerName": "Roberto",
+    "customerNif": "",
+    "customerAddress": "Bairro Ferroviario Q.66 C.59",
+    "lines": [
+      {
+        "id": "LINE1",
+        "articleId": "A001",
+        "articleCode": "A001",
+        "articleName": "Produto1",
+        "quantity": 1,
+        "unitPrice": 2500,
+        "discount": 0,
+        "ivaRate": 16,
+        "ivaCode": "01",
+        "subtotal": 2500,
+        "ivaAmount": 400,
+        "total": 2900
+      }
+    ],
+    "subtotal": 2500,
+    "discounts": 0,
+    "totalIva": 400,
+    "total": 2900,
+    "status": "APPROVED",
+    "notes": ""
+  },
+  "query": {}
+}
+---

@@ -37,6 +37,7 @@ export class AuthService {
     logout() {
         localStorage.removeItem('access_token');
         localStorage.removeItem('erp_current_user');
+        localStorage.removeItem('erp_company_info');
         this.currentUserSubject.next(null);
     }
 

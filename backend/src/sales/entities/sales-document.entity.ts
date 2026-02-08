@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { WorkflowStatus } from '../../common/enums/workflow-status.enum';
 
 export enum SalesDocumentType {
@@ -13,7 +13,7 @@ export enum SalesDocumentType {
 
 @Entity('sales_documents')
 export class SalesDocument {
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @Column({ nullable: true, type: 'varchar' })
@@ -88,7 +88,7 @@ export class SalesDocument {
 
 @Entity('sales_document_lines')
 export class SalesDocumentLine {
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @ManyToOne(() => SalesDocument, (document) => document.lines, { onDelete: 'CASCADE' })

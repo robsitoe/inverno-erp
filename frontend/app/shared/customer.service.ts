@@ -35,11 +35,7 @@ export class CustomerService {
             // Filter: 
             // 1. If it matches current company ID
             // 2. OR if it has NO company ID and we are in the main company (001)
-            this.customers = allCustomers.filter(c => {
-                if (c.companyId === this.activeCompanyId) return true;
-                if (!c.companyId && this.activeCompanyId === '001') return true;
-                return false;
-            });
+            this.customers = allCustomers;
 
             // Only load local samples if truly empty for the DEFAULT company 001
             if (this.customers.length === 0 && this.activeCompanyId === '001') {

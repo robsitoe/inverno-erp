@@ -13,14 +13,16 @@ const inventory_service_1 = require("./inventory.service");
 const inventory_controller_1 = require("./inventory.controller");
 const article_entity_1 = require("./entities/article.entity");
 const stock_movement_entity_1 = require("./entities/stock-movement.entity");
+const stock_document_entity_1 = require("./entities/stock-document.entity");
 let InventoryModule = class InventoryModule {
 };
 exports.InventoryModule = InventoryModule;
 exports.InventoryModule = InventoryModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([article_entity_1.Article, stock_movement_entity_1.StockMovement])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([article_entity_1.Article, stock_movement_entity_1.StockMovement, stock_document_entity_1.StockDocument, stock_document_entity_1.StockDocumentLine])],
         controllers: [inventory_controller_1.InventoryController],
         providers: [inventory_service_1.InventoryService],
+        exports: [inventory_service_1.InventoryService],
     })
 ], InventoryModule);
 //# sourceMappingURL=inventory.module.js.map

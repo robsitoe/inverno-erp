@@ -35,11 +35,7 @@ export class SupplierService {
             // Filter:
             // 1. Matches current company
             // 2. No company ID and we are in company 001
-            this.suppliers = allSuppliers.filter(s => {
-                if (s.companyId === this.activeCompanyId) return true;
-                if (!s.companyId && this.activeCompanyId === '001') return true;
-                return false;
-            });
+            this.suppliers = allSuppliers;
 
             if (this.suppliers.length === 0 && this.activeCompanyId === '001') {
                 // Convert sample data for company 001 only

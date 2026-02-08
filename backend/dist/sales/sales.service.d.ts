@@ -4,12 +4,16 @@ import { UpdateSalesDocumentDto } from './dto/update-sales-document.dto';
 import { SalesDocument, SalesDocumentLine } from './entities/sales-document.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { WorkflowService } from '../common/workflow.service';
+import { PeriodControlService } from '../periods/period-control.service';
+import { InventoryService } from '../inventory/inventory.service';
 export declare class SalesService {
     private readonly tenancyService;
+    private readonly periodControlService;
     private readonly defaultSalesDocumentRepo;
     private readonly defaultSalesLineRepo;
     private readonly workflowService;
-    constructor(tenancyService: TenancyService, defaultSalesDocumentRepo: Repository<SalesDocument>, defaultSalesLineRepo: Repository<SalesDocumentLine>, workflowService: WorkflowService);
+    private readonly inventoryService;
+    constructor(tenancyService: TenancyService, periodControlService: PeriodControlService, defaultSalesDocumentRepo: Repository<SalesDocument>, defaultSalesLineRepo: Repository<SalesDocumentLine>, workflowService: WorkflowService, inventoryService: InventoryService);
     private getRepo;
     private getSalesDocRepo;
     private getSalesLineRepo;
@@ -24,5 +28,6 @@ export declare class SalesService {
         status: import("../common/enums/workflow-status.enum").WorkflowStatus.SUBMITTED | import("../common/enums/workflow-status.enum").WorkflowStatus.APPROVED | import("../common/enums/workflow-status.enum").WorkflowStatus.REJECTED | import("../common/enums/workflow-status.enum").WorkflowStatus.POSTED;
         history: import("../common/entities/workflow-history.entity").WorkflowHistory;
     }>;
+    private createStockMovementsForSales;
     getWorkflowHistory(id: string): Promise<import("../common/entities/workflow-history.entity").WorkflowHistory[]>;
 }

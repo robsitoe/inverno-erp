@@ -4,14 +4,18 @@ import { UpdatePurchaseDto } from './dto/update-purchase.dto';
 import { PurchaseDocument } from './entities/purchase.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { WorkflowService } from '../common/workflow.service';
+import { PeriodControlService } from '../periods/period-control.service';
+import { InventoryService } from '../inventory/inventory.service';
 export declare class PurchasesService {
     private readonly tenancyService;
+    private readonly periodControlService;
     private readonly defaultPurchaseRepo;
     private readonly workflowService;
-    constructor(tenancyService: TenancyService, defaultPurchaseRepo: Repository<PurchaseDocument>, workflowService: WorkflowService);
+    private readonly inventoryService;
+    constructor(tenancyService: TenancyService, periodControlService: PeriodControlService, defaultPurchaseRepo: Repository<PurchaseDocument>, workflowService: WorkflowService, inventoryService: InventoryService);
     private getRepo;
     private getPurchaseRepo;
-    create(createPurchaseDto: CreatePurchaseDto): Promise<PurchaseDocument[]>;
+    create(createPurchaseDto: CreatePurchaseDto): Promise<PurchaseDocument>;
     findAll(companyId?: string): Promise<PurchaseDocument[]>;
     findOne(id: string): Promise<PurchaseDocument>;
     update(id: string, updatePurchaseDto: UpdatePurchaseDto, user?: any): Promise<PurchaseDocument>;
@@ -22,5 +26,6 @@ export declare class PurchasesService {
         status: import("../common/enums/workflow-status.enum").WorkflowStatus.SUBMITTED | import("../common/enums/workflow-status.enum").WorkflowStatus.APPROVED | import("../common/enums/workflow-status.enum").WorkflowStatus.REJECTED | import("../common/enums/workflow-status.enum").WorkflowStatus.POSTED;
         history: import("../common/entities/workflow-history.entity").WorkflowHistory;
     }>;
+    private createStockMovementsForPurchases;
     getWorkflowHistory(id: string): Promise<import("../common/entities/workflow-history.entity").WorkflowHistory[]>;
 }

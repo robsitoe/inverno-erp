@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventoryService } from '../../shared/inventory.service';
 import { ArticleSearchModalComponent } from './article-search-modal.component';
+import { DocumentTypeModalComponent } from '../../shared/components/document-type-modal.component';
 import { DocumentTypeConfigModalComponent } from '../../shared/components/document-type-config-modal.component';
 import { Article } from '../../shared/models';
 import { DataService } from '../../services/data.service';
@@ -50,12 +51,13 @@ interface StockDocument {
   movementIn: string;
   componentQty: string;
   reloadComponents: boolean;
+  companyId?: string;
 }
 
 @Component({
   selector: 'app-stock-movements',
   standalone: true,
-  imports: [CommonModule, FormsModule, ArticleSearchModalComponent, DocumentTypeConfigModalComponent],
+  imports: [CommonModule, FormsModule, ArticleSearchModalComponent, DocumentTypeModalComponent, DocumentTypeConfigModalComponent],
   template: `
     <div class="flex flex-col h-full bg-[#F0F0F0]">
       <!-- Toolbar -->
@@ -119,13 +121,13 @@ interface StockDocument {
       <div class="p-2 bg-[#F0F0F0] border-b border-gray-300 shrink-0 text-xs">
         <!-- Row 1: Document & Date -->
         <div class="flex items-center gap-4 mb-2">
-          <div class="flex items-center gap-2 w-64">
+          <div class="flex items-center gap-1 w-64">
             <label class="text-blue-700 font-medium w-20 text-right cursor-pointer hover:underline" (click)="openDocConfigModal()">Documento:</label>
-            <select [(ngModel)]="currentDoc.type" (change)="onDocumentTypeChange()" class="flex-1 border border-gray-300 px-1 py-0.5 h-6 text-xs">
-              <option *ngFor="let docType of documentTypes" [value]="docType.code" [disabled]="docType.isActive === false">
-                {{ docType.code }} - {{ docType.name }}
-              </option>
-            </select>
+            <div class="flex items-center border border-gray-300 bg-white rounded-sm h-6 flex-1 relative cursor-pointer" (click)="openDocTypeModal()">
+               <input class="w-full h-full px-1 focus:outline-none text-[11px] cursor-pointer" [value]="currentDoc.type" readonly (keydown)="onDocTypeKeydown($event)" />
+               <button class="absolute right-0 top-0 bottom-0 px-1 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[10px] font-bold">F4</button>
+            </div>
+            <input class="flex-1 h-6 border border-gray-300 px-1 bg-gray-50 rounded-sm text-[11px] w-32" [value]="getDocTypeDescription()" disabled />
           </div>
           
           <!-- Series and Number with Navigation -->
@@ -389,6 +391,14 @@ interface StockDocument {
       [documentCode]="currentDoc.type"
       (close)="onConfigModalClose()"
     ></app-document-type-config-modal>
+
+    <app-document-type-modal
+      *ngIf="showDocTypeModal"
+      [module]="'STOCK'"
+      [documentTypes]="documentTypes"
+      (close)="showDocTypeModal = false"
+      (select)="onDocTypeSelect($event)"
+    ></app-document-type-modal>
   `
 })
 export class StockMovementsComponent implements OnInit {
@@ -401,30 +411,48 @@ export class StockMovementsComponent implements OnInit {
   units: any[] = [];
   locations: any[] = [];
   batches: any[] = [];
+  showDocTypeModal = false;
   documentTypes: any[] = []; // Stock document types
   activeCompanyId: string | null = null;
 
   constructor(
     private inventoryService: InventoryService,
-    private dataService: DataService
+    private dataService: DataService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
     this.loadActiveCompany();
-    this.loadDocumentTypes();
     this.loadWarehouses();
     this.loadUnits();
     this.loadLocations();
     this.loadBatches();
+
+    // Start by creating a new document structure
     this.newDocument();
+
+    // Then load the specific configurations (this will call onDocumentTypeChange)
+    this.loadDocumentTypes();
   }
 
   loadActiveCompany() {
     this.dataService.activeCompany$.subscribe(company => {
       if (company) {
         this.activeCompanyId = company.id;
+        // Force refresh series when company is finally available
+        if (this.documentTypes && this.documentTypes.length > 0) {
+          this.onDocumentTypeChange();
+          this.cdr.detectChanges();
+        }
+        // Reload/Reset document for the new company
+        this.newDocument();
+        this.cdr.detectChanges();
       }
     });
+  }
+
+  private getStorageKey(): string {
+    return this.activeCompanyId ? `erp_stock_documents_${this.activeCompanyId}` : 'erp_stock_documents';
   }
 
   openDocConfigModal() {
@@ -437,9 +465,41 @@ export class StockMovementsComponent implements OnInit {
     this.onDocumentTypeChange(); // Reload series
   }
 
+  openDocTypeModal() {
+    this.showDocTypeModal = true;
+  }
+
+  onDocTypeSelect(type: any) {
+    this.currentDoc.type = type.code;
+    this.showDocTypeModal = false;
+    this.onDocumentTypeChange();
+  }
+
+  onDocTypeKeydown(event: KeyboardEvent) {
+    if (event.key === 'F4') {
+      event.preventDefault();
+      this.openDocTypeModal();
+    }
+  }
+
+  getDocTypeDescription(): string {
+    const docType = this.documentTypes.find(t => t.code === this.currentDoc.type);
+    return docType ? (docType.name || docType.description) : '';
+  }
+
   loadDocumentTypes() {
     this.dataService.getDocumentTypes('STOCK').subscribe(types => {
       this.documentTypes = types.filter((t: any) => t.isActive !== false);
+
+      // If we have document types, make sure the current one is valid
+      if (this.documentTypes.length > 0) {
+        const currentExists = this.documentTypes.find(t => t.code === this.currentDoc.type);
+        if (!currentExists) {
+          this.currentDoc.type = this.documentTypes[0].code;
+        }
+        this.onDocumentTypeChange();
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -472,13 +532,15 @@ export class StockMovementsComponent implements OnInit {
       }
 
       // Update document number for new type
-      this.currentDoc.number = this.getNextDocumentNumber(this.currentDoc.type, this.currentDoc.series);
+      this.getNextDocumentNumber(this.currentDoc.type, this.currentDoc.series).then(n => {
+        this.currentDoc.number = n;
+        this.cdr.detectChanges();
+      });
     }
   }
-
   getEmptyDocument(): StockDocument {
     const currentYear = new Date().getFullYear().toString();
-    return {
+    const doc: any = {
       id: '',
       series: currentYear,
       number: 0,
@@ -499,6 +561,12 @@ export class StockMovementsComponent implements OnInit {
       componentQty: 'Unitária',
       reloadComponents: false
     };
+
+    if (this.activeCompanyId) {
+      doc.companyId = this.activeCompanyId;
+    }
+
+    return doc;
   }
 
 
@@ -550,30 +618,26 @@ export class StockMovementsComponent implements OnInit {
   }
 
 
-
-  newDocument() {
+  async newDocument() {
     this.currentDoc = this.getEmptyDocument();
     // Load next number logic
-    this.currentDoc.number = this.getNextDocumentNumber(this.currentDoc.type, this.currentDoc.series);
+    this.currentDoc.number = await this.getNextDocumentNumber(this.currentDoc.type, this.currentDoc.series);
     this.addLine(); // Start with one empty line
+    this.cdr.detectChanges();
   }
 
-  getNextDocumentNumber(type: string, series: string): number {
-    const stored = localStorage.getItem('erp_stock_documents');
-    if (!stored) return 1;
-    const documents = JSON.parse(stored) as StockDocument[];
+  async getNextDocumentNumber(type: string, series: string): Promise<number> {
+    const documents = await lastValueFrom(this.dataService.getStockDocuments(this.activeCompanyId || undefined));
     const max = documents
-      .filter(d => d.type === type && d.series === series)
-      .reduce((max, d) => Math.max(max, d.number), 0);
+      .filter((d: any) => d.type === type && d.series === series)
+      .reduce((max: number, d: any) => Math.max(max, d.number), 0);
     return max + 1;
   }
 
-  loadDocument() {
-    const stored = localStorage.getItem('erp_stock_documents');
-    if (!stored) return;
-    const documents = JSON.parse(stored) as StockDocument[];
+  async loadDocument() {
+    const documents = await lastValueFrom(this.dataService.getStockDocuments(this.activeCompanyId || undefined));
 
-    const doc = documents.find(d =>
+    const doc = documents.find((d: any) =>
       d.type === this.currentDoc.type &&
       d.series === this.currentDoc.series &&
       d.number === this.currentDoc.number
@@ -582,9 +646,7 @@ export class StockMovementsComponent implements OnInit {
     if (doc) {
       this.currentDoc = doc;
     } else {
-      // If not found, maybe clear lines but keep header info? Or just show empty?
-      // For now, let's assume if user types a number that doesn't exist, we treat it as new if it's next in sequence, or error.
-      // But simpler: if not found, reset to empty (but keep number/series/type)
+      // If not found, reset to empty (but keep number/series/type)
       const number = this.currentDoc.number;
       const series = this.currentDoc.series;
       const type = this.currentDoc.type;
@@ -594,6 +656,7 @@ export class StockMovementsComponent implements OnInit {
       this.currentDoc.type = type;
       this.addLine();
     }
+    this.cdr.detectChanges();
   }
 
   navigateDocument(direction: number) {
@@ -733,51 +796,108 @@ export class StockMovementsComponent implements OnInit {
     }
 
     // Save logic
-    const stored = localStorage.getItem('erp_stock_documents');
-    const documents = stored ? JSON.parse(stored) : [];
-
-    // Check if updating existing draft (not implemented fully, assuming new for now)
     if (!this.currentDoc.id) {
       this.currentDoc.id = `DOC${Date.now()}`;
     }
-
     this.currentDoc.status = 'POSTED';
+    this.currentDoc.companyId = this.activeCompanyId || undefined;
 
-    // Create stock movements for each line
-    this.currentDoc.lines.forEach(line => {
-      if (!line.articleCode || line.quantity <= 0) return;
+    // Process based on mode
+    if (this.dataService.isLocalBrowser()) {
+      // Local Mode: We must manually create movements and update stock
+      this.currentDoc.lines.forEach(line => {
+        if (!line.articleCode || line.quantity <= 0) return;
 
-      // Get article ID if missing
-      if (!line.articleId) {
-        const article = this.inventoryService.getArticleByCode(line.articleCode);
-        if (article) line.articleId = article.id;
+        // Get article ID if missing
+        if (!line.articleId) {
+          const article = this.inventoryService.getArticleByCode(line.articleCode);
+          if (article) line.articleId = article.id;
+        }
+
+        if (line.articleId) {
+          this.inventoryService.createStockMovement({
+            date: new Date(this.currentDoc.date),
+            articleId: line.articleId,
+            articleCode: line.articleCode,
+            articleName: line.articleName,
+            warehouseId: line.warehouse || 'ARM01', // Default if empty
+            movementType: movementType,
+            quantity: line.quantity,
+            unitCost: line.unitPrice,
+            totalCost: line.total,
+            reference: `${this.currentDoc.type} ${this.currentDoc.series}/${this.currentDoc.number}`,
+            sourceDocument: this.currentDoc.id,
+            notes: line.description
+          });
+        }
+      });
+
+      // Save document locally via DataService
+      await lastValueFrom(this.dataService.saveStockDocument(this.currentDoc));
+
+      alert(`Documento ${this.currentDoc.type} ${this.currentDoc.series}/${this.currentDoc.number} gravado com sucesso!`);
+      this.newDocument();
+    } else {
+      // Backend Mode: The API handles document creation, movements, and stock updates
+      // Sanitize payload to remove UI-only fields
+      const payload: any = {
+        companyId: this.currentDoc.companyId || undefined, // Ensure undefined if null
+        type: this.currentDoc.type,
+        series: this.currentDoc.series,
+        number: Number(this.currentDoc.number), // Force Number
+        date: this.currentDoc.date,
+        time: this.currentDoc.time,
+        warehouse: this.currentDoc.warehouse,
+        originAccount: this.currentDoc.originAccount,
+        originCostCenter: this.currentDoc.originCostCenter,
+        originProject: this.currentDoc.originProject,
+        originAnalytic: this.currentDoc.originAnalytic,
+        originFunctional: this.currentDoc.originFunctional,
+        originPep: this.currentDoc.originPep,
+        status: 'POSTED',
+        notes: '',
+        lines: this.currentDoc.lines
+          .filter(l => l.articleCode && l.quantity > 0)
+          .map(l => ({
+            // Explicitly map line fields and CAST numbers
+            // Only send ID if it is a valid UUID (length 36), otherwise assume it's a new line (local timestamp)
+            id: l.id && l.id.length === 36 ? l.id : undefined,
+            articleId: l.articleId,
+            articleCode: l.articleCode,
+            articleName: l.articleName,
+            warehouse: l.warehouse,
+            location: l.location,
+            batch: l.batch,
+            description: l.description,
+            unit: l.unit,
+            quantity: Number(l.quantity),
+            unitPrice: Number(l.unitPrice || 0),
+            total: Number(l.total || 0),
+            generalAccount: l.generalAccount,
+            costCenter: l.costCenter,
+            analytic: l.analytic,
+            functional: l.functional,
+            project: l.project,
+            pepElement: l.pepElement,
+            item: l.item
+          }))
+      };
+
+      try {
+        await lastValueFrom(this.dataService.saveStockDocument(payload));
+
+        // Refresh local inventory state to update stock levels and movements
+        await this.inventoryService.loadData();
+
+        alert(`Documento ${this.currentDoc.type} ${this.currentDoc.series}/${this.currentDoc.number} gravado com sucesso!`);
+        this.newDocument();
+      } catch (error: any) {
+        console.error('Erro ao gravar documento:', error);
+        const msg = error.error?.message || error.message || 'Erro deconhecido';
+        const details = Array.isArray(msg) ? msg.join('\n') : msg;
+        alert(`Erro ao gravar documento:\n${details}`);
       }
-
-      if (line.articleId) {
-        this.inventoryService.createStockMovement({
-          date: new Date(this.currentDoc.date),
-          articleId: line.articleId,
-          articleCode: line.articleCode,
-          articleName: line.articleName,
-          warehouseId: line.warehouse || 'ARM01', // Default if empty
-          movementType: movementType,
-          quantity: line.quantity,
-          unitCost: line.unitPrice,
-          totalCost: line.total,
-          reference: `${this.currentDoc.type} ${this.currentDoc.series}/${this.currentDoc.number}`,
-          sourceDocument: this.currentDoc.id,
-          notes: line.description
-        });
-      }
-    });
-
-    documents.push(this.currentDoc);
-    localStorage.setItem('erp_stock_documents', JSON.stringify(documents));
-
-    alert(`Documento ${this.currentDoc.type} ${this.currentDoc.series}/${this.currentDoc.number} gravado com sucesso!`);
-
-    // Prepare for next document
-    this.newDocument();
+    }
   }
   async validateSeriesDate() {
     const allSeries = await lastValueFrom(this.dataService.getSeries(this.activeCompanyId || undefined));

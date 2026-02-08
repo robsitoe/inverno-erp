@@ -1,0 +1,206 @@
+/* 
+ * Local Fonts Configuration - Offline Mode
+ * Uses system fonts to avoid external dependencies
+ */
+
+/* System Font Stack - Professional and widely available */
+:root {
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Material Symbols Outlined - Default definition */
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined', 'Segoe UI Symbol', 'Segoe UI Emoji', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'liga';
+    user-select: none;
+}
+
+/* 
+ * Fallback Mode
+ * Activated by JS when font fails to load
+ */
+.material-icons-fallback .material-symbols-outlined[data-icon] {
+    /* Hide the text content (e.g. "menu", "search") */
+    font-size: 0 !important;
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon]::before {
+    /* Restore font size for the icon symbol */
+    font-size: 24px;
+    display: inline-block;
+    font-style: normal;
+    /* Use system fallback fonts for symbols */
+    font-family: 'Segoe UI Symbol', 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;
+}
+
+/* Map common icon names to Unicode symbols as fallback */
+.material-icons-fallback .material-symbols-outlined[data-icon="close"]::before {
+    content: "✕";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="search"]::before {
+    content: "🔍";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="add"]::before {
+    content: "+";
+    font-weight: bold;
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="edit"]::before {
+    content: "✎";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="delete"]::before {
+    content: "🗑";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="check"]::before {
+    content: "✓";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="save"]::before {
+    content: "💾";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="menu"]::before {
+    content: "☰";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="settings"]::before {
+    content: "⚙";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="help"]::before {
+    content: "?";
+    font-weight: bold;
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="info"]::before {
+    content: "ℹ";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="star"]::before {
+    content: "★";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="history"]::before {
+    content: "⟲";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="logout"]::before {
+    content: "⎋";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="chevron_right"]::before {
+    content: "›";
+    font-size: 32px;
+    line-height: 0.8;
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="chevron_left"]::before {
+    content: "‹";
+    font-size: 32px;
+    line-height: 0.8;
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="expand_more"]::before {
+    content: "⌄";
+    position: relative;
+    top: -5px;
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="expand_less"]::before {
+    content: "⌃";
+    position: relative;
+    top: 5px;
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="apps"]::before {
+    content: "▦";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="refresh"]::before {
+    content: "↻";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="print"]::before {
+    content: "⎙";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="payments"]::before {
+    content: "💵";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="check_circle"]::before {
+    content: "✓";
+    color: green;
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="warning"]::before {
+    content: "⚠";
+    color: orange;
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="error"]::before {
+    content: "!";
+    color: red;
+    font-weight: bold;
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="sync"]::before {
+    content: "⟳";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="upload_file"]::before {
+    content: "📤";
+}
+
+.material-icons-fallback .material-symbols-outlined[data-icon="verified"]::before {
+    content: "✓";
+    color: #0A4DAA;
+    font-weight: bold;
+}
+
+
+/* Font weight utilities */
+.font-normal {
+    font-weight: 400;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.font-mono {
+    font-family: var(--font-mono);
+}

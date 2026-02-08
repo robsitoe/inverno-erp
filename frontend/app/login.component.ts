@@ -284,7 +284,7 @@ export class LoginComponent implements OnInit {
   }
 
   selectCompany(company: any) {
-    localStorage.setItem('erp_company_info', JSON.stringify(company));
+    this.dataService.setActiveCompany(company);
     this.finishLogin();
   }
 

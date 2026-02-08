@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
@@ -32,7 +32,7 @@ import { DataService } from '../../services/data.service';
                   class="hover:bg-blue-50 cursor-pointer"
                   (click)="select.emit(doc)">
                 <td class="border border-gray-300 px-2 py-1 font-medium">{{ doc.code }}</td>
-                <td class="border border-gray-300 px-2 py-1">{{ doc.description }}</td>
+                <td class="border border-gray-300 px-2 py-1">{{ doc.name || doc.description }}</td>
               </tr>
             </tbody>
           </table>
@@ -49,20 +49,23 @@ import { DataService } from '../../services/data.service';
   `
 })
 export class PurchaseDocumentTypeModalComponent {
+  @Input() documentTypes: any[] = [];
   @Output() close = new EventEmitter<void>();
   @Output() select = new EventEmitter<any>();
-
-  documentTypes: any[] = [];
 
   constructor(private dataService: DataService) { }
 
   ngOnInit() {
-    this.loadTypes();
+    if (!this.documentTypes || this.documentTypes.length === 0) {
+      this.loadTypes();
+    }
   }
 
   loadTypes() {
     this.dataService.getDocumentTypes('PURCHASES').subscribe(types => {
-      this.documentTypes = types;
+      if (!this.documentTypes || this.documentTypes.length === 0) {
+        this.documentTypes = types || [];
+      }
     });
   }
 }

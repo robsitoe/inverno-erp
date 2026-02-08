@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, OnInit, Input } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit, Input, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountingService } from '../../shared/accounting.service';
@@ -254,6 +254,52 @@ interface PendingDocRow {
                </div>
              </div>
           </div>
+
+          <!-- Adiantamentos Tab -->
+          <div *ngIf="activeTab === 2" class="flex flex-col gap-4 p-4 h-full">
+            <div class="bg-white border border-gray-300 p-4 rounded shadow-sm">
+              <h3 class="text-sm font-bold mb-4 text-gray-700">Adiantamento a Fornecedor (ADF)</h3>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block font-medium mb-1 text-xs">Fornecedor</label>
+                  <div class="flex items-center bg-gray-50 border border-gray-300 rounded-sm">
+                    <input type="text" [(ngModel)]="supplierName" readonly class="flex-1 px-2 py-1 border-none focus:ring-0 text-xs bg-transparent" placeholder="Selecione o fornecedor...">
+                    <button (click)="openSupplierModal()" class="px-2 text-blue-600 hover:text-blue-800 font-bold">F4</button>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-medium mb-1 text-xs">Data do Documento</label>
+                  <input type="date" [(ngModel)]="docDate" class="w-full border border-gray-300 rounded-sm px-2 py-1 text-xs focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                  <label class="block font-medium mb-1 text-xs">Valor do Adiantamento</label>
+                  <input type="number" [(ngModel)]="advanceAmount" class="w-full border border-gray-300 rounded-sm px-2 py-1 text-xs text-right focus:outline-none focus:border-blue-500" step="0.01" min="0">
+                </div>
+
+                <div>
+                  <label class="block font-medium mb-1 text-xs">Meio de Pagamento</label>
+                  <select [(ngModel)]="advancePaymentMethod" class="w-full border border-gray-300 rounded-sm px-2 py-1 text-xs focus:outline-none focus:border-blue-500">
+                    <option *ngFor="let pm of paymentMethods" [value]="pm.code">{{ pm.description }}</option>
+                  </select>
+                </div>
+
+                <div class="col-span-2">
+                  <label class="block font-medium mb-1 text-xs">Observações</label>
+                  <textarea [(ngModel)]="advanceObservations" class="w-full border border-gray-300 rounded-sm px-2 py-1 text-xs focus:outline-none focus:border-blue-500" rows="3" placeholder="Observações sobre o adiantamento..."></textarea>
+                </div>
+              </div>
+
+              <div class="mt-4 flex justify-end">
+                <button (click)="saveAdvancePayment()" [disabled]="isSaving" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
+                  <span class="material-symbols-outlined text-[18px]">save</span>
+                  <span>{{ isSaving ? 'Gravando...' : 'Gravar Adiantamento' }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -271,7 +317,7 @@ export class PaymentModalComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
   @Output() saved = new EventEmitter<any>();
 
-  tabs = ['Gerais', 'Dados Liquidação', 'Distribuição Automática', 'Restrições', 'Restrições das Atividades'];
+  tabs = ['Gerais', 'Dados Liquidação', 'Adiantamentos', 'Distribuição Automática', 'Restrições', 'Restrições das Atividades'];
   activeTab = 0;
 
   // Filters
@@ -300,6 +346,16 @@ export class PaymentModalComponent implements OnInit {
   treasuryAccounts: any[] = [];
   paymentMethods: any[] = [];
 
+  // Advance Payment Fields
+  advanceAmount = 0;
+  advancePaymentMethod = 'NUM';
+  advanceObservations = '';
+  docDate = new Date().toISOString().split('T')[0];
+  docNumberString = '';
+  isSaving = false;
+  entityCode = '';
+  entityName = '';
+
   showSupplierModal = false;
   activeCompanyId: string | null = null;
 
@@ -307,7 +363,9 @@ export class PaymentModalComponent implements OnInit {
     private accountingService: AccountingService,
     private auditService: AuditService,
     private periodService: PeriodService,
-    private dataService: DataService
+    private dataService: DataService,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -695,5 +753,120 @@ export class PaymentModalComponent implements OnInit {
         alert(`A data do documento está fora do intervalo de validade da série ${series.code} (${series.startDate} a ${series.endDate}).\n\nPor favor altere a data ou selecione outra série.`);
       }
     }
+  }
+
+  saveAdvancePayment() {
+    const idPrefix = 'ADF';
+    const typeLabel = 'Adiantamento a Fornecedor';
+
+    if (!this.periodService.isPeriodOpen(this.docDate)) {
+      alert('O período para esta data está fechado.');
+      return;
+    }
+
+    if (!this.supplierName) {
+      alert('Selecione um fornecedor.');
+      return;
+    }
+
+    if (!this.advanceAmount || this.advanceAmount <= 0) {
+      alert('Insira um valor válido para o adiantamento.');
+      return;
+    }
+
+    const docId = `${idPrefix}${Date.now()}`;
+    const paymentMethod = this.paymentMethods.find(pm => pm.code === this.advancePaymentMethod);
+    const treasuryAccountId = paymentMethod?.treasuryAccountId || this.selectedTreasuryAccount || '3';
+
+    const document: any = {
+      id: docId,
+      companyId: this.activeCompanyId || undefined,
+      number: this.docNumberString || `${idPrefix}${Date.now()}`,
+      docType: this.selectedDocType,
+      series: this.selectedSeries,
+      seriesNumber: this.currentSeriesNumber,
+      date: new Date(this.docDate),
+      type: 'ADVANCE_PAYMENT',
+      amount: this.advanceAmount,
+      treasuryAccountId: treasuryAccountId,
+      entityCode: this.supplierCode,
+      entityName: this.supplierName,
+      paymentMethod: this.advancePaymentMethod,
+      description: `${typeLabel} - ${this.supplierName}`,
+      observations: this.advanceObservations
+    };
+
+    this.isSaving = true;
+    this.dataService.savePayment(document).subscribe({
+      next: () => {
+        this.ngZone.run(() => {
+          this.createAdvanceAccountingEntry(document);
+          this.isSaving = false;
+          alert(`${typeLabel} gravado com sucesso!`);
+          this.resetForm();
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => {
+          console.error('Error:', err);
+          this.isSaving = false;
+          alert(`Erro ao gravar ${typeLabel}.`);
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  createAdvanceAccountingEntry(doc: any) {
+    const entryId = `JE${Date.now()}`;
+    const treasuryAccount = this.accountingService.getAccount(doc.treasuryAccountId);
+    const advanceAccountId = '64'; // Adiantamentos a Fornecedores
+    const advanceAccount = this.accountingService.getAccount(advanceAccountId);
+
+    const lines = [];
+
+    // For supplier advance payment (ADF):
+    // Debit: Advance to Suppliers (22.9)
+    // Credit: Treasury Account
+    lines.push({
+      id: `${entryId}-0`,
+      accountId: advanceAccountId,
+      accountCode: advanceAccount?.code || '22.9',
+      accountName: advanceAccount?.name || 'Adiantamentos a Fornecedores',
+      debit: doc.amount,
+      credit: 0,
+      description: `Adiantamento ${doc.number}`
+    });
+    lines.push({
+      id: `${entryId}-1`,
+      accountId: doc.treasuryAccountId,
+      accountCode: treasuryAccount?.code || '11.1.1',
+      accountName: treasuryAccount?.name || 'Caixa',
+      debit: 0,
+      credit: doc.amount,
+      description: `Adiantamento a ${doc.entityName}`
+    });
+
+    let journalId = 'JNL-GEN';
+    if (treasuryAccount?.code.startsWith('11')) journalId = 'JNL-CSH';
+    else if (treasuryAccount?.code.startsWith('12')) journalId = 'JNL-BNK';
+
+    const entry: any = {
+      id: entryId,
+      companyId: doc.companyId,
+      journalId: journalId,
+      date: doc.date,
+      description: `Adiantamento ${doc.number} - ${doc.entityName}`,
+      reference: doc.number,
+      sourceDocument: doc.number,
+      sourceType: 'ADVANCE_PAYMENT',
+      lines: lines,
+      status: 'POSTED',
+      createdBy: 'user',
+      createdAt: new Date()
+    };
+
+    this.accountingService.createJournalEntry(entry);
   }
 }

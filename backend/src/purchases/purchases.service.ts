@@ -9,6 +9,9 @@ import { TenancyContext } from '../tenancy/tenancy.context';
 import { WorkflowService, WorkflowTarget } from '../common/workflow.service';
 import { PeriodControlService } from '../periods/period-control.service';
 
+import { InventoryService } from '../inventory/inventory.service';
+import { CreateStockMovementDto } from '../inventory/dto/create-stock-movement.dto';
+
 @Injectable()
 export class PurchasesService {
   constructor(
@@ -17,19 +20,22 @@ export class PurchasesService {
     @InjectRepository(PurchaseDocument)
     private readonly defaultPurchaseRepo: Repository<PurchaseDocument>,
     private readonly workflowService: WorkflowService,
+    private readonly inventoryService: InventoryService
   ) { }
 
-  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>): Promise<Repository<T>> {
-    const companyId = TenancyContext.getCompanyId();
-    if (!companyId) return defaultRepo;
+  // ... (getRepo methods remain same) ...
+  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>, companyId?: string): Promise<Repository<T>> {
+    const targetId = companyId || TenancyContext.getCompanyId();
+    if (!targetId) return defaultRepo;
 
-    const ds = await this.tenancyService.getTenantDataSource(companyId);
+    const ds = await this.tenancyService.getTenantDataSource(targetId);
     return ds.getRepository(entity);
   }
 
-  private async getPurchaseRepo() { return this.getRepo(PurchaseDocument, this.defaultPurchaseRepo); }
+  private async getPurchaseRepo(companyId?: string) { return this.getRepo(PurchaseDocument, this.defaultPurchaseRepo, companyId); }
 
   async create(createPurchaseDto: CreatePurchaseDto) {
+    // ... existing create logic ...
     await this.periodControlService.ensureDateInOpenPeriod(createPurchaseDto.date, createPurchaseDto.companyId);
     const { lines, ...documentData } = createPurchaseDto;
     const repo = await this.getPurchaseRepo();
@@ -81,16 +87,22 @@ export class PurchasesService {
     }
 
     const purchase = repo.create(entityData);
-    return repo.save(purchase);
+    const savedDoc = await repo.save(purchase) as unknown as PurchaseDocument;
+
+    // Trigger stock movements if doc is created with final status
+    if (savedDoc.status === 'APPROVED' || savedDoc.status === 'POSTED') {
+      console.log(`[PurchasesService] Direct create trigger for ${savedDoc.type} ${savedDoc.series}/${savedDoc.number} (${savedDoc.status})`);
+      const fullDoc = await this.findOne(savedDoc.id);
+      await this.createStockMovementsForPurchases(fullDoc);
+    }
+
+    return savedDoc;
   }
 
   async findAll(companyId?: string) {
-    const repo = await this.getPurchaseRepo();
-    const where: any = {};
-    if (companyId) {
-      where.companyId = companyId;
-    }
-    return repo.find({ where, relations: ['lines'] });
+    const listCompanyId = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getPurchaseRepo(listCompanyId);
+    return repo.find({ relations: ['lines'] });
   }
 
   async findOne(id: string) {
@@ -111,8 +123,18 @@ export class PurchasesService {
       this.workflowService.checkEditLock(document.status as any, user);
     }
 
+    const oldStatus = document.status;
     repo.merge(document, updatePurchaseDto as any);
-    return repo.save(document);
+    const savedDoc = await repo.save(document) as unknown as PurchaseDocument;
+
+    // Trigger stock movements if status just changed to final
+    if ((savedDoc.status === 'APPROVED' || savedDoc.status === 'POSTED') && oldStatus !== savedDoc.status) {
+      console.log(`[PurchasesService] Direct update trigger for ${savedDoc.type} ${savedDoc.series}/${savedDoc.number} (${savedDoc.status})`);
+      const fullDoc = await this.findOne(savedDoc.id);
+      await this.createStockMovementsForPurchases(fullDoc);
+    }
+
+    return savedDoc;
   }
 
   async findByNumber(companyId: string, type: string, series: string, number: number) {
@@ -143,7 +165,7 @@ export class PurchasesService {
     const document = await this.findOne(id);
     const repo = await this.getPurchaseRepo();
 
-    return this.workflowService.transition(
+    const result = await this.workflowService.transition(
       document as unknown as WorkflowTarget,
       action,
       user,
@@ -151,6 +173,60 @@ export class PurchasesService {
       'PURCHASES',
       notes
     );
+
+    // Re-verify document after transition for stock movement triggering
+    const updatedDoc = await this.findOne(id);
+    if (updatedDoc.status === 'POSTED' || updatedDoc.status === 'APPROVED') {
+      await this.createStockMovementsForPurchases(updatedDoc);
+    }
+
+    return result;
+  }
+
+  private async createStockMovementsForPurchases(document: PurchaseDocument) {
+    // Check if movements already exist for this document to prevent doubles
+    const existing = await this.inventoryService.findAllStockMovements(document.companyId);
+    const alreadyProcessed = existing.some(m => m.sourceDocument === document.id);
+    if (alreadyProcessed) {
+      console.log(`[PurchasesService] Stock movements for doc ${document.type} ${document.series}/${document.number} already exist. Skipping.`);
+      return;
+    }
+
+    const type = document.type;
+
+    // Setup logic for IN/OUT based on doc type
+    // FC (Fatura Compra), GR (Guia Remessa), ND (Nota Debito) = IN
+    // NC (Nota Credito), DC (Devolucao) = OUT
+    const isIn = ['FC', 'GR', 'ND', 'FCOMP'].includes(type);
+    const isOut = ['NC', 'DC'].includes(type);
+
+    console.log(`[PurchasesService] Processing movements for ${document.type} ${document.series}/${document.number}. Type: ${type}, Lines: ${document.lines?.length || 0}`);
+
+    if (!isIn && !isOut) return;
+
+    if (!document.lines || document.lines.length === 0) {
+      console.warn(`[PurchasesService] Document ${document.type} ${document.series}/${document.number} has NO lines to process movements.`);
+      return;
+    }
+
+    for (const line of document.lines) {
+      const movementDto: CreateStockMovementDto = {
+        date: document.date,
+        articleId: line.articleId,
+        companyId: document.companyId,
+        articleCode: line.articleCode,
+        articleName: line.articleName,
+        movementType: isIn ? 'IN' : 'OUT',
+        quantity: Number(line.quantity),
+        unitCost: Number(line.unitPrice),
+        totalCost: Number(line.totalValue),
+        reference: `${document.type} ${document.series}/${document.number}`,
+        sourceDocument: document.id,
+        notes: `Gerado via ${type}`
+      };
+
+      await this.inventoryService.createStockMovement(movementDto);
+    }
   }
 
   async getWorkflowHistory(id: string) {

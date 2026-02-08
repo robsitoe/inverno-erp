@@ -37,6 +37,8 @@ const generic_entity_entity_1 = require("./common-entities/generic-entity.entity
 const document_type_entity_1 = require("./common-entities/entities/document-type.entity");
 const payment_method_entity_1 = require("./treasury/entities/payment-method.entity");
 const tenancy_module_1 = require("./tenancy/tenancy.module");
+const period_audit_log_entity_1 = require("./companies/entities/period-audit-log.entity");
+const periods_module_1 = require("./periods/periods.module");
 const tenancy_middleware_1 = require("./tenancy/tenancy.middleware");
 const workflow_history_entity_1 = require("./common/entities/workflow-history.entity");
 const workflow_module_1 = require("./common/workflow.module");
@@ -66,7 +68,7 @@ exports.AppModule = AppModule = __decorate([
                                 account_entity_1.Account, journal_entry_entity_1.JournalEntry, journal_entry_entity_1.JournalLine, article_entity_1.Article, stock_movement_entity_1.StockMovement,
                                 sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, user_entity_1.User, purchase_entity_1.PurchaseDocument,
                                 purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
-                                company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity, document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory
+                                company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity, document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog
                             ],
                             synchronize: true,
                         };
@@ -83,7 +85,7 @@ exports.AppModule = AppModule = __decorate([
                             sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, user_entity_1.User, purchase_entity_1.PurchaseDocument,
                             purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
                             company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity,
-                            document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory
+                            document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog
                         ],
                         synchronize: true,
                     };
@@ -99,6 +101,7 @@ exports.AppModule = AppModule = __decorate([
             treasury_module_1.TreasuryModule,
             tenancy_module_1.TenancyModule,
             workflow_module_1.WorkflowModule,
+            periods_module_1.PeriodsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

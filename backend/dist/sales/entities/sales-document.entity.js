@@ -48,7 +48,7 @@ let SalesDocument = class SalesDocument {
 };
 exports.SalesDocument = SalesDocument;
 __decorate([
-    (0, typeorm_1.PrimaryColumn)(),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
     __metadata("design:type", String)
 ], SalesDocument.prototype, "id", void 0);
 __decorate([
@@ -162,7 +162,7 @@ let SalesDocumentLine = class SalesDocumentLine {
 };
 exports.SalesDocumentLine = SalesDocumentLine;
 __decorate([
-    (0, typeorm_1.PrimaryColumn)(),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
     __metadata("design:type", String)
 ], SalesDocumentLine.prototype, "id", void 0);
 __decorate([

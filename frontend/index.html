@@ -5,9 +5,104 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Primavera Professional</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0"
-        rel="stylesheet" />
+    <!-- Google Fonts - Will fallback to local fonts if unavailable -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"
+        onerror="this.onerror=null;">
+    <!-- Material Symbols Outlined Icons -->
+    <link id="material-icons-font"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet" crossorigin="anonymous">
+    <style>
+        /* Material Symbols Base Styles */
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined', 'Segoe UI Symbol', 'Segoe UI Emoji', sans-serif;
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            font-feature-settings: 'liga';
+            user-select: none;
+        }
+    </style>
+    <script>
+        // Detect if Material Symbols font loaded successfully
+        (function () {
+            const link = document.getElementById('material-icons-font');
+            let fontLoaded = false;
+            let timeout;
+
+            // Method 1: Check link load event
+            link.addEventListener('load', function () {
+                fontLoaded = true;
+                clearTimeout(timeout);
+            });
+
+            link.addEventListener('error', function () {
+                console.warn('Material Symbols font failed to load from CDN, using fallback');
+                document.documentElement.classList.add('material-icons-fallback');
+            });
+
+            // Method 2: Use FontFaceSet API if available
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(function () {
+                    document.fonts.check('24px "Material Symbols Outlined"').then(function (available) {
+                        if (!available) {
+                            console.warn('Material Symbols font not available, using fallback');
+                            document.documentElement.classList.add('material-icons-fallback');
+                        }
+                    });
+                });
+            }
+
+            // Method 3: Timeout fallback (3 seconds)
+            timeout = setTimeout(function () {
+                if (!fontLoaded) {
+                    // Test if font actually loaded by checking computed style
+                    const testElement = document.createElement('span');
+                    testElement.className = 'material-symbols-outlined';
+                    testElement.style.position = 'absolute';
+                    testElement.style.visibility = 'hidden';
+                    testElement.textContent = 'check';
+                    document.body.appendChild(testElement);
+
+                    const computedFont = window.getComputedStyle(testElement).fontFamily;
+                    document.body.removeChild(testElement);
+
+                    if (!computedFont.includes('Material Symbols')) {
+                        console.warn('Material Symbols font not loaded after 3s, using fallback');
+                        document.documentElement.classList.add('material-icons-fallback');
+                    }
+                }
+            }, 3000);
+
+            // Sync icon text to data-icon attribute for robust fallback
+            function syncIconAttributes() {
+                const icons = document.querySelectorAll('.material-symbols-outlined');
+                icons.forEach(icon => {
+                    const text = icon.textContent.trim();
+                    if (text && !icon.hasAttribute('data-icon')) {
+                        icon.setAttribute('data-icon', text);
+                    }
+                });
+            }
+
+            // Run repeatedly to handle dynamic content
+            setInterval(syncIconAttributes, 1000);
+
+            // Also run on mutation
+            const observer = new MutationObserver(syncIconAttributes);
+            observer.observe(document.body, { childList: true, subtree: true });
+        })();
+    </script>
 </head>
 
 <body class="text-sm text-gray-800 antialiased overflow-hidden">

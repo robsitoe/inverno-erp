@@ -5,12 +5,14 @@ import { TreasuryDocument } from './entities/treasury.entity';
 import { PaymentMethod } from './entities/payment-method.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { WorkflowService } from '../common/workflow.service';
+import { PeriodControlService } from '../periods/period-control.service';
 export declare class TreasuryService {
     private readonly tenancyService;
+    private readonly periodControlService;
     private readonly defaultTreasuryRepo;
     private readonly defaultPaymentMethodRepo;
     private readonly workflowService;
-    constructor(tenancyService: TenancyService, defaultTreasuryRepo: Repository<TreasuryDocument>, defaultPaymentMethodRepo: Repository<PaymentMethod>, workflowService: WorkflowService);
+    constructor(tenancyService: TenancyService, periodControlService: PeriodControlService, defaultTreasuryRepo: Repository<TreasuryDocument>, defaultPaymentMethodRepo: Repository<PaymentMethod>, workflowService: WorkflowService);
     private getRepo;
     private getTreasuryRepo;
     private getPaymentMethodRepo;

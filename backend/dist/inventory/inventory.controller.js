@@ -18,6 +18,7 @@ const swagger_1 = require("@nestjs/swagger");
 const inventory_service_1 = require("./inventory.service");
 const update_article_dto_1 = require("./dto/update-article.dto");
 const create_stock_movement_dto_1 = require("./dto/create-stock-movement.dto");
+const create_stock_document_dto_1 = require("./dto/create-stock-document.dto");
 let InventoryController = class InventoryController {
     inventoryService;
     constructor(inventoryService) {
@@ -38,11 +39,20 @@ let InventoryController = class InventoryController {
     remove(id) {
         return this.inventoryService.remove(id);
     }
+    createStockDocument(createStockDocumentDto) {
+        return this.inventoryService.createStockDocument(createStockDocumentDto);
+    }
+    findAllStockDocuments(companyId) {
+        return this.inventoryService.findAllStockDocuments(companyId);
+    }
+    findOneStockDocument(id) {
+        return this.inventoryService.findOneStockDocument(id);
+    }
     createStockMovement(createStockMovementDto) {
         return this.inventoryService.createStockMovement(createStockMovementDto);
     }
-    findAllStockMovements() {
-        return this.inventoryService.findAllStockMovements();
+    findAllStockMovements(companyId) {
+        return this.inventoryService.findAllStockMovements(companyId);
     }
     findOneStockMovement(id) {
         return this.inventoryService.findOneStockMovement(id);
@@ -92,6 +102,31 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], InventoryController.prototype, "remove", null);
 __decorate([
+    (0, common_1.Post)('stock-documents'),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a new stock document' }),
+    (0, swagger_1.ApiResponse)({ status: 201, description: 'The stock document has been successfully created.' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_stock_document_dto_1.CreateStockDocumentDto]),
+    __metadata("design:returntype", void 0)
+], InventoryController.prototype, "createStockDocument", null);
+__decorate([
+    (0, common_1.Get)('stock-documents'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get all stock documents' }),
+    __param(0, (0, common_1.Query)('companyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], InventoryController.prototype, "findAllStockDocuments", null);
+__decorate([
+    (0, common_1.Get)('stock-documents/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get a stock document by ID' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], InventoryController.prototype, "findOneStockDocument", null);
+__decorate([
     (0, common_1.Post)('stock-movements'),
     (0, swagger_1.ApiOperation)({ summary: 'Create a new stock movement' }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'The stock movement has been successfully created.' }),
@@ -103,8 +138,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)('stock-movements'),
     (0, swagger_1.ApiOperation)({ summary: 'Get all stock movements' }),
+    __param(0, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], InventoryController.prototype, "findAllStockMovements", null);
 __decorate([

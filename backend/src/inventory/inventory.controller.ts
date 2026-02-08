@@ -4,6 +4,7 @@ import { InventoryService } from './inventory.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { CreateStockMovementDto } from './dto/create-stock-movement.dto';
+import { CreateStockDocumentDto } from './dto/create-stock-document.dto';
 
 @ApiTags('inventory')
 @Controller('inventory')
@@ -42,6 +43,29 @@ export class InventoryController {
     return this.inventoryService.remove(id);
   }
 
+
+
+  // Stock Documents
+
+  @Post('stock-documents')
+  @ApiOperation({ summary: 'Create a new stock document' })
+  @ApiResponse({ status: 201, description: 'The stock document has been successfully created.' })
+  createStockDocument(@Body() createStockDocumentDto: CreateStockDocumentDto) {
+    return this.inventoryService.createStockDocument(createStockDocumentDto);
+  }
+
+  @Get('stock-documents')
+  @ApiOperation({ summary: 'Get all stock documents' })
+  findAllStockDocuments(@Query('companyId') companyId?: string) {
+    return this.inventoryService.findAllStockDocuments(companyId);
+  }
+
+  @Get('stock-documents/:id')
+  @ApiOperation({ summary: 'Get a stock document by ID' })
+  findOneStockDocument(@Param('id') id: string) {
+    return this.inventoryService.findOneStockDocument(id);
+  }
+
   // Stock Movements
 
   @Post('stock-movements')
@@ -53,8 +77,8 @@ export class InventoryController {
 
   @Get('stock-movements')
   @ApiOperation({ summary: 'Get all stock movements' })
-  findAllStockMovements() {
-    return this.inventoryService.findAllStockMovements();
+  findAllStockMovements(@Query('companyId') companyId?: string) {
+    return this.inventoryService.findAllStockMovements(companyId);
   }
 
   @Get('stock-movements/:id')

@@ -1,9 +1,9 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, Unique } from 'typeorm';
+import { Entity, Column, PrimaryColumn, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Unique } from 'typeorm';
 
 @Entity('customers')
 @Unique(['companyId', 'code'])
 export class Customer {
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @Column({ nullable: true, type: 'varchar' })

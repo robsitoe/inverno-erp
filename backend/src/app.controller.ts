@@ -36,11 +36,11 @@ export class AppController {
     private readonly periodControlService: PeriodControlService
   ) { }
 
-  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>): Promise<Repository<T>> {
-    const companyId = TenancyContext.getCompanyId();
-    if (!companyId) return this.dataSource.getRepository(entity);
+  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, companyId?: string): Promise<Repository<T>> {
+    const targetId = companyId || TenancyContext.getCompanyId();
+    if (!targetId) return this.dataSource.getRepository(entity);
 
-    const ds = await this.tenancyService.getTenantDataSource(companyId);
+    const ds = await this.tenancyService.getTenantDataSource(targetId);
     return ds.getRepository(entity);
   }
 
@@ -165,11 +165,8 @@ export class AppController {
   // --- Fiscal Years Endpoints ---
   @Get('fiscal-years')
   async getFiscalYears(@Query('companyId') companyId: string) {
-    const repo = await this.getRepo(FiscalYear);
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
-    if (filterCompanyId) {
-      return await repo.find({ where: { companyId: filterCompanyId }, order: { year: 'DESC' } });
-    }
+    const repo = await this.getRepo(FiscalYear, filterCompanyId);
     return await repo.find({ order: { year: 'DESC' } });
   }
 
@@ -230,11 +227,8 @@ export class AppController {
   // --- Series Endpoints ---
   @Get('series')
   async getSeries(@Query('companyId') companyId: string) {
-    const repo = await this.getRepo(Series);
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
-    if (filterCompanyId) {
-      return await repo.find({ where: { companyId: filterCompanyId }, order: { code: 'DESC' } });
-    }
+    const repo = await this.getRepo(Series, filterCompanyId);
     return await repo.find({ order: { code: 'DESC' } });
   }
 
@@ -253,11 +247,8 @@ export class AppController {
   // --- Journals Endpoints ---
   @Get('accounting/journals')
   async getJournals(@Query('companyId') companyId?: string) {
-    const repo = await this.getRepo(Journal);
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
-    if (filterCompanyId) {
-      return await repo.find({ where: { companyId: filterCompanyId }, order: { code: 'ASC' } });
-    }
+    const repo = await this.getRepo(Journal, filterCompanyId);
     return await repo.find({ order: { code: 'ASC' } });
   }
 
@@ -271,14 +262,8 @@ export class AppController {
   // --- Customers Endpoints ---
   @Get('customers')
   async getCustomers(@Query('companyId') companyId?: string) {
-    const repo = await this.getRepo(Customer);
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
-    if (filterCompanyId) {
-      return await repo.find({
-        where: { companyId: filterCompanyId },
-        order: { name: 'ASC' }
-      });
-    }
+    const repo = await this.getRepo(Customer, filterCompanyId);
     return await repo.find({ order: { name: 'ASC' } });
   }
 
@@ -286,7 +271,14 @@ export class AppController {
   @Post('customers')
   async saveCustomer(@Body() customer: CreateCustomerDto | CreateCustomerDto[]) {
     try {
-      const repo = await this.getRepo(Customer);
+      // Determine companyId from payload if possible
+      let companyId: string | undefined;
+      const first = Array.isArray(customer) ? customer[0] : customer;
+      if (first && (first as any).companyId) {
+        companyId = (first as any).companyId;
+      }
+
+      const repo = await this.getRepo(Customer, companyId);
       if (Array.isArray(customer)) {
         // Ensure all items have an ID if it's a primary column
         const processed = customer.map(c => ({
@@ -311,20 +303,24 @@ export class AppController {
   async getSuppliers(@Query('companyId') companyId?: string) {
     const repo = await this.getRepo(Supplier);
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
-    if (filterCompanyId) {
-      return await repo.find({
-        where: { companyId: filterCompanyId },
-        order: { name: 'ASC' }
-      });
-    }
-    return await repo.find({ order: { name: 'ASC' } });
+    // Re-get repo with correct context just in case, though logically getRepo(Supplier) might have used context? 
+    // Actually, following getCustomers pattern:
+    const properRepo = await this.getRepo(Supplier, filterCompanyId);
+    return await properRepo.find({ order: { name: 'ASC' } });
   }
 
 
   @Post('suppliers')
   async saveSupplier(@Body() supplier: CreateSupplierDto | CreateSupplierDto[]) {
     try {
-      const repo = await this.getRepo(Supplier);
+      // Determine companyId from payload if possible
+      let companyId: string | undefined;
+      const first = Array.isArray(supplier) ? supplier[0] : supplier;
+      if (first && (first as any).companyId) {
+        companyId = (first as any).companyId;
+      }
+
+      const repo = await this.getRepo(Supplier, companyId);
       if (Array.isArray(supplier)) {
         const processed = supplier.map(s => ({
           ...s,
@@ -345,8 +341,9 @@ export class AppController {
 
   // --- Generic Entities Endpoints ---
   @Get('entities')
-  async getGenericEntities(@Query('type') type: string) {
-    const repo = await this.getRepo(GenericEntity);
+  async getGenericEntities(@Query('type') type: string, @Query('companyId') companyId?: string) {
+    const filterCompanyId = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getRepo(GenericEntity, filterCompanyId);
     if (type) {
       return await repo.find({ where: { type }, order: { name: 'ASC' } });
     }
@@ -433,13 +430,28 @@ export class AppController {
   // --- Document Types Endpoints ---
   @Get('document-types')
   async getDocumentTypes(@Query('module') module: string, @Query('companyId') companyId?: string) {
-    const repo = await this.getRepo(DocumentType);
-    const filterCompanyId = companyId || TenancyContext.getCompanyId();
-    const where: any = { module };
-    if (filterCompanyId) {
-      where.companyId = filterCompanyId;
+    let filterCompanyId = companyId || TenancyContext.getCompanyId();
+    try {
+      const repo = await this.getRepo(DocumentType, filterCompanyId);
+
+      // Normalize module name and handle both singular/plural
+      const normalized = module ? module.toUpperCase() : '';
+      const moduleQueries = [normalized];
+      if (normalized === 'PURCHASE') moduleQueries.push('PURCHASES');
+      if (normalized === 'PURCHASES') moduleQueries.push('PURCHASE');
+      if (normalized === 'SALE') moduleQueries.push('SALES');
+      if (normalized === 'SALES') moduleQueries.push('SALE');
+      if (normalized === 'STOCK') moduleQueries.push('INVENTORY');
+      if (normalized === 'INVENTORY') moduleQueries.push('STOCK');
+
+      return await repo.find({
+        where: moduleQueries.map(m => ({ module: m })),
+        order: { code: 'ASC' } as any
+      });
+    } catch (error: any) {
+      console.error(`[AppController] Error in getDocumentTypes:`, error.message);
+      throw new BadRequestException(error.message);
     }
-    return await repo.find({ where, order: { code: 'ASC' } as any });
   }
 
   @Post('document-types')
@@ -461,14 +473,8 @@ export class AppController {
   // --- Payment Methods Endpoints ---
   @Get('payment-methods')
   async getPaymentMethods(@Query('companyId') companyId?: string) {
-    const repo = await this.getRepo(PaymentMethod);
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
-    if (filterCompanyId) {
-      return await repo.find({
-        where: [{ companyId: filterCompanyId }, { companyId: IsNull() }],
-        order: { sortOrder: 'ASC' }
-      });
-    }
+    const repo = await this.getRepo(PaymentMethod, filterCompanyId);
     return await repo.find({ order: { sortOrder: 'ASC' } });
   }
 
@@ -483,28 +489,14 @@ export class AppController {
 
   @Post('sync/push')
   async syncPush(@Body() data: any) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    // 1. Save Global Data (Companies, Users) to MAIN DB
+    const mainQueryRunner = this.dataSource.createQueryRunner();
+    await mainQueryRunner.connect();
+    await mainQueryRunner.startTransaction();
 
     try {
-      if (data.companies && data.companies.length > 0) await queryRunner.manager.save(Company, data.companies);
-      else if (data.companyInfo) await queryRunner.manager.save(Company, data.companyInfo);
-
-      if (data.fiscalYears && data.fiscalYears.length > 0) await queryRunner.manager.save(FiscalYear, data.fiscalYears);
-      if (data.periodAuditLogs && data.periodAuditLogs.length > 0) await queryRunner.manager.save(PeriodAuditLog, data.periodAuditLogs);
-      if (data.articles && data.articles.length > 0) await queryRunner.manager.save(Article, data.articles);
-      if (data.accounts && data.accounts.length > 0) await queryRunner.manager.save(Account, data.accounts);
-      if (data.journals && data.journals.length > 0) await queryRunner.manager.save(Journal, data.journals);
-      if (data.salesDocuments && data.salesDocuments.length > 0) await queryRunner.manager.save(SalesDocument, data.salesDocuments);
-      if (data.purchaseDocuments && data.purchaseDocuments.length > 0) await queryRunner.manager.save(PurchaseDocument, data.purchaseDocuments);
-      if (data.journalEntries && data.journalEntries.length > 0) await queryRunner.manager.save(JournalEntry, data.journalEntries);
-      if (data.stockMovements && data.stockMovements.length > 0) await queryRunner.manager.save(StockMovement, data.stockMovements);
-      if (data.receipts && data.receipts.length > 0) await queryRunner.manager.save(TreasuryDocument, data.receipts);
-      if (data.payments && data.payments.length > 0) await queryRunner.manager.save(TreasuryDocument, data.payments);
-      if (data.customers && data.customers.length > 0) await queryRunner.manager.save(Customer, data.customers);
-      if (data.suppliers && data.suppliers.length > 0) await queryRunner.manager.save(Supplier, data.suppliers);
-      if (data.genericEntities && data.genericEntities.length > 0) await queryRunner.manager.save(GenericEntity, data.genericEntities);
+      if (data.companies && data.companies.length > 0) await mainQueryRunner.manager.save(Company, data.companies);
+      else if (data.companyInfo) await mainQueryRunner.manager.save(Company, data.companyInfo);
 
       if (data.users && data.users.length > 0) {
         for (const user of data.users) {
@@ -512,17 +504,96 @@ export class AppController {
             user.password = await bcrypt.hash(user.password, 10);
           }
         }
-        await queryRunner.manager.save(User, data.users);
+        await mainQueryRunner.manager.save(User, data.users);
       }
 
-      await queryRunner.commitTransaction();
-      return { success: true, message: 'Dados sincronizados com sucesso!' };
+      await mainQueryRunner.commitTransaction();
     } catch (err) {
-      await queryRunner.rollbackTransaction();
-      console.error('Sync error:', err);
-      throw new BadRequestException('Erro ao sincronizar dados: ' + err.message);
+      await mainQueryRunner.rollbackTransaction();
+      console.error('Global sync error:', err);
+      throw new BadRequestException('Erro ao sincronizar dados globais: ' + err.message);
     } finally {
-      await queryRunner.release();
+      await mainQueryRunner.release();
     }
+
+    // 2. Group Tenant Data by CompanyId
+    const tenantData = new Map<string, any>();
+
+    const addToTenant = (items: any[], key: string) => {
+      if (!items || !Array.isArray(items)) return;
+      items.forEach(item => {
+        const cid = item.companyId;
+        if (!cid) return; // Skip items without companyId
+        if (!tenantData.has(cid)) tenantData.set(cid, {});
+        const group = tenantData.get(cid);
+        if (!group[key]) group[key] = [];
+        group[key].push(item);
+      });
+    };
+
+    addToTenant(data.fiscalYears, 'fiscalYears');
+    addToTenant(data.periodAuditLogs, 'periodAuditLogs');
+    addToTenant(data.articles, 'articles');
+    addToTenant(data.accounts, 'accounts');
+    addToTenant(data.journals, 'journals');
+    addToTenant(data.journalEntries, 'journalEntries');
+    addToTenant(data.salesDocuments, 'salesDocuments');
+    addToTenant(data.purchaseDocuments, 'purchaseDocuments');
+    addToTenant(data.stockMovements, 'stockMovements');
+    addToTenant(data.receipts, 'receipts'); // Maps to TreasuryDocument
+    addToTenant(data.payments, 'payments'); // Maps to TreasuryDocument
+    addToTenant(data.customers, 'customers');
+    addToTenant(data.suppliers, 'suppliers');
+    addToTenant(data.genericEntities, 'genericEntities');
+
+    // 3. Save per Tenant
+    const errors: string[] = [];
+
+    for (const [companyId, group] of tenantData.entries()) {
+      try {
+        // Get Tenant DataSource (or initialize it)
+        const tenantDS = await this.tenancyService.getTenantDataSource(companyId);
+        const qr = tenantDS.createQueryRunner();
+        await qr.connect();
+        await qr.startTransaction();
+
+        try {
+          if (group.fiscalYears) await qr.manager.getRepository(FiscalYear).save(group.fiscalYears);
+          if (group.periodAuditLogs) await qr.manager.getRepository(PeriodAuditLog).save(group.periodAuditLogs);
+          if (group.articles) await qr.manager.getRepository(Article).save(group.articles);
+          if (group.accounts) await qr.manager.getRepository(Account).save(group.accounts);
+          if (group.journals) await qr.manager.getRepository(Journal).save(group.journals);
+          if (group.salesDocuments) await qr.manager.getRepository(SalesDocument).save(group.salesDocuments);
+          if (group.purchaseDocuments) await qr.manager.getRepository(PurchaseDocument).save(group.purchaseDocuments);
+          if (group.journalEntries) await qr.manager.getRepository(JournalEntry).save(group.journalEntries);
+          if (group.stockMovements) await qr.manager.getRepository(StockMovement).save(group.stockMovements);
+
+          // Receipts and Payments are both TreasuryDocument
+          if (group.receipts) await qr.manager.getRepository(TreasuryDocument).save(group.receipts);
+          if (group.payments) await qr.manager.getRepository(TreasuryDocument).save(group.payments);
+
+          if (group.customers) await qr.manager.getRepository(Customer).save(group.customers);
+          if (group.suppliers) await qr.manager.getRepository(Supplier).save(group.suppliers);
+          if (group.genericEntities) await qr.manager.getRepository(GenericEntity).save(group.genericEntities);
+
+          await qr.commitTransaction();
+          console.log(`Synced data for company ${companyId}`);
+        } catch (e) {
+          await qr.rollbackTransaction();
+          throw e;
+        } finally {
+          await qr.release();
+        }
+      } catch (err) {
+        console.error(`Failed to sync for company ${companyId}`, err);
+        errors.push(`Empresa ${companyId}: ${err.message}`);
+      }
+    }
+
+    if (errors.length > 0) {
+      return { success: false, message: 'Sincronização parcial (erros em: ' + errors.join('; ') + ')' };
+    }
+
+    return { success: true, message: 'Dados sincronizados com sucesso!' };
   }
 }

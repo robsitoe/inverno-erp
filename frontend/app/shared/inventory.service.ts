@@ -76,8 +76,7 @@ export class InventoryService {
         // Load articles
         try {
             const allArticles = await lastValueFrom(this.dataService.getArticles());
-            // Filter STRICTLY by active company ID
-            this.allArticles = allArticles.filter(a => a.companyId === this.activeCompanyId);
+            this.allArticles = allArticles;
         } catch (e) {
             this.allArticles = [];
         }
@@ -101,28 +100,37 @@ export class InventoryService {
         }
         this.batches = this.filterByCompany(this.allBatches);
 
-        // Load stock movements (Still from localStorage for now)
-        const storedMovements = localStorage.getItem('erp_stock_movements');
-        if (storedMovements) {
-            this.allStockMovements = JSON.parse(storedMovements);
+        // Load stock movements
+        try {
+            const movements = await lastValueFrom(this.dataService.getStockMovements());
+            this.allStockMovements = movements;
+        } catch (e) {
+            console.error('Error loading stock movements:', e);
+            this.allStockMovements = [];
         }
         this.stockMovements = this.filterByCompany(this.allStockMovements);
 
-        // Recalculate stock from documents to ensure consistency
+        // Recalculate stock from documents to ensure consistency (Only for Local Browser)
         this.recalculateStockFromDocuments();
+
+        // Notify components that data is ready
+        this.articlesUpdated$.next();
     }
 
-    private filterByCompany<T extends { companyId?: string }>(list: T[]): T[] {
+    private filterByCompany<T extends { companyId?: string | null }>(list: T[]): T[] {
         if (!this.activeCompanyId) return [];
-        return list.filter(item => item.companyId === this.activeCompanyId);
+        return list.filter(item => !item.companyId || item.companyId === this.activeCompanyId);
     }
 
     private recalculateStockFromDocuments() {
+        if (!this.dataService.isLocalBrowser()) return;
+
         const calculatedStocks = new Map<string, number>();
         const today = new Date().toISOString().split('T')[0];
 
         // 1. Stock Documents (Inventory)
-        const storedDocuments = localStorage.getItem('erp_stock_documents');
+        const key = this.activeCompanyId ? `erp_stock_documents_${this.activeCompanyId}` : 'erp_stock_documents';
+        const storedDocuments = localStorage.getItem(key);
         if (storedDocuments) {
             const allDocuments = JSON.parse(storedDocuments);
             const documents = this.filterByCompany(allDocuments);
@@ -145,8 +153,8 @@ export class InventoryService {
                         isExit = docType.nature === 'OUT' || docType.nature === 'ADJUSTMENT_OUT';
                     } else {
                         // Fallback only if config missing
-                        isEntry = ['FI', 'SI', 'LE', 'AIP', 'ENT'].includes(doc.type);
-                        isExit = ['FS', 'AIN', 'LD', 'SAI'].includes(doc.type);
+                        isEntry = ['FI', 'SI', 'LE', 'AIP', 'ENT', 'ES'].includes(doc.type);
+                        isExit = ['FS', 'AIN', 'LD', 'SAI', 'SS'].includes(doc.type);
                     }
 
                     if (isEntry) {
@@ -329,18 +337,18 @@ export class InventoryService {
     updateArticle(article: Article): void {
         const index = this.allArticles.findIndex(a => a.id === article.id);
         if (index !== -1) {
-            // Preserve calculated fields
-            const currentStock = this.allArticles[index].currentStock;
-
-            this.allArticles[index] = {
-                ...article,
-                currentStock: currentStock
-            };
-
-            // Update filtered list
+            this.allArticles[index] = { ...article };
             this.articles = this.filterByCompany(this.allArticles);
             this.saveArticles();
         }
+    }
+
+    deleteArticle(id: string): void {
+        this.dataService.deleteArticle(id).subscribe(() => {
+            this.allArticles = this.allArticles.filter(a => a.id !== id);
+            this.articles = this.filterByCompany(this.allArticles);
+            this.articlesUpdated$.next();
+        });
     }
 
     // Warehouses
@@ -437,6 +445,68 @@ export class InventoryService {
 
     // Centralized Stock Calculation Logic
     calculateStockMovements(articleCode: string, warehouseFilter?: string, documentTypeFilter?: string): any[] {
+        console.log('[InventoryService] calculateStockMovements called for:', articleCode, 'warehouse:', warehouseFilter, 'docType:', documentTypeFilter);
+        console.log('[InventoryService] isLocalBrowser:', this.dataService.isLocalBrowser());
+
+        // If Backend Mode, use loaded movements
+        if (!this.dataService.isLocalBrowser()) {
+            console.log('[InventoryService] Backend mode - using loaded movements. Total:', this.stockMovements.length);
+
+            // Find article object to get ID if articleCode was passed
+            const article = this.getArticleByCode(articleCode);
+            const targetId = article?.id;
+
+            return this.stockMovements
+                .filter(m => m.articleCode === articleCode || m.articleId === articleCode || (targetId && m.articleId === targetId))
+                .filter(m => !warehouseFilter || m.warehouseId === warehouseFilter) // Warehouse check might need refinement
+                .map(m => {
+                    // Extract info from reference or type
+                    // Backend reference format: "TYPE SERIES/NUM"
+                    let docType: string = m.movementType;
+
+                    if (m.reference && m.reference.includes(' ')) {
+                        docType = m.reference.split(' ')[0];
+                    }
+
+                    if (documentTypeFilter && docType !== documentTypeFilter) return null;
+
+                    const qty = Number(m.quantity);
+                    const mType = String(m.movementType);
+
+                    let qIn = 0;
+                    let qOut = 0;
+
+                    if (mType === 'IN' || mType === 'ADJUSTMENT_IN' || (mType === 'ADJUSTMENT' && qty > 0)) {
+                        qIn = Math.abs(qty);
+                    } else if (mType === 'OUT' || mType === 'ADJUSTMENT_OUT' || (mType === 'ADJUSTMENT' && qty < 0)) {
+                        qOut = Math.abs(qty);
+                    } else if (mType === 'TRANSFER') {
+                        // Transfer logic: could be entry or exit depending on warehouse perspective
+                        // For now, if no warehouse filter, we might see multiple movements.
+                        // If we are looking at total stock, transfers are net 0.
+                        // But usually people want to see it in the list.
+                        // Let's assume the movement direction matches its sign or type.
+                        if (qty > 0) qIn = qty;
+                        else qOut = Math.abs(qty);
+                    }
+
+                    return {
+                        date: m.date,
+                        documentType: docType,
+                        documentNumber: m.reference || 'N/A',
+                        documentId: m.sourceDocument || m.id,
+                        description: m.notes || m.movementType,
+                        warehouse: m.warehouseId || '',
+                        quantityIn: qIn,
+                        quantityOut: qOut,
+                        unitCost: Number(m.unitCost || 0)
+                    };
+                })
+                .filter(m => m !== null)
+                .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        }
+
+        console.log('[InventoryService] Local browser mode - calculating from documents');
         const movements: any[] = [];
 
         // Helper to check warehouse filter
@@ -450,10 +520,17 @@ export class InventoryService {
         };
 
         // 1. Process Stock Documents
-        const storedStockDocs = localStorage.getItem('erp_stock_documents');
+        const key = this.activeCompanyId ? `erp_stock_documents_${this.activeCompanyId}` : 'erp_stock_documents';
+        const storedStockDocs = localStorage.getItem(key);
+        console.log('[InventoryService] Stock documents in localStorage:', storedStockDocs ? 'found' : 'not found');
+
         if (storedStockDocs) {
             const allDocuments = JSON.parse(storedStockDocs);
+            console.log('[InventoryService] Total stock documents:', allDocuments.length);
+
             const documents = this.filterByCompany(allDocuments);
+            console.log('[InventoryService] Stock documents for company:', documents.length);
+
             documents.forEach((doc: any) => {
                 if (documentTypeFilter && doc.type !== documentTypeFilter) return;
 
@@ -485,6 +562,8 @@ export class InventoryService {
                     }
 
                     if (!isEntry && !isExit) return;
+
+                    console.log('[InventoryService] Adding stock movement:', doc.type, line.articleCode, isEntry ? 'IN' : 'OUT', line.quantity);
 
                     movements.push({
                         date: doc.date,
@@ -613,7 +692,10 @@ export class InventoryService {
             });
         }
 
-        return movements.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        console.log('[InventoryService] Total movements calculated:', movements.length);
+        const sorted = movements.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        console.log('[InventoryService] Returning sorted movements:', sorted.length);
+        return sorted;
     }
 
     getStockBalanceAtDate(articleCode: string, date: string, warehouseFilter?: string): number {

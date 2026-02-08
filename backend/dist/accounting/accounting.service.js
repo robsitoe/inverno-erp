@@ -21,35 +21,40 @@ const journal_entry_entity_1 = require("./entities/journal-entry.entity");
 const tenancy_service_1 = require("../tenancy/tenancy.service");
 const tenancy_context_1 = require("../tenancy/tenancy.context");
 const accounting_presets_1 = require("./accounting-presets");
+const period_control_service_1 = require("../periods/period-control.service");
 let AccountingService = class AccountingService {
     tenancyService;
+    periodControlService;
     defaultAccountRepo;
     defaultJournalEntryRepo;
     defaultJournalLineRepo;
-    constructor(tenancyService, defaultAccountRepo, defaultJournalEntryRepo, defaultJournalLineRepo) {
+    constructor(tenancyService, periodControlService, defaultAccountRepo, defaultJournalEntryRepo, defaultJournalLineRepo) {
         this.tenancyService = tenancyService;
+        this.periodControlService = periodControlService;
         this.defaultAccountRepo = defaultAccountRepo;
         this.defaultJournalEntryRepo = defaultJournalEntryRepo;
         this.defaultJournalLineRepo = defaultJournalLineRepo;
     }
-    async getRepo(entity, defaultRepo) {
-        const companyId = tenancy_context_1.TenancyContext.getCompanyId();
-        if (!companyId) {
+    costCenters = [];
+    periodClosures = [];
+    async getRepo(entity, defaultRepo, companyId) {
+        const targetId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        if (!targetId) {
             console.warn(`[AccountingService] No companyId in context, using default repository for ${entity.toString()}`);
             return defaultRepo;
         }
         try {
-            const ds = await this.tenancyService.getTenantDataSource(companyId);
+            const ds = await this.tenancyService.getTenantDataSource(targetId);
             return ds.getRepository(entity);
         }
         catch (err) {
-            console.error(`[AccountingService] Error getting tenant repository for company ${companyId}:`, err.message);
+            console.error(`[AccountingService] Error getting tenant repository for company ${targetId}:`, err.message);
             throw err;
         }
     }
-    async getAccountRepo() { return this.getRepo(account_entity_1.Account, this.defaultAccountRepo); }
-    async getJournalEntryRepo() { return this.getRepo(journal_entry_entity_1.JournalEntry, this.defaultJournalEntryRepo); }
-    async getJournalLineRepo() { return this.getRepo(journal_entry_entity_1.JournalLine, this.defaultJournalLineRepo); }
+    async getAccountRepo(companyId) { return this.getRepo(account_entity_1.Account, this.defaultAccountRepo, companyId); }
+    async getJournalEntryRepo(companyId) { return this.getRepo(journal_entry_entity_1.JournalEntry, this.defaultJournalEntryRepo, companyId); }
+    async getJournalLineRepo(companyId) { return this.getRepo(journal_entry_entity_1.JournalLine, this.defaultJournalLineRepo, companyId); }
     async create(createAccountDto) {
         try {
             const repo = await this.getAccountRepo();
@@ -66,13 +71,8 @@ let AccountingService = class AccountingService {
         }
     }
     async findAll(companyId) {
-        const repo = await this.getAccountRepo();
-        if (companyId) {
-            return repo.find({
-                where: { companyId },
-                order: { code: 'ASC' }
-            });
-        }
+        const listCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getAccountRepo(listCompanyId);
         return repo.find({ order: { code: 'ASC' } });
     }
     async findOne(id) {
@@ -97,6 +97,7 @@ let AccountingService = class AccountingService {
     }
     async createJournalEntry(createJournalEntryDto) {
         const { lines } = createJournalEntryDto;
+        await this.periodControlService.ensureDateInOpenPeriod(createJournalEntryDto.date, createJournalEntryDto.companyId);
         const totalDebit = lines.reduce((sum, line) => sum + Number(line.debit), 0);
         const totalCredit = lines.reduce((sum, line) => sum + Number(line.credit), 0);
         if (Math.abs(totalDebit - totalCredit) > 0.01) {
@@ -111,13 +112,9 @@ let AccountingService = class AccountingService {
         return jeRepo.save(journalEntry);
     }
     async findAllJournalEntries(companyId) {
-        const where = {};
-        if (companyId) {
-            where.companyId = companyId;
-        }
-        const repo = await this.getJournalEntryRepo();
+        const listCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getJournalEntryRepo(listCompanyId);
         return repo.find({
-            where,
             relations: ['lines'],
             order: { date: 'DESC', createdAt: 'DESC' }
         });
@@ -211,14 +208,100 @@ let AccountingService = class AccountingService {
         console.log(`[AccountingService] Loading ${accountsToSave.length} accounts from preset "${presetName}" for company ${companyId}`);
         return await repo.save(accountsToSave);
     }
+    async listCostCenters() {
+        return this.costCenters;
+    }
+    async createCostCenter(payload) {
+        if (!payload.code?.trim() || !payload.description?.trim()) {
+            throw new common_1.BadRequestException('Código e descrição são obrigatórios.');
+        }
+        const exists = this.costCenters.some(item => item.code === payload.code.trim());
+        if (exists) {
+            throw new common_1.BadRequestException('Código de centro de custo já existe.');
+        }
+        const item = {
+            id: `cc-${Date.now()}`,
+            code: payload.code.trim(),
+            description: payload.description.trim(),
+            active: payload.active ?? true,
+            createdAt: new Date().toISOString()
+        };
+        this.costCenters.push(item);
+        return item;
+    }
+    async getVatSummary(fromDate, toDate) {
+        if (fromDate && toDate && fromDate > toDate) {
+            throw new common_1.BadRequestException('Data inicial deve ser menor ou igual à data final.');
+        }
+        return {
+            fromDate,
+            toDate,
+            vatSettled: 0,
+            vatDeductible: 0,
+            generatedAt: new Date().toISOString()
+        };
+    }
+    async closePeriod(payload) {
+        const { year, month } = payload;
+        if (!year || !month) {
+            throw new common_1.BadRequestException('Ano e mês são obrigatórios.');
+        }
+        if (month < 1 || month > 12) {
+            throw new common_1.BadRequestException('Mês inválido.');
+        }
+        const now = new Date();
+        const futurePeriod = year > now.getFullYear() || (year === now.getFullYear() && month > now.getMonth() + 1);
+        if (futurePeriod) {
+            throw new common_1.BadRequestException('Não é permitido fechar períodos futuros.');
+        }
+        const alreadyClosed = this.periodClosures.find(item => item.year === year && item.month === month);
+        if (alreadyClosed) {
+            throw new common_1.BadRequestException('Período já encerrado.');
+        }
+        const closure = {
+            id: `pc-${Date.now()}`,
+            year,
+            month,
+            status: 'CLOSED',
+            createdAt: new Date().toISOString()
+        };
+        this.periodClosures.push(closure);
+        return closure;
+    }
+    async getExplorationSummary(fromDate, toDate) {
+        return {
+            period: { fromDate, toDate },
+            totalDebit: 0,
+            totalCredit: 0,
+            topVariations: [],
+            generatedAt: new Date().toISOString()
+        };
+    }
+    async getUtilitiesAuditLog(page = 1, limit = 50) {
+        const boundedLimit = Math.min(Math.max(limit, 1), 500);
+        const start = (Math.max(page, 1) - 1) * boundedLimit;
+        const records = this.periodClosures.slice(start, start + boundedLimit).map(item => ({
+            id: item.id,
+            action: 'PERIOD_CLOSE',
+            reference: `${item.year}-${String(item.month).padStart(2, '0')}`,
+            createdAt: item.createdAt
+        }));
+        return {
+            page,
+            limit: boundedLimit,
+            total: this.periodClosures.length,
+            records
+        };
+    }
 };
 exports.AccountingService = AccountingService;
 exports.AccountingService = AccountingService = __decorate([
     (0, common_1.Injectable)(),
-    __param(1, (0, typeorm_1.InjectRepository)(account_entity_1.Account)),
-    __param(2, (0, typeorm_1.InjectRepository)(journal_entry_entity_1.JournalEntry)),
-    __param(3, (0, typeorm_1.InjectRepository)(journal_entry_entity_1.JournalLine)),
+    __param(2, (0, typeorm_1.InjectRepository)(account_entity_1.Account)),
+    __param(3, (0, typeorm_1.InjectRepository)(journal_entry_entity_1.JournalEntry)),
+    __param(4, (0, typeorm_1.InjectRepository)(journal_entry_entity_1.JournalLine)),
     __metadata("design:paramtypes", [tenancy_service_1.TenancyService,
+        period_control_service_1.PeriodControlService,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])

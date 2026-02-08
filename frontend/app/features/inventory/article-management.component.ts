@@ -337,16 +337,13 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
 
     const term = this.searchTerm.toLowerCase();
     this.filteredArticles = this.articles.filter(a =>
-      a.code.toLowerCase().includes(term) ||
-      a.name.toLowerCase().includes(term) ||
-      a.description.toLowerCase().includes(term)
+      (a.code || '').toLowerCase().includes(term) ||
+      (a.name || '').toLowerCase().includes(term) ||
+      (a.description || '').toLowerCase().includes(term)
     );
   }
 
   selectArticle(article: Article) {
-    if (article.stockControl) {
-      article.currentStock = this.inventoryService.recalculateArticleStock(article.code);
-    }
     this.selectedArticle = { ...article };
     this.activeTab = 0;
   }
@@ -417,10 +414,10 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
     if (!this.selectedArticle) return;
 
     if (confirm(`Tem certeza que deseja eliminar o artigo ${this.selectedArticle.code}?`)) {
-      // Delete logic here
-      alert('Artigo eliminado!');
+      const code = this.selectedArticle.code;
+      this.inventoryService.deleteArticle(this.selectedArticle.id);
       this.selectedArticle = null;
-      this.loadArticles();
+      alert(`Artigo ${code} eliminado com sucesso!`);
     }
   }
 }

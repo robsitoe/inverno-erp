@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, of, BehaviorSubject, map, catchError, throwError } from 'rxjs';
+import { Observable, of, BehaviorSubject, map, catchError, throwError, tap } from 'rxjs';
 import { SALES_DOCUMENT_TYPES, PURCHASE_DOCUMENT_TYPES, TREASURY_DOCUMENT_TYPES, STOCK_DOCUMENT_TYPES } from '../shared/constants';
 
 
@@ -134,7 +134,13 @@ export class DataService {
             }
             return of(JSON.parse(stored));
         } else {
-            return this.http.get(`${this.baseUrl}/company`);
+            return this.http.get(`${this.baseUrl}/company`).pipe(
+                tap((info: any) => {
+                    if (info && info.id) {
+                        this.setActiveCompany(info);
+                    }
+                })
+            );
         }
     }
 
@@ -144,7 +150,6 @@ export class DataService {
             this.activeCompanySubject.next(data);
 
 
-            // Update global list (legacy support)
             // Update global list (legacy support)
             const storedCompanies = localStorage.getItem('erp_companies');
             let companies: any[] = storedCompanies ? JSON.parse(storedCompanies) : [];
@@ -344,7 +349,50 @@ export class DataService {
             localStorage.setItem(`erp_articles_${companyId}`, JSON.stringify(finalArticles));
             return of(article);
         } else {
-            return this.http.post(`${this.baseUrl}/inventory/articles`, article);
+            const data = Array.isArray(article) ? article : [article];
+            return this.http.post(`${this.baseUrl}/inventory/articles`, data);
+        }
+    }
+
+    deleteArticle(id: string): Observable<any> {
+        if (this.isLocalBrowser()) {
+            const companyId = this.activeCompanySubject.value?.id || '001';
+            const stored = localStorage.getItem(`erp_articles_${companyId}`);
+            if (stored) {
+                const articles = JSON.parse(stored).filter((a: any) => a.id !== id);
+                localStorage.setItem(`erp_articles_${companyId}`, JSON.stringify(articles));
+            }
+            return of(true);
+        } else {
+            return this.http.delete(`${this.baseUrl}/inventory/articles/${id}`);
+        }
+    }
+
+    // --- Stock Movements ---
+    getStockMovements(companyId?: string): Observable<any[]> {
+        if (this.isLocalBrowser()) {
+            const stored = localStorage.getItem('erp_stock_movements');
+            const all = stored ? JSON.parse(stored) : [];
+            const targetCompany = companyId || this.activeCompanySubject.value?.id;
+            if (targetCompany) {
+                return of(all.filter((m: any) => m.companyId === targetCompany));
+            }
+            return of(all);
+        } else {
+            const cId = companyId || this.activeCompanySubject.value?.id || '';
+            return this.http.get<any[]>(`${this.baseUrl}/inventory/stock-movements?companyId=${cId}`);
+        }
+    }
+
+    saveStockMovement(movement: any): Observable<any> {
+        if (this.isLocalBrowser()) {
+            const stored = localStorage.getItem('erp_stock_movements');
+            const movements = stored ? JSON.parse(stored) : [];
+            movements.push(movement);
+            localStorage.setItem('erp_stock_movements', JSON.stringify(movements));
+            return of(movement);
+        } else {
+            return this.http.post(`${this.baseUrl}/inventory/stock-movements`, movement);
         }
     }
 
@@ -559,6 +607,37 @@ export class DataService {
             return of(doc);
         } else {
             return this.http.post(`${this.baseUrl}/purchases/documents`, doc);
+        }
+    }
+
+    getStockDocuments(companyId?: string): Observable<any[]> {
+        if (this.isLocalBrowser()) {
+            const cId = companyId || this.activeCompanySubject.value?.id;
+            const key = cId ? `erp_stock_documents_${cId}` : 'erp_stock_documents';
+            const stored = localStorage.getItem(key);
+            const docs = stored ? JSON.parse(stored) : [];
+            return of(docs);
+        } else {
+            return this.http.get<any[]>(`${this.baseUrl}/inventory/stock-documents?companyId=${companyId || ''}`);
+        }
+    }
+
+    saveStockDocument(doc: any): Observable<any> {
+        if (this.isLocalBrowser()) {
+            const companyId = this.activeCompanySubject.value?.id;
+            const key = companyId ? `erp_stock_documents_${companyId}` : 'erp_stock_documents';
+            const stored = localStorage.getItem(key);
+            const docs = stored ? JSON.parse(stored) : [];
+            const index = docs.findIndex((d: any) => d.id === doc.id);
+            if (index !== -1) {
+                docs[index] = doc;
+            } else {
+                docs.push(doc);
+            }
+            localStorage.setItem(key, JSON.stringify(docs));
+            return of(doc);
+        } else {
+            return this.http.post(`${this.baseUrl}/inventory/stock-documents`, doc);
         }
     }
 
@@ -836,10 +915,23 @@ export class DataService {
             localStorage.setItem(key, JSON.stringify(defaults));
             return of(defaults);
         } else {
-            const companyId = this.activeCompanySubject.value?.id || '';
-            return this.http.get<any[]>(`${this.baseUrl}/document-types?module=${normalizedModule}&companyId=${companyId}`).pipe(
+            let companyId = this.activeCompanySubject.value?.id;
+            if (!companyId) {
+                const stored = this.getStoredCompany();
+                companyId = stored?.id;
+            }
+
+            return this.http.get<any[]>(`${this.baseUrl}/document-types?module=${normalizedModule}&companyId=${companyId || ''}`).pipe(
                 map(types => {
-                    if (types && types.length > 0) return types;
+                    if (Array.isArray(types) && types.length > 0) return types;
+
+                    // If it's an error object or empty, types might not be an array
+                    if (!Array.isArray(types)) {
+                        console.warn(`[DataService] Document types response for ${normalizedModule} is not an array:`, types);
+                        return [];
+                    }
+
+                    console.log(`[DataService] No document types found for ${normalizedModule}. Generating defaults...`);
 
                     // If no types in backend, generate defaults and send to backend
                     let defaults: any[] = [];
@@ -849,8 +941,21 @@ export class DataService {
                         case 'TREASURY': defaults = TREASURY_DOCUMENT_TYPES.map(t => ({ ...t, name: t.description, module: 'TREASURY', series: [], isActive: true })); break;
                         case 'STOCK': defaults = STOCK_DOCUMENT_TYPES.map(t => ({ ...t, name: t.description, module: 'STOCK', series: [], isActive: true })); break;
                     }
-                    this.saveDocumentTypes(normalizedModule as any, defaults).subscribe();
+
+                    // Assign companyId
+                    const currentCompanyId = this.activeCompanySubject.value?.id;
+                    defaults = defaults.map(d => ({ ...d, companyId: currentCompanyId }));
+
+                    this.saveDocumentTypes(normalizedModule as any, defaults).subscribe({
+                        next: () => console.log('Defaults saved successfully'),
+                        error: (err) => console.error('Failed to save defaults:', err)
+                    });
+
                     return defaults;
+                }),
+                catchError(err => {
+                    console.error('Error fetching document types:', err);
+                    return of([]);
                 })
             );
         }

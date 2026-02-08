@@ -69,20 +69,24 @@ const payment_method_entity_1 = require("./treasury/entities/payment-method.enti
 const bcrypt = __importStar(require("bcrypt"));
 const tenancy_service_1 = require("./tenancy/tenancy.service");
 const tenancy_context_1 = require("./tenancy/tenancy.context");
+const period_control_service_1 = require("./periods/period-control.service");
+const period_audit_log_entity_1 = require("./companies/entities/period-audit-log.entity");
 let AppController = class AppController {
     appService;
     dataSource;
     tenancyService;
-    constructor(appService, dataSource, tenancyService) {
+    periodControlService;
+    constructor(appService, dataSource, tenancyService, periodControlService) {
         this.appService = appService;
         this.dataSource = dataSource;
         this.tenancyService = tenancyService;
+        this.periodControlService = periodControlService;
     }
-    async getRepo(entity) {
-        const companyId = tenancy_context_1.TenancyContext.getCompanyId();
-        if (!companyId)
+    async getRepo(entity, companyId) {
+        const targetId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        if (!targetId)
             return this.dataSource.getRepository(entity);
-        const ds = await this.tenancyService.getTenantDataSource(companyId);
+        const ds = await this.tenancyService.getTenantDataSource(targetId);
         return ds.getRepository(entity);
     }
     testRoute() {
@@ -150,6 +154,7 @@ let AppController = class AppController {
                 }
             }
             await queryRunner.manager.delete(fiscal_year_entity_1.FiscalYear, { companyId: id });
+            await queryRunner.manager.delete(period_audit_log_entity_1.PeriodAuditLog, { companyId: id });
             await queryRunner.manager.delete(series_entity_1.Series, { companyId: id });
             await queryRunner.manager.delete(journal_entity_1.Journal, { companyId: id });
             await queryRunner.manager.delete(customer_entity_1.Customer, { companyId: id });
@@ -169,11 +174,8 @@ let AppController = class AppController {
         }
     }
     async getFiscalYears(companyId) {
-        const repo = await this.getRepo(fiscal_year_entity_1.FiscalYear);
         const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
-        if (filterCompanyId) {
-            return await repo.find({ where: { companyId: filterCompanyId }, order: { year: 'DESC' } });
-        }
+        const repo = await this.getRepo(fiscal_year_entity_1.FiscalYear, filterCompanyId);
         return await repo.find({ order: { year: 'DESC' } });
     }
     async saveFiscalYear(year) {
@@ -189,12 +191,26 @@ let AppController = class AppController {
         await repo.update({ companyId: data.companyId, year: data.year }, { isCurrent: true });
         return { success: true };
     }
+    async getFiscalYearChecklist(id, companyId) {
+        return this.periodControlService.getClosureChecklist(id, companyId);
+    }
+    async closeFiscalYear(id, body) {
+        return this.periodControlService.closeFiscalYear(id, body?.reason, { id: body?.userId, username: body?.username }, body?.companyId);
+    }
+    async reopenFiscalYear(id, body) {
+        return this.periodControlService.reopenFiscalYear(id, body?.reason, { userId: body?.userId, username: body?.username, requireElevatedPermission: true }, body?.companyId);
+    }
+    async getFiscalYearAuditLogs(id, companyId) {
+        const repo = await this.getRepo(period_audit_log_entity_1.PeriodAuditLog);
+        const resolvedCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        return repo.find({
+            where: { fiscalYearId: id, companyId: resolvedCompanyId },
+            order: { createdAt: 'DESC' },
+        });
+    }
     async getSeries(companyId) {
-        const repo = await this.getRepo(series_entity_1.Series);
         const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
-        if (filterCompanyId) {
-            return await repo.find({ where: { companyId: filterCompanyId }, order: { code: 'DESC' } });
-        }
+        const repo = await this.getRepo(series_entity_1.Series, filterCompanyId);
         return await repo.find({ order: { code: 'DESC' } });
     }
     async saveSeries(series) {
@@ -206,11 +222,8 @@ let AppController = class AppController {
         return await repo.delete(id);
     }
     async getJournals(companyId) {
-        const repo = await this.getRepo(journal_entity_1.Journal);
         const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
-        if (filterCompanyId) {
-            return await repo.find({ where: { companyId: filterCompanyId }, order: { code: 'ASC' } });
-        }
+        const repo = await this.getRepo(journal_entity_1.Journal, filterCompanyId);
         return await repo.find({ order: { code: 'ASC' } });
     }
     async saveJournal(journal) {
@@ -218,19 +231,18 @@ let AppController = class AppController {
         return await repo.save(journal);
     }
     async getCustomers(companyId) {
-        const repo = await this.getRepo(customer_entity_1.Customer);
         const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
-        if (filterCompanyId) {
-            return await repo.find({
-                where: { companyId: filterCompanyId },
-                order: { name: 'ASC' }
-            });
-        }
+        const repo = await this.getRepo(customer_entity_1.Customer, filterCompanyId);
         return await repo.find({ order: { name: 'ASC' } });
     }
     async saveCustomer(customer) {
         try {
-            const repo = await this.getRepo(customer_entity_1.Customer);
+            let companyId;
+            const first = Array.isArray(customer) ? customer[0] : customer;
+            if (first && first.companyId) {
+                companyId = first.companyId;
+            }
+            const repo = await this.getRepo(customer_entity_1.Customer, companyId);
             if (Array.isArray(customer)) {
                 const processed = customer.map(c => ({
                     ...c,
@@ -252,17 +264,17 @@ let AppController = class AppController {
     async getSuppliers(companyId) {
         const repo = await this.getRepo(supplier_entity_1.Supplier);
         const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
-        if (filterCompanyId) {
-            return await repo.find({
-                where: { companyId: filterCompanyId },
-                order: { name: 'ASC' }
-            });
-        }
-        return await repo.find({ order: { name: 'ASC' } });
+        const properRepo = await this.getRepo(supplier_entity_1.Supplier, filterCompanyId);
+        return await properRepo.find({ order: { name: 'ASC' } });
     }
     async saveSupplier(supplier) {
         try {
-            const repo = await this.getRepo(supplier_entity_1.Supplier);
+            let companyId;
+            const first = Array.isArray(supplier) ? supplier[0] : supplier;
+            if (first && first.companyId) {
+                companyId = first.companyId;
+            }
+            const repo = await this.getRepo(supplier_entity_1.Supplier, companyId);
             if (Array.isArray(supplier)) {
                 const processed = supplier.map(s => ({
                     ...s,
@@ -281,8 +293,9 @@ let AppController = class AppController {
             throw new common_1.BadRequestException(`Erro ao guardar fornecedor: ${error.message}`);
         }
     }
-    async getGenericEntities(type) {
-        const repo = await this.getRepo(generic_entity_entity_1.GenericEntity);
+    async getGenericEntities(type, companyId) {
+        const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getRepo(generic_entity_entity_1.GenericEntity, filterCompanyId);
         if (type) {
             return await repo.find({ where: { type }, order: { name: 'ASC' } });
         }
@@ -332,7 +345,7 @@ let AppController = class AppController {
                         username: config.username,
                         password: config.password,
                         database: dbName,
-                        entities: [account_entity_1.Account, journal_entry_entity_1.JournalEntry, article_entity_1.Article, stock_movement_entity_1.StockMovement, sales_document_entity_1.SalesDocument, purchase_entity_1.PurchaseDocument, treasury_entity_1.TreasuryDocument, company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, user_entity_1.User, generic_entity_entity_1.GenericEntity],
+                        entities: [account_entity_1.Account, journal_entry_entity_1.JournalEntry, article_entity_1.Article, stock_movement_entity_1.StockMovement, sales_document_entity_1.SalesDocument, purchase_entity_1.PurchaseDocument, treasury_entity_1.TreasuryDocument, company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, user_entity_1.User, generic_entity_entity_1.GenericEntity, period_audit_log_entity_1.PeriodAuditLog],
                         synchronize: true,
                     });
                     await newDbDataSource.initialize();
@@ -356,13 +369,32 @@ let AppController = class AppController {
         }
     }
     async getDocumentTypes(module, companyId) {
-        const repo = await this.getRepo(document_type_entity_1.DocumentType);
-        const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
-        const where = { module };
-        if (filterCompanyId) {
-            where.companyId = filterCompanyId;
+        let filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        try {
+            const repo = await this.getRepo(document_type_entity_1.DocumentType, filterCompanyId);
+            const normalized = module ? module.toUpperCase() : '';
+            const moduleQueries = [normalized];
+            if (normalized === 'PURCHASE')
+                moduleQueries.push('PURCHASES');
+            if (normalized === 'PURCHASES')
+                moduleQueries.push('PURCHASE');
+            if (normalized === 'SALE')
+                moduleQueries.push('SALES');
+            if (normalized === 'SALES')
+                moduleQueries.push('SALE');
+            if (normalized === 'STOCK')
+                moduleQueries.push('INVENTORY');
+            if (normalized === 'INVENTORY')
+                moduleQueries.push('STOCK');
+            return await repo.find({
+                where: moduleQueries.map(m => ({ module: m })),
+                order: { code: 'ASC' }
+            });
         }
-        return await repo.find({ where, order: { code: 'ASC' } });
+        catch (error) {
+            console.error(`[AppController] Error in getDocumentTypes:`, error.message);
+            throw new common_1.BadRequestException(error.message);
+        }
     }
     async saveDocumentTypes(data) {
         const repo = await this.getRepo(document_type_entity_1.DocumentType);
@@ -376,14 +408,8 @@ let AppController = class AppController {
         return await repo.save(processed);
     }
     async getPaymentMethods(companyId) {
-        const repo = await this.getRepo(payment_method_entity_1.PaymentMethod);
         const filterCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
-        if (filterCompanyId) {
-            return await repo.find({
-                where: [{ companyId: filterCompanyId }, { companyId: (0, typeorm_1.IsNull)() }],
-                order: { sortOrder: 'ASC' }
-            });
-        }
+        const repo = await this.getRepo(payment_method_entity_1.PaymentMethod, filterCompanyId);
         return await repo.find({ order: { sortOrder: 'ASC' } });
     }
     async savePaymentMethod(method) {
@@ -394,59 +420,118 @@ let AppController = class AppController {
         return await repo.save(method);
     }
     async syncPush(data) {
-        const queryRunner = this.dataSource.createQueryRunner();
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
+        const mainQueryRunner = this.dataSource.createQueryRunner();
+        await mainQueryRunner.connect();
+        await mainQueryRunner.startTransaction();
         try {
             if (data.companies && data.companies.length > 0)
-                await queryRunner.manager.save(company_entity_1.Company, data.companies);
+                await mainQueryRunner.manager.save(company_entity_1.Company, data.companies);
             else if (data.companyInfo)
-                await queryRunner.manager.save(company_entity_1.Company, data.companyInfo);
-            if (data.fiscalYears && data.fiscalYears.length > 0)
-                await queryRunner.manager.save(fiscal_year_entity_1.FiscalYear, data.fiscalYears);
-            if (data.articles && data.articles.length > 0)
-                await queryRunner.manager.save(article_entity_1.Article, data.articles);
-            if (data.accounts && data.accounts.length > 0)
-                await queryRunner.manager.save(account_entity_1.Account, data.accounts);
-            if (data.journals && data.journals.length > 0)
-                await queryRunner.manager.save(journal_entity_1.Journal, data.journals);
-            if (data.salesDocuments && data.salesDocuments.length > 0)
-                await queryRunner.manager.save(sales_document_entity_1.SalesDocument, data.salesDocuments);
-            if (data.purchaseDocuments && data.purchaseDocuments.length > 0)
-                await queryRunner.manager.save(purchase_entity_1.PurchaseDocument, data.purchaseDocuments);
-            if (data.journalEntries && data.journalEntries.length > 0)
-                await queryRunner.manager.save(journal_entry_entity_1.JournalEntry, data.journalEntries);
-            if (data.stockMovements && data.stockMovements.length > 0)
-                await queryRunner.manager.save(stock_movement_entity_1.StockMovement, data.stockMovements);
-            if (data.receipts && data.receipts.length > 0)
-                await queryRunner.manager.save(treasury_entity_1.TreasuryDocument, data.receipts);
-            if (data.payments && data.payments.length > 0)
-                await queryRunner.manager.save(treasury_entity_1.TreasuryDocument, data.payments);
-            if (data.customers && data.customers.length > 0)
-                await queryRunner.manager.save(customer_entity_1.Customer, data.customers);
-            if (data.suppliers && data.suppliers.length > 0)
-                await queryRunner.manager.save(supplier_entity_1.Supplier, data.suppliers);
-            if (data.genericEntities && data.genericEntities.length > 0)
-                await queryRunner.manager.save(generic_entity_entity_1.GenericEntity, data.genericEntities);
+                await mainQueryRunner.manager.save(company_entity_1.Company, data.companyInfo);
             if (data.users && data.users.length > 0) {
                 for (const user of data.users) {
                     if (user.password && !user.password.startsWith('$2b$')) {
                         user.password = await bcrypt.hash(user.password, 10);
                     }
                 }
-                await queryRunner.manager.save(user_entity_1.User, data.users);
+                await mainQueryRunner.manager.save(user_entity_1.User, data.users);
             }
-            await queryRunner.commitTransaction();
-            return { success: true, message: 'Dados sincronizados com sucesso!' };
+            await mainQueryRunner.commitTransaction();
         }
         catch (err) {
-            await queryRunner.rollbackTransaction();
-            console.error('Sync error:', err);
-            throw new common_1.BadRequestException('Erro ao sincronizar dados: ' + err.message);
+            await mainQueryRunner.rollbackTransaction();
+            console.error('Global sync error:', err);
+            throw new common_1.BadRequestException('Erro ao sincronizar dados globais: ' + err.message);
         }
         finally {
-            await queryRunner.release();
+            await mainQueryRunner.release();
         }
+        const tenantData = new Map();
+        const addToTenant = (items, key) => {
+            if (!items || !Array.isArray(items))
+                return;
+            items.forEach(item => {
+                const cid = item.companyId;
+                if (!cid)
+                    return;
+                if (!tenantData.has(cid))
+                    tenantData.set(cid, {});
+                const group = tenantData.get(cid);
+                if (!group[key])
+                    group[key] = [];
+                group[key].push(item);
+            });
+        };
+        addToTenant(data.fiscalYears, 'fiscalYears');
+        addToTenant(data.periodAuditLogs, 'periodAuditLogs');
+        addToTenant(data.articles, 'articles');
+        addToTenant(data.accounts, 'accounts');
+        addToTenant(data.journals, 'journals');
+        addToTenant(data.journalEntries, 'journalEntries');
+        addToTenant(data.salesDocuments, 'salesDocuments');
+        addToTenant(data.purchaseDocuments, 'purchaseDocuments');
+        addToTenant(data.stockMovements, 'stockMovements');
+        addToTenant(data.receipts, 'receipts');
+        addToTenant(data.payments, 'payments');
+        addToTenant(data.customers, 'customers');
+        addToTenant(data.suppliers, 'suppliers');
+        addToTenant(data.genericEntities, 'genericEntities');
+        const errors = [];
+        for (const [companyId, group] of tenantData.entries()) {
+            try {
+                const tenantDS = await this.tenancyService.getTenantDataSource(companyId);
+                const qr = tenantDS.createQueryRunner();
+                await qr.connect();
+                await qr.startTransaction();
+                try {
+                    if (group.fiscalYears)
+                        await qr.manager.getRepository(fiscal_year_entity_1.FiscalYear).save(group.fiscalYears);
+                    if (group.periodAuditLogs)
+                        await qr.manager.getRepository(period_audit_log_entity_1.PeriodAuditLog).save(group.periodAuditLogs);
+                    if (group.articles)
+                        await qr.manager.getRepository(article_entity_1.Article).save(group.articles);
+                    if (group.accounts)
+                        await qr.manager.getRepository(account_entity_1.Account).save(group.accounts);
+                    if (group.journals)
+                        await qr.manager.getRepository(journal_entity_1.Journal).save(group.journals);
+                    if (group.salesDocuments)
+                        await qr.manager.getRepository(sales_document_entity_1.SalesDocument).save(group.salesDocuments);
+                    if (group.purchaseDocuments)
+                        await qr.manager.getRepository(purchase_entity_1.PurchaseDocument).save(group.purchaseDocuments);
+                    if (group.journalEntries)
+                        await qr.manager.getRepository(journal_entry_entity_1.JournalEntry).save(group.journalEntries);
+                    if (group.stockMovements)
+                        await qr.manager.getRepository(stock_movement_entity_1.StockMovement).save(group.stockMovements);
+                    if (group.receipts)
+                        await qr.manager.getRepository(treasury_entity_1.TreasuryDocument).save(group.receipts);
+                    if (group.payments)
+                        await qr.manager.getRepository(treasury_entity_1.TreasuryDocument).save(group.payments);
+                    if (group.customers)
+                        await qr.manager.getRepository(customer_entity_1.Customer).save(group.customers);
+                    if (group.suppliers)
+                        await qr.manager.getRepository(supplier_entity_1.Supplier).save(group.suppliers);
+                    if (group.genericEntities)
+                        await qr.manager.getRepository(generic_entity_entity_1.GenericEntity).save(group.genericEntities);
+                    await qr.commitTransaction();
+                    console.log(`Synced data for company ${companyId}`);
+                }
+                catch (e) {
+                    await qr.rollbackTransaction();
+                    throw e;
+                }
+                finally {
+                    await qr.release();
+                }
+            }
+            catch (err) {
+                console.error(`Failed to sync for company ${companyId}`, err);
+                errors.push(`Empresa ${companyId}: ${err.message}`);
+            }
+        }
+        if (errors.length > 0) {
+            return { success: false, message: 'Sincronização parcial (erros em: ' + errors.join('; ') + ')' };
+        }
+        return { success: true, message: 'Dados sincronizados com sucesso!' };
     }
 };
 exports.AppController = AppController;
@@ -509,6 +594,38 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "setCurrentYear", null);
+__decorate([
+    (0, common_1.Get)('fiscal-years/:id/checklist'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Query)('companyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "getFiscalYearChecklist", null);
+__decorate([
+    (0, common_1.Post)('fiscal-years/:id/close'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "closeFiscalYear", null);
+__decorate([
+    (0, common_1.Post)('fiscal-years/:id/reopen'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "reopenFiscalYear", null);
+__decorate([
+    (0, common_1.Get)('fiscal-years/:id/audit-logs'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Query)('companyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AppController.prototype, "getFiscalYearAuditLogs", null);
 __decorate([
     (0, common_1.Get)('series'),
     __param(0, (0, common_1.Query)('companyId')),
@@ -575,8 +692,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)('entities'),
     __param(0, (0, common_1.Query)('type')),
+    __param(1, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], AppController.prototype, "getGenericEntities", null);
 __decorate([
@@ -633,6 +751,7 @@ exports.AppController = AppController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [app_service_1.AppService,
         typeorm_1.DataSource,
-        tenancy_service_1.TenancyService])
+        tenancy_service_1.TenancyService,
+        period_control_service_1.PeriodControlService])
 ], AppController);
 //# sourceMappingURL=app.controller.js.map

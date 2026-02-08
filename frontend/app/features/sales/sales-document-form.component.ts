@@ -22,6 +22,8 @@ import { PrintSettingsModalComponent, PrintSettings } from './print-settings-mod
 import { SalesDocumentPrintComponent } from './sales-document-print.component';
 
 interface GridRow {
+  id?: string;
+  articleId?: string;
   articleCode: string;
   warehouse: string;
   location: string;
@@ -49,15 +51,12 @@ interface GridRow {
   imports: [
     CommonModule,
     FormsModule,
-    FormsModule,
     DocumentTypeModalComponent,
     DocumentTypeConfigModalComponent,
     EntityListModalComponent,
     ArticleListModalComponent,
     IvaListModalComponent,
     SalesDocumentSearchModalComponent,
-    WarehouseSearchModalComponent,
-    LocationSearchModalComponent,
     WarehouseSearchModalComponent,
     LocationSearchModalComponent,
     BatchSearchModalComponent,
@@ -131,7 +130,7 @@ interface GridRow {
             <div class="flex items-center gap-1">
               <label class="w-20 text-blue-600 font-medium text-right text-[11px] cursor-pointer hover:underline" (click)="!isLocked && openDocConfigModal()">Documento:</label>
               <div class="flex items-center border border-gray-300 bg-white rounded-sm h-5 w-16 relative">
-                 <input class="w-full h-full px-1 focus:outline-none text-[11px]" [value]="selectedDocType || defaultDocValue" [readOnly]="!isInternal" [disabled]="isLocked" />
+                 <input class="w-full h-full px-1 focus:outline-none text-[11px]" [value]="selectedDocType || defaultDocValue" [readOnly]="!isInternal" [disabled]="isLocked" (keydown)="onDocTypeKeydown($event)" />
                  <button (click)="!isLocked && openDocTypeModal()" [disabled]="isLocked" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50">F4</button>
               </div>
               <input class="flex-1 h-5 border border-gray-300 px-1 bg-[#FDFDFD] rounded-sm focus:outline-none text-[11px]" [value]="selectedDocDescription" disabled />
@@ -161,7 +160,7 @@ interface GridRow {
             <div class="flex items-center gap-1">
               <label class="w-20 text-blue-600 font-medium text-right text-[11px]">Entidade:</label>
               <div class="flex items-center border border-gray-300 bg-white rounded-sm h-5 w-24 relative">
-                 <input class="w-full h-full px-1 focus:outline-none text-[11px] disabled:bg-gray-100" [value]="selectedEntityCode" [disabled]="isLocked" />
+                 <input class="w-full h-full px-1 focus:outline-none text-[11px] disabled:bg-gray-100" [value]="selectedEntityCode" [disabled]="isLocked" (keydown)="onEntityKeydown($event)" />
                  <button (click)="!isLocked && openEntityModal()" [disabled]="isLocked" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50">F4</button>
               </div>
               <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm focus:outline-none text-[11px] disabled:bg-gray-100" [value]="selectedEntityName" [disabled]="isLocked" />
@@ -460,6 +459,8 @@ interface GridRow {
       </div>
       <app-document-type-modal 
         *ngIf="showDocTypeModal" 
+        [module]="'SALES'"
+        [documentTypes]="salesDocTypes"
         (close)="showDocTypeModal = false"
         (select)="onDocTypeSelect($event)"
       ></app-document-type-modal>
@@ -605,12 +606,13 @@ interface GridRow {
     </div>
   `
 })
-export class SalesDocumentForm {
+export class SalesDocumentFormComponent {
   @Input() viewMode: string = 'sales-form';
 
   activeCompanyId: string | null = null;
 
   showDocTypeModal = false;
+  salesDocTypes: any[] = [];
   selectedDocType = '';
   selectedDocDescription = '';
 
@@ -644,15 +646,15 @@ export class SalesDocumentForm {
       this.activeCompanyId = this.activeCompany.id;
     }
 
-    // Always call these to ensure state is initialized, even if company is not found
+    // Only call loadSeries, which will itself call loadNextNumber
     this.loadSeries();
-    this.loadNextNumber();
   }
 
   loadSeries() {
     this.availableSeries = [];
 
     this.dataService.getDocumentTypes('SALES').subscribe(types => {
+      this.salesDocTypes = types || [];
       if (types) {
         const docType = types.find((t: any) => t.code === (this.selectedDocType || this.defaultDocValue));
 
@@ -672,12 +674,18 @@ export class SalesDocumentForm {
         // If current series is not in the list, select the default one or the first one
         if (!this.currentSeries || !currentExists) {
           const defaultS = this.availableSeries.find(s => s.isDefault);
+
           this.currentSeries = defaultS ? defaultS.code : this.availableSeries[0].code;
+          this.loadNextNumber();
+        } else {
+          this.loadNextNumber();
         }
       } else {
         this.currentSeries = '';
+        this.loadNextNumber();
       }
-      this.loadNextNumber(); // Reload next number after series is updated
+
+      this.cdr.detectChanges();
     });
   }
 
@@ -819,6 +827,24 @@ export class SalesDocumentForm {
     }
   }
 
+  onDocTypeKeydown(event: KeyboardEvent) {
+    if (event.key === 'F4') {
+      event.preventDefault();
+      if (!this.isLocked) {
+        this.openDocTypeModal();
+      }
+    }
+  }
+
+  onEntityKeydown(event: KeyboardEvent) {
+    if (event.key === 'F4') {
+      event.preventDefault();
+      if (!this.isLocked) {
+        this.openEntityModal();
+      }
+    }
+  }
+
   openDocTypeModal() {
     this.showDocTypeModal = true;
   }
@@ -902,6 +928,8 @@ export class SalesDocumentForm {
 
     this.rows[index] = {
       ...this.rows[index],
+      id: undefined, // Clear existing line ID if changing article
+      articleId: article.id,
       articleCode: article.code,
       description: article.name || article.description,
       unit: article.unit,
@@ -1170,9 +1198,6 @@ export class SalesDocumentForm {
     this.initializeGrid();
     this.calculateTotals();
     this.loadTreasuryAccounts();
-
-    // Load last number for default doc type
-    this.loadNextNumber();
   }
 
   initializeGrid() {
@@ -1310,6 +1335,7 @@ export class SalesDocumentForm {
 
   loadNextNumber() {
     this.dataService.getSalesDocuments(this.activeCompanyId || undefined).subscribe(docs => {
+      let nextNum = 1;
       const typeDocs = docs.filter((d: any) =>
         d.documentType === (this.selectedDocType || this.defaultDocValue) &&
         d.series === this.currentSeries
@@ -1318,13 +1344,16 @@ export class SalesDocumentForm {
       if (typeDocs.length > 0) {
         const numbers = typeDocs.map((d: any) => Number(d.seriesNumber)).filter(n => !isNaN(n));
         const maxNum = numbers.length > 0 ? Math.max(...numbers) : 0;
-        this.currentSeriesNumber = maxNum + 1;
-      } else {
-        this.currentSeriesNumber = 1;
+        nextNum = maxNum + 1;
       }
-      this.ngZone.run(() => {
-        this.updatePageTitle();
-        this.cdr.detectChanges();
+
+      // Wrap in setTimeout to ensure it runs outside the check cycle
+      setTimeout(() => {
+        this.ngZone.run(() => {
+          this.currentSeriesNumber = nextNum;
+          this.updatePageTitle();
+          this.cdr.detectChanges();
+        });
       });
     });
   }
@@ -1380,7 +1409,7 @@ export class SalesDocumentForm {
           // If loading a number that doesn't exist, reset to draft and clear entity/lines
           // but keep the current number
           const currentNum = this.currentSeriesNumber;
-          this.status = 'DRAFT';
+          this.status = WorkflowStatus.DRAFT;
           this.clearForm();
           this.currentSeriesNumber = currentNum;
           this.selectedDocType = type;
@@ -1599,7 +1628,7 @@ export class SalesDocumentForm {
     // Create sales document with sequential numbering
     const documentNumber = `${this.selectedDocType} ${this.currentSeries}/${this.currentSeriesNumber}`;
 
-    const salesLines: SalesDocumentLine[] = validLines.map((row, index) => {
+    const salesLines: SalesDocumentLine[] = validLines.map((row) => {
       // Parse IVA rate properly - handle "23%" format
       let ivaRate = 0;
       if (row.iva && typeof row.iva === 'string' && row.iva.trim() !== '') {
@@ -1617,8 +1646,10 @@ export class SalesDocumentForm {
       const articleName = row.description && row.description.trim() !== '' ? row.description : row.articleCode;
 
       return {
-        id: `LINE${index + 1}`,
-        articleId: row.articleCode, // Mapping code to ID for now as per logic
+        // Only send ID if it's a valid UUID (36 chars). 
+        // Do NOT send temporary IDs like "LINE1" as backend entity expects UUID.
+        id: (row.id && row.id.length === 36) ? row.id : undefined,
+        articleId: row.articleId || row.articleCode,
         articleCode: row.articleCode,
         articleName: articleName,
         quantity: quantity,
@@ -1629,7 +1660,7 @@ export class SalesDocumentForm {
         subtotal: subtotal,
         ivaAmount: ivaAmount,
         total: subtotal + ivaAmount
-      };
+      } as any;
     });
 
     // Determine status
@@ -1637,15 +1668,15 @@ export class SalesDocumentForm {
     if (isPrinting) newStatus = WorkflowStatus.APPROVED; // Using APPROVED for CONFIRMED/INVOICED
     if (isCancelling) newStatus = WorkflowStatus.REJECTED;
 
-    const salesDoc: SalesDocument = {
-      id: this.currentId as any,
+    const salesDoc: any = {
+      id: this.currentId,
       companyId: this.activeCompanyId || undefined,
       documentType: this.selectedDocType,
       documentNumber: documentNumber,
       series: this.currentSeries,
       seriesNumber: this.currentSeriesNumber,
-      date: this.documentDate as any,
-      dueDate: this.dueDate as any,
+      date: this.documentDate,
+      dueDate: this.dueDate,
       customerId: this.selectedEntityCode,
       customerName: this.selectedEntityName,
       customerNif: this.selectedEntityNif,
@@ -1693,8 +1724,11 @@ export class SalesDocumentForm {
               this.currentId = savedDoc?.id || this.currentId;
               this.loadWorkflowHistory();
 
-              this.processPostSaveActions(savedDoc || salesDoc, this.currentId || '', documentNumber, isPrinting, isCancelling);
-              this.cdr.detectChanges();
+              // Refresh inventory data to reflect stock movements
+              this.inventoryService.loadData().then(() => {
+                this.processPostSaveActions(savedDoc || salesDoc, this.currentId || '', documentNumber, isPrinting, isCancelling);
+                this.cdr.detectChanges();
+              });
             });
           },
           error: (err) => {

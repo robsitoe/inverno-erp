@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventoryService } from '../../shared/inventory.service';
@@ -86,10 +87,21 @@ export class ArticleSearchModalComponent implements OnInit {
   articles: Article[] = [];
   filteredArticles: Article[] = [];
 
+  private subscription = new Subscription();
+
   constructor(private inventoryService: InventoryService) { }
 
   ngOnInit() {
     this.loadArticles();
+    this.subscription.add(
+      this.inventoryService.articlesUpdated$.subscribe(() => {
+        this.loadArticles();
+      })
+    );
+  }
+
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
   }
 
   loadArticles() {
@@ -104,7 +116,7 @@ export class ArticleSearchModalComponent implements OnInit {
     }
     const term = this.searchTerm.toLowerCase();
     this.filteredArticles = this.articles.filter(a =>
-      a.code.toLowerCase().includes(term) ||
+      (a.code || '').toLowerCase().includes(term) ||
       (a.name || '').toLowerCase().includes(term) ||
       (a.description || '').toLowerCase().includes(term)
     );

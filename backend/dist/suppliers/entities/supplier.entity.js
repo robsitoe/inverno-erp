@@ -33,7 +33,7 @@ let Supplier = class Supplier {
 };
 exports.Supplier = Supplier;
 __decorate([
-    (0, typeorm_1.PrimaryColumn)(),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
     __metadata("design:type", String)
 ], Supplier.prototype, "id", void 0);
 __decorate([

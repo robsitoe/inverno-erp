@@ -22,16 +22,16 @@ export class TreasuryService {
     private readonly workflowService: WorkflowService,
   ) { }
 
-  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>): Promise<Repository<T>> {
-    const companyId = TenancyContext.getCompanyId();
-    if (!companyId) return defaultRepo;
+  private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>, companyId?: string): Promise<Repository<T>> {
+    const targetId = companyId || TenancyContext.getCompanyId();
+    if (!targetId) return defaultRepo;
 
-    const ds = await this.tenancyService.getTenantDataSource(companyId);
+    const ds = await this.tenancyService.getTenantDataSource(targetId);
     return ds.getRepository(entity);
   }
 
-  private async getTreasuryRepo() { return this.getRepo(TreasuryDocument, this.defaultTreasuryRepo); }
-  private async getPaymentMethodRepo() { return this.getRepo(PaymentMethod, this.defaultPaymentMethodRepo); }
+  private async getTreasuryRepo(companyId?: string) { return this.getRepo(TreasuryDocument, this.defaultTreasuryRepo, companyId); }
+  private async getPaymentMethodRepo(companyId?: string) { return this.getRepo(PaymentMethod, this.defaultPaymentMethodRepo, companyId); }
 
   async create(createTreasuryDto: CreateTreasuryDto) {
     await this.periodControlService.ensureDateInOpenPeriod(createTreasuryDto.date, createTreasuryDto.companyId);
@@ -41,13 +41,8 @@ export class TreasuryService {
   }
 
   async findAll(companyId?: string) {
-    const repo = await this.getTreasuryRepo();
-    if (companyId) {
-      return repo.find({
-        where: { companyId },
-        relations: ['lines']
-      });
-    }
+    const listCompanyId = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getTreasuryRepo(listCompanyId);
     return repo.find({ relations: ['lines'] });
   }
 
@@ -104,13 +99,10 @@ export class TreasuryService {
   }
 
   async findAllReceipts(companyId?: string) {
-    const repo = await this.getTreasuryRepo();
-    const where: any = { type: TreasuryDocumentType.RECEIPT };
-    if (companyId) {
-      where.companyId = companyId;
-    }
+    const listCompanyId = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getTreasuryRepo(listCompanyId);
     return repo.find({
-      where,
+      where: { type: TreasuryDocumentType.RECEIPT },
       relations: ['lines']
     });
   }
@@ -124,13 +116,10 @@ export class TreasuryService {
   }
 
   async findAllPayments(companyId?: string) {
-    const repo = await this.getTreasuryRepo();
-    const where: any = { type: TreasuryDocumentType.PAYMENT };
-    if (companyId) {
-      where.companyId = companyId;
-    }
+    const listCompanyId = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getTreasuryRepo(listCompanyId);
     return repo.find({
-      where,
+      where: { type: TreasuryDocumentType.PAYMENT },
       relations: ['lines']
     });
   }

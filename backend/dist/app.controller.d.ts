@@ -13,11 +13,14 @@ import { CreateJournalDto } from './accounting/dto/create-journal.dto';
 import { CreateCustomerDto } from './customers/dto/create-customer.dto';
 import { CreateSupplierDto } from './suppliers/dto/create-supplier.dto';
 import { TenancyService } from './tenancy/tenancy.service';
+import { PeriodControlService } from './periods/period-control.service';
+import { PeriodAuditLog } from './companies/entities/period-audit-log.entity';
 export declare class AppController {
     private readonly appService;
     private readonly dataSource;
     private readonly tenancyService;
-    constructor(appService: AppService, dataSource: DataSource, tenancyService: TenancyService);
+    private readonly periodControlService;
+    constructor(appService: AppService, dataSource: DataSource, tenancyService: TenancyService, periodControlService: PeriodControlService);
     private getRepo;
     testRoute(): {
         status: string;
@@ -40,6 +43,64 @@ export declare class AppController {
     }): Promise<{
         success: boolean;
     }>;
+    getFiscalYearChecklist(id: string, companyId?: string): Promise<{
+        fiscalYear: FiscalYear;
+        checklist: {
+            trialBalance: {
+                ok: boolean;
+                debit: number;
+                credit: number;
+                difference: number;
+            };
+            pendingDocuments: {
+                ok: boolean;
+                salesDraft: number;
+                purchaseDraft: number;
+                total: number;
+            };
+            reconciliations: {
+                ok: boolean;
+                pending: number;
+            };
+        };
+    }>;
+    closeFiscalYear(id: string, body: {
+        reason: string;
+        userId?: string;
+        username?: string;
+        companyId?: string;
+    }): Promise<{
+        success: boolean;
+        fiscalYear: FiscalYear;
+        checklist: {
+            trialBalance: {
+                ok: boolean;
+                debit: number;
+                credit: number;
+                difference: number;
+            };
+            pendingDocuments: {
+                ok: boolean;
+                salesDraft: number;
+                purchaseDraft: number;
+                total: number;
+            };
+            reconciliations: {
+                ok: boolean;
+                pending: number;
+            };
+        };
+    }>;
+    reopenFiscalYear(id: string, body: {
+        reason: string;
+        userId: string;
+        username?: string;
+        companyId?: string;
+    }): Promise<{
+        success: boolean;
+        fiscalYear: FiscalYear;
+    }>;
+    getFiscalYearAuditLogs(id: string, companyId?: string): Promise<PeriodAuditLog[]>;
     getSeries(companyId: string): Promise<Series[]>;
     saveSeries(series: any): Promise<any>;
     deleteSeries(id: string): Promise<import("typeorm").DeleteResult>;
@@ -117,7 +178,7 @@ export declare class AppController {
         payableAccountId?: string;
         isActive?: boolean;
     } & Supplier)>;
-    getGenericEntities(type: string): Promise<GenericEntity[]>;
+    getGenericEntities(type: string, companyId?: string): Promise<GenericEntity[]>;
     saveGenericEntity(entity: any): Promise<any>;
     testDbConnection(config: any): Promise<{
         success: boolean;

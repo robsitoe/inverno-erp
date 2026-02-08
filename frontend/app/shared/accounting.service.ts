@@ -88,7 +88,7 @@ export class AccountingService {
             this.allAccounts = [];
             throw e; // Propagate error so UI can handle it
         }
-        this.accounts = this.filterByCompany(this.allAccounts);
+        this.accounts = this.allAccounts;
     }
 
     async loadAccountsPreset(presetName: string) {
@@ -165,7 +165,7 @@ export class AccountingService {
             this.allJournals = [];
             throw e;
         }
-        this.journals = this.filterByCompany(this.allJournals);
+        this.journals = this.allJournals;
     }
 
     private async loadJournalEntries() {
@@ -176,7 +176,7 @@ export class AccountingService {
         } catch (e) {
             this.allJournalEntries = [];
         }
-        this.journalEntries = this.filterByCompany(this.allJournalEntries);
+        this.journalEntries = this.allJournalEntries;
     }
 
     private loadAuditLogs() {
@@ -184,6 +184,9 @@ export class AccountingService {
         if (stored) {
             this.allAuditLogs = JSON.parse(stored);
         }
+        // Audit logs might be mixed in local storage, so we might need keeping filter here IF DataService doesn't handle it.
+        // DataService doesn't seem to have getAuditLogs. This is strictly local/custom here.
+        // Let's keep it for AuditLogs as they seem bypassing DataService for read?
         this.auditLogs = this.filterByCompany(this.allAuditLogs);
     }
 
@@ -490,7 +493,7 @@ export class AccountingService {
             sourceDocument: salesDoc.id,
             sourceType: 'SALE',
             lines: lines,
-            status: (salesDoc.documentType === 'VD' || paymentCondition === 'PRONTO' || salesDoc.status === 'CONFIRMED' || salesDoc.status === 'INVOICED') ? 'POSTED' : 'DRAFT',
+            status: (salesDoc.documentType === 'VD' || paymentCondition === 'PRONTO' || salesDoc.status === 'APPROVED' || salesDoc.status === 'POSTED') ? 'POSTED' : 'DRAFT',
             createdBy: 'Sistema',
             createdAt: new Date()
         };

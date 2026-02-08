@@ -17,6 +17,7 @@ const account_entity_1 = require("../accounting/entities/account.entity");
 const journal_entry_entity_1 = require("../accounting/entities/journal-entry.entity");
 const article_entity_1 = require("../inventory/entities/article.entity");
 const stock_movement_entity_1 = require("../inventory/entities/stock-movement.entity");
+const stock_document_entity_1 = require("../inventory/entities/stock-document.entity");
 const sales_document_entity_1 = require("../sales/entities/sales-document.entity");
 const purchase_entity_1 = require("../purchases/entities/purchase.entity");
 const treasury_entity_1 = require("../treasury/entities/treasury.entity");
@@ -28,6 +29,7 @@ const series_entity_1 = require("../companies/entities/series.entity");
 const generic_entity_entity_1 = require("../common-entities/generic-entity.entity");
 const payment_method_entity_1 = require("../treasury/entities/payment-method.entity");
 const document_type_entity_1 = require("../common-entities/entities/document-type.entity");
+const period_audit_log_entity_1 = require("../companies/entities/period-audit-log.entity");
 const initial_data_1 = require("../common-entities/initial-data");
 let TenancyService = class TenancyService {
     mainDataSource;
@@ -77,10 +79,11 @@ let TenancyService = class TenancyService {
                 database: targetDbName,
                 entities: [
                     account_entity_1.Account, journal_entry_entity_1.JournalEntry, journal_entry_entity_1.JournalLine, article_entity_1.Article, stock_movement_entity_1.StockMovement,
+                    stock_document_entity_1.StockDocument, stock_document_entity_1.StockDocumentLine,
                     sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, purchase_entity_1.PurchaseDocument,
                     purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
                     fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity,
-                    document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod
+                    document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, period_audit_log_entity_1.PeriodAuditLog
                 ],
                 synchronize: true,
                 logging: ['error', 'warn'],
@@ -166,8 +169,10 @@ let TenancyService = class TenancyService {
         }
     }
     async seedTenantData(ds, companyId) {
+        console.log(`[Tenancy] Seeding data for company ${companyId}...`);
         try {
             const company = await this.mainDataSource.getRepository(company_entity_1.Company).findOne({ where: { id: companyId } });
+            console.log(`[Tenancy] Company found for seeding: ${company?.name}`);
             const currentYear = new Date().getFullYear();
             let yearToUse = currentYear;
             let seriesCode = `${currentYear}`;
@@ -190,9 +195,11 @@ let TenancyService = class TenancyService {
                 startDate = `${yearToUse}-01-01`;
                 endDate = `${yearToUse}-12-31`;
             }
+            console.log(`[Tenancy] Using year ${yearToUse}, series ${seriesCode}`);
             const fiscalYearRepo = ds.getRepository(fiscal_year_entity_1.FiscalYear);
             let fiscalYear = await fiscalYearRepo.findOne({ where: { companyId, year: yearToUse } });
             if (!fiscalYear) {
+                console.log(`[Tenancy] Creating Fiscal Year ${yearToUse}`);
                 fiscalYear = new fiscal_year_entity_1.FiscalYear();
                 fiscalYear.id = `${yearToUse}-${companyId}`;
                 fiscalYear.year = yearToUse;
@@ -202,11 +209,11 @@ let TenancyService = class TenancyService {
                 fiscalYear.startDate = startDate;
                 fiscalYear.endDate = endDate;
                 await fiscalYearRepo.save(fiscalYear);
-                console.log(`[Tenancy] Initialized Fiscal Year ${yearToUse} for Company ${companyId}`);
             }
             const seriesRepo = ds.getRepository(series_entity_1.Series);
             let series = await seriesRepo.findOne({ where: { companyId, code: seriesCode } });
             if (!series) {
+                console.log(`[Tenancy] Creating Series ${seriesCode}`);
                 series = new series_entity_1.Series();
                 series.id = company?.seriesConfig ? `SERIES-${seriesCode}-${companyId}` : `${yearToUse}-${companyId}`;
                 series.companyId = companyId;
@@ -217,12 +224,12 @@ let TenancyService = class TenancyService {
                 series.active = true;
                 series.module = 'GLOBAL';
                 await seriesRepo.save(series);
-                console.log(`[Tenancy] Initialized Series ${seriesCode} for Company ${companyId}`);
             }
+            console.log(`[Tenancy] Checking Document Types...`);
             const docTypeRepo = ds.getRepository(document_type_entity_1.DocumentType);
             const count = await docTypeRepo.count();
             if (count === 0) {
-                console.log(`[Tenancy] Seeding standard document types for company ${companyId}...`);
+                console.log(`[Tenancy] Seeding standard document types...`);
                 const initialSeriesConfig = {
                     code: seriesCode,
                     description: seriesDesc,
@@ -247,12 +254,13 @@ let TenancyService = class TenancyService {
                     isActive: true
                 }));
                 await docTypeRepo.save(entities);
-                console.log(`[Tenancy] ✅ Created ${entities.length} document types with series: ${seriesCode}`);
+                console.log(`[Tenancy] ✅ Created ${entities.length} document types.`);
             }
+            console.log(`[Tenancy] Checking Payment Methods...`);
             const pmRepo = ds.getRepository(payment_method_entity_1.PaymentMethod);
             const pmCount = await pmRepo.count();
             if (pmCount === 0) {
-                console.log(`[Tenancy] Seeding standard payment methods for company ${companyId}...`);
+                console.log(`[Tenancy] Seeding standard payment methods...`);
                 const pmDefaults = [
                     { id: `PM-NUM-${companyId}`, code: 'NUM', description: 'Numerário', companyId, sortOrder: 1, isActive: true },
                     { id: `PM-TRF-${companyId}`, code: 'TRF', description: 'Transferência Bancária', companyId, sortOrder: 2, isActive: true },
@@ -260,10 +268,13 @@ let TenancyService = class TenancyService {
                     { id: `PM-CRD-${companyId}`, code: 'CRD', description: 'Cartão de Crédito/Débito', companyId, sortOrder: 4, isActive: true }
                 ];
                 await pmRepo.save(pmDefaults);
+                console.log(`[Tenancy] ✅ Created ${pmDefaults.length} payment methods.`);
             }
+            console.log(`[Tenancy] Seeding completed for ${companyId}`);
         }
         catch (err) {
-            console.error(`[Tenancy] Error seeding data for company ${companyId}:`, err.message);
+            console.error(`[Tenancy] Error in seedTenantData for ${companyId}:`, err);
+            throw err;
         }
     }
 };

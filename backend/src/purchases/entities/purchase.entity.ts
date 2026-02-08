@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { WorkflowStatus } from '../../common/enums/workflow-status.enum';
 
 export enum PurchaseDocumentType {
@@ -13,7 +13,7 @@ export enum PurchaseDocumentType {
 
 @Entity('purchase_documents')
 export class PurchaseDocument {
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @Column({ nullable: true })
@@ -97,7 +97,7 @@ export class PurchaseDocument {
 
 @Entity('purchase_document_lines')
 export class PurchaseDocumentLine {
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @ManyToOne(() => PurchaseDocument, (document) => document.lines, { onDelete: 'CASCADE' })

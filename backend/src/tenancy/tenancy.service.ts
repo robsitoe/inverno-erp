@@ -5,6 +5,7 @@ import { Account } from '../accounting/entities/account.entity';
 import { JournalEntry, JournalLine } from '../accounting/entities/journal-entry.entity';
 import { Article } from '../inventory/entities/article.entity';
 import { StockMovement } from '../inventory/entities/stock-movement.entity';
+import { StockDocument, StockDocumentLine } from '../inventory/entities/stock-document.entity';
 import { SalesDocument, SalesDocumentLine } from '../sales/entities/sales-document.entity';
 import { PurchaseDocument, PurchaseDocumentLine } from '../purchases/entities/purchase.entity';
 import { TreasuryDocument, TreasuryDocumentLine } from '../treasury/entities/treasury.entity';
@@ -85,6 +86,7 @@ export class TenancyService implements OnModuleDestroy {
                 database: targetDbName,
                 entities: [
                     Account, JournalEntry, JournalLine, Article, StockMovement,
+                    StockDocument, StockDocumentLine,
                     SalesDocument, SalesDocumentLine, PurchaseDocument,
                     PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
                     FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
@@ -188,12 +190,13 @@ export class TenancyService implements OnModuleDestroy {
     }
 
     private async seedTenantData(ds: DataSource, companyId: string) {
+        console.log(`[Tenancy] Seeding data for company ${companyId}...`);
         try {
             // Fetch company from MAIN database to see its config
             const company = await this.mainDataSource.getRepository(Company).findOne({ where: { id: companyId } });
+            console.log(`[Tenancy] Company found for seeding: ${company?.name}`);
 
             // 1. Ensure Fiscal Year and Series exist
-            // This logic was moved from AppController to ensure it runs on the correct tenant DB
             const currentYear = new Date().getFullYear();
             let yearToUse = currentYear;
             let seriesCode = `${currentYear}`;
@@ -216,11 +219,14 @@ export class TenancyService implements OnModuleDestroy {
                 endDate = `${yearToUse}-12-31`;
             }
 
+            console.log(`[Tenancy] Using year ${yearToUse}, series ${seriesCode}`);
+
             // Fiscal Year
             const fiscalYearRepo = ds.getRepository(FiscalYear);
             let fiscalYear = await fiscalYearRepo.findOne({ where: { companyId, year: yearToUse } });
 
             if (!fiscalYear) {
+                console.log(`[Tenancy] Creating Fiscal Year ${yearToUse}`);
                 fiscalYear = new FiscalYear();
                 fiscalYear.id = `${yearToUse}-${companyId}`;
                 fiscalYear.year = yearToUse;
@@ -230,15 +236,14 @@ export class TenancyService implements OnModuleDestroy {
                 fiscalYear.startDate = startDate;
                 fiscalYear.endDate = endDate;
                 await fiscalYearRepo.save(fiscalYear);
-                console.log(`[Tenancy] Initialized Fiscal Year ${yearToUse} for Company ${companyId}`);
             }
 
             // Series
             const seriesRepo = ds.getRepository(Series);
-            // Default active series for this year
             let series = await seriesRepo.findOne({ where: { companyId, code: seriesCode } });
 
             if (!series) {
+                console.log(`[Tenancy] Creating Series ${seriesCode}`);
                 series = new Series();
                 series.id = company?.seriesConfig ? `SERIES-${seriesCode}-${companyId}` : `${yearToUse}-${companyId}`;
                 series.companyId = companyId;
@@ -247,19 +252,18 @@ export class TenancyService implements OnModuleDestroy {
                 series.startDate = startDate;
                 series.endDate = endDate;
                 series.active = true;
-                series.module = 'GLOBAL'; // Ensure consistency
+                series.module = 'GLOBAL';
                 await seriesRepo.save(series);
-                console.log(`[Tenancy] Initialized Series ${seriesCode} for Company ${companyId}`);
             }
 
             // 2. Document Types
+            console.log(`[Tenancy] Checking Document Types...`);
             const docTypeRepo = ds.getRepository(DocumentType);
             const count = await docTypeRepo.count();
 
             if (count === 0) {
-                console.log(`[Tenancy] Seeding standard document types for company ${companyId}...`);
+                console.log(`[Tenancy] Seeding standard document types...`);
 
-                // Create initial series configuration for the document type JSON structure
                 const initialSeriesConfig = {
                     code: seriesCode,
                     description: seriesDesc,
@@ -282,19 +286,20 @@ export class TenancyService implements OnModuleDestroy {
                     ...t,
                     id: `${t.module}-${t.code}-${companyId}`,
                     companyId: companyId,
-                    series: [initialSeriesConfig], // Link to the created series context
+                    series: [initialSeriesConfig],
                     isActive: true
                 }));
 
                 await docTypeRepo.save(entities);
-                console.log(`[Tenancy] ✅ Created ${entities.length} document types with series: ${seriesCode}`);
+                console.log(`[Tenancy] ✅ Created ${entities.length} document types.`);
             }
 
             // 3. Payment Methods
+            console.log(`[Tenancy] Checking Payment Methods...`);
             const pmRepo = ds.getRepository(PaymentMethod);
             const pmCount = await pmRepo.count();
             if (pmCount === 0) {
-                console.log(`[Tenancy] Seeding standard payment methods for company ${companyId}...`);
+                console.log(`[Tenancy] Seeding standard payment methods...`);
                 const pmDefaults = [
                     { id: `PM-NUM-${companyId}`, code: 'NUM', description: 'Numerário', companyId, sortOrder: 1, isActive: true },
                     { id: `PM-TRF-${companyId}`, code: 'TRF', description: 'Transferência Bancária', companyId, sortOrder: 2, isActive: true },
@@ -302,10 +307,14 @@ export class TenancyService implements OnModuleDestroy {
                     { id: `PM-CRD-${companyId}`, code: 'CRD', description: 'Cartão de Crédito/Débito', companyId, sortOrder: 4, isActive: true }
                 ];
                 await pmRepo.save(pmDefaults);
+                console.log(`[Tenancy] ✅ Created ${pmDefaults.length} payment methods.`);
             }
+            console.log(`[Tenancy] Seeding completed for ${companyId}`);
 
         } catch (err: any) {
-            console.error(`[Tenancy] Error seeding data for company ${companyId}:`, err.message);
+            console.error(`[Tenancy] Error in seedTenantData for ${companyId}:`, err);
+            // Re-throw if it's a structural error that should stop initialization
+            throw err;
         }
     }
 }

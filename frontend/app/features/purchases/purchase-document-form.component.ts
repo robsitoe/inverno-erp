@@ -103,7 +103,22 @@ interface CompanyInfo {
       <div class="flex flex-col h-full w-full bg-[#F0F0F0] text-xs overflow-hidden relative no-print">
         <!-- Toolbar -->
         <div class="flex items-center gap-1 px-2 py-1.5 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0 overflow-x-auto">
-            <span>{{ item.label }}</span>
+          <!-- Standard Toolbar Buttons -->
+          <button (click)="saveDocument()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+            <span class="material-symbols-outlined text-[18px] text-blue-600">save</span>
+            <span>Gravar</span>
+          </button>
+          <button (click)="newDocument()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+            <span class="material-symbols-outlined text-[18px] text-green-600">add_circle</span>
+            <span>Novo</span>
+          </button>
+          <button (click)="voidDocument()" *ngIf="currentDoc.id" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+            <span class="material-symbols-outlined text-[18px] text-red-600">cancel</span>
+            <span>Anular</span>
+          </button>
+          <button (click)="duplicateDocument()" *ngIf="currentDoc.id" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+            <span class="material-symbols-outlined text-[18px] text-purple-600">content_copy</span>
+            <span>Duplicar</span>
           </button>
           
           <!-- Workflow Actions -->
@@ -413,6 +428,7 @@ interface CompanyInfo {
           <!-- Modals -->
           <app-purchase-document-type-modal
             *ngIf="isDocTypeModalOpen"
+            [documentTypes]="purchaseDocTypes"
             (close)="isDocTypeModalOpen = false"
             (select)="onDocTypeSelect($event)">
           </app-purchase-document-type-modal>
@@ -567,6 +583,7 @@ export class PurchaseDocumentFormComponent {
   }
 
   availableSeries: any[] = [];
+  purchaseDocTypes: any[] = [];
   currentDoc!: PurchaseDocument;
 
   constructor(
@@ -594,7 +611,6 @@ export class PurchaseDocumentFormComponent {
 
         // Load series and numbers after company ID is known
         this.loadSeries();
-        this.loadNextNumber();
 
         this.cdr.detectChanges();
       }
@@ -605,15 +621,14 @@ export class PurchaseDocumentFormComponent {
     this.availableSeries = [];
 
     this.dataService.getDocumentTypes('PURCHASES').subscribe(types => {
-      if (types) {
-        const docType = types.find((t: any) => t.code === this.currentDoc.type);
+      this.purchaseDocTypes = types || [];
+      const docType = this.purchaseDocTypes.find((t: any) => t.code === this.currentDoc.type);
 
-        if (docType && docType.series && docType.series.length > 0) {
-          if (this.activeCompanyId) {
-            this.availableSeries = docType.series.filter((s: any) => s.active && s.companyId == this.activeCompanyId);
-          } else {
-            this.availableSeries = docType.series.filter((s: any) => s.active && !s.companyId);
-          }
+      if (docType && docType.series && docType.series.length > 0) {
+        if (this.activeCompanyId) {
+          this.availableSeries = docType.series.filter((s: any) => s.active && s.companyId == this.activeCompanyId);
+        } else {
+          this.availableSeries = docType.series.filter((s: any) => s.active && !s.companyId);
         }
       }
 
@@ -628,6 +643,7 @@ export class PurchaseDocumentFormComponent {
         this.currentDoc.series = '';
       }
       this.loadNextNumber(); // Reload next number after series is updated
+      this.cdr.detectChanges();
     });
   }
 
@@ -725,15 +741,21 @@ export class PurchaseDocumentFormComponent {
   }
 
   getDocTypeDescription(): string {
-    const types: any = {
-      'FC': 'Fatura de Compra',
-      'NC': 'Nota de Crédito',
-      'ND': 'Nota de Débito',
-      'GR': 'Guia de Receção',
-      'EF': 'Encomenda a Fornecedor',
-      'DC': 'Devolução a Fornecedor'
-    };
-    return types[this.currentDoc.type] || '';
+    if (!this.purchaseDocTypes || this.purchaseDocTypes.length === 0) {
+      // Fallback to constants or common types if not loaded yet
+      const types: any = {
+        'FC': 'Fatura de Compra',
+        'NC': 'Nota de Crédito',
+        'ND': 'Nota de Débito',
+        'GR': 'Guia de Receção',
+        'EF': 'Encomenda a Fornecedor',
+        'DC': 'Devolução a Fornecedor'
+      };
+      return types[this.currentDoc.type] || '';
+    }
+
+    const docType = this.purchaseDocTypes.find(t => t.code === this.currentDoc.type);
+    return docType ? (docType.name || docType.description) : this.currentDoc.type;
   }
 
   // Modal handlers
@@ -808,6 +830,7 @@ export class PurchaseDocumentFormComponent {
 
     const article = this.inventoryService.getArticleByCode(line.articleCode);
     if (article) {
+      line.articleId = article.id;
       line.articleName = article.description;
       line.description = article.description;
       line.unit = article.unit;
@@ -1247,21 +1270,25 @@ export class PurchaseDocumentFormComponent {
     // Save via DataService
     this.dataService.savePurchaseDocument(backendPayload).subscribe({
       next: (savedDoc) => {
-        this.currentDoc = savedDoc || this.currentDoc;
-        this.loadWorkflowHistory();
-        if (post) {
-          // Create stock movements and accounting ONLY when posting
-          this.createStockMovements();
-          this.createAccountingEntries();
-          if (print) {
-            alert('Documento processado e enviado para a impressora.');
-            setTimeout(() => window.print(), 500);
+        // Refresh inventory data after save to reflect stock changes
+        this.inventoryService.loadData().then(() => {
+          this.currentDoc = savedDoc || this.currentDoc;
+          this.loadWorkflowHistory();
+          if (post) {
+            // Create stock movements and accounting ONLY when posting
+            this.createStockMovements();
+            this.createAccountingEntries();
+            if (print) {
+              alert('Documento processado e enviado para a impressora.');
+              setTimeout(() => window.print(), 500);
+            } else {
+              alert('Documento lançado com sucesso.');
+            }
           } else {
-            alert('Documento lançado com sucesso.');
+            alert('Documento gravado como Rascunho.');
           }
-        } else {
-          alert('Documento gravado como Rascunho.');
-        }
+          this.cdr.detectChanges();
+        });
       },
       error: (err) => {
         console.error('Erro ao gravar documento:', err);
@@ -1402,9 +1429,13 @@ export class PurchaseDocumentFormComponent {
 
     this.dataService.processWorkflow('purchases', this.currentDoc.id, action, notes).subscribe({
       next: (res) => {
-        this.currentDoc.status = res.status;
-        this.loadWorkflowHistory();
-        alert(`Documento ${action === 'SUBMIT' ? 'submetido' : action === 'APPROVE' ? 'aprovado' : action === 'REJECT' ? 'rejeitado' : 'lançado'} com sucesso.`);
+        // Refresh inventory data after workflow action as it might trigger movements (e.g., POSTING)
+        this.inventoryService.loadData().then(() => {
+          this.currentDoc.status = res.status;
+          this.loadWorkflowHistory();
+          this.cdr.detectChanges();
+          alert(`Documento ${action === 'SUBMIT' ? 'submetido' : action === 'APPROVE' ? 'aprovado' : action === 'REJECT' ? 'rejeitado' : 'lançado'} com sucesso.`);
+        });
       },
       error: (err) => {
         alert('Erro ao processar workflow: ' + (err.error?.message || err.message));

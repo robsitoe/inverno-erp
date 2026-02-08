@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { InventoryService } from '../../shared/inventory.service';
 import { ArticleSearchModalComponent } from './article-search-modal.component';
 import { Article } from '../../shared/models';
+import { DataService } from '../../services/data.service';
 
 interface ArticleStatementFilters {
   articleCode: string;
@@ -410,18 +411,38 @@ export class ArticleStatementComponent implements OnInit {
 
   documentTypes: any[] = [];
 
-  constructor(private inventoryService: InventoryService) { }
+  constructor(
+    private inventoryService: InventoryService,
+    private dataService: DataService
+  ) { }
 
   ngOnInit() {
     this.loadWarehouses();
     this.loadDocumentTypes();
   }
 
-  loadDocumentTypes() {
-    const stockTypes = JSON.parse(localStorage.getItem('erp_stock_document_types') || '[]');
-    const salesTypes = JSON.parse(localStorage.getItem('erp_sales_document_types') || '[]');
-    const purchaseTypes = JSON.parse(localStorage.getItem('erp_purchase_document_types') || '[]');
+  async loadDocumentTypes() {
+    try {
+      if (this.dataService.isLocalBrowser()) {
+        const stockTypes = JSON.parse(localStorage.getItem('erp_stock_document_types') || '[]');
+        const salesTypes = JSON.parse(localStorage.getItem('erp_sales_document_types') || '[]');
+        const purchaseTypes = JSON.parse(localStorage.getItem('erp_purchase_document_types') || '[]');
+        this.setDocTypes(stockTypes, salesTypes, purchaseTypes);
+      } else {
+        // Parallel load from DataService
+        const [stockTypes, salesTypes, purchaseTypes] = await Promise.all([
+          this.dataService.getDocumentTypes('STOCK').toPromise(),
+          this.dataService.getDocumentTypes('SALES').toPromise(),
+          this.dataService.getDocumentTypes('PURCHASES').toPromise()
+        ]);
+        this.setDocTypes(stockTypes || [], salesTypes || [], purchaseTypes || []);
+      }
+    } catch (error) {
+      console.error('Error loading document types', error);
+    }
+  }
 
+  private setDocTypes(stockTypes: any[], salesTypes: any[], purchaseTypes: any[]) {
     this.documentTypes = [
       {
         group: 'Stock',
@@ -448,26 +469,30 @@ export class ArticleStatementComponent implements OnInit {
 
   generateStatement() {
     const articles = this.inventoryService.getArticles();
+    console.log('[ArticleStatement] Total articles loaded:', articles.length);
 
     // Filter articles
     let filteredArticles = articles.filter(a => a.stockControl);
 
     if (this.filters.articleCode) {
       filteredArticles = filteredArticles.filter(a =>
-        a.code.toLowerCase().includes(this.filters.articleCode.toLowerCase())
+        a.code?.toLowerCase().includes(this.filters.articleCode.toLowerCase())
       );
     }
 
     if (this.filters.articleName) {
       filteredArticles = filteredArticles.filter(a =>
-        a.description.toLowerCase().includes(this.filters.articleName.toLowerCase())
+        (a.name || a.description || '').toLowerCase().includes(this.filters.articleName.toLowerCase())
       );
     }
 
     // Generate statements for each article
     this.statements = filteredArticles.map(article => {
+      console.log('[ArticleStatement] Processing article:', article.code);
+
       // 1. Get ALL movements for this article, regardless of date
       const allMovements = this.getAllMovementsForArticle(article);
+      console.log('[ArticleStatement] Total movements for', article.code, ':', allMovements.length);
 
       // 2. Sort by date
       allMovements.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -475,6 +500,10 @@ export class ArticleStatementComponent implements OnInit {
       // 3. Calculate Initial Balance (movements before dateFrom)
       const startDate = new Date(this.filters.dateFrom);
       const endDate = new Date(this.filters.dateTo);
+
+      // Reset hours for pure date comparison
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
 
       let initialBalance = 0;
       let initialValue = 0;
@@ -484,22 +513,24 @@ export class ArticleStatementComponent implements OnInit {
 
       for (const mov of allMovements) {
         const movDate = new Date(mov.date);
+        movDate.setHours(12, 0, 0, 0); // Normalize to noon to avoid day shifts
 
         if (movDate < startDate) {
           initialBalance += mov.quantityIn - mov.quantityOut;
-          // approximate value calculation
-          initialValue += (mov.quantityIn - mov.quantityOut) * mov.unitCost;
+          initialValue += (mov.quantityIn - mov.quantityOut) * (mov.unitCost || 0);
         } else if (movDate <= endDate) {
           periodMovements.push(mov);
         }
       }
+
+      console.log('[ArticleStatement] Period movements for', article.code, ':', periodMovements.length);
 
       // 4. Calculate Running Balance for period movements
       let runningBalance = initialBalance;
       periodMovements.forEach(mov => {
         runningBalance += mov.quantityIn - mov.quantityOut;
         mov.balance = runningBalance;
-        mov.totalValue = runningBalance * mov.unitCost;
+        mov.totalValue = runningBalance * (mov.unitCost || 0);
       });
 
       // Calculate totals for the period
@@ -509,7 +540,7 @@ export class ArticleStatementComponent implements OnInit {
 
       return {
         articleCode: article.code,
-        articleName: article.description,
+        articleName: article.name || article.description || 'S/ Descrição',
         unit: article.unit,
         initialBalance: initialBalance,
         initialValue: initialValue,
@@ -521,15 +552,20 @@ export class ArticleStatementComponent implements OnInit {
       };
     }).filter(s => !this.filters.showOnlyWithMovements || s.movements.length > 0 || s.initialBalance !== 0);
 
+    console.log('[ArticleStatement] Final statements count:', this.statements.length);
     this.statementGenerated = true;
   }
 
   getAllMovementsForArticle(article: any): ArticleMovement[] {
+    console.log('[ArticleStatement] Fetching movements for article:', article.code, 'warehouse:', this.filters.warehouse, 'docType:', this.filters.documentType);
+
     const movements = this.inventoryService.calculateStockMovements(
       article.code,
       this.filters.warehouse,
       this.filters.documentType
     );
+
+    console.log('[ArticleStatement] Raw movements from service:', movements.length, movements);
 
     return movements.map(m => ({
       date: m.date,
@@ -569,29 +605,35 @@ export class ArticleStatementComponent implements OnInit {
   }
 
   openDocument(movement: ArticleMovement) {
-    // Extract document ID from the movement
-    // The documentId should be stored when creating movements
-    const stored = localStorage.getItem('erp_stock_documents');
-    if (!stored) {
-      alert('Documento não encontrado.');
+    if (!movement.documentId) {
+      alert('ID do documento não disponível.');
       return;
     }
 
-    const documents = JSON.parse(stored);
-    const doc = documents.find((d: any) =>
-      `${d.type}${d.series}/${d.number}` === movement.documentNumber
-    );
+    if (this.dataService.isLocalBrowser()) {
+      const stored = localStorage.getItem('erp_stock_documents');
+      if (!stored) {
+        alert('Documento não encontrado.');
+        return;
+      }
 
-    if (doc) {
-      // Navigate to stock movements view with this document loaded
-      // For now, we'll show an alert with document info
-      alert(`Abrindo documento: ${movement.documentNumber}\n\nTipo: ${movement.documentType}\nData: ${movement.date}\n\nEsta funcionalidade abrirá o documento completo em breve.`);
+      const documents = JSON.parse(stored);
+      const doc = documents.find((d: any) =>
+        `${d.type}${d.series}/${d.number}` === movement.documentNumber
+      );
 
-      // TODO: Implement navigation to stock-movements view with document loaded
-      // this.navigateToDocument.emit(doc.id);
-    } else {
-      alert('Documento não encontrado no sistema.');
+      if (doc) {
+        alert(`Abrindo documento: ${movement.documentNumber}\n\nTipo: ${movement.documentType}\nData: ${movement.date}\n\nNota: Funcionalidade de navegação local limitada.`);
+      } else {
+        alert('Documento não encontrado no sistema local.');
+      }
+      return;
     }
+
+    // Backend Navigation Logic
+    // Ideally we route based on document type
+    alert(`Navegação para documento ${movement.documentNumber} (${movement.documentId}). Implementação de rotas pendente.`);
+    // this.router.navigate(['/sales/documents', movement.documentId]);
   }
 
   clearFilters() {

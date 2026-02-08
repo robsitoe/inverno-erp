@@ -42,7 +42,7 @@ let Article = class Article {
 };
 exports.Article = Article;
 __decorate([
-    (0, typeorm_1.PrimaryColumn)(),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
     __metadata("design:type", String)
 ], Article.prototype, "id", void 0);
 __decorate([

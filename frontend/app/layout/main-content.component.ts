@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { DataService } from '../services/data.service';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
-import { SalesDocumentForm } from '../features/sales/sales-document-form.component';
+import { SalesDocumentFormComponent } from '../features/sales/sales-document-form.component';
 import { ChartOfAccountsComponent } from '../features/accounting/chart-of-accounts.component';
 import { JournalEntriesComponent } from '../features/accounting/journal-entries.component';
 import { TrialBalanceComponent } from '../features/accounting/trial-balance.component';
@@ -35,13 +35,14 @@ import { AdminSeriesComponent } from '../features/admin/admin-series.component';
 import { EntityManagementComponent } from '../features/admin/entity-management.component';
 import { BankReconciliationComponent } from '../features/treasury/bank-reconciliation.component';
 import { AccountStatementComponent } from '../features/treasury/account-statement.component';
+import { ToasterComponent } from '../shared/toaster.component';
 
 @Component({
   selector: 'app-main-content',
   standalone: true,
   imports: [
     CommonModule,
-    SalesDocumentForm,
+    SalesDocumentFormComponent,
     ChartOfAccountsComponent,
     JournalEntriesComponent,
     TrialBalanceComponent,
@@ -73,7 +74,8 @@ import { AccountStatementComponent } from '../features/treasury/account-statemen
     AdminSeriesComponent,
     EntityManagementComponent,
     BankReconciliationComponent,
-    AccountStatementComponent
+    AccountStatementComponent,
+    ToasterComponent
   ],
   template: `
     <!-- Sales Forms -->
@@ -297,6 +299,7 @@ import { AccountStatementComponent } from '../features/treasury/account-statemen
         </div>
       </main>
     </ng-container>
+    <app-toaster></app-toaster>
   `
 })
 export class MainContentComponent {

@@ -51,7 +51,7 @@ let PurchaseDocument = class PurchaseDocument {
 };
 exports.PurchaseDocument = PurchaseDocument;
 __decorate([
-    (0, typeorm_1.PrimaryColumn)(),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
     __metadata("design:type", String)
 ], PurchaseDocument.prototype, "id", void 0);
 __decorate([
@@ -185,7 +185,7 @@ let PurchaseDocumentLine = class PurchaseDocumentLine {
 };
 exports.PurchaseDocumentLine = PurchaseDocumentLine;
 __decorate([
-    (0, typeorm_1.PrimaryColumn)(),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
     __metadata("design:type", String)
 ], PurchaseDocumentLine.prototype, "id", void 0);
 __decorate([

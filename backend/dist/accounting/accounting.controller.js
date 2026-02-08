@@ -54,6 +54,24 @@ let AccountingController = class AccountingController {
     loadPreset(presetName) {
         return this.accountingService.loadPresetAccountSystem(presetName);
     }
+    listCostCenters() {
+        return this.accountingService.listCostCenters();
+    }
+    createCostCenter(payload) {
+        return this.accountingService.createCostCenter(payload);
+    }
+    getVatSummary(fromDate, toDate) {
+        return this.accountingService.getVatSummary(fromDate, toDate);
+    }
+    closePeriod(payload) {
+        return this.accountingService.closePeriod(payload);
+    }
+    getExplorationSummary(fromDate, toDate) {
+        return this.accountingService.getExplorationSummary(fromDate, toDate);
+    }
+    getUtilitiesAuditLog(page, limit) {
+        return this.accountingService.getUtilitiesAuditLog(page, limit);
+    }
 };
 exports.AccountingController = AccountingController;
 __decorate([
@@ -133,7 +151,7 @@ __decorate([
     __param(4, (0, common_1.Query)('includeDrafts')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String, String, String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], AccountingController.prototype, "getStatement", null);
 __decorate([
     (0, common_1.Post)('accounts/presets/:presetName'),
@@ -143,6 +161,56 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AccountingController.prototype, "loadPreset", null);
+__decorate([
+    (0, common_1.Get)('cost-centers'),
+    (0, swagger_1.ApiOperation)({ summary: 'List cost centers (MVP)' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AccountingController.prototype, "listCostCenters", null);
+__decorate([
+    (0, common_1.Post)('cost-centers'),
+    (0, swagger_1.ApiOperation)({ summary: 'Create cost center (MVP)' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AccountingController.prototype, "createCostCenter", null);
+__decorate([
+    (0, common_1.Get)('vat/summary'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get VAT summary (MVP)' }),
+    __param(0, (0, common_1.Query)('fromDate')),
+    __param(1, (0, common_1.Query)('toDate')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AccountingController.prototype, "getVatSummary", null);
+__decorate([
+    (0, common_1.Post)('period-close'),
+    (0, swagger_1.ApiOperation)({ summary: 'Close accounting period (MVP)' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AccountingController.prototype, "closePeriod", null);
+__decorate([
+    (0, common_1.Get)('exploration/summary'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get exploration summary (MVP)' }),
+    __param(0, (0, common_1.Query)('fromDate')),
+    __param(1, (0, common_1.Query)('toDate')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AccountingController.prototype, "getExplorationSummary", null);
+__decorate([
+    (0, common_1.Get)('utilities/audit-log'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get accounting audit log (MVP)' }),
+    __param(0, (0, common_1.Query)('page', new common_1.ParseIntPipe({ optional: true }))),
+    __param(1, (0, common_1.Query)('limit', new common_1.ParseIntPipe({ optional: true }))),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:returntype", Promise)
+], AccountingController.prototype, "getUtilitiesAuditLog", null);
 exports.AccountingController = AccountingController = __decorate([
     (0, swagger_1.ApiTags)('accounting'),
     (0, common_1.Controller)('accounting'),

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
@@ -840,7 +840,7 @@ export class DocumentTypeConfigModalComponent implements OnInit {
   selectedSerieCode: string | null = null;
   selectedSerieConfig: any = null;
 
-  constructor(private dataService: DataService) { }
+  constructor(private dataService: DataService, private cdr: ChangeDetectorRef) { }
 
   ngOnInit() {
     this.loadActiveCompany();
@@ -946,6 +946,7 @@ export class DocumentTypeConfigModalComponent implements OnInit {
         if (!a.isStandard && b.isStandard) return 1;
         return a.code.localeCompare(b.code);
       });
+      this.cdr.detectChanges();
     });
   }
 

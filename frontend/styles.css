@@ -8,8 +8,11 @@ body {
 }
 
 .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined', 'Segoe UI Symbol', 'Segoe UI Emoji', sans-serif;
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
     user-select: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /* Custom scrollbar for sidebar */

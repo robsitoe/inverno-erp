@@ -12,12 +12,16 @@ const typeorm_1 = require("@nestjs/typeorm");
 const sales_service_1 = require("./sales.service");
 const sales_controller_1 = require("./sales.controller");
 const sales_document_entity_1 = require("./entities/sales-document.entity");
+const inventory_module_1 = require("../inventory/inventory.module");
 let SalesModule = class SalesModule {
 };
 exports.SalesModule = SalesModule;
 exports.SalesModule = SalesModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine])],
+        imports: [
+            typeorm_1.TypeOrmModule.forFeature([sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine]),
+            inventory_module_1.InventoryModule
+        ],
         controllers: [sales_controller_1.SalesController],
         providers: [sales_service_1.SalesService],
     })
