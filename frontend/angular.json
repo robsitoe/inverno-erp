@@ -17,7 +17,9 @@
               "browser": "."
             },
             "browser": "main.ts",
+            "index": "index.html",
             "tsConfig": "tsconfig.json",
+            "polyfills": [],
             "styles": [
               "src/assets/fonts/fonts.css",
               "styles.css"

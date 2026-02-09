@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="/">
     <title>Primavera Professional</title>
+    <!-- Main Application Styles -->
+    <link rel="stylesheet" href="styles.css">
     <!-- Google Fonts - Will fallback to local fonts if unavailable -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"
         onerror="this.onerror=null;">
@@ -54,18 +57,22 @@
             // Method 2: Use FontFaceSet API if available
             if (document.fonts && document.fonts.ready) {
                 document.fonts.ready.then(function () {
-                    document.fonts.check('24px "Material Symbols Outlined"').then(function (available) {
+                    try {
+                        // document.fonts.check is synchronous, returns boolean
+                        const available = document.fonts.check('24px "Material Symbols Outlined"');
                         if (!available) {
                             console.warn('Material Symbols font not available, using fallback');
                             document.documentElement.classList.add('material-icons-fallback');
                         }
-                    });
+                    } catch (e) {
+                        console.warn('Error checking font availability:', e);
+                    }
                 });
             }
 
             // Method 3: Timeout fallback (3 seconds)
             timeout = setTimeout(function () {
-                if (!fontLoaded) {
+                if (!fontLoaded && document.body) {
                     // Test if font actually loaded by checking computed style
                     const testElement = document.createElement('span');
                     testElement.className = 'material-symbols-outlined';
@@ -98,9 +105,20 @@
             // Run repeatedly to handle dynamic content
             setInterval(syncIconAttributes, 1000);
 
-            // Also run on mutation
-            const observer = new MutationObserver(syncIconAttributes);
-            observer.observe(document.body, { childList: true, subtree: true });
+            // Also run on mutation - wait for body to be available
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', startObserving);
+            } else {
+                startObserving();
+            }
+
+            function startObserving() {
+                if (document.body) {
+                    const observer = new MutationObserver(syncIconAttributes);
+                    observer.observe(document.body, { childList: true, subtree: true });
+                    syncIconAttributes();
+                }
+            }
         })();
     </script>
 </head>

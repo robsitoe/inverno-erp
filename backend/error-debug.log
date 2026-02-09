@@ -2866,3 +2866,117 @@
   "query": {}
 }
 ---
+{
+  "timestamp": "2026-02-09T09:07:01.561Z",
+  "path": "/purchases/documents",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "invalid input syntax for type uuid: \"PUR-1770628021542-igmq8gcam\"",
+    "stack": "QueryFailedError: invalid input syntax for type uuid: \"PUR-1770628021542-igmq8gcam\"\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async SelectQueryBuilder.loadRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3868:25)\n    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3614:26)\n    at async SelectQueryBuilder.getRawAndEntities (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1671:29)\n    at async SelectQueryBuilder.getMany (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1761:25)\n    at async <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectDatabaseEntityLoader.ts:119:32)\n    at async Promise.all (index 0)\n    at async SubjectDatabaseEntityLoader.load (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectDatabaseEntityLoader.ts:148:9)\n    at async <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:116:21)"
+  },
+  "body": {
+    "companyId": "003",
+    "documentType": "FC",
+    "series": "2026",
+    "seriesNumber": 1,
+    "documentNumber": "FC2026/1",
+    "date": "2026-02-09",
+    "dueDate": "2026-02-09",
+    "supplierId": "F001",
+    "supplierName": "GALP",
+    "supplierNif": "212121121",
+    "supplierAddress": "Bairro Ferroviario Q.66 C.59",
+    "subtotal": 0,
+    "discounts": 0,
+    "totalIva": 0,
+    "total": 0,
+    "notes": "",
+    "status": "DRAFT",
+    "lines": [
+      {
+        "id": "",
+        "articleId": "67d99bcb-e95e-4175-a23a-681912588c80",
+        "articleCode": "A001",
+        "articleName": "Desconhecido",
+        "quantity": 10,
+        "unitPrice": 0,
+        "discount": 0,
+        "ivaRate": 16,
+        "ivaCode": "16",
+        "subtotal": 0,
+        "ivaAmount": 0,
+        "total": 0
+      }
+    ]
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-09T12:32:44.085Z",
+  "path": "/sales/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-09T13:31:13.094Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE-1770643872989",
+    "journalId": "PURCHASES",
+    "status": "POSTED",
+    "date": "2026-02-09T00:00:00.000Z",
+    "description": "Compra FC2026/3 - GALP",
+    "reference": null,
+    "lines": [
+      {
+        "id": "JEL-1770643872989-1",
+        "accountId": "22",
+        "accountCode": "31.1.1",
+        "accountName": "Mercadorias - Produtos Alimentares",
+        "debit": "500.00",
+        "credit": 0,
+        "description": "Compra de mercadorias"
+      },
+      {
+        "id": "JEL-1770643872989-2",
+        "accountId": "53",
+        "accountCode": "32.2",
+        "accountName": "IVA a Recuperar",
+        "debit": "80.00",
+        "credit": 0,
+        "description": "IVA dedutível"
+      },
+      {
+        "id": "JEL-1770643872989-3",
+        "accountId": "49",
+        "accountCode": "22.1",
+        "accountName": "Fornecedores Nacionais",
+        "debit": 0,
+        "credit": "580.00",
+        "description": "Fornecedor: GALP"
+      }
+    ],
+    "companyId": "003"
+  },
+  "query": {}
+}
+---

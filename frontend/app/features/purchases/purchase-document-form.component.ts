@@ -16,6 +16,7 @@ import { AuditService } from '../../shared/audit.service';
 import { PeriodService } from '../../shared/period.service';
 import { DataService } from '../../services/data.service';
 import { WorkflowStatus, WorkflowHistory } from '../../shared/models';
+import { AppIconComponent } from '../../shared/components/app-icon.component';
 
 interface PurchaseDocumentLine {
   id: string;
@@ -96,48 +97,42 @@ interface CompanyInfo {
     LocationSearchModalComponent,
     BatchSearchModalComponent,
     PurchaseDocumentSearchModalComponent,
-    DocumentTypeConfigModalComponent
+    DocumentTypeConfigModalComponent,
+    AppIconComponent
   ],
   template: `
     <ng-container *ngIf="currentDoc; else loading">
       <div class="flex flex-col h-full w-full bg-[#F0F0F0] text-xs overflow-hidden relative no-print">
         <!-- Toolbar -->
         <div class="flex items-center gap-1 px-2 py-1.5 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0 overflow-x-auto">
-          <!-- Standard Toolbar Buttons -->
-          <button (click)="saveDocument()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
-            <span class="material-symbols-outlined text-[18px] text-blue-600">save</span>
-            <span>Gravar</span>
-          </button>
-          <button (click)="newDocument()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
-            <span class="material-symbols-outlined text-[18px] text-green-600">add_circle</span>
-            <span>Novo</span>
-          </button>
-          <button (click)="voidDocument()" *ngIf="currentDoc.id" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
-            <span class="material-symbols-outlined text-[18px] text-red-600">cancel</span>
-            <span>Anular</span>
-          </button>
-          <button (click)="duplicateDocument()" *ngIf="currentDoc.id" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
-            <span class="material-symbols-outlined text-[18px] text-purple-600">content_copy</span>
-            <span>Duplicar</span>
-          </button>
-          
+          <ng-container *ngFor="let item of toolbarItems; let i = index">
+            <button 
+              (click)="handleToolbarClick(item.label)"
+              class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 whitespace-nowrap group focus:bg-gray-200 focus:outline-none"
+            >
+              <app-icon [name]="item.icon" [size]="18" class="text-gray-600 group-hover:text-green-600 transition-colors"></app-icon>
+              <span>{{ item.label }}</span>
+            </button>
+            <div *ngIf="shouldRenderDivider(i)" class="w-px h-4 bg-gray-300 mx-1"></div>
+          </ng-container>
+
           <!-- Workflow Actions -->
           <ng-container *ngIf="currentDoc.id">
             <div class="w-px h-4 bg-gray-300 mx-1"></div>
             <button *ngIf="currentDoc.status === 'DRAFT' || currentDoc.status === 'REJECTED'" (click)="onWorkflowAction('SUBMIT')" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 border border-transparent hover:border-blue-200 rounded-sm transition-all text-blue-700 group">
-              <span class="material-symbols-outlined text-[18px]">send</span>
+              <app-icon name="send" [size]="18"></app-icon>
               <span>Submeter</span>
             </button>
             <button *ngIf="currentDoc.status === 'SUBMITTED'" (click)="onWorkflowAction('APPROVE')" class="flex items-center gap-1 px-2 py-1 hover:bg-green-50 border border-transparent hover:border-green-200 rounded-sm transition-all text-green-700 group">
-              <span class="material-symbols-outlined text-[18px]">check_circle</span>
+              <app-icon name="check_circle" [size]="18"></app-icon>
               <span>Aprovar</span>
             </button>
             <button *ngIf="currentDoc.status === 'SUBMITTED'" (click)="onWorkflowAction('REJECT')" class="flex items-center gap-1 px-2 py-1 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-sm transition-all text-red-700 group">
-              <span class="material-symbols-outlined text-[18px]">cancel</span>
+              <app-icon name="cancel" [size]="18"></app-icon>
               <span>Rejeitar</span>
             </button>
             <button *ngIf="currentDoc.status === 'APPROVED'" (click)="onWorkflowAction('POST')" class="flex items-center gap-1 px-2 py-1 hover:bg-purple-50 border border-transparent hover:border-purple-200 rounded-sm transition-all text-purple-700 group">
-              <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+              <app-icon name="account_balance_wallet" [size]="18"></app-icon>
               <span>Lançar</span>
             </button>
           </ng-container>
@@ -176,7 +171,7 @@ interface CompanyInfo {
                   <select [(ngModel)]="currentDoc.series" (change)="loadNextNumber(); validateSeriesDate()" [disabled]="isLocked" class="h-5 border border-gray-300 bg-white rounded-sm text-[11px] w-16">
                     <option *ngFor="let s of availableSeries" [value]="s.code">{{ s.code }}</option>
                   </select>
-                  <input type="number" [(ngModel)]="currentDoc.number" (change)="onNumberChange()" [disabled]="isLocked" class="h-5 border border-gray-300 px-1 w-16 rounded-sm text-right text-[11px]" min="1" />
+                  <input type="number" [(ngModel)]="currentDoc.number" (change)="onNumberChange()" class="h-5 border border-gray-300 px-1 w-16 rounded-sm text-right text-[11px]" min="1" />
                 </div>
                 <div class="flex items-center gap-1 ml-2">
                   <label class="font-medium text-[11px]">Data Doc.:</label>
@@ -334,7 +329,7 @@ interface CompanyInfo {
                       class="flex-1 w-0 h-full px-1 border-none bg-transparent focus:outline-none text-[11px]" />
                     <button *ngIf="!isLocked" (click)="openArticleSearch(i)" 
                       class="w-5 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-green-600 transition-all opacity-0 group-hover/cell:opacity-100">
-                      <span class="material-symbols-outlined text-[14px]">search</span>
+                      <app-icon name="search" [size]="14"></app-icon>
                     </button>
                   </div>
                 </td>
@@ -346,7 +341,7 @@ interface CompanyInfo {
                       [disabled]="isLocked" />
                     <button *ngIf="!isLocked && line.articleCode" (click)="openWarehouseSearch(i)" 
                       class="w-4 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-blue-600 opacity-0 group-hover/cell:opacity-100 transition-all">
-                      <span class="material-symbols-outlined text-[12px]">search</span>
+                      <app-icon name="search" [size]="12"></app-icon>
                     </button>
                   </div>
                 </td>
@@ -358,7 +353,7 @@ interface CompanyInfo {
                       [disabled]="isLocked" />
                     <button *ngIf="!isLocked && line.articleCode" (click)="openLocationSearch(i)" 
                       class="w-4 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-blue-600 opacity-0 group-hover/cell:opacity-100 transition-all">
-                      <span class="material-symbols-outlined text-[12px]">search</span>
+                      <app-icon name="search" [size]="12"></app-icon>
                     </button>
                   </div>
                 </td>
@@ -370,7 +365,7 @@ interface CompanyInfo {
                       [disabled]="isLocked" />
                     <button *ngIf="!isLocked && line.articleCode" (click)="openBatchSearch(i)" 
                       class="w-4 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-blue-600 opacity-0 group-hover/cell:opacity-100 transition-all">
-                      <span class="material-symbols-outlined text-[12px]">search</span>
+                      <app-icon name="search" [size]="12"></app-icon>
                     </button>
                   </div>
                 </td>
@@ -383,7 +378,7 @@ interface CompanyInfo {
                       [disabled]="isLocked" />
                     <button *ngIf="!isLocked && line.articleCode" (click)="openTaxSearch(i)" 
                       class="w-4 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-blue-600 opacity-0 group-hover/cell:opacity-100 transition-all">
-                      <span class="material-symbols-outlined text-[12px]">search</span>
+                      <app-icon name="search" [size]="12"></app-icon>
                     </button>
                   </div>
                 </td>
@@ -416,11 +411,11 @@ interface CompanyInfo {
             [style.left.px]="contextMenuPosition.x"
             [style.top.px]="contextMenuPosition.y">
             <button (click)="insertLine()" class="w-full text-left px-4 py-1.5 hover:bg-gray-100 flex items-center gap-2">
-              <span class="material-symbols-outlined text-[16px] text-green-600">add</span>
+              <app-icon name="add" [size]="16" color="#059669"></app-icon>
               Inserir Linha
             </button>
             <button (click)="removeLine()" class="w-full text-left px-4 py-1.5 hover:bg-gray-100 flex items-center gap-2">
-              <span class="material-symbols-outlined text-[16px] text-red-600">remove</span>
+              <app-icon name="remove" [size]="16" color="#dc2626"></app-icon>
               Remover Linha
             </button>
           </div>
@@ -539,19 +534,44 @@ export class PurchaseDocumentFormComponent {
 
 
 
-  toolbarItems = [
-    { label: "Gravar", icon: "save" },
-    { label: "Lançar", icon: "check_circle" },
-    { label: "Novo", icon: "add_circle" },
-    { label: "Anular", icon: "block" },
-    { label: "Duplicar", icon: "content_copy" },
-    { label: "Imprimir", icon: "print" },
-    { label: "Procurar", icon: "search" },
-    { label: "Enviar", icon: "send" },
-    { label: "Contexto", icon: "settings" },
-    { label: "Ajuda", icon: "help_outline" },
-    { label: "Cancelar", icon: "logout" }
-  ];
+  get toolbarItems() {
+    return this.isInternal
+      ? [
+        { label: "Gravar", icon: "save" },
+        { label: "Novo", icon: "add_circle" },
+        { label: "Duplicar", icon: "content_copy" },
+        { label: "Imprimir", icon: "print" },
+        { label: "Procurar", icon: "search" },
+        { label: "Enviar", icon: "send" },
+        { label: "CRM", icon: "contacts" },
+        { label: "Contexto", icon: "settings" },
+        { label: "Ajuda", icon: "help_outline" },
+        { label: "Cancelar", icon: "logout" },
+      ]
+      : [
+        { label: "Gravar", icon: "save" },
+        { label: "Novo", icon: "add_circle" },
+        { label: "Anular", icon: "block" },
+        { label: "Duplicar", icon: "content_copy" },
+        { label: "Anular e Duplicar", icon: "file_copy" },
+        { label: "Imprimir", icon: "print" },
+        { label: "Rascunhos", icon: "history_edu" },
+        { label: "Procurar", icon: "search" },
+        { label: "Enviar", icon: "send" },
+        { label: "CRM", icon: "contacts" },
+        { label: "Contexto", icon: "settings" },
+        { label: "Ajuda", icon: "help_outline" },
+        { label: "Cancelar", icon: "logout" },
+      ];
+  }
+
+  shouldRenderDivider(idx: number): boolean {
+    if (this.isInternal) {
+      return idx === 2 || idx === 3 || idx === 4 || idx === 6;
+    } else {
+      return idx === 4 || idx === 6 || idx === 9;
+    }
+  }
 
   // Modals state
   isDocTypeModalOpen = false;
@@ -577,6 +597,10 @@ export class PurchaseDocumentFormComponent {
   // Active line for modals
   activeLineForModal: PurchaseDocumentLine | null = null;
   activeLineIndex = -1;
+  get isInternal(): boolean {
+    return this.viewMode === 'internal-docs';
+  }
+
   get isLocked(): boolean {
     if (!this.currentDoc) return false;
     return this.currentDoc.status === WorkflowStatus.APPROVED || this.currentDoc.status === WorkflowStatus.POSTED;
@@ -1051,12 +1075,20 @@ export class PurchaseDocumentFormComponent {
       case 'Enviar':
         this.sendDocument();
         break;
+      case 'Anular e Duplicar':
+        this.voidAndDuplicate();
+        break;
+      case 'Rascunhos':
+        this.showDrafts();
+        break;
+      case 'CRM':
+        this.openCrm();
+        break;
       case 'Contexto':
-        // Context menu logic or settings
-        alert('Opções de contexto não disponíveis.');
+        this.openContext();
         break;
       case 'Ajuda':
-        alert('Ajuda não disponível.');
+        this.showHelp();
         break;
       case 'Cancelar':
         this.newDocument();
@@ -1134,6 +1166,37 @@ export class PurchaseDocumentFormComponent {
 
   sendDocument() {
     alert('Funcionalidade de envio de email em desenvolvimento.');
+  }
+
+  voidAndDuplicate() {
+    if (!this.currentDoc.id) {
+      alert('Grave o documento antes de anular.');
+      return;
+    }
+    if (confirm('Deseja anular este documento e criar uma cópia?')) {
+      this.currentDoc.status = WorkflowStatus.REJECTED;
+      this.dataService.savePurchaseDocument(this.currentDoc).subscribe(() => {
+        this.duplicateDocument();
+      });
+    }
+  }
+
+  showDrafts() {
+    this.isSearchModalOpen = true;
+    // We would ideally filter by status=DRAFT here
+    alert('A mostrar pesquisa filtrada por rascunhos.');
+  }
+
+  openCrm() {
+    alert('Integração com CRM em desenvolvimento.');
+  }
+
+  openContext() {
+    alert('Opções de contexto em desenvolvimento.');
+  }
+
+  showHelp() {
+    alert('Ajuda do sistema em desenvolvimento.');
   }
 
   saveDocument(post: boolean = false, print: boolean = false) {
@@ -1228,7 +1291,7 @@ export class PurchaseDocumentFormComponent {
 
     // Unified Mapping for Backend DTO (Matches src/purchases/dto/create-purchase.dto.ts)
     const backendPayload = {
-      id: this.currentDoc.id.startsWith('PUR-') ? undefined : this.currentDoc.id, // Only send real IDs
+      id: (this.currentDoc.id && !this.currentDoc.id.startsWith('PUR-')) ? this.currentDoc.id : undefined, // Only send real IDs
       companyId: this.activeCompanyId,
       documentType: this.currentDoc.type,
       series: this.currentDoc.series,
@@ -1251,7 +1314,7 @@ export class PurchaseDocumentFormComponent {
         .map(l => {
           const article = this.inventoryService.getArticleByCode(l.articleCode);
           return {
-            id: l.id.length > 20 ? undefined : l.id, // Filter out temp IDs
+            id: (l.id && l.id.length === 36) ? l.id : undefined, // Only send real UUIDs
             articleId: l.articleId || (article ? article.id : '00000000-0000-0000-0000-000000000000'), // Fallback to avoid mandatory fail
             articleCode: l.articleCode,
             articleName: l.articleName || article?.description || 'Desconhecido',

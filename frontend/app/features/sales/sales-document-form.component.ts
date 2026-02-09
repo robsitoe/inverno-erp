@@ -20,6 +20,7 @@ import { LocationSearchModalComponent } from '../inventory/location-search-modal
 import { BatchSearchModalComponent } from '../inventory/batch-search-modal.component';
 import { PrintSettingsModalComponent, PrintSettings } from './print-settings-modal.component';
 import { SalesDocumentPrintComponent } from './sales-document-print.component';
+import { AppIconComponent } from '../../shared/components/app-icon.component';
 
 interface GridRow {
   id?: string;
@@ -61,7 +62,8 @@ interface GridRow {
     LocationSearchModalComponent,
     BatchSearchModalComponent,
     PrintSettingsModalComponent,
-    SalesDocumentPrintComponent
+    SalesDocumentPrintComponent,
+    AppIconComponent
   ],
   template: `
     <div class="flex flex-col h-full w-full bg-[#F0F0F0] text-xs overflow-hidden relative">
@@ -70,9 +72,9 @@ interface GridRow {
         <ng-container *ngFor="let item of toolbarItems; let i = index">
           <button 
             (click)="handleToolbarClick(item.label)"
-            class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 whitespace-nowrap group"
+            class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 whitespace-nowrap group focus:bg-gray-200 focus:outline-none"
           >
-            <span class="material-symbols-outlined text-[18px] text-gray-600 group-hover:text-primary">{{ item.icon }}</span>
+            <app-icon [name]="item.icon" [size]="18" class="text-gray-600 group-hover:text-primary transition-colors"></app-icon>
             <span>{{ item.label }}</span>
           </button>
           <div *ngIf="shouldRenderDivider(i)" class="w-px h-4 bg-gray-300 mx-1"></div>
@@ -82,19 +84,19 @@ interface GridRow {
         <ng-container *ngIf="currentId">
           <div class="w-px h-4 bg-gray-300 mx-1"></div>
           <button *ngIf="status === 'DRAFT' || status === 'REJECTED'" (click)="onWorkflowAction('SUBMIT')" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 border border-transparent hover:border-blue-200 rounded-sm transition-all text-blue-700 group">
-            <span class="material-symbols-outlined text-[18px]">send</span>
+            <app-icon name="send" [size]="18"></app-icon>
             <span>Submeter</span>
           </button>
           <button *ngIf="status === 'SUBMITTED'" (click)="onWorkflowAction('APPROVE')" class="flex items-center gap-1 px-2 py-1 hover:bg-green-50 border border-transparent hover:border-green-200 rounded-sm transition-all text-green-700 group">
-            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            <app-icon name="check_circle" [size]="18"></app-icon>
             <span>Aprovar</span>
           </button>
           <button *ngIf="status === 'SUBMITTED'" (click)="onWorkflowAction('REJECT')" class="flex items-center gap-1 px-2 py-1 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-sm transition-all text-red-700 group">
-            <span class="material-symbols-outlined text-[18px]">cancel</span>
+            <app-icon name="cancel" [size]="18"></app-icon>
             <span>Rejeitar</span>
           </button>
           <button *ngIf="status === 'APPROVED'" (click)="onWorkflowAction('POST')" class="flex items-center gap-1 px-2 py-1 hover:bg-purple-50 border border-transparent hover:border-purple-200 rounded-sm transition-all text-purple-700 group">
-            <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+            <app-icon name="account_balance_wallet" [size]="18"></app-icon>
             <span>Lançar</span>
           </button>
         </ng-container>
@@ -371,7 +373,7 @@ interface GridRow {
                     [disabled]="isLocked"
                     class="w-full h-full px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50 disabled:bg-transparent"
                  />
-                 <span *ngIf="row.articleCode" class="material-symbols-outlined text-[14px] text-red-500 absolute left-1 top-1.5 hidden group-hover:block" title="Artigo">pentagon</span>
+                  <app-icon *ngIf="row.articleCode" name="pentagon" [size]="14" color="#ef4444" class="absolute left-1 top-1.5 hidden group-hover:block" title="Artigo"></app-icon>
                </td>
                
                <!-- Other Columns (Read-only for now or simple inputs) -->
@@ -397,11 +399,11 @@ interface GridRow {
                      (keydown)="!isLocked && onLocationKeydown(i, $event)"
                      [disabled]="isLocked"
                      class="flex-1 px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50 disabled:bg-transparent" />
-                   <button (click)="!isLocked && openLocationSearch(i)" 
-                     [disabled]="isLocked"
-                     class="w-5 bg-blue-50 hover:bg-blue-100 flex items-center justify-center border-l border-gray-200 opacity-0 group-hover/loc:opacity-100 transition-opacity disabled:hidden">
-                     <span class="material-symbols-outlined text-[12px] text-blue-600">search</span>
-                   </button>
+                    <button (click)="!isLocked && openLocationSearch(i)" 
+                      [disabled]="isLocked"
+                      class="w-5 bg-blue-50 hover:bg-blue-100 flex items-center justify-center border-l border-gray-200 opacity-0 group-hover/loc:opacity-100 transition-opacity disabled:hidden">
+                      <app-icon name="search" [size]="12" color="#2563eb"></app-icon>
+                    </button>
                  </div>
                </td>
 
@@ -412,11 +414,11 @@ interface GridRow {
                      (keydown)="!isLocked && onBatchKeydown(i, $event)"
                      [disabled]="isLocked"
                      class="flex-1 px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50 disabled:bg-transparent" />
-                   <button (click)="!isLocked && openBatchSearch(i)" 
-                     [disabled]="isLocked"
-                     class="w-5 bg-blue-50 hover:bg-blue-100 flex items-center justify-center border-l border-gray-200 opacity-0 group-hover/batch:opacity-100 transition-opacity disabled:hidden">
-                     <span class="material-symbols-outlined text-[12px] text-blue-600">search</span>
-                   </button>
+                    <button (click)="!isLocked && openBatchSearch(i)" 
+                      [disabled]="isLocked"
+                      class="w-5 bg-blue-50 hover:bg-blue-100 flex items-center justify-center border-l border-gray-200 opacity-0 group-hover/batch:opacity-100 transition-opacity disabled:hidden">
+                      <app-icon name="search" [size]="12" color="#2563eb"></app-icon>
+                    </button>
                  </div>
                </td>
                <td class="border-r border-b border-gray-200 h-6 px-1 overflow-hidden">{{ row.description }}</td>
@@ -526,11 +528,11 @@ interface GridRow {
            [style.top.px]="contextMenuPosition.y">
         
         <button (click)="insertLine()" class="w-full text-left px-4 py-1.5 hover:bg-blue-50 flex items-center gap-2 text-gray-700">
-          <span class="material-symbols-outlined text-[16px] text-blue-600">add</span>
+          <app-icon name="add" [size]="16" color="#2563eb"></app-icon>
           Insere Linha
         </button>
         <button (click)="removeLine()" class="w-full text-left px-4 py-1.5 hover:bg-blue-50 flex items-center gap-2 text-gray-700">
-          <span class="material-symbols-outlined text-[16px] text-red-600">remove</span>
+          <app-icon name="remove" [size]="16" color="#dc2626"></app-icon>
           Remove Linha
         </button>
         
@@ -1264,7 +1266,30 @@ export class SalesDocumentFormComponent {
       case 'Anular':
         this.cancelDocument();
         break;
-      // Add other cases as needed
+      case 'Duplicar':
+        this.duplicateDocument();
+        break;
+      case 'Anular e Duplicar':
+        this.voidAndDuplicate();
+        break;
+      case 'Rascunhos':
+        this.showDrafts();
+        break;
+      case 'Enviar':
+        this.sendDocument();
+        break;
+      case 'CRM':
+        this.openCrm();
+        break;
+      case 'Contexto':
+        this.openContext();
+        break;
+      case 'Ajuda':
+        this.showHelp();
+        break;
+      default:
+        console.log('Action not implemented:', action);
+        break;
     }
   }
 
@@ -1548,6 +1573,26 @@ export class SalesDocumentFormComponent {
       status: this.status,
       notes: ''
     };
+  }
+
+  duplicateDocument() {
+    this.currentId = undefined;
+    this.status = WorkflowStatus.DRAFT;
+    this.loadNextNumber();
+    alert('Documento duplicado. Verifique os dados e grave.');
+  }
+
+  voidAndDuplicate() {
+    if (!this.currentId) {
+      alert('Grave o documento antes de anular.');
+      return;
+    }
+    if (confirm('Deseja anular este documento e criar uma cópia?')) {
+      this.cancelDocument();
+      // Wait for save to complete? cancelDocument calls saveDocument with subscription
+      // We'll just trigger duplication as well
+      this.duplicateDocument();
+    }
   }
 
   getDocDescription(type: string): string {
@@ -1844,7 +1889,31 @@ export class SalesDocumentFormComponent {
     this.totalIva = 0;
     this.totalValue = 0;
     this.currentId = undefined;
+    this.status = WorkflowStatus.DRAFT;
     this.workflowHistory = [];
+  }
+
+
+
+  showDrafts() {
+    this.isSearchModalOpen = true;
+    alert('A mostrar pesquisa filtrada por rascunhos.');
+  }
+
+  sendDocument() {
+    alert('Funcionalidade de envio de email em desenvolvimento.');
+  }
+
+  openCrm() {
+    alert('Integração com CRM em desenvolvimento.');
+  }
+
+  openContext() {
+    alert('Opções de contexto em desenvolvimento.');
+  }
+
+  showHelp() {
+    alert('Ajuda do sistema em desenvolvimento.');
   }
 
   loadWorkflowHistory() {

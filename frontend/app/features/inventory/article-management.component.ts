@@ -6,33 +6,35 @@ import { Article } from '../../shared/models';
 import { Subscription } from 'rxjs';
 import { DataService } from '../../services/data.service';
 
+import { AppIconComponent } from '../../shared/components/app-icon.component';
+
 @Component({
   selector: 'app-article-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppIconComponent],
   template: `
     <div class="flex flex-col h-full bg-[#F0F0F0]">
       <!-- Toolbar -->
       <div class="flex items-center gap-1 px-2 py-1.5 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0">
         <button (click)="newArticle()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
-          <span class="material-symbols-outlined text-[18px]">add_circle</span>
+          <app-icon name="add_circle" [size]="18"></app-icon>
           <span>Novo</span>
         </button>
         <button (click)="saveArticle()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
-          <span class="material-symbols-outlined text-[18px]">save</span>
+          <app-icon name="save" [size]="18"></app-icon>
           <span>Gravar</span>
         </button>
-        <button (click)="deleteArticle()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
-          <span class="material-symbols-outlined text-[18px]">delete</span>
+        <button (click)="deleteArticle()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs text-red-600">
+          <app-icon name="delete" [size]="18"></app-icon>
           <span>Eliminar</span>
         </button>
         <div class="w-px h-4 bg-gray-300 mx-1"></div>
         <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
-          <span class="material-symbols-outlined text-[18px]">search</span>
+          <app-icon name="search" [size]="18"></app-icon>
           <span>Procurar</span>
         </button>
         <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
-          <span class="material-symbols-outlined text-[18px]">print</span>
+          <app-icon name="print" [size]="18"></app-icon>
           <span>Imprimir</span>
         </button>
       </div>
@@ -241,7 +243,7 @@ import { DataService } from '../../services/data.service';
               <!-- Stock Alert -->
               <div *ngIf="selectedArticle.currentStock < selectedArticle.minStock" class="bg-yellow-50 border-l-4 border-yellow-400 p-3">
                 <div class="flex items-center">
-                  <span class="material-symbols-outlined text-yellow-600 mr-2">warning</span>
+                  <app-icon name="warning" [size]="20" color="#ca8a04" class="mr-2"></app-icon>
                   <span class="text-xs text-yellow-700">
                     <strong>Atenção:</strong> Stock abaixo do mínimo! (Atual: {{ selectedArticle.currentStock }}, Mínimo: {{ selectedArticle.minStock }})
                   </span>
@@ -288,7 +290,7 @@ import { DataService } from '../../services/data.service';
           <!-- Empty State -->
           <div *ngIf="!selectedArticle" class="flex items-center justify-center h-full text-gray-400">
             <div class="text-center">
-              <span class="material-symbols-outlined text-6xl mb-2">inventory_2</span>
+              <app-icon name="inventory_2" [size]="64" class="mb-2 opacity-20"></app-icon>
               <p class="text-sm">Selecione um artigo para ver os detalhes</p>
             </div>
           </div>

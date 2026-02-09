@@ -57,7 +57,6 @@ let PurchasesService = class PurchasesService {
             totalValue: documentData.total || 0,
             lines: lines.map(line => ({
                 ...line,
-                id: line.id || `LINE-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 totalLiquid: line.subtotal || (line.quantity * line.unitPrice),
                 totalValue: line.total || (line.quantity * line.unitPrice * (1 + (line.ivaRate || 0) / 100)),
                 taxRate: line.ivaRate || 0,
@@ -70,22 +69,19 @@ let PurchasesService = class PurchasesService {
         delete entityData.discounts;
         delete entityData.totalIva;
         delete entityData.total;
-        if (!entityData.id) {
-            entityData.id = `PUR-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            if (!entityData.number) {
-                const lastDoc = await repo.findOne({
-                    where: {
-                        type: entityData.type,
-                        series: entityData.series,
-                        companyId: entityData.companyId
-                    },
-                    order: { number: 'DESC' },
-                });
-                entityData.number = (lastDoc?.number || 0) + 1;
-            }
-            if (!entityData.documentNumber || entityData.documentNumber.includes('undefined')) {
-                entityData.documentNumber = `${entityData.type} ${entityData.series}/${entityData.number}`;
-            }
+        if (!entityData.number) {
+            const lastDoc = await repo.findOne({
+                where: {
+                    type: entityData.type,
+                    series: entityData.series,
+                    companyId: entityData.companyId
+                },
+                order: { number: 'DESC' },
+            });
+            entityData.number = (lastDoc?.number || 0) + 1;
+        }
+        if (!entityData.documentNumber || entityData.documentNumber.includes('undefined')) {
+            entityData.documentNumber = `${entityData.type} ${entityData.series}/${entityData.number}`;
         }
         const purchase = repo.create(entityData);
         const savedDoc = await repo.save(purchase);
