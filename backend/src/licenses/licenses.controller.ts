@@ -5,14 +5,17 @@ import {
     Body,
     Param,
     Req,
+    Query,
     UseGuards,
     HttpCode,
     HttpStatus,
     Delete,
+    Patch,
 } from '@nestjs/common';
 import { LicensesService } from './licenses.service';
 import { GenerateLicenseDto, ActivateLicenseDto } from './dto/generate-license.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { BlockLicensesDto, ListLicensesQueryDto, UpdateLicensePricingDto } from './dto/manage-license.dto';
 
 @Controller('licenses')
 export class LicensesController {
@@ -89,11 +92,50 @@ export class LicensesController {
     // GET /licenses
     @UseGuards(JwtAuthGuard)
     @Get()
-    async listAll(@Req() req: any) {
+    async listAll(@Req() req: any, @Query() query: ListLicensesQueryDto) {
         const user = req.user;
         if (!user?.isSuperAdmin && !user?.isAdmin) {
             return { error: 'Acesso negado.' };
         }
-        return this.licensesService.listAll();
+        return this.licensesService.listAll(query);
+    }
+
+    // ─── LIST ACTIVE (Admin only) ────────────────────────────────────────────
+    // GET /licenses/active
+    @UseGuards(JwtAuthGuard)
+    @Get('active')
+    async listActive(@Req() req: any) {
+        const user = req.user;
+        if (!user?.isSuperAdmin && !user?.isAdmin) {
+            return { error: 'Acesso negado.' };
+        }
+        return this.licensesService.listActive();
+    }
+
+    // ─── UPDATE PRICING (SuperAdmin only) ────────────────────────────────────
+    // PATCH /licenses/pricing
+    @UseGuards(JwtAuthGuard)
+    @Patch('pricing')
+    async updatePricing(@Body() dto: UpdateLicensePricingDto, @Req() req: any) {
+        const user = req.user;
+        if (!user?.isSuperAdmin) {
+            return { error: 'Acesso negado. Apenas super-administradores podem atualizar preços.' };
+        }
+        const result = await this.licensesService.updatePricing(dto.price, dto.companyIds);
+        return { message: 'Preço atualizado com sucesso.', ...result };
+    }
+
+    // ─── BLOCK LICENSES (SuperAdmin only) ────────────────────────────────────
+    // PATCH /licenses/block
+    @UseGuards(JwtAuthGuard)
+    @Patch('block')
+    async block(@Body() dto: BlockLicensesDto, @Req() req: any) {
+        const user = req.user;
+        if (!user?.isSuperAdmin) {
+            return { error: 'Acesso negado. Apenas super-administradores podem bloquear licenças.' };
+        }
+
+        const result = await this.licensesService.blockLicenses(user.username || user.sub, dto.reason, dto.companyIds);
+        return { message: 'Licenças bloqueadas com sucesso.', ...result };
     }
 }

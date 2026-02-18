@@ -34,6 +34,14 @@ export class License {
     @Column()
     companyName: string;
 
+    @Index()
+    @Column({ nullable: true })
+    contactEmail?: string;
+
+    @Index()
+    @Column({ nullable: true })
+    contactPhone?: string;
+
     @Column({ type: 'enum', enum: LicensePlan, default: LicensePlan.DEMO })
     plan: LicensePlan;
 
@@ -57,6 +65,9 @@ export class License {
 
     @Column({ nullable: true })
     maxCompanies?: number;
+
+    @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+    price?: number;
 
     @Column({ default: false })
     isRevoked: boolean;
