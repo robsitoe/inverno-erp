@@ -164,13 +164,14 @@ export class AppComponent {
   validateStoredSession() {
     const currentUser = localStorage.getItem('erp_current_user');
     const savedMode = localStorage.getItem('erp_login_mode');
+    const savedInitialView = localStorage.getItem('erp_initial_view');
 
     if (currentUser && currentUser !== 'undefined' && currentUser !== 'null') {
       try {
         if (savedMode === 'ADMIN') {
           this.isLoggedIn = true;
           this.currentMode = 'ADMIN';
-          this.activeView = 'admin-page';
+          this.activeView = savedInitialView || 'admin-page';
         } else if (savedMode === 'ERP') {
           const companyInfo = localStorage.getItem('erp_company_info');
           if (companyInfo && companyInfo !== 'undefined' && companyInfo !== 'null') {
@@ -195,13 +196,21 @@ export class AppComponent {
     this.activeView = view;
   }
 
-  handleLogin(mode: string) {
+  handleLogin(event: string | { mode: string; initialView?: string }) {
+    const mode = typeof event === 'string' ? event : event.mode;
+    const initialView = typeof event === 'string' ? undefined : event.initialView;
+
     this.isLoggedIn = true;
     this.currentMode = mode;
     localStorage.setItem('erp_login_mode', mode);
+    if (initialView) {
+      localStorage.setItem('erp_initial_view', initialView);
+    } else {
+      localStorage.removeItem('erp_initial_view');
+    }
 
     if (mode === 'ADMIN') {
-      this.activeView = 'admin-page';
+      this.activeView = initialView || 'admin-page';
     } else {
       this.activeView = 'dashboard';
     }
@@ -213,6 +222,7 @@ export class AppComponent {
     this.currentMode = 'ERP';
     localStorage.removeItem('erp_current_user');
     localStorage.removeItem('erp_login_mode');
+    localStorage.removeItem('erp_initial_view');
     localStorage.removeItem('erp_company_info');
     localStorage.removeItem('access_token');
     this.authService.logout();
