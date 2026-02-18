@@ -28,23 +28,23 @@ import { ToasterService } from './services/toaster.service';
         </div>
 
         <div class="flex justify-center mb-6 mt-2">
-          <div 
-            class="bg-center bg-no-repeat bg-cover size-16 rounded-md border border-gray-200" 
+          <div
+            class="bg-center bg-no-repeat bg-cover size-16 rounded-md border border-gray-200"
             style='background-image: url("https://picsum.photos/128/128")'
           ></div>
         </div>
         <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Inverno ERP</h2>
-        
+
         <!-- Step 1: Credentials -->
         <form *ngIf="step === 'LOGIN'" (ngSubmit)="onCredentialsSubmit()">
           <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
               Utilizador
             </label>
-            <input 
-              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" 
-              id="username" 
-              type="text" 
+            <input
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500"
+              id="username"
+              type="text"
               placeholder="Utilizador"
               [(ngModel)]="username"
               name="username"
@@ -55,33 +55,19 @@ import { ToasterService } from './services/toaster.service';
             <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
               Palavra-passe
             </label>
-            <input 
-              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" 
-              id="password" 
-              type="password" 
+            <input
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500"
+              id="password"
+              type="password"
               placeholder="******************"
               [(ngModel)]="password"
               name="password"
             >
           </div>
-          
-          <div class="mb-6">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="mode">
-              Aplicação
-            </label>
-            <select 
-              class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500 bg-white" 
-              id="mode" 
-              [(ngModel)]="selectedMode"
-              name="mode"
-            >
-              <option value="ERP">Inverno ERP (Gestão)</option>
-              <option value="ADMIN">Administrador</option>
-            </select>
-          </div>
+
           <div class="flex items-center justify-between">
-            <button 
-              class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full transition-colors" 
+            <button
+              class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full transition-colors"
               type="submit"
             >
               Entrar
@@ -89,7 +75,59 @@ import { ToasterService } from './services/toaster.service';
           </div>
         </form>
 
-        <!-- Step 2: Company Selection -->
+        <!-- Step 2: Access Gate -->
+        <div *ngIf="step === 'ACCESS_GATE'" class="animate-slide-in space-y-4">
+          <div class="text-center">
+            <p class="text-gray-700 text-sm font-semibold">Bem-vindo, {{ currentUser?.name || currentUser?.username }}</p>
+            <p class="text-gray-500 text-xs mt-1">Antes de usar o ERP, escolha como entrar na Administração</p>
+          </div>
+
+          <div class="p-3 border border-amber-200 bg-amber-50 rounded-lg">
+            <label class="block text-xs font-bold text-amber-800 mb-1">Código especial do Administrador</label>
+            <input
+              type="password"
+              [(ngModel)]="adminAccessCode"
+              class="w-full border border-amber-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
+              placeholder="Por agora use: admin"
+            >
+            <p class="text-[10px] text-amber-700 mt-1">Este código poderá ser alterado futuramente para um valor privado.</p>
+          </div>
+
+          <div class="space-y-2">
+            <button
+              (click)="enterViaAdministration('buy')"
+              class="w-full text-left p-3 border border-blue-200 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors"
+            >
+              <p class="text-sm font-bold text-blue-700">Pagar Licença</p>
+              <p class="text-xs text-blue-600">Abre Administração > Gestão de Licenças para pagamento/renovação.</p>
+            </button>
+
+            <button
+              (click)="enterViaAdministration('key')"
+              class="w-full text-left p-3 border border-indigo-200 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors"
+            >
+              <p class="text-sm font-bold text-indigo-700">Inserir Chave</p>
+              <p class="text-xs text-indigo-600">Abre Administração > Gestão de Licenças para ativação manual.</p>
+            </button>
+
+            <button
+              (click)="enterViaAdministration('demo')"
+              class="w-full text-left p-3 border border-green-200 rounded-lg bg-green-50 hover:bg-green-100 transition-colors"
+            >
+              <p class="text-sm font-bold text-green-700">Entrar em Demonstração</p>
+              <p class="text-xs text-green-600">Continua em modo de demonstração e segue para o painel de administração.</p>
+            </button>
+          </div>
+
+          <button
+            (click)="step = 'LOGIN'; password = ''; adminAccessCode = ''"
+            class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none transition-colors text-sm"
+          >
+            Voltar ao Login
+          </button>
+        </div>
+
+        <!-- Step 3: Company Selection -->
         <div *ngIf="step === 'COMPANY_SELECT'" class="animate-slide-in">
           <div class="mb-4 text-center">
             <p class="text-gray-600 text-sm">Bem-vindo, <span class="font-bold text-gray-800">{{ currentUser?.name || currentUser?.username }}</span></p>
@@ -97,7 +135,7 @@ import { ToasterService } from './services/toaster.service';
           </div>
 
           <div class="space-y-2 mb-6 max-h-60 overflow-y-auto border border-gray-200 rounded p-2 bg-gray-50">
-            <button 
+            <button
               *ngFor="let company of availableCompanies"
               (click)="selectCompany(company)"
               class="w-full text-left p-3 rounded bg-white border border-gray-200 hover:border-blue-500 hover:shadow-sm transition-all flex items-center gap-3 group"
@@ -114,9 +152,9 @@ import { ToasterService } from './services/toaster.service';
 
             <div *ngIf="availableCompanies.length === 0" class="text-center py-4 text-gray-500 text-sm">
               <p class="mb-4">Não tem acesso a nenhuma empresa.</p>
-              <button 
+              <button
                 *ngIf="currentUser?.role === 'ADMIN'"
-                (click)="selectedMode = 'ADMIN'; finishLogin()"
+                (click)="selectedMode = 'ADMIN'; finishLogin('admin-page')"
                 class="w-full bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 py-2 px-4 rounded transition-colors text-xs font-semibold"
               >
                 IR PARA PAINEL DE ADMINISTRAÇÃO
@@ -125,8 +163,8 @@ import { ToasterService } from './services/toaster.service';
           </div>
 
           <div class="flex gap-2">
-            <button 
-              (click)="step = 'LOGIN'; password = ''" 
+            <button
+              (click)="step = 'LOGIN'; password = ''"
               class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none transition-colors text-sm"
             >
               Voltar
@@ -170,12 +208,14 @@ import { ToasterService } from './services/toaster.service';
   `]
 })
 export class LoginComponent implements OnInit {
-  @Output() onLogin = new EventEmitter<string>();
+  @Output() onLogin = new EventEmitter<{ mode: string; initialView?: string }>();
 
-  step: 'LOGIN' | 'COMPANY_SELECT' = 'LOGIN';
+  step: 'LOGIN' | 'ACCESS_GATE' | 'COMPANY_SELECT' = 'LOGIN';
   username = '';
   password = '';
   selectedMode = 'ERP';
+  adminAccessCode = '';
+  readonly defaultAdminAccessCode = 'admin';
 
   currentUser: any = null;
   availableCompanies: any[] = [];
@@ -230,18 +270,12 @@ export class LoginComponent implements OnInit {
         next: (user) => {
           this.currentUser = user;
 
-          // Permission Check for ADMIN mode
-          if (this.selectedMode === 'ADMIN') {
-            if (!user.isAdmin && !user.isSuperAdmin) {
-              this.toasterService.showError('Acesso Negado', 'Não tem permissões de administrador para aceder a este painel.');
-              return;
-            }
-            this.finishLogin();
+          if (!user.isAdmin && !user.isSuperAdmin) {
+            this.toasterService.showError('Acesso Negado', 'A entrada inicial neste sistema exige permissões de administrador.');
             return;
           }
 
-          // ERP Mode - Proceed to Company Selection
-          this.loadAvailableCompanies();
+          this.step = 'ACCESS_GATE';
         },
         error: (err) => {
           console.error('Login failed', err);
@@ -253,25 +287,14 @@ export class LoginComponent implements OnInit {
 
   loadAvailableCompanies() {
     this.dataService.getCompanies().subscribe(companies => {
-      // For now, simple logic: if admin, see all. If not, see none (unless we implement user-company relation in backend)
       if (this.currentUser.isAdmin || this.currentUser.isSuperAdmin) {
         this.availableCompanies = companies;
       } else {
-        // Filter companies based on user permissions
         const allowedIds = (this.currentUser.permissions || []).map((p: any) => p.companyId);
         if (allowedIds.includes('ALL')) {
           this.availableCompanies = companies;
         } else {
           this.availableCompanies = companies.filter(c => allowedIds.includes(c.id));
-        }
-      }
-
-      if (this.availableCompanies.length === 0) {
-        // If no companies found, maybe mock one for testing if local?
-        // Or just leave empty.
-        if (this.systemConfig.deploymentMode === 'LOCAL' && this.systemConfig.localStorageType === 'BROWSER') {
-          // Optional: Auto-create a demo company if none exists in browser mode?
-          // For now, let's just leave it.
         }
       }
 
@@ -288,7 +311,18 @@ export class LoginComponent implements OnInit {
     this.finishLogin();
   }
 
-  finishLogin() {
-    this.onLogin.emit(this.selectedMode);
+  enterViaAdministration(option: 'buy' | 'key' | 'demo') {
+    if (this.adminAccessCode !== this.defaultAdminAccessCode) {
+      this.toasterService.showError('Código inválido', 'Código especial do administrador incorreto.');
+      return;
+    }
+
+    localStorage.setItem('erp_license_entry_mode', option === 'buy' ? 'BUY' : option === 'key' ? 'KEY' : 'DEMO');
+    this.selectedMode = 'ADMIN';
+    this.finishLogin('admin-page');
+  }
+
+  finishLogin(initialView?: string) {
+    this.onLogin.emit({ mode: this.selectedMode, initialView });
   }
 }
