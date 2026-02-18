@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const licenses_service_1 = require("./licenses.service");
 const generate_license_dto_1 = require("./dto/generate-license.dto");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const manage_license_dto_1 = require("./dto/manage-license.dto");
 let LicensesController = class LicensesController {
     licensesService;
     constructor(licensesService) {
@@ -62,12 +63,35 @@ let LicensesController = class LicensesController {
         await this.licensesService.revoke(companyId, body.reason, user.username || user.sub);
         return { message: `Licença da empresa ${companyId} revogada com sucesso.` };
     }
-    async listAll(req) {
+    async listAll(req, query) {
         const user = req.user;
         if (!user?.isSuperAdmin && !user?.isAdmin) {
             return { error: 'Acesso negado.' };
         }
-        return this.licensesService.listAll();
+        return this.licensesService.listAll(query);
+    }
+    async listActive(req) {
+        const user = req.user;
+        if (!user?.isSuperAdmin && !user?.isAdmin) {
+            return { error: 'Acesso negado.' };
+        }
+        return this.licensesService.listActive();
+    }
+    async updatePricing(dto, req) {
+        const user = req.user;
+        if (!user?.isSuperAdmin) {
+            return { error: 'Acesso negado. Apenas super-administradores podem atualizar preços.' };
+        }
+        const result = await this.licensesService.updatePricing(dto.price, dto.companyIds);
+        return { message: 'Preço atualizado com sucesso.', ...result };
+    }
+    async block(dto, req) {
+        const user = req.user;
+        if (!user?.isSuperAdmin) {
+            return { error: 'Acesso negado. Apenas super-administradores podem bloquear licenças.' };
+        }
+        const result = await this.licensesService.blockLicenses(user.username || user.sub, dto.reason, dto.companyIds);
+        return { message: 'Licenças bloqueadas com sucesso.', ...result };
     }
 };
 exports.LicensesController = LicensesController;
@@ -123,10 +147,37 @@ __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)(),
     __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, manage_license_dto_1.ListLicensesQueryDto]),
+    __metadata("design:returntype", Promise)
+], LicensesController.prototype, "listAll", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('active'),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
-], LicensesController.prototype, "listAll", null);
+], LicensesController.prototype, "listActive", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Patch)('pricing'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [manage_license_dto_1.UpdateLicensePricingDto, Object]),
+    __metadata("design:returntype", Promise)
+], LicensesController.prototype, "updatePricing", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Patch)('block'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [manage_license_dto_1.BlockLicensesDto, Object]),
+    __metadata("design:returntype", Promise)
+], LicensesController.prototype, "block", null);
 exports.LicensesController = LicensesController = __decorate([
     (0, common_1.Controller)('licenses'),
     __metadata("design:paramtypes", [licenses_service_1.LicensesService])

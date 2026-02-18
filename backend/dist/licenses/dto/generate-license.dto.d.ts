@@ -8,6 +8,9 @@ export declare class GenerateLicenseDto {
     maxUsers?: number;
     maxCompanies?: number;
     gracePeriodHours?: number;
+    contactEmail?: string;
+    contactPhone?: string;
+    price?: number;
 }
 export declare class ActivateLicenseDto {
     token: string;

@@ -127,6 +127,9 @@ let LicensesService = LicensesService_1 = class LicensesService {
         license.features = features;
         license.maxUsers = dto.maxUsers;
         license.maxCompanies = dto.maxCompanies;
+        license.contactEmail = dto.contactEmail;
+        license.contactPhone = dto.contactPhone;
+        license.price = dto.price;
         license.gracePeriodHours = gracePeriodHours;
         license.isRevoked = false;
         license.revokedAt = undefined;
@@ -195,8 +198,56 @@ let LicensesService = LicensesService_1 = class LicensesService {
         await this.licenseRepo.save(license);
         this.logger.warn(`License REVOKED for company ${companyId} by ${revokedBy}. Reason: ${reason}`);
     }
-    async listAll() {
-        return this.licenseRepo.find({ order: { createdAt: 'DESC' } });
+    async listAll(filters) {
+        const where = [];
+        if (filters?.search) {
+            where.push({ companyName: (0, typeorm_2.ILike)(`%${filters.search}%`) }, { companyId: (0, typeorm_2.ILike)(`%${filters.search}%`) }, { contactEmail: (0, typeorm_2.ILike)(`%${filters.search}%`) }, { contactPhone: (0, typeorm_2.ILike)(`%${filters.search}%`) });
+        }
+        const licenses = await this.licenseRepo.find({
+            where: where.length ? where : undefined,
+            order: { createdAt: 'DESC' },
+        });
+        if (!filters?.status) {
+            return licenses;
+        }
+        const status = filters.status.toUpperCase();
+        return licenses.filter((license) => license.status === status);
+    }
+    async listActive() {
+        const licenses = await this.licenseRepo.find({
+            where: { isRevoked: false },
+            order: { createdAt: 'DESC' },
+        });
+        for (const license of licenses) {
+            await this.syncStatus(license);
+        }
+        return licenses.filter((license) => [license_entity_1.LicenseStatus.ACTIVE, license_entity_1.LicenseStatus.GRACE].includes(license.status));
+    }
+    async updatePricing(price, companyIds) {
+        if (companyIds?.length) {
+            const result = await this.licenseRepo.update({ companyId: (0, typeorm_2.In)(companyIds) }, { price });
+            return { updated: result.affected ?? 0 };
+        }
+        const result = await this.licenseRepo
+            .createQueryBuilder()
+            .update(license_entity_1.License)
+            .set({ price })
+            .execute();
+        return { updated: result.affected ?? 0 };
+    }
+    async blockLicenses(blockedBy, reason, companyIds) {
+        const licenses = companyIds?.length
+            ? await this.licenseRepo.find({ where: { companyId: (0, typeorm_2.In)(companyIds) } })
+            : await this.licenseRepo.find();
+        for (const license of licenses) {
+            license.isRevoked = true;
+            license.status = license_entity_1.LicenseStatus.REVOKED;
+            license.revokedAt = new Date();
+            license.revokedBy = blockedBy;
+            license.revokedReason = reason || 'Bloqueio administrativo';
+            await this.licenseRepo.save(license);
+        }
+        return { blocked: licenses.length };
     }
     async validateToken(token) {
         const licenseSecret = this.configService.get('LICENSE_SECRET') || 'license-secret-change-in-production';

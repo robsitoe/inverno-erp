@@ -1,5 +1,6 @@
 import { LicensesService } from './licenses.service';
 import { GenerateLicenseDto, ActivateLicenseDto } from './dto/generate-license.dto';
+import { BlockLicensesDto, ListLicensesQueryDto, UpdateLicensePricingDto } from './dto/manage-license.dto';
 export declare class LicensesController {
     private readonly licensesService;
     constructor(licensesService: LicensesService);
@@ -41,7 +42,24 @@ export declare class LicensesController {
         message: string;
         error?: undefined;
     }>;
-    listAll(req: any): Promise<import("./entities/license.entity").License[] | {
+    listAll(req: any, query: ListLicensesQueryDto): Promise<import("./entities/license.entity").License[] | {
         error: string;
+    }>;
+    listActive(req: any): Promise<import("./entities/license.entity").License[] | {
+        error: string;
+    }>;
+    updatePricing(dto: UpdateLicensePricingDto, req: any): Promise<{
+        error: string;
+    } | {
+        updated: number;
+        message: string;
+        error?: undefined;
+    }>;
+    block(dto: BlockLicensesDto, req: any): Promise<{
+        error: string;
+    } | {
+        blocked: number;
+        message: string;
+        error?: undefined;
     }>;
 }

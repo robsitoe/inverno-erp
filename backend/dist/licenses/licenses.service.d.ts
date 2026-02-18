@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { License, LicensePlan, LicenseStatus } from './entities/license.entity';
 import { GenerateLicenseDto } from './dto/generate-license.dto';
+import { ListLicensesQueryDto } from './dto/manage-license.dto';
 export interface LicensePayload {
     sub: string;
     cid: string;
@@ -64,7 +65,14 @@ export declare class LicensesService {
     activate(token: string, requestIp: string): Promise<LicenseStatusResponse>;
     getStatus(companyId: string): Promise<LicenseStatusResponse>;
     revoke(companyId: string, reason: string, revokedBy: string): Promise<void>;
-    listAll(): Promise<License[]>;
+    listAll(filters?: ListLicensesQueryDto): Promise<License[]>;
+    listActive(): Promise<License[]>;
+    updatePricing(price: number, companyIds?: string[]): Promise<{
+        updated: number;
+    }>;
+    blockLicenses(blockedBy: string, reason?: string, companyIds?: string[]): Promise<{
+        blocked: number;
+    }>;
     validateToken(token: string): Promise<LicensePayload | null>;
     private syncStatus;
     private buildStatusResponse;

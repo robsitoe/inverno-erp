@@ -30,6 +30,8 @@ let License = class License {
     id;
     companyId;
     companyName;
+    contactEmail;
+    contactPhone;
     plan;
     status;
     expiresAt;
@@ -38,6 +40,7 @@ let License = class License {
     features;
     maxUsers;
     maxCompanies;
+    price;
     isRevoked;
     revokedAt;
     revokedBy;
@@ -61,6 +64,16 @@ __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], License.prototype, "companyName", void 0);
+__decorate([
+    (0, typeorm_1.Index)(),
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], License.prototype, "contactEmail", void 0);
+__decorate([
+    (0, typeorm_1.Index)(),
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], License.prototype, "contactPhone", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'enum', enum: LicensePlan, default: LicensePlan.DEMO }),
     __metadata("design:type", String)
@@ -93,6 +106,10 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Number)
 ], License.prototype, "maxCompanies", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', precision: 12, scale: 2, nullable: true }),
+    __metadata("design:type", Number)
+], License.prototype, "price", void 0);
 __decorate([
     (0, typeorm_1.Column)({ default: false }),
     __metadata("design:type", Boolean)

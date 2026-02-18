@@ -15,6 +15,8 @@ export declare class License {
     id: string;
     companyId: string;
     companyName: string;
+    contactEmail?: string;
+    contactPhone?: string;
     plan: LicensePlan;
     status: LicenseStatus;
     expiresAt: Date;
@@ -23,6 +25,7 @@ export declare class License {
     features?: string[];
     maxUsers?: number;
     maxCompanies?: number;
+    price?: number;
     isRevoked: boolean;
     revokedAt?: Date;
     revokedBy?: string;

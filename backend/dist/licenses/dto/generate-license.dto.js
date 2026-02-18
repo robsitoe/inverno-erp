@@ -21,6 +21,9 @@ class GenerateLicenseDto {
     maxUsers;
     maxCompanies;
     gracePeriodHours;
+    contactEmail;
+    contactPhone;
+    price;
 }
 exports.GenerateLicenseDto = GenerateLicenseDto;
 __decorate([
@@ -61,6 +64,22 @@ __decorate([
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
 ], GenerateLicenseDto.prototype, "gracePeriodHours", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], GenerateLicenseDto.prototype, "contactEmail", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], GenerateLicenseDto.prototype, "contactPhone", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)({ maxDecimalPlaces: 2 }),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], GenerateLicenseDto.prototype, "price", void 0);
 class ActivateLicenseDto {
     token;
 }
