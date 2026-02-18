@@ -20,8 +20,15 @@
             "index": "index.html",
             "tsConfig": "tsconfig.json",
             "polyfills": [],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "assets",
+                "output": "assets"
+              }
+            ],
             "styles": [
-              "src/assets/fonts/fonts.css",
+              "assets/fonts/fonts.css",
               "styles.css"
             ]
           },

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { AdminToolsComponent } from './admin-tools.component';
 import { AdminSeriesComponent } from './admin-series.component';
+import { LicenseManagerComponent } from './license-manager.component';
 import { PeriodService } from '../../shared/period.service';
 import { DataService } from '../../services/data.service';
 
@@ -29,7 +30,7 @@ interface FiscalYear {
 @Component({
   selector: 'app-admin-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule, AdminToolsComponent, AdminSeriesComponent],
+  imports: [CommonModule, FormsModule, HttpClientModule, AdminToolsComponent, AdminSeriesComponent, LicenseManagerComponent],
   template: `
     <div class="flex flex-col h-full bg-[#F0F0F0]">
       <!-- Header -->
@@ -401,6 +402,11 @@ interface FiscalYear {
         <div *ngIf="activeTab === 'system'" class="max-w-4xl mx-auto">
           <app-admin-tools></app-admin-tools>
         </div>
+
+        <!-- Tab: Licenças -->
+        <div *ngIf="activeTab === 'licenses'" class="max-w-4xl mx-auto">
+          <app-license-manager></app-license-manager>
+        </div>
       </div>
     </div>
 
@@ -446,7 +452,8 @@ export class AdminPageComponent implements OnInit {
     { id: 'series', label: 'Séries', icon: 'format_list_numbered' },
     { id: 'parameters', label: 'Parâmetros', icon: 'settings_applications' },
     { id: 'maintenance', label: 'Manutenção', icon: 'build_circle' },
-    { id: 'system', label: 'Sistema', icon: 'settings_system_daydream' }
+    { id: 'system', label: 'Sistema', icon: 'settings_system_daydream' },
+    { id: 'licenses', label: 'Licenças', icon: 'verified' }
   ];
 
   companyInfo: CompanyInfo = {

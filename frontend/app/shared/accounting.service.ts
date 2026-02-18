@@ -442,7 +442,7 @@ export class AccountingService {
             accountName: customerAccountName,
             debit: salesDoc.total,
             credit: 0,
-            description: `Venda a ${salesDoc.customerName} - ${salesDoc.documentNumber}`
+            description: `Venda a ${salesDoc.customerName} (${customer?.code || ''}) - ${salesDoc.documentNumber}`
         });
 
         // 2. Crédito nas Vendas (agrupado por conta de receita dos artigos)

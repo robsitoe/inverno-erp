@@ -308,7 +308,7 @@ export class ChartOfAccountsComponent implements OnInit {
           acc.code,
           acc.name,
           this.getTypeLabel(acc.type),
-          acc.balance.toFixed(2),
+          Number(acc.balance).toFixed(2),
           acc.isActive ? 'Ativo' : 'Inativo'
         ]
         : [

@@ -18,7 +18,7 @@ import { SalesDocumentSearchModalComponent } from './sales-document-search-modal
 import { WarehouseSearchModalComponent } from '../inventory/warehouse-search-modal.component';
 import { LocationSearchModalComponent } from '../inventory/location-search-modal.component';
 import { BatchSearchModalComponent } from '../inventory/batch-search-modal.component';
-import { PrintSettingsModalComponent, PrintSettings } from './print-settings-modal.component';
+import { PrintSettingsModalComponent, PrintSettings } from '../../shared/components/print-settings-modal.component';
 import { SalesDocumentPrintComponent } from './sales-document-print.component';
 import { AppIconComponent } from '../../shared/components/app-icon.component';
 
@@ -67,6 +67,7 @@ interface GridRow {
   ],
   template: `
     <div class="flex flex-col h-full w-full bg-[#F0F0F0] text-xs overflow-hidden relative">
+      <div class="flex flex-col h-full w-full no-print overflow-hidden">
       <!-- Toolbar -->
       <div class="flex items-center gap-1 px-2 py-1.5 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0 overflow-x-auto">
         <ng-container *ngFor="let item of toolbarItems; let i = index">
@@ -594,7 +595,8 @@ interface GridRow {
       </div>
 
 
-      <!-- Print Components -->
+      </div>
+
       <app-print-settings-modal
         [isOpen]="isPrintSettingsOpen"
         (closeEvent)="onPrintSettingsClose()"

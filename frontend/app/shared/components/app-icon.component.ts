@@ -6,16 +6,26 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <svg 
-      [attr.width]="size" 
-      [attr.height]="size" 
-      viewBox="0 -960 960 960" 
-      [attr.fill]="color" 
-      xmlns="http://www.w3.org/2000/svg"
-      class="inline-block align-middle"
-    >
-      <path [attr.d]="getPath()" />
-    </svg>
+    <ng-container *ngIf="getPath(); else fontIcon">
+      <svg 
+        [attr.width]="size" 
+        [attr.height]="size" 
+        viewBox="0 -960 960 960" 
+        [attr.fill]="color" 
+        xmlns="http://www.w3.org/2000/svg"
+        class="inline-block align-middle"
+      >
+        <path [attr.d]="getPath()" />
+      </svg>
+    </ng-container>
+    <ng-template #fontIcon>
+      <span class="material-symbols-outlined inline-block align-middle select-none shrink-0" 
+            [style.font-size.px]="size" 
+            [style.color]="color"
+            style="width: 1em; height: 1em; overflow: hidden; display: inline-flex; align-items: center; justify-content: center;">
+        {{ name }}
+      </span>
+    </ng-template>
   `
 })
 export class AppIconComponent {

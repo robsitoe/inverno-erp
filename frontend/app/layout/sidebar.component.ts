@@ -3,11 +3,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/constants';
+import { AppIconComponent } from '../shared/components/app-icon.component';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AppIconComponent],
   template: `
     <aside [class]="'flex flex-col h-full bg-white border-r border-gray-300 shrink-0 transition-all duration-300 ' + (collapsed ? 'w-14' : 'w-64')">
       <!-- Sidebar Header -->
@@ -25,7 +26,7 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
             [class]="'text-gray-600 hover:bg-gray-100 p-1 rounded transition-colors ' + (collapsed ? 'mx-auto' : '')"
             [title]="collapsed ? 'Expandir' : 'Recolher'"
         >
-          <span class="material-symbols-outlined">menu</span>
+          <app-icon name="menu" [size]="20" color="#374151"></app-icon>
         </button>
       </div>
 
@@ -35,7 +36,7 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
           <!-- Favorites -->
           <div class="mb-2 mt-2" *ngIf="mode !== 'ADMIN'">
             <div [class]="'flex items-center gap-2 px-3 py-1 ' + (collapsed ? 'justify-center' : '')">
-              <span class="material-symbols-outlined text-[18px] text-yellow-500" title="Favoritos">star</span>
+              <app-icon name="star" [size]="18" color="#eab308" title="Favoritos"></app-icon>
               <h3 *ngIf="!collapsed" class="font-semibold text-xs text-gray-800">Favoritos</h3>
             </div>
             <p *ngIf="!collapsed" class="pl-9 text-xs text-gray-400 italic">sem favoritos</p>
@@ -44,7 +45,7 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
           <!-- Recents -->
           <div class="mb-4" *ngIf="mode !== 'ADMIN'">
             <div [class]="'flex items-center gap-2 px-3 py-1 ' + (collapsed ? 'justify-center' : '')">
-              <span class="material-symbols-outlined text-[18px] text-blue-600" title="Recentes">history</span>
+              <app-icon name="history" [size]="18" color="#2563eb" title="Recentes"></app-icon>
               <h3 *ngIf="!collapsed" class="font-semibold text-xs text-gray-800">Recentes</h3>
             </div>
             <nav *ngIf="!collapsed" class="flex flex-col text-xs pl-9 space-y-1 mt-1">
@@ -67,12 +68,19 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
                 [class]="'w-full flex items-center gap-2 px-2 py-1.5 hover:bg-gray-100 transition-colors cursor-pointer select-none ' + (collapsed ? 'justify-center' : '') + ' ' + (isModuleOpen(item.label) ? 'bg-gray-50 text-primary' : 'text-gray-700')"
                 [title]="collapsed ? item.label : ''"
               >
-                <span *ngIf="!collapsed" [class]="'material-symbols-outlined text-[18px] text-blue-600 transition-transform duration-200 ' + (isModuleOpen(item.label) ? 'rotate-90' : '')">
-                    chevron_right
-                </span>
-                <span [class]="'material-symbols-outlined text-[18px] ' + (isModuleOpen(item.label) ? 'text-primary' : 'text-gray-500')">
-                  {{ item.icon }}
-                </span>
+                <app-icon 
+                  *ngIf="!collapsed" 
+                  name="chevron_right" 
+                  [size]="20" 
+                  color="#172554" 
+                  [class.rotate-90]="isModuleOpen(item.label)"
+                  class="transition-transform duration-200"
+                ></app-icon>
+                <app-icon 
+                  [name]="item.icon" 
+                  [size]="22" 
+                  [color]="isModuleOpen(item.label) ? '#2563eb' : getIconColor(item.label)"
+                ></app-icon>
                 <span *ngIf="!collapsed" class="font-medium truncate">{{ item.label }}</span>
               </button>
               
@@ -85,10 +93,14 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
                       (click)="toggleSubModule(child.label)"
                       class="w-full flex items-center gap-2 text-gray-600 hover:text-primary py-0.5 transition-colors text-left"
                     >
-                      <span [class]="'material-symbols-outlined text-[14px] transition-transform duration-200 ' + (isSubModuleOpen(child.label) ? 'rotate-90' : '')">
-                        chevron_right
-                      </span>
-                      <span class="material-symbols-outlined text-[14px]">{{ child.icon }}</span>
+                      <app-icon 
+                        name="chevron_right" 
+                        [size]="16" 
+                        color="#000000" 
+                        [class.rotate-90]="isSubModuleOpen(child.label)"
+                        class="transition-transform duration-200"
+                      ></app-icon>
+                      <app-icon [name]="child.icon" [size]="16" color="#374151"></app-icon>
                       <span>{{ child.label }}</span>
                       <span *ngIf="child.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
                     </button>
@@ -102,10 +114,14 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
                             (click)="toggleSubSubModule(subChild.label)"
                             class="w-full flex items-center gap-2 text-gray-600 hover:text-primary py-0.5 transition-colors text-left"
                           >
-                            <span [class]="'material-symbols-outlined text-[12px] transition-transform duration-200 ' + (isSubSubModuleOpen(subChild.label) ? 'rotate-90' : '')">
-                              chevron_right
-                            </span>
-                            <span class="material-symbols-outlined text-[12px]">{{ subChild.icon }}</span>
+                            <app-icon 
+                              name="chevron_right" 
+                              [size]="12" 
+                              color="#111827" 
+                              [class.rotate-90]="isSubSubModuleOpen(subChild.label)"
+                              class="transition-transform duration-200"
+                            ></app-icon>
+                            <app-icon [name]="subChild.icon" [size]="12" color="#374151"></app-icon>
                             <span class="text-xs">{{ subChild.label }}</span>
                             <span *ngIf="subChild.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
                           </button>
@@ -146,7 +162,7 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
                        [class]="'flex items-center gap-2 text-gray-600 hover:text-primary hover:underline py-0.5 transition-colors ' + 
                           (child.view === currentView ? 'text-primary font-semibold' : '')"
                     >
-                      <span class="material-symbols-outlined text-[14px]">{{ child.icon }}</span>
+                      <app-icon [name]="child.icon" [size]="16" color="#374151"></app-icon>
                       <span>{{ child.label }}</span>
                       <span *ngIf="child.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
                     </a>
@@ -161,7 +177,7 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
       <!-- Search Footer in Sidebar -->
       <div *ngIf="!collapsed && mode !== 'ADMIN'" class="border-t border-gray-300 p-3 space-y-2 bg-gray-50 shrink-0">
         <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-[18px] text-blue-600">apps</span>
+          <app-icon name="apps" [size]="20" color="#1d4ed8"></app-icon>
           <h3 class="font-semibold text-xs text-gray-800">Todas as tarefas</h3>
         </div>
         <div class="relative">
@@ -171,7 +187,12 @@ import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/
               type="text"
               (input)="onSearch($event)"
           />
-          <span class="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 text-[16px]">search</span>
+          <app-icon 
+            name="search" 
+            [size]="18" 
+            color="#111827" 
+            class="absolute right-1.5 top-1/2 -translate-y-1/2"
+          ></app-icon>
         </div>
       </div>
     </aside>
@@ -271,6 +292,22 @@ export class SidebarComponent {
 
   toggleCollapsed() {
     this.collapsed = !this.collapsed;
+  }
+
+  getIconColor(label: string): string {
+    const colors: { [key: string]: string } = {
+      'Contabilidade': '#1d4ed8', // blue-700
+      'Equipamentos e Ativos': '#334155', // slate-700
+      'Tesouraria': '#047857', // emerald-700
+      'Inventário': '#c2410c', // orange-700
+      'Vendas': '#be123c', // rose-700
+      'Compras': '#0369a1', // sky-700
+      'Projetos e Serviços': '#7e22ce', // purple-700
+      'Administração': '#4338ca', // indigo-700
+      'Tabelas': '#374151', // gray-700
+      'Menus do Utilizador': '#0f766e' // teal-700
+    };
+    return colors[label] || '#374151';
   }
 
   handleMenuItemClick(e: Event, item: MenuItem) {

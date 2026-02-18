@@ -16,9 +16,8 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Material Symbols Outlined - Default definition */
 .material-symbols-outlined {
-    font-family: 'Material Symbols Outlined', 'Segoe UI Symbol', 'Segoe UI Emoji', sans-serif;
+    font-family: 'Material Symbols Outlined', sans-serif;
     font-weight: normal;
     font-style: normal;
     font-size: 24px;

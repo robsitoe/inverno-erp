@@ -542,14 +542,14 @@ export class ConsumptionReportComponent implements OnInit {
 
       group.lines.forEach(line => {
         csvContent += `${line.date};${line.documentNumber};${line.articleCode};${line.articleName};`;
-        csvContent += `${line.costCenter};${line.project};${line.quantity.toFixed(2)};`;
-        csvContent += `${line.unitPrice.toFixed(2)};${line.totalValue.toFixed(2)}\n`;
+        csvContent += `${line.costCenter};${line.project};${Number(line.quantity).toFixed(2)};`;
+        csvContent += `${Number(line.unitPrice).toFixed(2)};${Number(line.totalValue).toFixed(2)}\n`;
       });
 
-      csvContent += `\nSubtotal:;;;;;${group.totalQuantity.toFixed(2)};;${group.totalValue.toFixed(2)}\n`;
+      csvContent += `\nSubtotal:;;;;;${Number(group.totalQuantity).toFixed(2)};;${Number(group.totalValue).toFixed(2)}\n`;
     });
 
-    csvContent += `\n\nTOTAL GERAL:;;;;;${this.groups.reduce((s, g) => s + g.totalQuantity, 0).toFixed(2)};;${this.getTotalValue().toFixed(2)}\n`;
+    csvContent += `\n\nTOTAL GERAL:;;;;;${Number(this.groups.reduce((s, g) => s + g.totalQuantity, 0)).toFixed(2)};;${Number(this.getTotalValue()).toFixed(2)}\n`;
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');

@@ -15,60 +15,11 @@ import { InventoryService } from '../../shared/inventory.service';
 import { AuditService } from '../../shared/audit.service';
 import { PeriodService } from '../../shared/period.service';
 import { DataService } from '../../services/data.service';
-import { WorkflowStatus, WorkflowHistory } from '../../shared/models';
+import { WorkflowStatus, WorkflowHistory, PurchaseDocument, PurchaseDocumentLine } from '../../shared/models';
 import { AppIconComponent } from '../../shared/components/app-icon.component';
+import { PrintSettingsModalComponent, PrintSettings } from '../../shared/components/print-settings-modal.component';
+import { PurchaseDocumentPrintComponent } from './purchase-document-print.component';
 
-interface PurchaseDocumentLine {
-  id: string;
-  articleId?: string; // Mandatoy for backend
-  articleCode: string;
-  articleName: string;
-  warehouse: string;
-  location: string;
-  batch: string;
-  description: string;
-  taxCode: string;
-  taxRate: number;
-  unitPrice: number;
-  discount: number;
-  unit: string;
-  quantity: number;
-  totalLiquid: number;
-  totalValue: number;
-  project: string;
-  costCenter: string;
-  analytic: string;
-  functional: string;
-}
-
-interface PurchaseDocument {
-  id: string;
-  companyId?: string;
-  type: string;
-  series: string;
-  number: number;
-  date: string;
-  dueDate: string;
-  supplierCode: string;
-  supplierName: string;
-  supplierNif: string;
-  supplierAddress: string;
-  supplierAccountId?: string;
-  reference: string;
-  paymentCondition: 'PRONTO' | 'PRAZO';
-  paymentDays: number;
-  currency: string;
-  status: WorkflowStatus;
-  lines: PurchaseDocumentLine[];
-  merchandiseTotal: number;
-  discountValue: number;
-  taxTotal: number;
-  totalValue: number;
-  notes: string;
-  statusNotes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 interface CompanyInfo {
   name: string;
@@ -80,6 +31,7 @@ interface CompanyInfo {
   logoUrl?: string;
   city?: string;
   country?: string;
+  currency?: string;
 }
 
 @Component({
@@ -98,11 +50,14 @@ interface CompanyInfo {
     BatchSearchModalComponent,
     PurchaseDocumentSearchModalComponent,
     DocumentTypeConfigModalComponent,
-    AppIconComponent
+    AppIconComponent,
+    PrintSettingsModalComponent,
+    PurchaseDocumentPrintComponent
   ],
   template: `
     <ng-container *ngIf="currentDoc; else loading">
-      <div class="flex flex-col h-full w-full bg-[#F0F0F0] text-xs overflow-hidden relative no-print">
+      <div class="flex flex-col h-full w-full bg-[#F0F0F0] text-xs overflow-hidden relative">
+        <div class="flex flex-col h-full w-full no-print">
         <!-- Toolbar -->
         <div class="flex items-center gap-1 px-2 py-1.5 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0 overflow-x-auto">
           <ng-container *ngFor="let item of toolbarItems; let i = index">
@@ -486,40 +441,27 @@ interface CompanyInfo {
         </div>
       </div>
 
-      <!-- Print (Hidden) -->
-      <div class="print-only hidden">
-        <div class="p-8 font-sans">
-          <div class="flex justify-between items-start mb-8 border-b pb-4">
-            <div class="flex items-center gap-4">
-              <img *ngIf="companyInfo?.logoUrl" [src]="companyInfo?.logoUrl" class="h-16 w-auto" alt="Logo">
-              <div><h1 class="text-2xl font-bold">{{ companyInfo?.name }}</h1><p>{{ companyInfo?.address }}</p><p>NIF: {{ companyInfo?.nif }}</p></div>
-            </div>
-            <div class="text-right"><h2 class="text-xl font-bold">Documento de Compra</h2><p>{{ currentDoc.series }} / {{ currentDoc.number }}</p><p>Data: {{ currentDoc.date | date:'dd/MM/yyyy' }}</p></div>
-          </div>
-          <table class="w-full mb-8">
-            <thead><tr class="border-b-2 border-gray-300"><th class="text-left py-2">Artigo</th><th class="text-left py-2">Descrição</th><th class="text-right py-2">Qtd</th><th class="text-right py-2">Total</th></tr></thead>
-            <tbody><tr *ngFor="let row of currentDoc.lines" class="border-b border-gray-100"><ng-container *ngIf="row.articleCode"><td class="py-2">{{ row.articleCode }}</td><td class="py-2">{{ row.description }}</td><td class="py-2 text-right">{{ row.quantity }}</td><td class="py-2 text-right">{{ row.totalValue | number:'1.2-2' }}</td></ng-container></tr></tbody>
-          </table>
-          <div class="flex justify-end"><div class="w-64"><div class="flex justify-between font-bold text-lg"><span>Total:</span><span>{{ currentDoc.totalValue | number:'1.2-2' }} MT</span></div></div></div>
-        </div>
+      <app-print-settings-modal
+        [isOpen]="isPrintSettingsOpen"
+        (closeEvent)="isPrintSettingsOpen = false"
+        (confirmEvent)="onPrintConfirm($event)">
+      </app-print-settings-modal>
 
-        <app-document-type-config-modal
-          *ngIf="isConfigModalOpen"
-          [module]="'PURCHASES'"
-          [documentCode]="currentDoc.type"
-          (close)="onConfigModalClose()">
-        </app-document-type-config-modal>
-      </div>
+      <app-purchase-document-print
+        [document]="currentDoc"
+        [settings]="printSettings">
+      </app-purchase-document-print>
+    </div>
     </ng-container>
 
     <ng-template #loading>
-      <div class="flex-1 flex flex-col items-center justify-center bg-gray-50 text-gray-400 min-h-[400px]">
-        <span class="material-symbols-outlined text-4xl animate-spin mb-2">sync</span>
-        <p class="text-sm font-medium uppercase">A carregar dados...</p>
+      <div class="flex items-center justify-center h-full bg-[#F0F0F0] min-h-[400px]">
+        <div class="flex flex-col items-center gap-2 text-gray-500">
+          <app-icon name="sync" [size]="48" class="animate-spin text-green-600"></app-icon>
+          <span>A carregar documento...</span>
+        </div>
       </div>
     </ng-template>
-
-    <style>@media print { body { visibility: hidden; } .print-only { visibility: visible; position: fixed; left: 0; top: 0; background: white; z-index: 9999; display: block !important; } .no-print { display: none !important; } }</style>
   `
 })
 export class PurchaseDocumentFormComponent {
@@ -597,6 +539,10 @@ export class PurchaseDocumentFormComponent {
   // Active line for modals
   activeLineForModal: PurchaseDocumentLine | null = null;
   activeLineIndex = -1;
+  // Print State
+  isPrintSettingsOpen = false;
+  printSettings: PrintSettings | null = null;
+
   get isInternal(): boolean {
     return this.viewMode === 'internal-docs';
   }
@@ -1127,18 +1073,23 @@ export class PurchaseDocumentFormComponent {
   }
 
   printDocument() {
-    if (this.isLocked) {
-      alert('Este documento já foi processado e não pode ser alterado.');
-      // In a real app, we would still show the print preview
-      return;
-    }
+    this.isPrintSettingsOpen = true;
+  }
 
-    if (!confirm('A impressão irá bloquear o documento para edições futuras. Deseja continuar?')) {
-      return;
-    }
+  onPrintConfirm(settings: PrintSettings) {
+    this.printSettings = settings;
+    this.isPrintSettingsOpen = false;
 
-    // Save first to ensure data is persisted
-    this.saveDocument(true, true); // Post and Print
+    // The print component handles the actual layout
+    // We just need to trigger the browser print
+    if (!this.isLocked) {
+      if (confirm('A impressão irá bloquear o documento para edições futuras. Deseja continuar?')) {
+        this.saveDocument(true, false); // Post
+        setTimeout(() => window.print(), 500);
+      }
+    } else {
+      setTimeout(() => window.print(), 200);
+    }
   }
 
   confirmDocument() {

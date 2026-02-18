@@ -10,13 +10,6 @@ import { DataService } from '../services/data.service';
   template: `
     <header class="flex items-center justify-between bg-[#F0F0F0] px-4 py-1.5 border-b border-gray-300 shadow-sm select-none shrink-0 z-20">
       <div class="flex items-center gap-6 text-xs">
-        <div class="flex flex-col">
-          <p class="font-bold text-gray-800 tracking-tight">ERP INVERNO v1.1</p>
-          <div class="flex items-center gap-1.5">
-            <div class="size-1.5 rounded-full animate-pulse" [ngClass]="isLocal ? 'bg-orange-500' : 'bg-green-500'"></div>
-            <span class="text-[9px] font-bold uppercase tracking-widest text-gray-500">{{ dataSourceLabel }}</span>
-          </div>
-        </div>
         <nav class="hidden lg:flex items-center gap-4">
           <a *ngFor="let link of navLinks" 
              [href]="'#' + link.toLowerCase()" 
@@ -53,15 +46,10 @@ export class HeaderComponent implements OnInit {
   navLinks = ["SISTEMA", "FERRAMENTAS", "PREFERÊNCIAS", "", ""];
   username = 'Utilizador';
   companyName = '';
-  dataSourceLabel = '';
-  isLocal = false;
 
   constructor(private dataService: DataService) { }
 
   ngOnInit() {
-    this.dataSourceLabel = this.dataService.getDataSourceLabel();
-    this.isLocal = this.dataService.isLocalBrowser();
-
     const storedUser = localStorage.getItem('erp_current_user');
     if (storedUser) {
       const user = JSON.parse(storedUser);

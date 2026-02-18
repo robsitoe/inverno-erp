@@ -208,6 +208,141 @@ export interface PaymentMethod {
     sortOrder: number;         // Order for display in dropdowns
 }
 
+export interface TreasuryDocument {
+    id: string;
+    companyId?: string;
+    number: string;
+    docType: string;
+    series: string;
+    seriesNumber: number;
+    date: Date;
+    type: 'RECEIPT' | 'PAYMENT';
+    amount: number;
+    treasuryAccountId: string;
+    entityCode: string;
+    entityName: string;
+    customerCode?: string;     // Generic entity support
+    customerName?: string;
+    beneficiaryCode?: string;
+    beneficiaryName?: string;
+    paymentMethod: string;
+    entityNif?: string;
+    entityAddress?: string;
+    entityCity?: string;
+    description: string;
+    observations?: string;
+    relatedDocument?: string;
+    status: WorkflowStatus;
+    lines: TreasuryDocumentLine[];
+}
+
+export interface TreasuryDocumentLine {
+    id: string;
+    docNumber: string;
+    docType?: string;
+    amount: number;
+    paymentMode: string;
+    originalAmount?: number;
+    discount?: number;
+    pendingAfter?: number;
+}
+
+export interface PurchaseDocumentLine {
+    id: string;
+    articleId?: string;
+    articleCode: string;
+    articleName: string;
+    warehouse: string;
+    location: string;
+    batch: string;
+    description: string;
+    taxCode: string;
+    taxRate: number;
+    unitPrice: number;
+    discount: number;
+    unit: string;
+    quantity: number;
+    totalLiquid: number;
+    totalValue: number;
+    project: string;
+    costCenter: string;
+    analytic?: string;
+    functional?: string;
+}
+
+export interface PurchaseDocument {
+    id: string;
+    companyId?: string;
+    type: string;
+    series: string;
+    number: number;
+    date: Date | string;
+    dueDate: Date | string;
+    supplierCode: string;
+    supplierName: string;
+    supplierNif: string;
+    supplierAddress: string;
+    supplierAccountId?: string;
+    reference: string;
+    paymentCondition: 'PRONTO' | 'PRAZO' | string;
+    paymentDays: number;
+    currency: string;
+    status: WorkflowStatus;
+    lines: PurchaseDocumentLine[];
+    merchandiseTotal: number;
+    discountValue: number;
+    taxTotal: number;
+    totalValue: number;
+    notes: string;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+}
+
+export interface StockDocumentLine {
+    id: string;
+    articleId?: string;
+    articleCode: string;
+    articleName: string;
+    warehouse: string;
+    location: string;
+    batch: string;
+    description: string;
+    unit: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+    generalAccount: string;
+    costCenter: string;
+    analytic: string;
+    functional: string;
+    project: string;
+    pepElement: string;
+    item: string;
+}
+
+export interface StockDocument {
+    id: string;
+    series: string;
+    number: number;
+    type: string;
+    date: string;
+    time: string;
+    inputType: string;
+    originAccount: string;
+    originCostCenter: string;
+    originProject: string;
+    originAnalytic: string;
+    originFunctional: string;
+    originPep: string;
+    warehouse: string;
+    lines: StockDocumentLine[];
+    status: 'DRAFT' | 'POSTED';
+    movementIn: string;
+    componentQty: string;
+    reloadComponents: boolean;
+    companyId?: string;
+}
+
 export interface StockMovement {
     id: string;
     companyId?: string;

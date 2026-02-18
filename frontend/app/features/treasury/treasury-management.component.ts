@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+﻿import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -12,7 +12,9 @@ import { SupplierListModalComponent } from '../../shared/components/supplier-lis
 import { DocumentTypeConfigModalComponent } from '../../shared/components/document-type-config-modal.component';
 import { EntityTypeConfigModalComponent, EntityType } from '../../shared/components/entity-type-config-modal.component';
 import { GenericEntityListModalComponent } from '../../shared/components/generic-entity-list-modal.component';
-import { WorkflowStatus, WorkflowHistory } from '../../shared/models';
+import { PrintSettingsModalComponent, PrintSettings } from '../../shared/components/print-settings-modal.component';
+import { TreasuryDocumentPrintComponent } from './treasury-document-print.component';
+import { WorkflowStatus, WorkflowHistory, TreasuryDocument, TreasuryDocumentLine } from '../../shared/models';
 
 interface PendingDocRow {
   selected: boolean;
@@ -35,7 +37,7 @@ interface PendingDocRow {
 @Component({
   selector: 'app-treasury-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, EntityListModalComponent, SupplierListModalComponent, DocumentTypeConfigModalComponent, EntityTypeConfigModalComponent, GenericEntityListModalComponent],
+  imports: [CommonModule, FormsModule, EntityListModalComponent, SupplierListModalComponent, DocumentTypeConfigModalComponent, EntityTypeConfigModalComponent, GenericEntityListModalComponent, PrintSettingsModalComponent, TreasuryDocumentPrintComponent],
   styles: [`
     .spinner {
       animation: rotate 2s linear infinite;
@@ -48,6 +50,7 @@ interface PendingDocRow {
   `],
   template: `
     <div class="flex flex-col h-full bg-[#F0F0F0] text-xs font-sans relative">
+      <div class="flex flex-col h-full w-full no-print">
       <!-- Window Header (Title Bar) -->
       <div class="bg-gradient-to-r from-blue-700 to-blue-600 text-white px-2 py-1 flex justify-between items-center shrink-0 select-none"
            [ngClass]="{'from-red-700 to-red-600': entityType === 'SUPPLIER'}">
@@ -87,8 +90,8 @@ interface PendingDocRow {
           <span class="material-symbols-outlined text-[18px] text-green-600">add_circle</span>
           <span>Novo</span>
         </button>
-        <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
-          <span class="material-symbols-outlined text-[18px]">print</span>
+        <button (click)="openPrintSettings()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+          <span class="material-symbols-outlined text-[18px] text-blue-600">print</span>
           <span>Imprimir</span>
         </button>
         <div class="w-px h-4 bg-gray-300 mx-1"></div>
@@ -509,7 +512,6 @@ interface PendingDocRow {
           </div>
         </div>
       </div>
-
     </div>
 
     <app-entity-list-modal
@@ -538,18 +540,36 @@ interface PendingDocRow {
       (close)="onEntityTypeConfigClose()"
     ></app-entity-type-config-modal>
 
-    <app-generic-entity-list-modal
-      *ngIf="showOtherEntityModal"
-      [entityType]="entityTypeCode"
-      [entityTypeLabel]="getEntityTypeLabel()"
-      (close)="showOtherEntityModal = false"
-      (select)="onEntitySelect($event)"
-    ></app-generic-entity-list-modal>
+      <app-generic-entity-list-modal
+        *ngIf="showOtherEntityModal"
+        [entityType]="entityTypeCode"
+        [entityTypeLabel]="getEntityTypeLabel()"
+        (close)="showOtherEntityModal = false"
+        (select)="onEntitySelect($event)"
+      ></app-generic-entity-list-modal>
+
+      <!-- Print Components -->
+      <app-print-settings-modal
+        [isOpen]="isPrintSettingsOpen"
+        (closeEvent)="isPrintSettingsOpen = false"
+        (confirmEvent)="onPrintConfirm($event)">
+      </app-print-settings-modal>
+
+      <app-treasury-document-print
+        [document]="documentToPrint"
+        [settings]="printSettings">
+      </app-treasury-document-print>
+    </div>
   `
 })
 export class TreasuryManagementComponent implements OnInit {
   tabs = ['Gerais', 'Dados Liquidação', 'Distribuição Automática', 'Restrições', 'Restrições das Atividades', 'Workflow/Estado'];
   activeTab = 0;
+
+  // Print State
+  isPrintSettingsOpen = false;
+  documentToPrint: TreasuryDocument | null = null;
+  printSettings: PrintSettings | null = null;
 
   // Filters
   entityTypeCode = 'CLIENTE';
@@ -571,6 +591,9 @@ export class TreasuryManagementComponent implements OnInit {
 
   entityCode = '';
   entityName = '';
+  entityNif = '';
+  entityAddress = '';
+  entityCity = '';
   filterDateUntil = new Date().toISOString().split('T')[0];
 
   // Document Info
@@ -716,9 +739,99 @@ export class TreasuryManagementComponent implements OnInit {
   }
 
   printDocument(doc: any) {
-    // For now, simple window print or alert
-    console.log('Printing document:', doc);
-    window.print();
+    this.documentToPrint = doc;
+    this.isPrintSettingsOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  openPrintSettings() {
+    if (!this.entityCode) {
+      alert('Selecione uma entidade primeiro.');
+      return;
+    }
+
+    // If we have a current doc, use it. Otherwise, generate preview from current form data.
+    if (this.currentDocId) {
+      // In a real scenario, we'd fetch the full doc. For now, we'll build it from state.
+      this.documentToPrint = this.getCurrentDocument();
+    } else {
+      this.documentToPrint = this.getCurrentDocument();
+    }
+
+    this.isPrintSettingsOpen = true;
+  }
+
+  onPrintConfirm(settings: PrintSettings) {
+    this.printSettings = settings;
+    this.isPrintSettingsOpen = false;
+    this.cdr.detectChanges();
+
+    // The print component handles the actual window.print() via @media print
+    // We just need to ensure it's rendered with the current document/settings
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  }
+
+  getCurrentDocument(): TreasuryDocument {
+    const isReceipt = this.entityType === 'CUSTOMER';
+    const type = isReceipt ? 'RECEIPT' : 'PAYMENT';
+
+    const lines: TreasuryDocumentLine[] = this.isAdvanceMode ? [] : this.pendingRows
+      .filter(r => r.selected && r.toPay > 0)
+      .map((r, index) => ({
+        id: `L${index + 1}`,
+        docNumber: r.docNumber,
+        amount: r.toPay,
+        paymentMode: r.paymentMode
+      }));
+
+    return {
+      id: this.currentDocId || `TEMP-${Date.now()}`,
+      companyId: this.activeCompanyId || undefined,
+      number: this.docNumberString || `${this.selectedDocType} ${this.selectedSeries}/${this.currentSeriesNumber}`,
+      docType: this.selectedDocType,
+      series: this.selectedSeries,
+      seriesNumber: this.currentSeriesNumber,
+      date: new Date(this.docDate),
+      type: type as 'RECEIPT' | 'PAYMENT',
+      amount: Number(this.isAdvanceMode ? this.advanceAmount : this.totalSelected) || 0,
+      treasuryAccountId: this.selectedTreasuryAccount,
+      entityCode: this.entityCode,
+      entityName: this.entityName,
+      entityNif: this.entityNif,
+      entityAddress: this.entityAddress,
+      entityCity: this.entityCity,
+      customerCode: isReceipt ? this.entityCode : undefined,
+      customerName: isReceipt ? this.entityName : undefined,
+      beneficiaryCode: !isReceipt ? this.entityCode : undefined,
+      beneficiaryName: !isReceipt ? this.entityName : undefined,
+      paymentMethod: this.isAdvanceMode ? this.advancePaymentMethod : this.paymentMethod,
+      description: `${isReceipt ? 'Recebimento' : 'Pagamento'} ${this.entityName}`,
+      observations: this.isAdvanceMode ? this.advanceObservations : this.observations,
+      status: this.status,
+      lines: lines.map((l, i) => {
+        const row = this.pendingRows.filter(d => d.selected)[i];
+        return {
+          ...l,
+          docType: row?.docType || 'FA',
+          originalAmount: row?.total || 0,
+          discount: row?.discount || 0,
+          pendingAfter: row ? row.pending - row.toPay : 0
+        };
+      })
+    };
+  }
+
+  getTreasuryAccountDisplay(accountId: string): string {
+    const account = this.treasuryAccounts.find(a => a.id === accountId);
+    return account ? `${account.code} - ${account.name}` : 'N/A';
+  }
+
+  getAdvanceTreasuryAccountDisplay(): string {
+    const pm = this.paymentMethods.find(p => p.code === this.advancePaymentMethod);
+    const accountId = pm?.treasuryAccountId || this.selectedTreasuryAccount;
+    return this.getTreasuryAccountDisplay(accountId);
   }
 
   // Payment Methods Configuration
@@ -1031,10 +1144,6 @@ export class TreasuryManagementComponent implements OnInit {
     }
   }
 
-  getTreasuryAccountDisplay(accountId: string): string {
-    const account = this.treasuryAccounts.find(acc => acc.id === accountId);
-    return account ? `${account.code} - ${account.name}` : '';
-  }
 
   // ADC Mode Methods
   onAdvanceModeChange() {
@@ -1067,12 +1176,6 @@ export class TreasuryManagementComponent implements OnInit {
     }
   }
 
-  getAdvanceTreasuryAccountDisplay(): string {
-    if (!this.advancePaymentMethod) return '';
-    const paymentMethod = this.paymentMethods.find(pm => pm.code === this.advancePaymentMethod);
-    if (!paymentMethod) return '';
-    return this.getTreasuryAccountDisplay(paymentMethod.treasuryAccountId);
-  }
 
   onEntityTypeChange() {
     // Determine mapped category for backward compatibility and internal logic
@@ -1268,7 +1371,7 @@ export class TreasuryManagementComponent implements OnInit {
     this.isAdvanceMode = doc.isAdvance === true || ['ADC', 'ADF'].includes(doc.docType);
 
     if (this.isAdvanceMode) {
-      this.advanceAmount = doc.amount;
+      this.advanceAmount = Number(doc.amount) || 0;
       this.advancePaymentMethod = doc.paymentMethod;
       this.advanceObservations = doc.observations || '';
       this.pendingRows = [];
@@ -1280,9 +1383,9 @@ export class TreasuryManagementComponent implements OnInit {
         date: doc.date,
         docType: l.docType || (this.entityType === 'CUSTOMER' ? 'FC' : 'VFA'),
         docNumber: l.docNumber,
-        total: l.amount,
+        total: Number(l.amount) || 0,
         pending: 0,
-        toPay: l.amount,
+        toPay: Number(l.amount) || 0,
         currency: 'MZN',
         paymentMode: l.paymentMode || 'NUM',
         paymentCode: '',
@@ -1291,7 +1394,7 @@ export class TreasuryManagementComponent implements OnInit {
       }));
     }
 
-    this.totalSelected = doc.amount;
+    this.totalSelected = Number(doc.amount) || 0;
     this.totalExcess = 0;
     this.cdr.detectChanges();
   }
@@ -1329,6 +1432,9 @@ export class TreasuryManagementComponent implements OnInit {
     this.selectedEntity = entity;
     this.entityCode = entity.code;
     this.entityName = entity.name;
+    this.entityNif = entity.nif || '';
+    this.entityAddress = entity.address || '';
+    this.entityCity = entity.city || '';
     this.showCustomerModal = false;
     this.showSupplierModal = false;
     this.loadPendingDocuments();
@@ -1650,15 +1756,16 @@ export class TreasuryManagementComponent implements OnInit {
       });
 
       // Credit: Customer (one line per document)
-      const customerAccountId = this.selectedEntity?.receivableAccountId || '17';
+      // Use '18' (21.1.2 - Clientes a Crédito) as default for receipts to match Credit Sales and Statement
+      const customerAccountId = this.selectedEntity?.receivableAccountId || '18';
       const customerAccount = this.accountingService.getAccount(customerAccountId);
 
       rows.forEach((row) => {
         lines.push({
           id: `${entryId}-${lineIndex++}`,
           accountId: customerAccountId,
-          accountCode: customerAccount?.code || '21.1.1',
-          accountName: customerAccount?.name || 'Clientes',
+          accountCode: customerAccount?.code || '21.1.2',
+          accountName: customerAccount?.name || 'Clientes a Crédito',
           debit: 0,
           credit: row.toPay,
           description: `Liq. ${row.docNumber}`
@@ -1708,7 +1815,7 @@ export class TreasuryManagementComponent implements OnInit {
       companyId: doc.companyId,
       journalId: journalId,
       date: doc.date,
-      description: `${isReceipt ? 'Recibo' : 'Pagamento'} ${doc.number} - ${this.entityName}`,
+      description: `${isReceipt ? 'Recibo' : 'Pagamento'} ${doc.number} - ${this.entityName} (${this.entityCode || ''})`,
       reference: doc.number,
       sourceDocument: doc.number,
       sourceType: isReceipt ? 'RECEIPT' : 'PAYMENT',
@@ -1901,7 +2008,7 @@ export class TreasuryManagementComponent implements OnInit {
       companyId: doc.companyId,
       journalId: journalId,
       date: doc.date,
-      description: `${isReceipt ? 'Adiantamento de' : 'Adiantamento a'} ${this.entityName} - ${doc.number}`,
+      description: `Adiantamento ${doc.number} - ${this.entityName} (${this.entityCode || ''})`,
       reference: doc.number,
       sourceDocument: doc.number,
       sourceType: isReceipt ? 'RECEIPT' : 'PAYMENT',

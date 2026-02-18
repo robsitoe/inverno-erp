@@ -5,61 +5,28 @@ import { InventoryService } from '../../shared/inventory.service';
 import { ArticleSearchModalComponent } from './article-search-modal.component';
 import { DocumentTypeModalComponent } from '../../shared/components/document-type-modal.component';
 import { DocumentTypeConfigModalComponent } from '../../shared/components/document-type-config-modal.component';
-import { Article } from '../../shared/models';
+import { Article, WorkflowStatus, WorkflowHistory, StockDocument, StockDocumentLine } from '../../shared/models';
 import { DataService } from '../../services/data.service';
 import { lastValueFrom } from 'rxjs';
+import { PrintSettingsModalComponent, PrintSettings } from '../../shared/components/print-settings-modal.component';
+import { StockDocumentPrintComponent } from './stock-document-print.component';
 
-interface StockDocumentLine {
-  id: string;
-  articleId?: string; // Added to link to real article
-  articleCode: string;
-  articleName: string;
-  warehouse: string;
-  location: string;
-  batch: string;
-  description: string;
-  unit: string;
-  quantity: number;
-  unitPrice: number;
-  total: number;
-  generalAccount: string;
-  costCenter: string;
-  analytic: string;
-  functional: string;
-  project: string;
-  pepElement: string;
-  item: string;
-}
-
-interface StockDocument {
-  id: string;
-  series: string;
-  number: number;
-  type: string;
-  date: string;
-  time: string;
-  inputType: string;
-  originAccount: string;
-  originCostCenter: string;
-  originProject: string;
-  originAnalytic: string;
-  originFunctional: string;
-  originPep: string;
-  warehouse: string;
-  lines: StockDocumentLine[];
-  status: 'DRAFT' | 'POSTED';
-  movementIn: string;
-  componentQty: string;
-  reloadComponents: boolean;
-  companyId?: string;
-}
 
 @Component({
   selector: 'app-stock-movements',
   standalone: true,
-  imports: [CommonModule, FormsModule, ArticleSearchModalComponent, DocumentTypeModalComponent, DocumentTypeConfigModalComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ArticleSearchModalComponent,
+    DocumentTypeModalComponent,
+    DocumentTypeConfigModalComponent,
+    PrintSettingsModalComponent,
+    StockDocumentPrintComponent
+  ],
   template: `
-    <div class="flex flex-col h-full bg-[#F0F0F0]">
+    <div class="flex flex-col h-full bg-[#F0F0F0] relative">
+      <div class="flex flex-col h-full w-full no-print">
       <!-- Toolbar -->
       <div class="flex items-center gap-1 px-2 py-1.5 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0">
         <button (click)="saveDocument()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
@@ -70,7 +37,7 @@ interface StockDocument {
           <span class="material-symbols-outlined text-[18px]">add_circle</span>
           <span>Novo</span>
         </button>
-        <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
+        <button (click)="printDocument()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs text-blue-700 font-bold">
           <span class="material-symbols-outlined text-[18px]">print</span>
           <span>Imprimir</span>
         </button>
@@ -399,6 +366,18 @@ interface StockDocument {
       (close)="showDocTypeModal = false"
       (select)="onDocTypeSelect($event)"
     ></app-document-type-modal>
+
+    <!-- Print Components -->
+    <app-print-settings-modal
+      [isOpen]="isPrintSettingsOpen"
+      (closeEvent)="isPrintSettingsOpen = false"
+      (confirmEvent)="onPrintConfirm($event)">
+    </app-print-settings-modal>
+    <app-stock-document-print
+      [document]="currentDoc"
+      [settings]="printSettings">
+    </app-stock-document-print>
+  </div>
   `
 })
 export class StockMovementsComponent implements OnInit {
@@ -414,6 +393,10 @@ export class StockMovementsComponent implements OnInit {
   showDocTypeModal = false;
   documentTypes: any[] = []; // Stock document types
   activeCompanyId: string | null = null;
+
+  // Print State
+  isPrintSettingsOpen = false;
+  printSettings: PrintSettings | null = null;
 
   constructor(
     private inventoryService: InventoryService,
@@ -726,7 +709,7 @@ export class StockMovementsComponent implements OnInit {
     return this.currentDoc.lines.reduce((sum, line) => sum + (line.total || 0), 0);
   }
 
-  async saveDocument() {
+  async saveDocument(autoNew: boolean = true) {
     // Validate Series Date
     const allSeries = await lastValueFrom(this.dataService.getSeries(this.activeCompanyId || undefined));
     const docTypes = await lastValueFrom(this.dataService.getDocumentTypes('STOCK'));
@@ -836,7 +819,7 @@ export class StockMovementsComponent implements OnInit {
       await lastValueFrom(this.dataService.saveStockDocument(this.currentDoc));
 
       alert(`Documento ${this.currentDoc.type} ${this.currentDoc.series}/${this.currentDoc.number} gravado com sucesso!`);
-      this.newDocument();
+      if (autoNew) this.newDocument();
     } else {
       // Backend Mode: The API handles document creation, movements, and stock updates
       // Sanitize payload to remove UI-only fields
@@ -890,7 +873,7 @@ export class StockMovementsComponent implements OnInit {
         await this.inventoryService.loadData();
 
         alert(`Documento ${this.currentDoc.type} ${this.currentDoc.series}/${this.currentDoc.number} gravado com sucesso!`);
-        this.newDocument();
+        if (autoNew) this.newDocument();
       } catch (error: any) {
         console.error('Erro ao gravar documento:', error);
         const msg = error.error?.message || error.message || 'Erro deconhecido';
@@ -924,6 +907,32 @@ export class StockMovementsComponent implements OnInit {
       if (docDate < start || docDate > end) {
         alert(`A data do documento está fora do intervalo de validade da série ${series.code} (${series.startDate} a ${series.endDate}).\n\nPor favor altere a data ou selecione outra série.`);
       }
+    }
+  }
+
+  printDocument() {
+    this.isPrintSettingsOpen = true;
+  }
+
+  onPrintConfirm(settings: PrintSettings) {
+    this.printSettings = settings;
+    this.isPrintSettingsOpen = false;
+
+    if (this.currentDoc.status === 'DRAFT') {
+      if (confirm('A impressão irá confirmar o documento. Deseja continuar?')) {
+        this.currentDoc.status = 'POSTED';
+        this.saveDocument(false).then(() => {
+          setTimeout(() => {
+            window.print();
+            // Optional: after print, we could call newDocument()
+            // this.newDocument();
+          }, 500);
+        });
+      }
+    } else {
+      setTimeout(() => {
+        window.print();
+      }, 200);
     }
   }
 }

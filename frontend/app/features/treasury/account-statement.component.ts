@@ -65,7 +65,8 @@ interface StatementMovement {
                             <input 
                                 class="w-full h-full px-2 focus:outline-none text-[11px] font-mono font-bold" 
                                 [(ngModel)]="entityCode"
-                                (blur)="onCodeBlur()"
+                                (ngModelChange)="onCodeChange($event)"
+                                (keyup.enter)="onCodeBlur()"
                                 [placeholder]="'Código'"
                             />
                             <button 
@@ -74,9 +75,17 @@ interface StatementMovement {
                             >F4</button>
                         </div>
                         <div class="flex-1 h-6 border border-gray-300 bg-gray-50 rounded-sm px-2 flex items-center overflow-hidden">
-                            <span class="text-[11px] text-gray-700 truncate font-medium">{{ entityName || 'Selecione uma conta ou entidade...' }}</span>
+                            <span class="text-[11px] text-gray-700 truncate font-medium" [class.text-red-500]="!selectedAccountId && entityCode">
+                                {{ entityName || 'Selecione uma conta ou entidade...' }}
+                            </span>
                         </div>
                     </div>
+                    <p *ngIf="entityCode && !selectedAccountId" class="text-[9px] text-red-500 font-bold uppercase italic">
+                        ⚠️ Código não encontrado no sistema.
+                    </p>
+                    <p *ngIf="entityCode && selectedAccountId && (!selectedEntity?.receivableAccountId && !selectedEntity?.payableAccountId)" class="text-[9px] text-blue-600 font-bold uppercase italic">
+                        ℹ️ Esta entidade utiliza a conta geral do sistema.
+                    </p>
                 </div>
 
                 <!-- Date Range -->
@@ -294,6 +303,7 @@ export class AccountStatementComponent implements OnInit {
     showEntityModal = false;
     showSupplierModal = false;
     showAccountModal = false;
+    isLoading = false;
 
     // Filters
     dateFrom: string = '';
@@ -379,7 +389,10 @@ export class AccountStatementComponent implements OnInit {
         this.selectedEntity = entity;
         this.entityCode = entity.code;
         this.entityName = entity.name;
-        this.selectedAccountId = entity.receivableAccountId;
+
+        // Use dedicated account if available, otherwise fallback to generic (code 21.1.2 - Clientes a Crédito)
+        // '21.1.1' is usually for Cash Customers (no balance), so we use '21.1.2' for statements.
+        this.selectedAccountId = entity.receivableAccountId || this.findAccountByCode('21.1.2');
     }
 
     onSupplierSelect(supplier: any) {
@@ -387,7 +400,9 @@ export class AccountStatementComponent implements OnInit {
         this.selectedEntity = supplier;
         this.entityCode = supplier.code;
         this.entityName = supplier.name;
-        this.selectedAccountId = supplier.payableAccountId;
+
+        // Use dedicated account if available, otherwise fallback to generic (code 22.1)
+        this.selectedAccountId = supplier.payableAccountId || this.findAccountByCode('22.1');
     }
 
     onAccountSelect(acc: Account) {
@@ -398,118 +413,358 @@ export class AccountStatementComponent implements OnInit {
         this.selectedAccountId = acc.id;
     }
 
+    onCodeChange(code: string) {
+        if (!code) {
+            this.resetSelection();
+            return;
+        }
+        // Auto-resolve if code is complete (e.g. exactly 4 chars for C001)
+        if (code.length >= 3) {
+            this.resolveCode(code, false);
+        }
+    }
+
     onCodeBlur() {
         if (!this.entityCode) {
             this.resetSelection();
             return;
         }
+        this.resolveCode(this.entityCode, true);
+    }
 
-        // Try to find entity by code
+    private resolveCode(code: string, showAlert: boolean) {
         if (this.entityType === 'CUSTOMER') {
-            const customer = this.customerService.getCustomers().find(c => c.code === this.entityCode);
+            const customer = this.customerService.getCustomers().find(c => c.code === code);
             if (customer) this.onEntitySelect(customer);
+            else if (showAlert) this.entityName = 'Não encontrado';
         } else if (this.entityType === 'SUPPLIER') {
-            const supplier = this.supplierService.getSuppliers().find(s => s.code === this.entityCode);
+            const supplier = this.supplierService.getSuppliers().find(s => s.code === code);
             if (supplier) this.onSupplierSelect(supplier);
+            else if (showAlert) this.entityName = 'Não encontrado';
         } else {
-            const acc = this.accountingService.getAccounts().find(a => a.code === this.entityCode);
+            const acc = this.accountingService.getAccounts().find(a => a.code === code);
             if (acc) this.onAccountSelect(acc);
+            else if (showAlert) this.entityName = 'Não encontrado';
         }
     }
 
     generateStatement() {
+        // Force resolution if needed
+        if (this.entityCode && !this.selectedAccountId) {
+            this.onCodeBlur();
+        }
+
         if (!this.selectedAccountId) {
-            alert('Por favor, selecione uma conta ou entidade primeiro.');
+            alert('Por favor, selecione uma entidade/conta válida que possua mapeamento contabilístico.');
             return;
         }
 
         const companyInfo = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
         const companyId = companyInfo.id;
-
-        const account = this.accountingService.getAccount(this.selectedAccountId);
-        const isAssetSide = account ? ['ASSET', 'EXPENSE'].includes(account.type) : true;
+        this.isLoading = true;
 
         this.accountingService.getAccountStatement(this.selectedAccountId, this.dateFrom, this.dateTo, companyId, this.includeDrafts).subscribe({
             next: (data) => {
+                this.isLoading = false;
                 if (data && data.movements && data.movements.length > 0) {
-                    this.initialBalance = data.initialBalance;
-                    this.totalDebit = 0;
-                    this.totalCredit = 0;
-
-                    this.movements = data.movements.map((m: any) => {
-                        this.totalDebit += Number(m.debit) || 0;
-                        this.totalCredit += Number(m.credit) || 0;
-
-                        // Use backend balance if provided, otherwise calculate
-                        const calculatedBalance = m.balance !== undefined ? m.balance :
-                            (isAssetSide ? (m.debit - m.credit) : (m.credit - m.debit));
-
-                        return {
-                            ...m,
-                            date: new Date(m.date),
-                            balance: calculatedBalance
-                        };
-                    });
-
-                    const lastMovement = this.movements[this.movements.length - 1];
-                    this.finalBalance = lastMovement ? lastMovement.balance : this.initialBalance;
+                    this.processMovements(data.movements, data.initialBalance);
                 } else {
                     this.generateStatementLocally();
                 }
-
-                if (this.movements.length === 0) {
-                    this.finalBalance = this.initialBalance;
-                }
-
             },
-            error: () => this.generateStatementLocally()
+            error: () => {
+                this.isLoading = false;
+                this.generateStatementLocally();
+            }
         });
     }
 
+    processMovements(movements: any[], initialBalance: number) {
+        const account = this.accountingService.getAccount(this.selectedAccountId);
+        const isAssetSide = account ? ['ASSET', 'EXPENSE'].includes(account.type) : true;
+
+        this.initialBalance = initialBalance;
+        this.totalDebit = 0;
+        this.totalCredit = 0;
+
+        this.movements = movements.map((m: any) => {
+            this.totalDebit += Number(m.debit) || 0;
+            this.totalCredit += Number(m.credit) || 0;
+
+            // Use backend balance if provided, otherwise calculate
+            const calculatedBalance = m.balance !== undefined ? m.balance :
+                (isAssetSide ? (m.debit - m.credit) : (m.credit - m.debit));
+
+            return {
+                ...m,
+                date: new Date(m.date),
+                balance: calculatedBalance
+            };
+        });
+
+        const lastMovement = this.movements[this.movements.length - 1];
+        this.finalBalance = lastMovement ? lastMovement.balance : this.initialBalance;
+    }
+
     generateStatementLocally() {
+        // Ensure entity is set if we are in local mode with entity selected
+        if (!this.selectedEntity && this.entityCode) {
+            // Try to resolve entity again
+            if (this.entityType === 'CUSTOMER') {
+                this.selectedEntity = this.customerService.getCustomers().find(c => c.code === this.entityCode);
+            } else if (this.entityType === 'SUPPLIER') {
+                this.selectedEntity = this.supplierService.getSuppliers().find(s => s.code === this.entityCode);
+            }
+        }
+
         const journalEntries = this.accountingService.getJournalEntries();
         const startDate = new Date(this.dateFrom);
         const endDate = new Date(this.dateTo);
         endDate.setHours(23, 59, 59);
 
+        // Determine target accounts to search
+        let targetAccountIds: string[] = [];
+
+        if (this.selectedEntity) {
+            // For entities, search all relevant generic accounts + their specific account
+            targetAccountIds.push(this.selectedAccountId);
+
+            const findId = (code: string) => this.accountingService.getAccounts().find(a => a.code === code)?.id;
+
+            if (this.entityType === 'CUSTOMER') {
+                ['21.1.1', '21.1.2', '21.9'].forEach(code => {
+                    const id = findId(code);
+                    if (id && !targetAccountIds.includes(id)) targetAccountIds.push(id);
+                });
+            } else if (this.entityType === 'SUPPLIER') {
+                ['22.1', '22.9'].forEach(code => {
+                    const id = findId(code);
+                    if (id && !targetAccountIds.includes(id)) targetAccountIds.push(id);
+                });
+            }
+        } else {
+            targetAccountIds = [this.selectedAccountId];
+        }
+
+        // Helper to check if entry belongs to the selected entity
+        const belongsToEntity = (entry: any, lineDesc: string) => {
+            if (!this.selectedEntity) return true;
+            const desc = (entry.description || '').toLowerCase() + ' ' + (lineDesc || '').toLowerCase();
+            const eName = (this.entityName || '').trim().toLowerCase();
+            const eCode = (this.entityCode || '').trim().toLowerCase();
+            return (eName && desc.includes(eName)) || (eCode && desc.includes(eCode));
+        };
+
         const account = this.accountingService.getAccount(this.selectedAccountId);
         const isAssetSide = account ? ['ASSET', 'EXPENSE'].includes(account.type) : true;
 
-        // 1. Calculate Initial Balance
+        // 1. Calculate Initial Balance from Journal Entries
         this.initialBalance = 0;
         journalEntries.forEach(entry => {
             if (entry.status !== 'POSTED' && !this.includeDrafts) return;
             const entryDate = new Date(entry.date);
             if (entryDate < startDate) {
-                entry.lines.filter(l => l.accountId === this.selectedAccountId).forEach(line => {
-                    const amount = isAssetSide
-                        ? (line.debit || 0) - (line.credit || 0)
-                        : (line.credit || 0) - (line.debit || 0);
-                    this.initialBalance += amount;
+                entry.lines.filter(l => targetAccountIds.includes(l.accountId)).forEach(line => {
+                    if (belongsToEntity(entry, line.description)) {
+                        const amount = isAssetSide ? (line.debit - line.credit) : (line.credit - line.debit);
+                        this.initialBalance += amount;
+                    }
                 });
             }
         });
 
-        // 2. Fetch Movements
+        // 2. Fetch Movements from Journal Entries
         const periodMovements: any[] = [];
+        const processedDocNumbers = new Set<string>();
+
         journalEntries.forEach(entry => {
             if (entry.status !== 'POSTED' && !this.includeDrafts) return;
             const entryDate = new Date(entry.date);
             if (entryDate >= startDate && entryDate <= endDate) {
-                const line = entry.lines.find(l => l.accountId === this.selectedAccountId);
-                if (line) {
-                    periodMovements.push({
-                        date: entryDate,
-                        docType: entry.sourceType || 'JE',
-                        docNumber: entry.reference || entry.id,
-                        description: entry.description || line.description,
-                        debit: line.debit || 0,
-                        credit: line.credit || 0
-                    });
-                }
+                entry.lines.filter(l => targetAccountIds.includes(l.accountId)).forEach(line => {
+                    if (belongsToEntity(entry, line.description)) {
+                        const ref = entry.reference || entry.id;
+                        // Prevent duplicates if multiple lines match same document (e.g. split payment) - actually we want all lines?
+                        // Usually Account Statement shows one line per JE unless detail is needed.
+                        // But if split lines exist (e.g. partial payment), we want them.
+
+                        periodMovements.push({
+                            date: entryDate,
+                            docType: entry.sourceType || 'JE',
+                            docNumber: ref,
+                            description: entry.description || line.description,
+                            debit: line.debit || 0,
+                            credit: line.credit || 0
+                        });
+                        processedDocNumbers.add(ref);
+                    }
+                });
             }
         });
 
+        // 3. FALLBACK: Fetch Documents directly if they are missing from JEs
+        // This handles cases where JEs were not created or lost
+        if (this.selectedEntity) {
+            const companyId = JSON.parse(localStorage.getItem('erp_company_info') || '{}').id;
+            let docsObservable;
+
+            if (this.entityType === 'CUSTOMER') {
+                docsObservable = this.dataService.getSalesDocuments(companyId);
+            } else if (this.entityType === 'SUPPLIER') {
+                docsObservable = this.dataService.getPurchaseDocuments(companyId);
+            }
+
+            if (docsObservable) {
+                docsObservable.subscribe(docs => {
+                    // 1. Process Sales/Purchase Documents
+                    docs.forEach((doc: any) => {
+                        const docDate = new Date(doc.date);
+                        if (docDate < startDate || docDate > endDate) return;
+
+                        let isMatch = false;
+                        if (this.entityType === 'CUSTOMER') {
+                            if (doc.customerId && this.selectedEntity.id && doc.customerId === this.selectedEntity.id) isMatch = true;
+                            else if (doc.customerName && this.selectedEntity.name && doc.customerName.toLowerCase().includes(this.selectedEntity.name.toLowerCase())) isMatch = true;
+                        } else if (this.entityType === 'SUPPLIER') {
+                            if (doc.supplierId && this.selectedEntity.id && doc.supplierId === this.selectedEntity.id) isMatch = true;
+                            else if (doc.supplierName && this.selectedEntity.name && doc.supplierName.toLowerCase().includes(this.selectedEntity.name.toLowerCase())) isMatch = true;
+                        }
+
+                        if (!isMatch) return;
+
+                        const docNum = doc.documentNumber || doc.number;
+                        const foundInProcessed = Array.from(processedDocNumbers).some(ref => ref && docNum && (ref.toString().includes(docNum.toString()) || docNum.toString().includes(ref.toString())));
+
+                        if (foundInProcessed) return;
+
+                        const isDraft = doc.status === 'DRAFT';
+                        // if (isDraft && !this.includeDrafts) return; // User requested to see all documents
+
+                        const statusSuffix = isDraft ? ' (Rascunho)' : '';
+
+                        if (this.entityType === 'CUSTOMER') {
+                            // Sales Invoice, VD, etc = DEBIT
+                            // Credit Note = CREDIT
+                            const isCreditNote = ['NC', 'RE', 'ADC'].includes(doc.documentType);
+                            // VD (Venda Dinheiro) and FR (Fatura Recibo) are Cash Sales, so they don't generate Debt (Debit).
+                            // User Request: "VD should not be in debits".
+                            const isCashSale = ['VD', 'FR'].includes(doc.documentType);
+                            const isDebit = !isCreditNote && !isCashSale;
+
+                            // Check for different total field names (Sales uses total/totalValue, Purchases uses totalValue)
+                            const amount = Number(doc.total || doc.totalValue || doc.amount) || 0;
+                            const docType = doc.documentType || doc.type || doc.docType || '';
+                            const series = doc.series || '';
+                            const fullDocRef = series ? `${docType} ${series}/${docNum}` : `${docType} ${docNum}`;
+
+                            periodMovements.push({
+                                date: docDate,
+                                docType: doc.documentType,
+                                docNumber: fullDocRef,
+                                description: `Doc. Comercial${statusSuffix} ${fullDocRef} - ${doc.customerName || ''}`,
+                                debit: isDebit ? amount : 0,
+                                credit: isCreditNote ? amount : 0
+                            });
+                        } else {
+                            // Supplier Invoice = CREDIT (Increases Debt)
+                            // Credit Note, Advance = DEBIT (Decreases Debt)
+                            const isDebit = ['NC', 'ADF'].includes(doc.documentType);
+                            // VD (Venda Dinheiro / Compra a Pronto) and FR (Fatura Recibo) are Cash Purchases.
+                            // User Request: "Supplier statement equal to customer statement" -> Exclude Cash Purchases from Debt.
+                            const isCashPurchase = ['VD', 'FR'].includes(doc.documentType);
+                            const isCredit = !isDebit && !isCashPurchase;
+
+                            // Purchase Docs use 'totalValue'
+                            const amount = Number(doc.total || doc.totalValue || doc.amount) || 0;
+                            const docType = doc.documentType || doc.type || doc.docType || '';
+                            const series = doc.series || '';
+                            const fullDocRef = series ? `${docType} ${series}/${docNum}` : `${docType} ${docNum}`;
+
+                            periodMovements.push({
+                                date: docDate,
+                                docType: doc.documentType,
+                                docNumber: fullDocRef,
+                                description: `Doc. Comercial${statusSuffix} ${fullDocRef} - ${doc.supplierName || ''}`,
+                                debit: isDebit ? amount : 0,
+                                credit: isCredit ? amount : 0
+                            });
+                        }
+                    });
+
+                    // 2. Process Treasury Documents (Receipts, Payments)
+                    this.dataService.getTreasuryDocuments().subscribe(treasuryDocs => {
+                        if (treasuryDocs) {
+                            treasuryDocs.forEach((doc: any) => {
+                                const docDate = new Date(doc.date);
+                                if (docDate < startDate || docDate > endDate) return;
+
+                                // Entity Match
+                                let isMatch = false;
+                                let entityId = this.entityType === 'CUSTOMER' ? (doc.customerId || doc.entityId) : (doc.supplierId || doc.entityId);
+                                let entityName = this.entityType === 'CUSTOMER' ? (doc.customerName || doc.entityName) : (doc.supplierName || doc.entityName);
+
+                                if (this.entityType === 'CUSTOMER') {
+                                    if (doc.entityType === 'CUSTOMER' || doc.documentType === 'RE' || doc.documentType === 'ADC') {
+                                        if (entityId && this.selectedEntity.id && entityId === this.selectedEntity.id) isMatch = true;
+                                        else if (entityName && this.selectedEntity.name && entityName.toLowerCase().includes(this.selectedEntity.name.toLowerCase())) isMatch = true;
+                                    }
+                                } else if (this.entityType === 'SUPPLIER') {
+                                    if (doc.entityType === 'SUPPLIER' || doc.documentType === 'PAG' || doc.documentType === 'ADF') {
+                                        if (entityId && this.selectedEntity.id && entityId === this.selectedEntity.id) isMatch = true;
+                                        else if (entityName && this.selectedEntity.name && entityName.toLowerCase().includes(this.selectedEntity.name.toLowerCase())) isMatch = true;
+                                    }
+                                }
+
+                                if (!isMatch) return;
+
+                                const docNum = doc.docNumber || doc.number || doc.id;
+                                const foundInProcessed = Array.from(processedDocNumbers).some(ref => ref && docNum && (ref.toString().includes(docNum.toString()) || docNum.toString().includes(ref.toString())));
+                                if (foundInProcessed) return;
+
+                                const isDraftT = doc.status === 'DRAFT';
+                                const statusSuffixT = isDraftT ? ' (Rascunho)' : '';
+
+                                // Treasury uses 'amount' or 'total'
+                                const amount = Number(doc.amount || doc.total || doc.totalValue) || 0;
+                                const fullDocRefT = `${doc.documentType || ''} ${docNum}`; // Treasury usually just Type and Number
+
+                                if (this.entityType === 'CUSTOMER') {
+                                    // Receipt = CREDIT (Reduces debt)
+                                    periodMovements.push({
+                                        date: docDate,
+                                        docType: doc.documentType || 'RE',
+                                        docNumber: fullDocRefT,
+                                        description: `Tesouraria${statusSuffixT} ${fullDocRefT} - ${entityName || ''}`,
+                                        debit: 0,
+                                        credit: amount
+                                    });
+                                } else {
+                                    // Payment = DEBIT (Reduces debt to supplier)
+                                    periodMovements.push({
+                                        date: docDate,
+                                        docType: doc.documentType || 'PAG',
+                                        docNumber: fullDocRefT,
+                                        description: `Tesouraria${statusSuffixT} ${fullDocRefT} - ${entityName || ''}`,
+                                        debit: amount,
+                                        credit: 0
+                                    });
+                                }
+                            });
+                        }
+
+                        // Finalize after BOTH
+                        this.finalizeLocallyGeneratedStatement(periodMovements, isAssetSide);
+                    });
+                });
+                return;
+            }
+        }
+
+        // Finalize if no docs fetching done
+        this.finalizeLocallyGeneratedStatement(periodMovements, isAssetSide);
+    }
+
+    finalizeLocallyGeneratedStatement(periodMovements: any[], isAssetSide: boolean) {
         periodMovements.sort((a, b) => a.date.getTime() - b.date.getTime());
 
         let running = this.initialBalance;
@@ -517,20 +772,28 @@ export class AccountStatementComponent implements OnInit {
         this.totalCredit = 0;
 
         this.movements = periodMovements.map(m => {
+            const parsedDebit = Number(m.debit) || 0;
+            const parsedCredit = Number(m.credit) || 0;
+
             const movementAmount = isAssetSide
-                ? (m.debit - m.credit)
-                : (m.credit - m.debit);
+                ? (parsedDebit - parsedCredit)
+                : (parsedCredit - parsedDebit);
 
             running += movementAmount;
-            this.totalDebit += m.debit;
-            this.totalCredit += m.credit;
+            this.totalDebit += parsedDebit;
+            this.totalCredit += parsedCredit;
             return {
                 ...m,
+                debit: parsedDebit,
+                credit: parsedCredit,
                 balance: running
             };
         });
 
-        this.finalBalance = running;
+        const lastMovement = this.movements[this.movements.length - 1];
+        this.finalBalance = lastMovement ? lastMovement.balance : this.initialBalance;
+
+        // Notify UI update if needed (ChangeDetectorRef might be useful but bindings should auto-update)
     }
 
     getEntityDisplay(): string {
@@ -541,9 +804,18 @@ export class AccountStatementComponent implements OnInit {
 
     getEntityDetails(): string {
         if (this.selectedEntity) {
-            return `NIF: ${this.selectedEntity.nif || '---'} | Endereço: ${this.selectedEntity.address || '---'}`;
+            let details = `NIF: ${this.selectedEntity.nif || '---'} | Endereço: ${this.selectedEntity.address || '---'}`;
+            if (!this.selectedEntity.receivableAccountId && !this.selectedEntity.payableAccountId) {
+                details += ' | [Movimentos registrados em conta genérica]';
+            }
+            return details;
         }
         return 'Detalhamento geral da conta contabilística selecionada';
+    }
+
+    private findAccountByCode(code: string): string {
+        const acc = this.accountingService.getAccounts().find(a => a.code === code);
+        return acc ? acc.id : '';
     }
 
     resetFilters() {

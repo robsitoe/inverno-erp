@@ -1,12 +1,13 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SalesDocument } from '../../shared/models';
-import { PrintSettings } from './print-settings-modal.component';
+import { PrintSettings } from '../../shared/components/print-settings-modal.component';
 
 @Component({
   selector: 'app-sales-document-print',
   standalone: true,
   imports: [CommonModule],
+  encapsulation: ViewEncapsulation.None,
   template: `
     <div class="print-container" *ngIf="document">
       <div *ngFor="let copy of getCopies(); let i = index" class="page-container">
@@ -141,26 +142,10 @@ import { PrintSettings } from './print-settings-modal.component';
   styles: [`
     /* Print Styles */
     @media print {
-      @page {
-        size: A4;
-        margin: 0;
-      }
-      
-      body {
-        margin: 0;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-
-      .print-container {
-        display: block !important;
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        z-index: 9999;
-        background: white;
-      }
+      @page { size: A4; margin: 0; }
+      body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .print-container { display: block !important; background: white !important; }
+      .no-print { display: none !important; }
     }
 
     /* Screen Styles (Hide by default) */

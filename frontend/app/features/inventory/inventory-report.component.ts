@@ -334,13 +334,13 @@ export class InventoryReportComponent implements OnInit {
           line.articleCode,
           line.description,
           line.unit,
-          line.quantity.toFixed(2),
-          line.unitCost.toFixed(2),
-          line.totalValue.toFixed(2)
+          Number(line.quantity).toFixed(2),
+          Number(line.unitCost).toFixed(2),
+          Number(line.totalValue).toFixed(2)
         ].join(';')
       ),
       '',
-      `Total Geral;;;;${this.getTotalValue().toFixed(2)}`
+      `Total Geral;;;;${Number(this.getTotalValue()).toFixed(2)}`
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

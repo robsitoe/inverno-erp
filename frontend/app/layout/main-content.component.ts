@@ -36,6 +36,7 @@ import { EntityManagementComponent } from '../features/admin/entity-management.c
 import { BankReconciliationComponent } from '../features/treasury/bank-reconciliation.component';
 import { AccountStatementComponent } from '../features/treasury/account-statement.component';
 import { ToasterComponent } from '../shared/toaster.component';
+import { LicenseManagerComponent } from '../features/admin/license-manager.component';
 
 @Component({
   selector: 'app-main-content',
@@ -44,6 +45,7 @@ import { ToasterComponent } from '../shared/toaster.component';
     CommonModule,
     SalesDocumentFormComponent,
     ChartOfAccountsComponent,
+    LicenseManagerComponent,
     JournalEntriesComponent,
     TrialBalanceComponent,
     AccountingPlaceholderComponent,
@@ -246,6 +248,7 @@ import { ToasterComponent } from '../shared/toaster.component';
     <ng-container *ngIf="activeView === 'admin-tools'">
       <app-admin-tools class="w-full h-full block"></app-admin-tools>
     </ng-container>
+
 
     <!-- Default Dashboard -->
     <ng-container *ngIf="!isKnownView()">
