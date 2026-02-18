@@ -1,0 +1,276 @@
+import {
+    Injectable,
+    UnauthorizedException,
+    BadRequestException,
+    NotFoundException,
+    Logger,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { License, LicensePlan, LicenseStatus } from './entities/license.entity';
+import { GenerateLicenseDto } from './dto/generate-license.dto';
+
+export interface LicensePayload {
+    sub: string;        // license id
+    cid: string;        // companyId
+    cn: string;         // companyName
+    plan: LicensePlan;
+    features: string[];
+    maxUsers?: number;
+    maxCompanies?: number;
+    gracePeriodHours: number;
+    iat?: number;
+    exp?: number;
+}
+
+export interface LicenseStatusResponse {
+    valid: boolean;
+    status: LicenseStatus;
+    plan: LicensePlan;
+    companyName: string;
+    expiresAt: Date;
+    daysRemaining: number;
+    features: string[];
+    maxUsers?: number;
+    maxCompanies?: number;
+    inGracePeriod: boolean;
+    gracePeriodEndsAt?: Date;
+    token?: string; // returned on activation
+}
+
+@Injectable()
+export class LicensesService {
+    private readonly logger = new Logger(LicensesService.name);
+
+    constructor(
+        @InjectRepository(License)
+        private readonly licenseRepo: Repository<License>,
+        private readonly jwtService: JwtService,
+        private readonly configService: ConfigService,
+    ) { }
+
+    // ─── GENERATE (Admin only) ────────────────────────────────────────────────
+
+    async generate(dto: GenerateLicenseDto, issuedBy: string): Promise<{ token: string; license: License }> {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + dto.durationDays);
+
+        const features = dto.features ?? this.defaultFeaturesForPlan(dto.plan);
+        const gracePeriodHours = dto.gracePeriodHours ?? 72;
+
+        // Upsert: if company already has a license, replace it
+        let license = await this.licenseRepo.findOne({ where: { companyId: dto.companyId } });
+
+        if (!license) {
+            license = this.licenseRepo.create();
+        }
+
+        license.companyId = dto.companyId;
+        license.companyName = dto.companyName;
+        license.plan = dto.plan;
+        license.status = LicenseStatus.ACTIVE;
+        license.expiresAt = expiresAt;
+        license.activatedBy = issuedBy;
+        license.features = features;
+        license.maxUsers = dto.maxUsers;
+        license.maxCompanies = dto.maxCompanies;
+        license.gracePeriodHours = gracePeriodHours;
+        license.isRevoked = false;
+        license.revokedAt = undefined;
+        license.revokedBy = undefined;
+        license.revokedReason = undefined;
+
+        await this.licenseRepo.save(license);
+
+        // Sign JWT with license secret (separate from user auth secret)
+        const licenseSecret = this.configService.get<string>('LICENSE_SECRET') || 'license-secret-change-in-production';
+
+        const payload: LicensePayload = {
+            sub: license.id,
+            cid: dto.companyId,
+            cn: dto.companyName,
+            plan: dto.plan,
+            features,
+            maxUsers: dto.maxUsers,
+            maxCompanies: dto.maxCompanies,
+            gracePeriodHours,
+        };
+
+        const token = this.jwtService.sign(payload, {
+            secret: licenseSecret,
+            expiresIn: `${dto.durationDays}d`,
+        });
+
+        license.licenseToken = token;
+        await this.licenseRepo.save(license);
+
+        this.logger.log(`License generated for company ${dto.companyId} (${dto.plan}) by ${issuedBy}`);
+
+        return { token, license };
+    }
+
+    // ─── ACTIVATE (Client activates their license) ────────────────────────────
+
+    async activate(token: string, requestIp: string): Promise<LicenseStatusResponse> {
+        const licenseSecret = this.configService.get<string>('LICENSE_SECRET') || 'license-secret-change-in-production';
+
+        let payload: LicensePayload;
+        try {
+            payload = this.jwtService.verify<LicensePayload>(token, { secret: licenseSecret });
+        } catch (err) {
+            throw new BadRequestException('Token de licença inválido ou expirado.');
+        }
+
+        const license = await this.licenseRepo.findOne({ where: { id: payload.sub, companyId: payload.cid } });
+        if (!license) {
+            throw new NotFoundException('Licença não encontrada no servidor.');
+        }
+
+        if (license.isRevoked) {
+            throw new UnauthorizedException('Esta licença foi revogada.');
+        }
+
+        // Update activation IP
+        license.activatedIp = requestIp;
+        license.licenseToken = token;
+        await this.licenseRepo.save(license);
+
+        this.logger.log(`License activated for company ${payload.cid} from IP ${requestIp}`);
+
+        return this.buildStatusResponse(license, token);
+    }
+
+    // ─── STATUS (Frontend polls this) ─────────────────────────────────────────
+
+    async getStatus(companyId: string): Promise<LicenseStatusResponse> {
+        const license = await this.licenseRepo.findOne({ where: { companyId } });
+
+        if (!license) {
+            // Return a DEMO license status if none found
+            return this.buildDemoStatus(companyId);
+        }
+
+        // Sync status based on current time (server time — tamper-proof)
+        await this.syncStatus(license);
+
+        return this.buildStatusResponse(license);
+    }
+
+    // ─── REVOKE (Admin only) ──────────────────────────────────────────────────
+
+    async revoke(companyId: string, reason: string, revokedBy: string): Promise<void> {
+        const license = await this.licenseRepo.findOne({ where: { companyId } });
+        if (!license) throw new NotFoundException('Licença não encontrada.');
+
+        license.isRevoked = true;
+        license.status = LicenseStatus.REVOKED;
+        license.revokedAt = new Date();
+        license.revokedBy = revokedBy;
+        license.revokedReason = reason;
+
+        await this.licenseRepo.save(license);
+        this.logger.warn(`License REVOKED for company ${companyId} by ${revokedBy}. Reason: ${reason}`);
+    }
+
+    // ─── LIST (Admin only) ────────────────────────────────────────────────────
+
+    async listAll(): Promise<License[]> {
+        return this.licenseRepo.find({ order: { createdAt: 'DESC' } });
+    }
+
+    // ─── VALIDATE TOKEN (for LicenseGuard) ───────────────────────────────────
+
+    async validateToken(token: string): Promise<LicensePayload | null> {
+        const licenseSecret = this.configService.get<string>('LICENSE_SECRET') || 'license-secret-change-in-production';
+        try {
+            return this.jwtService.verify<LicensePayload>(token, { secret: licenseSecret });
+        } catch {
+            return null;
+        }
+    }
+
+    // ─── PRIVATE HELPERS ──────────────────────────────────────────────────────
+
+    private async syncStatus(license: License): Promise<void> {
+        if (license.isRevoked) {
+            license.status = LicenseStatus.REVOKED;
+            await this.licenseRepo.save(license);
+            return;
+        }
+
+        const now = new Date();
+        const gracePeriodEnd = new Date(license.expiresAt);
+        gracePeriodEnd.setHours(gracePeriodEnd.getHours() + license.gracePeriodHours);
+
+        if (now <= license.expiresAt) {
+            license.status = LicenseStatus.ACTIVE;
+        } else if (now <= gracePeriodEnd) {
+            license.status = LicenseStatus.GRACE;
+        } else {
+            license.status = LicenseStatus.EXPIRED;
+        }
+
+        await this.licenseRepo.save(license);
+    }
+
+    private buildStatusResponse(license: License, token?: string): LicenseStatusResponse {
+        const now = new Date();
+        const msRemaining = license.expiresAt.getTime() - now.getTime();
+        const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+
+        const gracePeriodEnd = new Date(license.expiresAt);
+        gracePeriodEnd.setHours(gracePeriodEnd.getHours() + license.gracePeriodHours);
+
+        const inGracePeriod = license.status === LicenseStatus.GRACE;
+
+        return {
+            valid: license.status === LicenseStatus.ACTIVE || license.status === LicenseStatus.GRACE,
+            status: license.status,
+            plan: license.plan,
+            companyName: license.companyName,
+            expiresAt: license.expiresAt,
+            daysRemaining,
+            features: license.features ?? [],
+            maxUsers: license.maxUsers,
+            maxCompanies: license.maxCompanies,
+            inGracePeriod,
+            gracePeriodEndsAt: inGracePeriod ? gracePeriodEnd : undefined,
+            token,
+        };
+    }
+
+    private buildDemoStatus(companyId: string): LicenseStatusResponse {
+        const expires = new Date();
+        expires.setDate(expires.getDate() + 30);
+
+        return {
+            valid: true,
+            status: LicenseStatus.ACTIVE,
+            plan: LicensePlan.DEMO,
+            companyName: companyId,
+            expiresAt: expires,
+            daysRemaining: 30,
+            features: ['SALES', 'PURCHASES', 'BASIC'],
+            inGracePeriod: false,
+        };
+    }
+
+    private defaultFeaturesForPlan(plan: LicensePlan): string[] {
+        switch (plan) {
+            case LicensePlan.DEMO:
+                return ['SALES', 'PURCHASES', 'BASIC'];
+            case LicensePlan.LITE:
+                return ['SALES', 'INVENTORY', 'BASIC'];
+            case LicensePlan.STANDARD:
+                return ['SALES', 'INVENTORY', 'PURCHASES', 'TREASURY', 'BASIC'];
+            case LicensePlan.PRO:
+                return ['ACCOUNTING', 'INVENTORY', 'SALES', 'PURCHASES', 'TREASURY'];
+            case LicensePlan.ENTERPRISE:
+                return ['ALL'];
+            default:
+                return ['BASIC'];
+        }
+    }
+}

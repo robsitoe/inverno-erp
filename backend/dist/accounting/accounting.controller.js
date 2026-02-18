@@ -18,6 +18,7 @@ const swagger_1 = require("@nestjs/swagger");
 const accounting_service_1 = require("./accounting.service");
 const update_account_dto_1 = require("./dto/update-account.dto");
 const create_journal_entry_dto_1 = require("./dto/create-journal-entry.dto");
+const license_guard_1 = require("../auth/guards/license.guard");
 let AccountingController = class AccountingController {
     accountingService;
     constructor(accountingService) {
@@ -214,6 +215,7 @@ __decorate([
 exports.AccountingController = AccountingController = __decorate([
     (0, swagger_1.ApiTags)('accounting'),
     (0, common_1.Controller)('accounting'),
+    (0, common_1.UseGuards)(license_guard_1.LicenseGuard),
     __metadata("design:paramtypes", [accounting_service_1.AccountingService])
 ], AccountingController);
 //# sourceMappingURL=accounting.controller.js.map

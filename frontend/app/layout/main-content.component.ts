@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { DataService } from '../services/data.service';
+import { LicenseService } from '../services/license.service';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 import { SalesDocumentFormComponent } from '../features/sales/sales-document-form.component';
@@ -250,6 +251,11 @@ import { LicenseManagerComponent } from '../features/admin/license-manager.compo
     </ng-container>
 
 
+    <!-- License Manager (Direct Access) -->
+    <ng-container *ngIf="activeView === 'license-manager'">
+      <app-license-manager class="w-full h-full block p-6 bg-gray-50"></app-license-manager>
+    </ng-container>
+
     <!-- Default Dashboard -->
     <ng-container *ngIf="!isKnownView()">
       <main 
@@ -268,7 +274,7 @@ import { LicenseManagerComponent } from '../features/admin/license-manager.compo
             <p class="text-lg text-gray-600 mb-8">Selecione uma opção no menu lateral para começar.</p>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-              <div class="p-4 bg-blue-50 rounded-xl border border-blue-100 hover:shadow-md transition-shadow cursor-pointer group" (click)="activeView = 'sales-form'">
+              <div *ngIf="licenseService.hasFeature('SALES')" class="p-4 bg-blue-50 rounded-xl border border-blue-100 hover:shadow-md transition-shadow cursor-pointer group" (click)="activeView = 'sales-form'">
                 <div class="flex items-center gap-3 mb-2">
                   <span class="p-2 bg-blue-100 rounded-lg text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <span class="material-symbols-outlined">point_of_sale</span>
@@ -278,7 +284,7 @@ import { LicenseManagerComponent } from '../features/admin/license-manager.compo
                 <p class="text-sm text-gray-600">Criar faturas e encomendas</p>
               </div>
 
-              <div class="p-4 bg-green-50 rounded-xl border border-green-100 hover:shadow-md transition-shadow cursor-pointer group" (click)="activeView = 'chart-of-accounts'">
+              <div *ngIf="licenseService.hasFeature('ACCOUNTING')" class="p-4 bg-green-50 rounded-xl border border-green-100 hover:shadow-md transition-shadow cursor-pointer group" (click)="activeView = 'chart-of-accounts'">
                 <div class="flex items-center gap-3 mb-2">
                   <span class="p-2 bg-green-100 rounded-lg text-green-600 group-hover:bg-green-600 group-hover:text-white transition-colors">
                     <span class="material-symbols-outlined">account_balance</span>
@@ -288,14 +294,14 @@ import { LicenseManagerComponent } from '../features/admin/license-manager.compo
                 <p class="text-sm text-gray-600">Gerir plano de contas</p>
               </div>
 
-              <div class="p-4 bg-purple-50 rounded-xl border border-purple-100 hover:shadow-md transition-shadow cursor-pointer group">
+              <div *ngIf="licenseService.hasFeature('INVENTORY')" class="p-4 bg-purple-50 rounded-xl border border-purple-100 hover:shadow-md transition-shadow cursor-pointer group" (click)="activeView = 'article-management'">
                 <div class="flex items-center gap-3 mb-2">
                   <span class="p-2 bg-purple-100 rounded-lg text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
                     <span class="material-symbols-outlined">inventory_2</span>
                   </span>
                   <h3 class="font-semibold text-gray-800">Inventário</h3>
                 </div>
-                <p class="text-sm text-gray-600">Gestão de stocks (Brevemente)</p>
+                <p class="text-sm text-gray-600">Gestão de stocks e artigos</p>
               </div>
             </div>
           </div>
@@ -308,7 +314,11 @@ import { LicenseManagerComponent } from '../features/admin/license-manager.compo
 export class MainContentComponent {
   @Input() activeView: string = 'dashboard';
 
-  constructor(private sanitizer: DomSanitizer, private dataService: DataService) { }
+  constructor(
+    private sanitizer: DomSanitizer,
+    private dataService: DataService,
+    public licenseService: LicenseService
+  ) { }
 
 
   isProductionMode(): boolean {
@@ -357,7 +367,8 @@ export class MainContentComponent {
       'admin-users',
       'admin-series',
       'customer-management',
-      'supplier-management'
+      'supplier-management',
+      'license-manager'
     ];
     return knownViews.includes(this.activeView);
   }

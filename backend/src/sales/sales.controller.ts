@@ -4,10 +4,11 @@ import { SalesService } from './sales.service';
 import { CreateSalesDocumentDto } from './dto/create-sales-document.dto';
 import { UpdateSalesDocumentDto } from './dto/update-sales-document.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { LicenseGuard } from '../auth/guards/license.guard';
 
 @ApiTags('sales')
 @Controller('sales')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, LicenseGuard)
 export class SalesController {
   constructor(private readonly salesService: SalesService) { }
 

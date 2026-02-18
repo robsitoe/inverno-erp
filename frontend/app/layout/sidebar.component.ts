@@ -4,6 +4,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/constants';
 import { AppIconComponent } from '../shared/components/app-icon.component';
+import { LicenseService } from '../services/license.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -208,6 +209,8 @@ export class SidebarComponent {
   adminMenuItems = ADMIN_MENU_ITEMS;
   recentItems = RECENT_ITEMS;
   activeModule: string | null = null;
+
+  constructor(private licenseService: LicenseService) { }
   activeSubModules = new Set<string>();
   activeSubSubModules = new Set<string>();
   searchQuery = '';
@@ -224,7 +227,11 @@ export class SidebarComponent {
       .map(item => {
         const children = item.children ? filterProduction(item.children) : undefined;
         const hiddenInProduction = this.productionMode && item.productionReady === false;
-        if (hiddenInProduction) return null;
+
+        // Feature check: hide if item requires a feature that user doesn't have
+        const featureDisabled = item.feature && !this.licenseService.hasFeature(item.feature);
+
+        if (hiddenInProduction || featureDisabled) return null;
         if (item.children && (!children || children.length === 0) && !item.view) return null;
         return { ...item, children };
       })

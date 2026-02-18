@@ -14,6 +14,7 @@ import { CustomerService } from './shared/customer.service';
 import { SupplierService } from './shared/supplier.service';
 import { DataService } from './services/data.service';
 import { AuthService } from './services/auth.service';
+import { LicenseService, LicenseInfo } from './services/license.service';
 
 import { ToasterComponent } from './shared/toaster.component';
 
@@ -53,12 +54,41 @@ import { ToasterComponent } from './shared/toaster.component';
 
     <ng-container *ngIf="isLoggedIn; else loginTpl">
       <div @fadeSlideIn class="flex flex-col h-screen w-screen overflow-hidden bg-[#F0F0F0]">
+        
+        <!-- Global License Banner -->
+        <div *ngIf="license?.valid && (license?.inGracePeriod || (license?.daysRemaining || 0) <= 7)" 
+             class="bg-amber-100 border-b border-amber-200 px-4 py-2 flex items-center justify-between text-amber-800 animate-pulse-subtle">
+          <div class="flex items-center gap-2 text-xs font-semibold">
+            <span class="material-symbols-outlined text-[18px]">warning</span>
+            <span *ngIf="license?.inGracePeriod">
+              A sua licença expirou. Encontra-se em período de graça até {{ license?.gracePeriodEndsAt | date:'dd/MM/yyyy HH:mm' }}.
+            </span>
+            <span *ngIf="!license?.inGracePeriod">
+              A sua licença expira em {{ license?.daysRemaining }} dias ({{ license?.expiresAt | date:'dd/MM/yyyy' }}).
+            </span>
+          </div>
+          <button (click)="activeView = 'license-manager'" class="text-[10px] uppercase font-bold bg-amber-200 hover:bg-amber-300 px-2 py-1 rounded transition-colors">
+            Renovar Agora
+          </button>
+        </div>
+
+        <div *ngIf="!license?.valid" 
+             class="bg-red-600 border-b border-red-700 px-4 py-2 flex items-center justify-between text-white">
+          <div class="flex items-center gap-2 text-xs font-bold">
+            <span class="material-symbols-outlined text-[18px]">gpp_bad</span>
+            <span>LICENÇA INVÁLIDA OU EXPIRADA. O acesso aos módulos foi bloqueado pelo servidor.</span>
+          </div>
+          <button (click)="activeView = 'license-manager'" class="text-[10px] uppercase font-bold bg-white text-red-600 hover:bg-red-50 px-2 py-1 rounded transition-colors">
+            Ativar Licença
+          </button>
+        </div>
+
         <app-header (onLogout)="handleLogout()"></app-header>
         <div class="flex flex-1 overflow-hidden relative">
           <app-sidebar (onNavigate)="setActiveView($event)" [currentView]="activeView" [mode]="currentMode" [productionMode]="isProductionMode"></app-sidebar>
           <app-main-content [activeView]="activeView" class="flex-1 w-full h-full overflow-hidden"></app-main-content>
         </div>
-        <app-footer></app-footer>
+        <app-footer (onLicenseClick)="activeView = 'license-manager'"></app-footer>
       </div>
     </ng-container>
     
@@ -75,6 +105,7 @@ export class AppComponent {
   currentMode: string = 'ERP';
   backendError: boolean = false;
   isProductionMode: boolean = false;
+  license: LicenseInfo | null = null;
 
   constructor(
     private startupService: StartupService,
@@ -83,12 +114,18 @@ export class AppComponent {
     private customerService: CustomerService,
     private supplierService: SupplierService,
     private dataService: DataService,
-    private authService: AuthService
+    private authService: AuthService,
+    private licenseService: LicenseService
   ) { }
 
   ngOnInit() {
     this.validateStoredSession();
     this.checkConnectionAndInit();
+
+    // Subscribe to license updates
+    this.licenseService.license$.subscribe(l => {
+      this.license = l;
+    });
   }
 
   async checkConnectionAndInit() {

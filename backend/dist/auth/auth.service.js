@@ -97,7 +97,7 @@ let AuthService = class AuthService {
         if (!user) {
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
-        const payload = { username: user.username, sub: user.id };
+        const payload = { username: user.username, sub: user.id, isAdmin: !!user.isAdmin, isSuperAdmin: !!user.isSuperAdmin };
         return {
             access_token: this.jwtService.sign(payload),
             user,

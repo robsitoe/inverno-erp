@@ -3353,3 +3353,104 @@
   }
 }
 ---
+{
+  "timestamp": "2026-02-18T08:26:37.581Z",
+  "path": "/inventory/articles?companyId=test-company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"test-company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"test-company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:126:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:52:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:31:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:60:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "test-company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-18T08:32:51.939Z",
+  "path": "/inventory/articles?companyId=test-company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"test-company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"test-company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:126:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:52:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:31:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:60:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "test-company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-18T08:32:52.037Z",
+  "path": "/inventory/articles?companyId=unknown-company",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"unknown-company\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"unknown-company\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:126:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:52:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:31:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:60:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "unknown-company"
+  }
+}
+---
+{
+  "timestamp": "2026-02-18T08:33:07.523Z",
+  "path": "/inventory/articles?companyId=test-company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"test-company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"test-company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:126:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:52:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:31:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:60:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "test-company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-18T08:34:46.600Z",
+  "path": "/inventory/articles",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"test-company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"test-company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:126:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:52:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:31:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:60:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-18T08:34:47.502Z",
+  "path": "/sales/documents?companyId=test-company-001",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"test-company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"test-company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:126:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:52:24)\n    at async SalesService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\sales\\sales.service.ts:34:16)\n    at async SalesService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\sales\\sales.service.ts:128:20)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "test-company-001"
+  }
+}
+---
+{
+  "timestamp": "2026-02-18T08:35:16.062Z",
+  "path": "/inventory/articles",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura: Empresa com ID \"test-company-001\" não encontrada na base de dados principal.",
+    "stack": "BadRequestException: Erro de Infraestrutura: Empresa com ID \"test-company-001\" não encontrada na base de dados principal.\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:126:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:52:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:31:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:60:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---

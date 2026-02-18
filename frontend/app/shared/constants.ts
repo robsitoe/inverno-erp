@@ -4,6 +4,7 @@ export interface MenuItem {
   view?: string;
   beta?: boolean;
   productionReady?: boolean;
+  feature?: string;
   children?: MenuItem[];
 }
 
@@ -19,6 +20,7 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     label: "Contabilidade",
     icon: "account_balance",
+    feature: "ACCOUNTING",
     children: [
       { label: "Plano de Contas", icon: "account_tree", view: "chart-of-accounts" },
       { label: "Lançamentos", icon: "edit_note", view: "journal-entries" },
@@ -44,6 +46,7 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     label: "Equipamentos e Ativos",
     icon: "construction",
+    feature: "ASSETS",
     children: [
       { label: "Ficha do Ativo", icon: "inventory" },
       { label: "Manutenções", icon: "build_circle" },
@@ -59,6 +62,7 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     label: "Tesouraria",
     icon: "account_balance_wallet",
+    feature: "TREASURY",
     children: [
       { label: "Gestão de Tesouraria", icon: "account_balance_wallet", view: "treasury-management" },
       { label: "Pagamentos", icon: "payment" },
@@ -85,6 +89,7 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     label: "Inventário",
     icon: "inventory",
+    feature: "INVENTORY",
     children: [
       { label: "Artigos", icon: "inventory_2", view: "article-management" },
       { label: "Documentos Stock", icon: "swap_horiz", view: "stock-movements" },
@@ -122,6 +127,7 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     label: "Vendas",
     icon: "shopping_cart",
+    feature: "SALES",
     children: [
       { label: "Clientes", icon: "group", view: "customer-management" },
       { label: "Vendas/Encomendas", icon: "receipt", view: "sales-form" },
@@ -134,6 +140,7 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     label: "Compras",
     icon: "shopping_bag",
+    feature: "PURCHASES",
     children: [
       { label: "Fornecedores", icon: "group", view: "supplier-management" },
       { label: "Compras/Encomendas", icon: "receipt", view: "purchase-form" },
@@ -156,6 +163,7 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     label: "Projetos e Serviços",
     icon: "work",
+    feature: "PROJECTS",
     children: [
       { label: "Projetos", icon: "folder_special" },
       { label: "Fases do Projeto", icon: "timeline" },

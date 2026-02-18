@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentMethodsController = void 0;
 const common_1 = require("@nestjs/common");
 const treasury_service_1 = require("./treasury.service");
+const license_guard_1 = require("../auth/guards/license.guard");
 let PaymentMethodsController = class PaymentMethodsController {
     treasuryService;
     constructor(treasuryService) {
@@ -54,6 +55,7 @@ __decorate([
 ], PaymentMethodsController.prototype, "remove", null);
 exports.PaymentMethodsController = PaymentMethodsController = __decorate([
     (0, common_1.Controller)('payment-methods'),
+    (0, common_1.UseGuards)(license_guard_1.LicenseGuard),
     __metadata("design:paramtypes", [treasury_service_1.TreasuryService])
 ], PaymentMethodsController);
 //# sourceMappingURL=payment-methods.controller.js.map

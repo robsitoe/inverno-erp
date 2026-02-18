@@ -3,9 +3,10 @@ import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { UpdatePurchaseDto } from './dto/update-purchase.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { LicenseGuard } from '../auth/guards/license.guard';
 
 @Controller('purchases')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, LicenseGuard)
 export class PurchasesController {
   constructor(private readonly purchasesService: PurchasesService) { }
 

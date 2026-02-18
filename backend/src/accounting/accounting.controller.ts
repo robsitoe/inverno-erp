@@ -1,12 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AccountingService } from './accounting.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
+import { LicenseGuard } from '../auth/guards/license.guard';
 
 @ApiTags('accounting')
 @Controller('accounting')
+@UseGuards(LicenseGuard)
 export class AccountingController {
   constructor(private readonly accountingService: AccountingService) { }
 

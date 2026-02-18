@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../services/data.service';
 import { LicenseService, LicenseInfo } from '../services/license.service';
@@ -35,16 +35,16 @@ import { LicenseService, LicenseInfo } from '../services/license.service';
         <span class="font-bold hidden md:block">PT</span>
       </div>
       
-      <div class="flex items-center gap-4 shrink-0 ml-4">
-        <span class="font-medium" [class.text-red-300]="licenseStatus === 'EXPIRED'" title="Clique em Admin > Licenciamento para gerir">
+      <div class="flex items-center gap-4 shrink-0 ml-4 cursor-pointer hover:bg-white/10 px-2 py-0.5 rounded transition-colors" (click)="onLicenseClick.emit()">
+        <span class="font-medium" [class.text-red-300]="licenseStatus === 'EXPIRED'" title="Clique para gerir subscrição">
             Lic.: {{ licenseText }}
         </span>
         <div 
             class="size-2.5 rounded-full border shadow-sm"
             [ngClass]="{
-                'bg-green-400 border-green-600': licenseStatus === 'VALID',
-                'bg-red-500 border-red-700 animate-pulse': licenseStatus === 'EXPIRED' || licenseStatus === 'INVALID',
-                'bg-yellow-400 border-yellow-600': licenseStatus === 'DEMO'
+                'bg-green-400 border-green-600': licenseStatus === 'ACTIVE',
+                'bg-yellow-400 border-yellow-600': licenseStatus === 'GRACE',
+                'bg-red-500 border-red-700 animate-pulse': licenseStatus === 'EXPIRED' || licenseStatus === 'REVOKED' || licenseStatus === 'INVALID'
             }"
             [title]="'Status: ' + licenseStatus">
         </div>
@@ -53,6 +53,8 @@ import { LicenseService, LicenseInfo } from '../services/license.service';
   `
 })
 export class FooterComponent implements OnInit {
+  @Output() onLicenseClick = new EventEmitter<void>();
+
   companyName: string = 'N/A';
   dbConnection: string = 'N/A';
   username: string = 'N/A';
@@ -76,12 +78,16 @@ export class FooterComponent implements OnInit {
     this.licenseService.license$.subscribe(lic => {
       if (lic) {
         this.licenseStatus = lic.status;
-        if (lic.status === 'VALID') {
-          this.licenseText = `${lic.type} EDITION`;
+        if (lic.valid && lic.plan !== 'DEMO') {
+          this.licenseText = `${lic.plan} EDITION`;
+        } else if (lic.plan === 'DEMO') {
+          this.licenseText = 'DEMO EDITION';
+        } else if (lic.status === 'GRACE') {
+          this.licenseText = 'PERÍODO DE GRAÇA';
         } else if (lic.status === 'EXPIRED') {
-          this.licenseText = 'EXPIRADA';
+          this.licenseText = 'LICENÇA EXPIRADA';
         } else {
-          this.licenseText = 'VERSÃO DE DEMONSTRAÇÃO';
+          this.licenseText = 'LICENÇA INVÁLIDA';
         }
       }
     });

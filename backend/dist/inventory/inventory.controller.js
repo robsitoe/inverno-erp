@@ -19,6 +19,7 @@ const inventory_service_1 = require("./inventory.service");
 const update_article_dto_1 = require("./dto/update-article.dto");
 const create_stock_movement_dto_1 = require("./dto/create-stock-movement.dto");
 const create_stock_document_dto_1 = require("./dto/create-stock-document.dto");
+const license_guard_1 = require("../auth/guards/license.guard");
 let InventoryController = class InventoryController {
     inventoryService;
     constructor(inventoryService) {
@@ -154,6 +155,7 @@ __decorate([
 exports.InventoryController = InventoryController = __decorate([
     (0, swagger_1.ApiTags)('inventory'),
     (0, common_1.Controller)('inventory'),
+    (0, common_1.UseGuards)(license_guard_1.LicenseGuard),
     __metadata("design:paramtypes", [inventory_service_1.InventoryService])
 ], InventoryController);
 //# sourceMappingURL=inventory.controller.js.map

@@ -1,13 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { InventoryService } from './inventory.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { CreateStockMovementDto } from './dto/create-stock-movement.dto';
 import { CreateStockDocumentDto } from './dto/create-stock-document.dto';
+import { LicenseGuard } from '../auth/guards/license.guard';
 
 @ApiTags('inventory')
 @Controller('inventory')
+@UseGuards(LicenseGuard)
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) { }
 

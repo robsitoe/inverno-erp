@@ -3,9 +3,10 @@ import { TreasuryService } from './treasury.service';
 import { CreateTreasuryDto } from './dto/create-treasury.dto';
 import { UpdateTreasuryDto } from './dto/update-treasury.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { LicenseGuard } from '../auth/guards/license.guard';
 
 @Controller('treasury')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, LicenseGuard)
 export class TreasuryController {
   constructor(private readonly treasuryService: TreasuryService) { }
 

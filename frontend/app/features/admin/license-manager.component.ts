@@ -1,234 +1,355 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { LicenseService, LicenseInfo } from '../../services/license.service';
+import { MobilePaymentFormComponent } from './mobile-payment-form.component';
+import { PaymentStatus } from '../../services/payment.service';
 
 @Component({
   selector: 'app-license-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule, MobilePaymentFormComponent],
   template: `
-    <div class="flex flex-col h-full bg-[#F0F2F5] p-6 space-y-6 overflow-y-auto">
-      <!-- Header -->
-      <div class="flex items-center justify-between text-gray-800">
-        <div class="flex items-center gap-3">
-            <div class="p-2 bg-blue-600 rounded-lg shadow-lg text-white">
-            <span class="material-symbols-outlined text-2xl">verified</span>
-            </div>
-            <div>
-            <h1 class="text-2xl font-bold tracking-tight">Gestão de Licenciamento</h1>
-            <p class="text-sm text-gray-500">Controle a validade e as funcionalidades do seu ERP</p>
-            </div>
-        </div>
-        <button (click)="toggleGenerator()" class="text-gray-400 hover:text-gray-600 transition-colors" title="Modo Administrador">
-            <span class="material-symbols-outlined">settings_suggest</span>
+    <div class="space-y-6 p-2 h-full overflow-y-auto">
+
+      <!-- Tabs Navigation -->
+      <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-lg w-fit mb-4">
+        <button (click)="activeTab = 'status'" 
+                [class]="'px-4 py-1.5 rounded-md text-xs font-bold transition-all ' + (activeTab === 'status' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700')">
+          STATUS ATUAL
+        </button>
+        <button (click)="activeTab = 'buy'" 
+                [class]="'px-4 py-1.5 rounded-md text-xs font-bold transition-all ' + (activeTab === 'buy' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700')">
+          COMPRAR / RENOVAR
+        </button>
+        <button (click)="activeTab = 'activate'" 
+                [class]="'px-4 py-1.5 rounded-md text-xs font-bold transition-all ' + (activeTab === 'activate' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700')">
+          ATIVAR MANUAL
         </button>
       </div>
 
-      <!-- Generator Mode (Hidden by default) -->
-      <div *ngIf="showGenerator" class="bg-gray-800 text-white rounded-xl shadow-lg border border-gray-700 overflow-hidden mb-6 animate-fade-in">
-        <div class="p-4 border-b border-gray-700 bg-gray-900/50 flex justify-between items-center">
-            <h2 class="font-bold flex items-center gap-2 text-yellow-500">
-                <span class="material-symbols-outlined">key</span>
-                Gerador de Licenças (Admin)
-            </h2>
-            <button (click)="showGenerator = false" class="text-gray-400 hover:text-white"><span class="material-symbols-outlined">close</span></button>
-        </div>
-        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Empresa Cliente</label>
-                <input [(ngModel)]="genCompany" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-yellow-500 outline-none text-white" placeholder="Nome da Empresa">
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Tipo de Licença</label>
-                <select [(ngModel)]="genType" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-yellow-500 outline-none text-white">
-                    <option value="DEMO">Demonstração</option>
-                    <option value="PRO">Profissional</option>
-                    <option value="ENTERPRISE">Enterprise</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Validade (Dias)</label>
-                <input type="number" [(ngModel)]="genDays" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-yellow-500 outline-none text-white" placeholder="365">
-            </div>
-            <div class="md:col-span-3">
-                <button (click)="generateKey()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 rounded transition-colors flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined">vpn_key</span> GERAR CHAVE
-                </button>
-            </div>
-            <div *ngIf="generatedKey" class="md:col-span-3 mt-2 bg-black/30 p-4 rounded border border-gray-600 relative group">
-                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Chave Gerada</label>
-                <code class="block font-mono text-xs break-all text-green-400">{{ generatedKey }}</code>
-                <button (click)="copyKey()" class="absolute top-2 right-2 text-gray-400 hover:text-white bg-gray-700 p-1 rounded">
-                    <span class="material-symbols-outlined text-sm">content_copy</span>
-                </button>
-            </div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Current License Card -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-          <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-            <h2 class="font-bold text-gray-700 flex items-center gap-2">
-              <span class="material-symbols-outlined text-gray-400">badge</span>
-              Licença Atual
-            </h2>
-            <span [class]="getStatusClass(license?.status || 'INVALID')" class="px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider">
-              {{ license?.status === 'VALID' ? 'Ativa' : license?.status === 'EXPIRED' ? 'Expirada' : 'Inválida' }}
-            </span>
-          </div>
-          
-          <div class="p-6 flex-1 space-y-6" *ngIf="license">
-            <div class="text-center py-4">
-              <div class="inline-flex items-center justify-center size-20 rounded-full bg-blue-50 text-blue-600 mb-3 relative">
-                 <span class="material-symbols-outlined text-4xl">workspace_premium</span>
-                 <div class="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-sm border border-gray-100">
-                    <span class="material-symbols-outlined text-green-500 text-sm" *ngIf="license.status === 'VALID'">check_circle</span>
-                    <span class="material-symbols-outlined text-red-500 text-sm" *ngIf="license.status !== 'VALID'">error</span>
-                 </div>
+      <!-- STATUS TAB -->
+      <div *ngIf="activeTab === 'status'" class="animate-fade-in space-y-4">
+          <!-- Status Card -->
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between"
+                 [ngClass]="{
+                   'bg-green-50': license?.valid && (license?.plan !== 'DEMO'),
+                   'bg-blue-50': license?.plan === 'DEMO',
+                   'bg-amber-50': license?.inGracePeriod,
+                   'bg-red-50': !license?.valid
+                 }">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-2xl"
+                      [ngClass]="{
+                        'text-green-600': license?.valid && (license?.plan !== 'DEMO'),
+                        'text-blue-600': license?.plan === 'DEMO',
+                        'text-amber-600': license?.inGracePeriod,
+                        'text-red-600': !license?.valid
+                      }">
+                  {{ license?.valid ? 'verified' : 'gpp_bad' }}
+                </span>
+                <div>
+                  <h2 class="text-base font-bold text-gray-800">Estado da Licença</h2>
+                  <p class="text-xs text-gray-500">Versão {{ license?.plan }} instalada</p>
+                </div>
               </div>
-              <h3 class="text-xl font-bold text-gray-800">{{ license.companyName }}</h3>
-              <p class="text-xs font-mono text-gray-400 mt-1 uppercase tracking-widest">{{ license.type }} EDITION</p>
+              <div class="flex items-center gap-2">
+                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+                      [ngClass]="{
+                        'bg-green-100 text-green-700': license?.status === 'ACTIVE',
+                        'bg-amber-100 text-amber-700': license?.status === 'GRACE',
+                        'bg-red-100 text-red-700': license?.status === 'EXPIRED' || license?.status === 'REVOKED',
+                        'bg-gray-100 text-gray-600': license?.status === 'INVALID'
+                      }">
+                  {{ statusLabel }}
+                </span>
+                <button (click)="refresh()" title="Atualizar" class="text-gray-400 hover:text-blue-600 transition-colors ml-1">
+                  <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="refreshing">refresh</span>
+                </button>
+              </div>
             </div>
 
-            <div class="space-y-4">
-               <div class="flex justify-between items-center border-b border-gray-100 pb-2">
-                 <span class="text-sm text-gray-500">Expira em</span>
-                 <span class="font-mono font-bold text-gray-800">{{ license.expirationDate | date:'dd/MM/yyyy' }}</span>
-               </div>
-               <div class="flex justify-between items-center border-b border-gray-100 pb-2">
-                 <span class="text-sm text-gray-500">Dias Restantes</span>
-                 <span class="font-mono font-bold" [class.text-red-500]="getDaysRemaining() < 7" [class.text-green-600]="getDaysRemaining() >= 7">
-                    {{ getDaysRemaining() }} dias
-                 </span>
-               </div>
-               <div class="flex justify-between items-center border-b border-gray-100 pb-2">
-                 <span class="text-sm text-gray-500">Chave</span>
-                 <span class="font-mono text-xs text-gray-400 truncate max-w-[150px]">{{ license.key }}</span>
-               </div>
+            <div class="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="text-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Plano</p>
+                <p class="text-lg font-bold" [ngClass]="{
+                  'text-blue-600': license?.plan === 'PRO',
+                  'text-amber-600': license?.plan === 'ENTERPRISE',
+                  'text-gray-600': license?.plan === 'DEMO'
+                }">{{ license?.plan || '---' }}</p>
+              </div>
+              <div class="text-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Empresa</p>
+                <p class="text-sm font-semibold text-gray-800 truncate">{{ license?.companyName || '---' }}</p>
+              </div>
+              <div class="text-center p-3 rounded-lg border"
+                   [ngClass]="{
+                     'bg-green-50 border-green-100': (license?.daysRemaining || 0) > 30,
+                     'bg-amber-50 border-amber-100': (license?.daysRemaining || 0) <= 30 && (license?.daysRemaining || 0) > 0,
+                     'bg-red-50 border-red-100': (license?.daysRemaining || 0) <= 0
+                   }">
+                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Dias Restantes</p>
+                <p class="text-2xl font-bold" [ngClass]="{
+                  'text-green-600': (license?.daysRemaining || 0) > 30,
+                  'text-amber-600': (license?.daysRemaining || 0) <= 30 && (license?.daysRemaining || 0) > 0,
+                  'text-red-600': (license?.daysRemaining || 0) <= 0
+                }">{{ license?.daysRemaining ?? '---' }}</p>
+              </div>
+              <div class="text-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Expira em</p>
+                <p class="text-sm font-semibold text-gray-800">{{ license?.expiresAt | date:'dd/MM/yyyy' }}</p>
+              </div>
+            </div>
+
+            <!-- Features -->
+            <div *ngIf="license?.features?.length" class="px-6 pb-4">
+              <p class="text-xs text-gray-400 uppercase font-bold tracking-wider mb-2">Módulos Incluídos</p>
+              <div class="flex flex-wrap gap-2">
+                <span *ngFor="let f of license?.features"
+                      class="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-100 font-medium tracking-wide">
+                  {{ f }}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
+      </div>
 
-        <!-- Activation Card -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-          <div class="p-6 border-b border-gray-100 bg-gray-50/50">
-             <h2 class="font-bold text-gray-700 flex items-center gap-2">
-              <span class="material-symbols-outlined text-gray-400">key</span>
-              Ativar Nova Licença
-            </h2>
+      <!-- BUY / RENEW TAB -->
+      <div *ngIf="activeTab === 'buy'" class="animate-fade-in space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- LITE Plan -->
+            <div class="bg-white border-2 rounded-2xl p-4 transition-all hover:shadow-lg cursor-pointer flex flex-col h-full"
+                 [class.border-green-600]="selectedPlan === 'LITE'"
+                 [class.border-gray-200]="selectedPlan !== 'LITE'"
+                 (click)="selectedPlan = 'LITE'">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-green-600 bg-green-50 px-2 py-1 rounded">PLAN LOJA / GÁS</span>
+                <span *ngIf="selectedPlan === 'LITE'" class="material-symbols-outlined text-green-600 scale-75">check_circle</span>
+              </div>
+              <h3 class="text-xl font-bold text-gray-900 mb-1">3.500 MT</h3>
+              <p class="text-[10px] text-gray-500 mb-4 font-medium italic">Foco em Vendas e Stock</p>
+              
+              <ul class="space-y-2 mb-6 flex-1 text-[11px]">
+                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Vendas de Balcão</li>
+                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Controlo de Stock Simples</li>
+                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> 1 Empresa + 1 Utilizador</li>
+              </ul>
+            </div>
+
+            <!-- STANDARD Plan -->
+            <div class="bg-white border-2 rounded-2xl p-4 transition-all hover:shadow-lg cursor-pointer flex flex-col h-full"
+                 [class.border-blue-500]="selectedPlan === 'STANDARD'"
+                 [class.border-gray-200]="selectedPlan !== 'STANDARD'"
+                 (click)="selectedPlan = 'STANDARD'">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded">PLAN ARMAZÉM</span>
+                <span *ngIf="selectedPlan === 'STANDARD'" class="material-symbols-outlined text-blue-600 scale-75">check_circle</span>
+              </div>
+              <h3 class="text-xl font-bold text-gray-900 mb-1">8.500 MT</h3>
+              <p class="text-[10px] text-gray-500 mb-4 font-medium italic">Foco em Distribuição</p>
+              
+              <ul class="space-y-2 mb-6 flex-1 text-[11px]">
+                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Compras e Fornecedores</li>
+                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Gestão de Armazém</li>
+                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> 3 Utilizadores</li>
+              </ul>
+            </div>
+
+            <!-- PRO Plan -->
+            <div class="bg-white border-2 rounded-2xl p-4 transition-all hover:shadow-lg cursor-pointer flex flex-col h-full"
+                 [class.border-purple-600]="selectedPlan === 'PRO'"
+                 [class.border-gray-200]="selectedPlan !== 'PRO'"
+                 (click)="selectedPlan = 'PRO'">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-purple-600 bg-purple-50 px-2 py-1 rounded">PLAN INDÚSTRIA</span>
+                <span *ngIf="selectedPlan === 'PRO'" class="material-symbols-outlined text-purple-600 scale-75">check_circle</span>
+              </div>
+              <h3 class="text-xl font-bold text-gray-900 mb-1">15.000 MT</h3>
+              <p class="text-[10px] text-gray-500 mb-4 font-medium italic">Contabilidade Completa</p>
+              
+              <ul class="space-y-2 mb-6 flex-1 text-[11px]">
+                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Contabilidade e Fiscal</li>
+                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Tesouraria Avançada</li>
+                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> 5 Utilizadores</li>
+              </ul>
+            </div>
+
+            <!-- ENTERPRISE Plan -->
+            <div class="bg-white border-2 rounded-2xl p-4 transition-all hover:shadow-lg cursor-pointer flex flex-col h-full relative overflow-hidden"
+                 [class.border-amber-500]="selectedPlan === 'ENTERPRISE'"
+                 [class.border-gray-200]="selectedPlan !== 'ENTERPRISE'"
+                 (click)="selectedPlan = 'ENTERPRISE'">
+              <div class="absolute top-0 right-0 bg-amber-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-bl-lg">TOP SELLER</div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-amber-600 bg-amber-50 px-2 py-1 rounded">PLAN ENTERPRISE</span>
+                <span *ngIf="selectedPlan === 'ENTERPRISE'" class="material-symbols-outlined text-amber-600 scale-75">check_circle</span>
+              </div>
+              <h3 class="text-xl font-bold text-gray-900 mb-1">50.000 MT</h3>
+              <p class="text-[10px] text-gray-500 mb-4 font-medium italic">Gestão VIP</p>
+              
+              <ul class="space-y-2 mb-6 flex-1 text-[11px]">
+                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Utilizadores ILIMITADOS</li>
+                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Multi-Empresa</li>
+                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Suporte VIP 24/7</li>
+              </ul>
+            </div>
           </div>
-          
-          <div class="p-6 flex-1 flex flex-col justify-center space-y-4">
+
+          <!-- Payment Options -->
+          <div *ngIf="selectedPlan" class="animate-slide-up space-y-4 max-w-2xl mx-auto">
+            <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wide text-center">Escolha o Método de Pagamento</h4>
+            <div class="grid grid-cols-2 gap-4">
+                <button (click)="paymentMethod = 'MPESA'" 
+                        [class]="'p-4 border-2 rounded-xl flex flex-col items-center justify-center gap-2 transition-all ' + 
+                           (paymentMethod === 'MPESA' ? 'border-red-600 bg-red-50' : 'border-gray-200 bg-white hover:border-gray-300')">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/M-Pesa_logo.png" class="h-8 object-contain" alt="M-Pesa">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-gray-600">Carteira M-Pesa</span>
+                </button>
+                <button (click)="paymentMethod = 'EMOLA'" 
+                        [class]="'p-4 border-2 rounded-xl flex flex-col items-center justify-center gap-2 transition-all ' + 
+                           (paymentMethod === 'EMOLA' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white hover:border-gray-300')">
+                  <img src="https://yt3.googleusercontent.com/I2vW848n1XmQ8m_JOfp0FkE-7k1X_wE_w-QW-_t0X6_8E8_B7E-7k1X_wE_w-QW-_t0X6_8E8_B7E-7k1X_wE_w-QW-_t0X6_8E8_B7E-7k1X_wE_w-QW-_t0X6_8E8_B7E" class="h-8 object-contain" alt="e-Mola">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-gray-600">Carteira e-Mola</span>
+                </button>
+            </div>
+
+            <!-- Mobile Payment Form (Integrated) -->
+            <div *ngIf="paymentMethod" class="mt-6 animate-fade-in">
+              <app-mobile-payment-form 
+                [wallet]="paymentMethod" 
+                [amount]="getPlanPrice(selectedPlan)"
+                [companyId]="licenseService.current?.companyName || ''"
+                (onPaymentSuccess)="handlePaymentDone($event)"
+              >
+              </app-mobile-payment-form>
+            </div>
+          </div>
+      </div>
+
+      <!-- ACTIVATE TAB -->
+      <div *ngIf="activeTab === 'activate'" class="animate-fade-in">
+          <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-4">
             <div>
-              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Chave de Licença</label>
-              <textarea 
-                [(ngModel)]="activationKey"
-                rows="4"
-                class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 font-mono text-xs text-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none"
-                placeholder="Cole aqui a sua chave de licença..."
-              ></textarea>
+              <h2 class="text-base font-bold text-gray-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-blue-600">key</span>
+                Ativar Manualmente
+              </h2>
+              <p class="text-xs text-gray-500 mt-1">Se já possui um token de licença, introduza-o aqui.</p>
             </div>
-
-            <button 
-              (click)="activate()"
-              [disabled]="!activationKey"
-              class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
-            >
-              <span class="material-symbols-outlined">lock_open</span>
-              ATIVAR LICENÇA
-            </button>
             
-            <div *ngIf="message" [class]="'p-3 rounded text-xs font-medium flex items-center gap-2 ' + (success ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200')">
-               <span class="material-symbols-outlined text-lg">{{ success ? 'check' : 'error' }}</span>
-               {{ message }}
+            <textarea
+              [(ngModel)]="activationToken"
+              rows="5"
+              placeholder="Cole aqui o token de licença..."
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none shadow-inner bg-gray-50"
+            ></textarea>
+
+            <div *ngIf="activationError" class="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+              <span class="material-symbols-outlined text-red-600 text-[18px]">error</span>
+              <p class="text-sm text-red-700">{{ activationError }}</p>
             </div>
 
-            <div class="pt-6 border-t border-gray-100 mt-4">
-               <p class="text-[10px] text-gray-400 text-center uppercase tracking-wider mb-3">Zona de Testes (Desenvolvimento)</p>
-               <button (click)="generateDemoKey()" class="w-full border border-dashed border-gray-300 text-gray-500 hover:bg-gray-50 hover:text-gray-700 py-2 rounded text-xs transition-colors">
-                 Gerar Chave de Demo (30 Dias)
-               </button>
-            </div>
+            <button
+              (click)="activate()"
+              [disabled]="!activationToken.trim() || activating"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95">
+              <span class="material-symbols-outlined text-[20px]">verified</span>
+              {{ activating ? 'VERIFICANDO...' : 'ATIVAR AGORA' }}
+            </button>
           </div>
+      </div>
+
+      <!-- Info Box -->
+      <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
+        <span class="material-symbols-outlined text-blue-500 text-[20px] mt-0.5">help</span>
+        <div class="text-[10px] text-blue-700 leading-normal">
+          <p class="font-bold mb-1 uppercase tracking-wider">Centro de Assistência MozPay</p>
+          <p>Os pagamentos via Carteira Móvel são processados de imediato de forma segura. Após a confirmação no seu telemóvel, a licença é automaticamente atualizada no servidor.</p>
+          <p class="mt-1 opacity-70">Linha de Apoio (Pós-Venda): +258 84 000 0000 | Email: suporte&#64;inverno.co.mz</p>
         </div>
       </div>
+
     </div>
   `
 })
 export class LicenseManagerComponent implements OnInit {
   license: LicenseInfo | null = null;
-  activationKey: string = '';
-  message: string = '';
-  success: boolean = false;
+  activationToken = '';
+  activating = false;
+  refreshing = false;
+  activationError = '';
+  activationSuccess = '';
 
-  // Generator State
-  showGenerator = false;
-  genCompany = '';
-  genType = 'PRO';
-  genDays = 365;
-  generatedKey = '';
+  // UI Tabs
+  activeTab: 'status' | 'buy' | 'activate' = 'status';
+  selectedPlan: 'PRO' | 'ENTERPRISE' | null = null;
+  paymentMethod: 'MPESA' | 'EMOLA' | null = null;
 
-  constructor(private licenseService: LicenseService) { }
+  constructor(
+    private licenseService: LicenseService,
+  ) { }
 
   ngOnInit() {
-    this.licenseService.license$.subscribe(lic => {
-      this.license = lic;
+    this.licenseService.license$.subscribe(l => {
+      this.license = l;
     });
+    this.refresh();
   }
 
-  toggleGenerator() {
-    this.showGenerator = !this.showGenerator;
-  }
-
-  generateKey() {
-    if (!this.genCompany || !this.genDays) return;
-    this.generatedKey = this.licenseService.generateLicenseKey(this.genCompany, this.genType, this.genDays);
-  }
-
-  copyKey() {
-    navigator.clipboard.writeText(this.generatedKey);
-    alert('Chave copiada!');
-  }
-
-  getStatusClass(status: string): string {
-    switch (status) {
-      case 'VALID': return 'bg-green-100 text-green-700 border border-green-200';
-      case 'EXPIRED': return 'bg-red-100 text-red-700 border border-red-200';
-      default: return 'bg-gray-100 text-gray-700 border border-gray-200';
+  get statusLabel(): string {
+    switch (this.license?.status) {
+      case 'ACTIVE': return 'Ativa';
+      case 'GRACE': return 'Período de Graça';
+      case 'EXPIRED': return 'Expirada';
+      case 'REVOKED': return 'Revogada';
+      default: return 'Inválida';
     }
   }
 
-  getDaysRemaining(): number {
-    if (!this.license) return 0;
-    const now = new Date();
-    const exp = new Date(this.license.expirationDate);
-    const diff = exp.getTime() - now.getTime();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  refresh() {
+    this.refreshing = true;
+    this.licenseService.refreshFromServer();
+    setTimeout(() => this.refreshing = false, 1500);
+  }
+
+  getPlanPrice(plan: string | null): number {
+    switch (plan) {
+      case 'LITE': return 3500;
+      case 'STANDARD': return 8500;
+      case 'PRO': return 15000;
+      case 'ENTERPRISE': return 50000;
+      default: return 0;
+    }
   }
 
   activate() {
-    this.message = '';
+    if (!this.activationToken.trim()) return;
+    this.activating = true;
+    this.activationError = '';
+    this.activationSuccess = '';
 
-    if (!this.activationKey) return;
-
-    const result = this.licenseService.activateLicense(this.activationKey);
-    if (result) {
-      this.success = true;
-      this.message = 'Licença ativada com sucesso!';
-      this.activationKey = '';
-    } else {
-      this.success = false;
-      this.message = 'Chave de licença inválida ou corrompida.';
-    }
+    this.licenseService.activateLicense(this.activationToken.trim()).subscribe({
+      next: (result) => {
+        this.activating = false;
+        this.activationSuccess = `Licença ativada com sucesso! Plano: ${result.plan}.`;
+        this.activationToken = '';
+        this.activeTab = 'status';
+      },
+      error: (err) => {
+        this.activating = false;
+        this.activationError = err?.error?.message || 'Erro ao ativar licença.';
+      }
+    });
   }
 
-  generateDemoKey() {
-    // Generate a key for the current company or a generic one
-    const key = this.licenseService.generateLicenseKey('Minha Empresa Demo', 'PRO', 30);
-    this.activationKey = key;
-    this.message = 'Chave de demonstração gerada. Clique em "Ativar" para aplicar.';
-    this.success = true; // technically just info
+  handlePaymentDone(status: PaymentStatus) {
+    // Aqui simularíamos que o backend gera um token novo após o pagamento
+    // Por agora, vamos apenas mostrar sucesso e refrescar
+    console.log('Pagamento recebido:', status);
+    this.activationSuccess = 'Pagamento confirmado! A sua licença foi renovada.';
+    this.activeTab = 'status';
+    this.refresh();
   }
 }

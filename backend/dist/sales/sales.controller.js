@@ -19,6 +19,7 @@ const sales_service_1 = require("./sales.service");
 const create_sales_document_dto_1 = require("./dto/create-sales-document.dto");
 const update_sales_document_dto_1 = require("./dto/update-sales-document.dto");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const license_guard_1 = require("../auth/guards/license.guard");
 let SalesController = class SalesController {
     salesService;
     constructor(salesService) {
@@ -126,7 +127,7 @@ __decorate([
 exports.SalesController = SalesController = __decorate([
     (0, swagger_1.ApiTags)('sales'),
     (0, common_1.Controller)('sales'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, license_guard_1.LicenseGuard),
     __metadata("design:paramtypes", [sales_service_1.SalesService])
 ], SalesController);
 //# sourceMappingURL=sales.controller.js.map

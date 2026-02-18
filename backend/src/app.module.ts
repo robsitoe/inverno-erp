@@ -33,6 +33,8 @@ import { PeriodsModule } from './periods/periods.module';
 import { TenancyMiddleware } from './tenancy/tenancy.middleware';
 import { WorkflowHistory } from './common/entities/workflow-history.entity';
 import { WorkflowModule } from './common/workflow.module';
+import { LicensesModule } from './licenses/licenses.module';
+import { License } from './licenses/entities/license.entity';
 
 @Module({
   imports: [
@@ -52,7 +54,8 @@ import { WorkflowModule } from './common/workflow.module';
               Account, JournalEntry, JournalLine, Article, StockMovement,
               SalesDocument, SalesDocumentLine, User, PurchaseDocument,
               PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity, DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog
+              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
+              DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License
             ],
             synchronize: true,
           };
@@ -70,7 +73,7 @@ import { WorkflowModule } from './common/workflow.module';
             SalesDocument, SalesDocumentLine, User, PurchaseDocument,
             PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
             Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-            DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog
+            DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License
           ],
           synchronize: true,
         };
@@ -87,6 +90,7 @@ import { WorkflowModule } from './common/workflow.module';
     TenancyModule,
     WorkflowModule,
     PeriodsModule,
+    LicensesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
