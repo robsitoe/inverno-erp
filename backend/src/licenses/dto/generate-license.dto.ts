@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsNumber, IsOptional, IsArray, Min, Max } from 'class-validator';
+import { IsString, IsEnum, IsNumber, IsOptional, IsArray, Min, Max, IsEmail } from 'class-validator';
 import { LicensePlan } from '../entities/license.entity';
 
 export class GenerateLicenseDto {
@@ -31,6 +31,19 @@ export class GenerateLicenseDto {
     @IsOptional()
     @IsNumber()
     gracePeriodHours?: number;
+
+    @IsOptional()
+    @IsEmail()
+    contactEmail?: string;
+
+    @IsOptional()
+    @IsString()
+    contactPhone?: string;
+
+    @IsOptional()
+    @IsNumber({ maxDecimalPlaces: 2 })
+    @Min(0)
+    price?: number;
 }
 
 export class ActivateLicenseDto {

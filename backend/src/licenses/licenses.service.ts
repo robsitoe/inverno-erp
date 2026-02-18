@@ -6,11 +6,12 @@ import {
     Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, ILike, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { License, LicensePlan, LicenseStatus } from './entities/license.entity';
 import { GenerateLicenseDto } from './dto/generate-license.dto';
+import { ListLicensesQueryDto } from './dto/manage-license.dto';
 
 export interface LicensePayload {
     sub: string;        // license id
@@ -76,6 +77,9 @@ export class LicensesService {
         license.features = features;
         license.maxUsers = dto.maxUsers;
         license.maxCompanies = dto.maxCompanies;
+        license.contactEmail = dto.contactEmail;
+        license.contactPhone = dto.contactPhone;
+        license.price = dto.price;
         license.gracePeriodHours = gracePeriodHours;
         license.isRevoked = false;
         license.revokedAt = undefined;
@@ -176,8 +180,74 @@ export class LicensesService {
 
     // ─── LIST (Admin only) ────────────────────────────────────────────────────
 
-    async listAll(): Promise<License[]> {
-        return this.licenseRepo.find({ order: { createdAt: 'DESC' } });
+    async listAll(filters?: ListLicensesQueryDto): Promise<License[]> {
+        const where: any[] = [];
+
+        if (filters?.search) {
+            where.push(
+                { companyName: ILike(`%${filters.search}%`) },
+                { companyId: ILike(`%${filters.search}%`) },
+                { contactEmail: ILike(`%${filters.search}%`) },
+                { contactPhone: ILike(`%${filters.search}%`) },
+            );
+        }
+
+        const licenses = await this.licenseRepo.find({
+            where: where.length ? where : undefined,
+            order: { createdAt: 'DESC' },
+        });
+
+        if (!filters?.status) {
+            return licenses;
+        }
+
+        const status = filters.status.toUpperCase();
+        return licenses.filter((license) => license.status === status);
+    }
+
+    async listActive(): Promise<License[]> {
+        const licenses = await this.licenseRepo.find({
+            where: { isRevoked: false },
+            order: { createdAt: 'DESC' },
+        });
+
+        for (const license of licenses) {
+            await this.syncStatus(license);
+        }
+
+        return licenses.filter((license) => [LicenseStatus.ACTIVE, LicenseStatus.GRACE].includes(license.status));
+    }
+
+    async updatePricing(price: number, companyIds?: string[]): Promise<{ updated: number }> {
+        if (companyIds?.length) {
+            const result = await this.licenseRepo.update({ companyId: In(companyIds) }, { price });
+            return { updated: result.affected ?? 0 };
+        }
+
+        const result = await this.licenseRepo
+            .createQueryBuilder()
+            .update(License)
+            .set({ price })
+            .execute();
+
+        return { updated: result.affected ?? 0 };
+    }
+
+    async blockLicenses(blockedBy: string, reason?: string, companyIds?: string[]): Promise<{ blocked: number }> {
+        const licenses = companyIds?.length
+            ? await this.licenseRepo.find({ where: { companyId: In(companyIds) } })
+            : await this.licenseRepo.find();
+
+        for (const license of licenses) {
+            license.isRevoked = true;
+            license.status = LicenseStatus.REVOKED;
+            license.revokedAt = new Date();
+            license.revokedBy = blockedBy;
+            license.revokedReason = reason || 'Bloqueio administrativo';
+            await this.licenseRepo.save(license);
+        }
+
+        return { blocked: licenses.length };
     }
 
     // ─── VALIDATE TOKEN (for LicenseGuard) ───────────────────────────────────
