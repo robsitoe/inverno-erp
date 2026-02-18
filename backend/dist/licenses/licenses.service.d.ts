@@ -29,12 +29,34 @@ export interface LicenseStatusResponse {
     gracePeriodEndsAt?: Date;
     token?: string;
 }
+export interface PromoCode {
+    code: string;
+    discountPercent?: number;
+    discountFixed?: number;
+    expiresAt: Date;
+    region?: string;
+    description: string;
+}
+export interface LicensePlanDefinition {
+    id: LicensePlan;
+    name: string;
+    description: string;
+    price: number;
+    billing: string;
+    features: string[];
+    benefitSummary: string[];
+    icon: string;
+    color: string;
+    isPopular?: boolean;
+}
 export declare class LicensesService {
     private readonly licenseRepo;
     private readonly jwtService;
     private readonly configService;
     private readonly logger;
     constructor(licenseRepo: Repository<License>, jwtService: JwtService, configService: ConfigService);
+    getAvailablePlans(): Promise<LicensePlanDefinition[]>;
+    validatePromoCode(code: string): Promise<PromoCode | null>;
     generate(dto: GenerateLicenseDto, issuedBy: string): Promise<{
         token: string;
         license: License;

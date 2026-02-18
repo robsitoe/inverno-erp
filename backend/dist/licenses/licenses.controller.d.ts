@@ -3,6 +3,16 @@ import { GenerateLicenseDto, ActivateLicenseDto } from './dto/generate-license.d
 export declare class LicensesController {
     private readonly licensesService;
     constructor(licensesService: LicensesService);
+    getPlans(): Promise<import("./licenses.service").LicensePlanDefinition[]>;
+    validatePromo(code: string): Promise<{
+        valid: boolean;
+        message: string;
+        promo?: undefined;
+    } | {
+        valid: boolean;
+        promo: import("./licenses.service").PromoCode;
+        message?: undefined;
+    }>;
     generate(dto: GenerateLicenseDto, req: any): Promise<{
         error: string;
         token?: undefined;

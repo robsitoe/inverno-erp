@@ -6,7 +6,7 @@ import { catchError, tap } from 'rxjs/operators';
 export interface LicenseInfo {
     valid: boolean;
     status: 'ACTIVE' | 'EXPIRED' | 'REVOKED' | 'GRACE' | 'INVALID';
-    plan: 'DEMO' | 'PRO' | 'ENTERPRISE';
+    plan: 'DEMO' | 'LITE' | 'STANDARD' | 'PRO' | 'ENTERPRISE';
     companyName: string;
     expiresAt: Date;
     daysRemaining: number;
@@ -15,6 +15,19 @@ export interface LicenseInfo {
     maxCompanies?: number;
     inGracePeriod: boolean;
     gracePeriodEndsAt?: Date;
+}
+
+export interface LicensePlanDefinition {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    billing: string;
+    features: string[];
+    benefitSummary: string[];
+    icon: string;
+    color: string;
+    isPopular?: boolean;
 }
 
 const CACHE_KEY = 'erp_license_cache';
@@ -34,6 +47,14 @@ export class LicenseService {
     }
 
     // ─── PUBLIC API ───────────────────────────────────────────────────────────
+
+    getAvailablePlans(): Observable<LicensePlanDefinition[]> {
+        return this.http.get<LicensePlanDefinition[]>(`${this.apiBase}/plans`);
+    }
+
+    validatePromoCode(code: string): Observable<any> {
+        return this.http.get<any>(`${this.apiBase}/promo/${code}`);
+    }
 
     /** Activate a license token received from the vendor */
     activateLicense(token: string): Observable<any> {

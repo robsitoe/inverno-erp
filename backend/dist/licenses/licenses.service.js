@@ -20,6 +20,73 @@ const typeorm_2 = require("typeorm");
 const jwt_1 = require("@nestjs/jwt");
 const config_1 = require("@nestjs/config");
 const license_entity_1 = require("./entities/license.entity");
+const PROMO_CODES = [
+    {
+        code: 'MAPUTO20',
+        discountPercent: 20,
+        expiresAt: new Date('2026-12-31'),
+        description: 'Desconto de Boas-vindas Maputo'
+    },
+    {
+        code: 'MANHICA-OFERTA',
+        discountFixed: 500,
+        expiresAt: new Date('2026-06-30'),
+        description: 'Desconto Especial Manhiça'
+    },
+    {
+        code: 'INVERNO-SALE',
+        discountPercent: 15,
+        expiresAt: new Date('2026-03-31'),
+        description: 'Promoção de Verão'
+    }
+];
+const LICENSE_PLANS_CONFIG = [
+    {
+        id: license_entity_1.LicensePlan.LITE,
+        name: 'PLAN LOJA / GÁS',
+        description: 'Foco em Vendas e Stock',
+        price: 3500,
+        billing: 'Anual por Empresa',
+        features: ['SALES', 'INVENTORY', 'BASIC'],
+        benefitSummary: ['Vendas de Balcão', 'Controlo de Stock Simples', '1 Empresa + 1 Utilizador'],
+        icon: 'store',
+        color: 'green'
+    },
+    {
+        id: license_entity_1.LicensePlan.STANDARD,
+        name: 'PLAN ARMAZÉM',
+        description: 'Foco em Distribuição',
+        price: 8500,
+        billing: 'Anual por Empresa',
+        features: ['SALES', 'INVENTORY', 'PURCHASES', 'TREASURY', 'BASIC'],
+        benefitSummary: ['Compras e Fornecedores', 'Gestão de Armazém', '3 Utilizadores'],
+        icon: 'warehouse',
+        color: 'blue'
+    },
+    {
+        id: license_entity_1.LicensePlan.PRO,
+        name: 'PLAN INDÚSTRIA',
+        description: 'Contabilidade Completa',
+        price: 15000,
+        billing: 'Anual por Empresa',
+        features: ['ACCOUNTING', 'INVENTORY', 'SALES', 'PURCHASES', 'TREASURY'],
+        benefitSummary: ['Contabilidade e Fiscal', 'Tesouraria Avançada', '5 Utilizadores'],
+        icon: 'business',
+        color: 'purple',
+        isPopular: true
+    },
+    {
+        id: license_entity_1.LicensePlan.ENTERPRISE,
+        name: 'PLAN ENTERPRISE',
+        description: 'Gestão VIP',
+        price: 50000,
+        billing: 'Anual com Suporte VIP',
+        features: ['ALL'],
+        benefitSummary: ['Utilizadores ILIMITADOS', 'Multi-Empresa', 'Suporte VIP 24/7'],
+        icon: 'corporate_fare',
+        color: 'amber'
+    }
+];
 let LicensesService = LicensesService_1 = class LicensesService {
     licenseRepo;
     jwtService;
@@ -29,6 +96,18 @@ let LicensesService = LicensesService_1 = class LicensesService {
         this.licenseRepo = licenseRepo;
         this.jwtService = jwtService;
         this.configService = configService;
+    }
+    async getAvailablePlans() {
+        return LICENSE_PLANS_CONFIG;
+    }
+    async validatePromoCode(code) {
+        const promo = PROMO_CODES.find(p => p.code.toUpperCase() === code.toUpperCase());
+        if (!promo)
+            return null;
+        const now = new Date();
+        if (promo.expiresAt < now)
+            return null;
+        return promo;
     }
     async generate(dto, issuedBy) {
         const expiresAt = new Date();

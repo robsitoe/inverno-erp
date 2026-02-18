@@ -22,6 +22,16 @@ let LicensesController = class LicensesController {
     constructor(licensesService) {
         this.licensesService = licensesService;
     }
+    async getPlans() {
+        return this.licensesService.getAvailablePlans();
+    }
+    async validatePromo(code) {
+        const promo = await this.licensesService.validatePromoCode(code);
+        if (!promo) {
+            return { valid: false, message: 'Código inválido ou expirado.' };
+        }
+        return { valid: true, promo };
+    }
     async generate(dto, req) {
         const user = req.user;
         if (!user?.isSuperAdmin && !user?.isAdmin) {
@@ -61,6 +71,19 @@ let LicensesController = class LicensesController {
     }
 };
 exports.LicensesController = LicensesController;
+__decorate([
+    (0, common_1.Get)('plans'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], LicensesController.prototype, "getPlans", null);
+__decorate([
+    (0, common_1.Get)('promo/:code'),
+    __param(0, (0, common_1.Param)('code')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], LicensesController.prototype, "validatePromo", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)('generate'),

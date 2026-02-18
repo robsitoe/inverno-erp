@@ -18,6 +18,20 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class LicensesController {
     constructor(private readonly licensesService: LicensesService) { }
 
+    @Get('plans')
+    async getPlans() {
+        return this.licensesService.getAvailablePlans();
+    }
+
+    @Get('promo/:code')
+    async validatePromo(@Param('code') code: string) {
+        const promo = await this.licensesService.validatePromoCode(code);
+        if (!promo) {
+            return { valid: false, message: 'Código inválido ou expirado.' };
+        }
+        return { valid: true, promo };
+    }
+
     // ─── GENERATE (SuperAdmin only) ───────────────────────────────────────────
     // POST /licenses/generate
     @UseGuards(JwtAuthGuard)

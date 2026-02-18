@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { LicenseService, LicenseInfo } from '../../services/license.service';
+import { LicenseService, LicenseInfo, LicensePlanDefinition } from '../../services/license.service';
 import { MobilePaymentFormComponent } from './mobile-payment-form.component';
 import { PaymentStatus } from '../../services/payment.service';
 
@@ -118,87 +118,72 @@ import { PaymentStatus } from '../../services/payment.service';
 
       <!-- BUY / RENEW TAB -->
       <div *ngIf="activeTab === 'buy'" class="animate-fade-in space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- LITE Plan -->
-            <div class="bg-white border-2 rounded-2xl p-4 transition-all hover:shadow-lg cursor-pointer flex flex-col h-full"
-                 [class.border-green-600]="selectedPlan === 'LITE'"
-                 [class.border-gray-200]="selectedPlan !== 'LITE'"
-                 (click)="selectedPlan = 'LITE'">
+          <div *ngIf="loadingPlans" class="flex items-center justify-center py-20">
+            <span class="material-symbols-outlined animate-spin text-blue-600 text-4xl">refresh</span>
+          </div>
+
+          <div *ngIf="!loadingPlans" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Dynamic Plans -->
+            <div *ngFor="let plan of availablePlans" 
+                 class="bg-white border-2 rounded-2xl p-4 transition-all hover:shadow-lg cursor-pointer flex flex-col h-full relative overflow-hidden"
+                 [class.border-blue-600]="selectedPlan === plan.id"
+                 [class.border-gray-200]="selectedPlan !== plan.id"
+                 (click)="selectedPlan = plan.id">
+              
+              <div *ngIf="plan.isPopular" class="absolute top-0 right-0 bg-blue-600 text-white text-[8px] font-bold px-2 py-0.5 rounded-bl-lg">POPULAR</div>
+              
               <div class="flex items-center justify-between mb-3">
-                <span class="text-[10px] font-bold uppercase tracking-widest text-green-600 bg-green-50 px-2 py-1 rounded">PLAN LOJA / GÁS</span>
-                <span *ngIf="selectedPlan === 'LITE'" class="material-symbols-outlined text-green-600 scale-75">check_circle</span>
+                <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded"
+                      [ngClass]="{
+                        'text-green-600 bg-green-50': plan.color === 'green',
+                        'text-blue-600 bg-blue-50': plan.color === 'blue',
+                        'text-purple-600 bg-purple-50': plan.color === 'purple',
+                        'text-amber-600 bg-amber-50': plan.color === 'amber'
+                      }">{{ plan.name }}</span>
+                <span *ngIf="selectedPlan === plan.id" class="material-symbols-outlined text-blue-600 scale-75">check_circle</span>
+                <span *ngIf="selectedPlan !== plan.id" class="material-symbols-outlined text-gray-300 scale-75">{{ plan.icon }}</span>
               </div>
-              <h3 class="text-xl font-bold text-gray-900 mb-1">3.500 MT</h3>
-              <p class="text-[10px] text-gray-500 mb-4 font-medium italic">Foco em Vendas e Stock</p>
+              
+              <h3 class="text-xl font-bold text-gray-900 mb-1">{{ plan.price | number:'1.0-0' }} MT</h3>
+              <p class="text-[10px] text-gray-500 mb-4 font-medium italic">{{ plan.description }}</p>
               
               <ul class="space-y-2 mb-6 flex-1 text-[11px]">
-                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Vendas de Balcão</li>
-                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Controlo de Stock Simples</li>
-                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> 1 Empresa + 1 Utilizador</li>
+                <li *ngFor="let benefit of plan.benefitSummary" class="flex items-start gap-2 text-gray-600">
+                  <span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span>
+                  {{ benefit }}
+                </li>
               </ul>
             </div>
+          </div>
 
-            <!-- STANDARD Plan -->
-            <div class="bg-white border-2 rounded-2xl p-4 transition-all hover:shadow-lg cursor-pointer flex flex-col h-full"
-                 [class.border-blue-500]="selectedPlan === 'STANDARD'"
-                 [class.border-gray-200]="selectedPlan !== 'STANDARD'"
-                 (click)="selectedPlan = 'STANDARD'">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-[10px] font-bold uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded">PLAN ARMAZÉM</span>
-                <span *ngIf="selectedPlan === 'STANDARD'" class="material-symbols-outlined text-blue-600 scale-75">check_circle</span>
+          <!-- Promo Code Section -->
+          <div *ngIf="selectedPlan && !paymentMethod" class="animate-slide-up max-w-2xl mx-auto bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-[20px]">sell</span>
+                <input type="text" [(ngModel)]="promoInput" placeholder="Tem um código promocional?" 
+                       class="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none uppercase font-bold tracking-wider">
               </div>
-              <h3 class="text-xl font-bold text-gray-900 mb-1">8.500 MT</h3>
-              <p class="text-[10px] text-gray-500 mb-4 font-medium italic">Foco em Distribuição</p>
-              
-              <ul class="space-y-2 mb-6 flex-1 text-[11px]">
-                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Compras e Fornecedores</li>
-                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Gestão de Armazém</li>
-                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> 3 Utilizadores</li>
-              </ul>
+              <button (click)="applyPromo()" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-black transition-all">APLICAR</button>
             </div>
-
-            <!-- PRO Plan -->
-            <div class="bg-white border-2 rounded-2xl p-4 transition-all hover:shadow-lg cursor-pointer flex flex-col h-full"
-                 [class.border-purple-600]="selectedPlan === 'PRO'"
-                 [class.border-gray-200]="selectedPlan !== 'PRO'"
-                 (click)="selectedPlan = 'PRO'">
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-[10px] font-bold uppercase tracking-widest text-purple-600 bg-purple-50 px-2 py-1 rounded">PLAN INDÚSTRIA</span>
-                <span *ngIf="selectedPlan === 'PRO'" class="material-symbols-outlined text-purple-600 scale-75">check_circle</span>
-              </div>
-              <h3 class="text-xl font-bold text-gray-900 mb-1">15.000 MT</h3>
-              <p class="text-[10px] text-gray-500 mb-4 font-medium italic">Contabilidade Completa</p>
-              
-              <ul class="space-y-2 mb-6 flex-1 text-[11px]">
-                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Contabilidade e Fiscal</li>
-                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Tesouraria Avançada</li>
-                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> 5 Utilizadores</li>
-              </ul>
-            </div>
-
-            <!-- ENTERPRISE Plan -->
-            <div class="bg-white border-2 rounded-2xl p-4 transition-all hover:shadow-lg cursor-pointer flex flex-col h-full relative overflow-hidden"
-                 [class.border-amber-500]="selectedPlan === 'ENTERPRISE'"
-                 [class.border-gray-200]="selectedPlan !== 'ENTERPRISE'"
-                 (click)="selectedPlan = 'ENTERPRISE'">
-              <div class="absolute top-0 right-0 bg-amber-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-bl-lg">TOP SELLER</div>
-              <div class="flex items-center justify-between mb-3">
-                <span class="text-[10px] font-bold uppercase tracking-widest text-amber-600 bg-amber-50 px-2 py-1 rounded">PLAN ENTERPRISE</span>
-                <span *ngIf="selectedPlan === 'ENTERPRISE'" class="material-symbols-outlined text-amber-600 scale-75">check_circle</span>
-              </div>
-              <h3 class="text-xl font-bold text-gray-900 mb-1">50.000 MT</h3>
-              <p class="text-[10px] text-gray-500 mb-4 font-medium italic">Gestão VIP</p>
-              
-              <ul class="space-y-2 mb-6 flex-1 text-[11px]">
-                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Utilizadores ILIMITADOS</li>
-                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Multi-Empresa</li>
-                <li class="flex items-start gap-2 text-gray-600"><span class="material-symbols-outlined text-green-500 text-[14px] mt-0.5">done</span> Suporte VIP 24/7</li>
-              </ul>
+            <p *ngIf="promoError" class="text-[10px] text-red-600 mt-2 font-medium">{{ promoError }}</p>
+            <div *ngIf="appliedPromo" class="mt-2 flex items-center justify-between text-[11px] text-green-700 bg-green-50 p-2 rounded-md border border-green-100">
+              <span class="flex items-center gap-1 font-bold">
+                <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                CÓDIGO APLICADO: {{ appliedPromo.code }}
+              </span>
+              <span class="font-bold">- {{ appliedPromo.discountPercent ? appliedPromo.discountPercent + '%' : appliedPromo.discountFixed + ' MT' }}</span>
             </div>
           </div>
 
           <!-- Payment Options -->
           <div *ngIf="selectedPlan" class="animate-slide-up space-y-4 max-w-2xl mx-auto">
+            
+            <div *ngIf="appliedPromo" class="text-center mb-2">
+               <span class="text-xs text-gray-400 line-through">{{ getPlanPrice(selectedPlan) | number }} MT</span>
+               <span class="text-lg font-bold text-blue-800 ml-2">{{ getFinalPrice() | number }} MT</span>
+            </div>
+
             <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wide text-center">Escolha o Método de Pagamento</h4>
             <div class="grid grid-cols-2 gap-4">
                 <button (click)="paymentMethod = 'MPESA'" 
@@ -219,8 +204,8 @@ import { PaymentStatus } from '../../services/payment.service';
             <div *ngIf="paymentMethod" class="mt-6 animate-fade-in">
               <app-mobile-payment-form 
                 [wallet]="paymentMethod" 
-                [amount]="getPlanPrice(selectedPlan)"
-                [companyId]="licenseService.current?.companyName || ''"
+                [amount]="getFinalPrice()"
+                [companyId]="license?.companyName || ''"
                 (onPaymentSuccess)="handlePaymentDone($event)"
               >
               </app-mobile-payment-form>
@@ -284,18 +269,35 @@ export class LicenseManagerComponent implements OnInit {
 
   // UI Tabs
   activeTab: 'status' | 'buy' | 'activate' = 'status';
-  selectedPlan: 'PRO' | 'ENTERPRISE' | null = null;
+  selectedPlan: string | null = null;
   paymentMethod: 'MPESA' | 'EMOLA' | null = null;
+  availablePlans: LicensePlanDefinition[] = [];
+  loadingPlans = false;
 
   constructor(
-    private licenseService: LicenseService,
+    public licenseService: LicenseService,
   ) { }
 
   ngOnInit() {
     this.licenseService.license$.subscribe(l => {
       this.license = l;
     });
+    this.loadPlans();
     this.refresh();
+  }
+
+  loadPlans() {
+    this.loadingPlans = true;
+    this.licenseService.getAvailablePlans().subscribe({
+      next: (plans) => {
+        this.availablePlans = plans;
+        this.loadingPlans = false;
+      },
+      error: () => {
+        this.loadingPlans = false;
+        // Fallback or error handling
+      }
+    });
   }
 
   get statusLabel(): string {
@@ -314,14 +316,48 @@ export class LicenseManagerComponent implements OnInit {
     setTimeout(() => this.refreshing = false, 1500);
   }
 
-  getPlanPrice(plan: string | null): number {
-    switch (plan) {
-      case 'LITE': return 3500;
-      case 'STANDARD': return 8500;
-      case 'PRO': return 15000;
-      case 'ENTERPRISE': return 50000;
-      default: return 0;
+  getPlanPrice(planId: string): number {
+    const plan = this.availablePlans.find(p => p.id === planId);
+    return plan ? plan.price : 0;
+  }
+
+  // Promo Code Support
+  promoInput = '';
+  promoError = '';
+  appliedPromo: any = null;
+
+  applyPromo() {
+    if (!this.promoInput.trim()) return;
+    this.promoError = '';
+
+    this.licenseService.validatePromoCode(this.promoInput.trim()).subscribe({
+      next: (res) => {
+        if (res.valid) {
+          this.appliedPromo = res.promo;
+          this.promoInput = '';
+        } else {
+          this.promoError = res.message;
+          this.appliedPromo = null;
+        }
+      },
+      error: () => {
+        this.promoError = 'Servidor de promoções indisponível.';
+      }
+    });
+  }
+
+  getFinalPrice(): number {
+    const basePrice = this.getPlanPrice(this.selectedPlan || '');
+    if (!basePrice) return 0;
+    if (!this.appliedPromo) return basePrice;
+
+    if (this.appliedPromo.discountPercent) {
+      return basePrice * (1 - this.appliedPromo.discountPercent / 100);
     }
+    if (this.appliedPromo.discountFixed) {
+      return Math.max(0, basePrice - this.appliedPromo.discountFixed);
+    }
+    return basePrice;
   }
 
   activate() {
