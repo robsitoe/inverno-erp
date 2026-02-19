@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { finalize } from 'rxjs';
 import { LicenseService, LicenseInfo, LicensePlanDefinition, LicenseRenewalInfo } from '../../services/license.service';
 import { MobilePaymentFormComponent } from './mobile-payment-form.component';
 import { PaymentStatus } from '../../services/payment.service';
@@ -367,17 +368,24 @@ export class LicenseManagerComponent implements OnInit {
 
   loadRenewals() {
     const companyId = this.getCompanyId();
-    if (!companyId) return;
+    if (!companyId || companyId === 'undefined' || companyId === 'null') {
+      console.warn('LicenseManager: No valid companyId found for renewals history.');
+      this.loadingRenewals = false;
+      this.renewals = [];
+      return;
+    }
 
     this.loadingRenewals = true;
-    this.licenseService.getRenewalsByCompany(companyId).subscribe({
+    this.licenseService.getRenewalsByCompany(companyId).pipe(
+      finalize(() => this.loadingRenewals = false)
+    ).subscribe({
       next: (renewals) => {
-        this.renewals = renewals;
-        this.loadingRenewals = false;
+        this.renewals = Array.isArray(renewals) ? renewals : [];
       },
-      error: () => {
+      error: (err) => {
+        console.error('LicenseManager: Error loading renewals history', err);
         this.renewals = [];
-        this.loadingRenewals = false;
+        // The interceptor will show the toast, we just reset the UI state here
       }
     });
   }

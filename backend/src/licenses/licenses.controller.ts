@@ -11,6 +11,7 @@ import {
     HttpStatus,
     Delete,
     Patch,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { LicensesService } from './licenses.service';
 import { GenerateLicenseDto, ActivateLicenseDto } from './dto/generate-license.dto';
@@ -119,7 +120,7 @@ export class LicensesController {
     async listRenewalsByCompany(@Param('companyId') companyId: string, @Req() req: any) {
         const user = req.user;
         if (!user?.isSuperAdmin && !user?.isAdmin) {
-            return { error: 'Acesso negado.' };
+            throw new UnauthorizedException('Acesso negado. Apenas administradores podem ver o histórico de renovações.');
         }
         return this.licensesService.listRenewalsByCompany(companyId);
     }

@@ -80,7 +80,7 @@ let LicensesController = class LicensesController {
     async listRenewalsByCompany(companyId, req) {
         const user = req.user;
         if (!user?.isSuperAdmin && !user?.isAdmin) {
-            return { error: 'Acesso negado.' };
+            throw new common_1.UnauthorizedException('Acesso negado. Apenas administradores podem ver o histórico de renovações.');
         }
         return this.licensesService.listRenewalsByCompany(companyId);
     }
