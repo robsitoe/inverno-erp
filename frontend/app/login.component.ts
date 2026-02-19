@@ -5,6 +5,7 @@ import { AuthService } from './services/auth.service';
 import { HttpClientModule } from '@angular/common/http';
 import { DataService } from './services/data.service';
 import { ToasterService } from './services/toaster.service';
+import { LicenseService } from './services/license.service';
 
 @Component({
   selector: 'app-login',
@@ -116,6 +117,14 @@ import { ToasterService } from './services/toaster.service';
             >
               <p class="text-sm font-bold text-green-700">Entrar em Demonstração</p>
               <p class="text-xs text-green-600">Continua em modo de demonstração e segue para o painel de administração.</p>
+            </button>
+
+            <button
+              (click)="enterViaAdministration('erp')"
+              class="w-full text-left p-3 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+            >
+              <p class="text-sm font-bold text-gray-700">Entrar no ERP (Modo Operacional)</p>
+              <p class="text-xs text-gray-400">Pula a administração e vai direto para as Vendas e Stock.</p>
             </button>
           </div>
 
@@ -230,8 +239,14 @@ export class LoginComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private dataService: DataService,
-    private toasterService: ToasterService
+    private toasterService: ToasterService,
+    private licenseService: LicenseService
   ) { }
+
+  selectCompany(company: any) {
+    this.dataService.setActiveCompany(company);
+    this.finishLogin();
+  }
 
   ngOnInit() {
     const storedConfig = localStorage.getItem('erp_system_config');
@@ -264,18 +279,58 @@ export class LoginComponent implements OnInit {
     return 'Armazenamento Local (Navegador)';
   }
 
+  enterViaAdministration(option: 'buy' | 'key' | 'demo' | 'erp') {
+    if (option !== 'erp' && this.adminAccessCode !== this.defaultAdminAccessCode) {
+      this.toasterService.showError('Código inválido', 'Código especial do administrador incorreto.');
+      return;
+    }
+
+    if (option === 'erp') {
+      this.selectedMode = 'ERP';
+      this.loadAvailableCompanies();
+      return;
+    }
+
+    localStorage.setItem('erp_license_entry_mode', option === 'buy' ? 'BUY' : option === 'key' ? 'KEY' : 'DEMO');
+    this.selectedMode = 'ADMIN';
+    this.finishLogin('admin-page');
+  }
+
+  finishLogin(initialView?: string) {
+    this.onLogin.emit({ mode: this.selectedMode, initialView });
+  }
+
   onCredentialsSubmit() {
     this.authService.login({ username: this.username, password: this.password })
       .subscribe({
         next: (user) => {
           this.currentUser = user;
 
+          const license = this.licenseService.current;
+          // Rule: If license is valid (not expired/revoked), skip the gate.
+          const isLicenseValid = license && license.valid;
+
+          // Normal users: only allow if system has a valid license
           if (!user.isAdmin && !user.isSuperAdmin) {
-            this.toasterService.showError('Acesso Negado', 'A entrada inicial neste sistema exige permissões de administrador.');
+            if (!isLicenseValid) {
+              this.toasterService.showError('Acesso Negado', 'O sistema encontra-se sem licença ativa. Por favor, contacte o administrador.');
+              return;
+            }
+            this.selectedMode = 'ERP';
+            this.loadAvailableCompanies();
             return;
           }
 
-          this.step = 'ACCESS_GATE';
+          // Admins/SuperAdmins: 
+          // 1. If license is VALID (ACTIVE or GRACE) -> skip directly to Company Selection/ERP
+          // 2. If license is NOT VALID (EXPIRED or REVOKED) -> show ACCESS_GATE to force payment
+          if (isLicenseValid) {
+            this.selectedMode = 'ERP';
+            this.loadAvailableCompanies();
+          } else {
+            // Expired or No License: show the Gate
+            this.step = 'ACCESS_GATE';
+          }
         },
         error: (err) => {
           console.error('Login failed', err);
@@ -287,16 +342,7 @@ export class LoginComponent implements OnInit {
 
   loadAvailableCompanies() {
     this.dataService.getCompanies().subscribe(companies => {
-      if (this.currentUser.isAdmin || this.currentUser.isSuperAdmin) {
-        this.availableCompanies = companies;
-      } else {
-        const allowedIds = (this.currentUser.permissions || []).map((p: any) => p.companyId);
-        if (allowedIds.includes('ALL')) {
-          this.availableCompanies = companies;
-        } else {
-          this.availableCompanies = companies.filter(c => allowedIds.includes(c.id));
-        }
-      }
+      this.availableCompanies = companies;
 
       if (this.availableCompanies.length === 1) {
         this.selectCompany(this.availableCompanies[0]);
@@ -304,25 +350,5 @@ export class LoginComponent implements OnInit {
         this.step = 'COMPANY_SELECT';
       }
     });
-  }
-
-  selectCompany(company: any) {
-    this.dataService.setActiveCompany(company);
-    this.finishLogin();
-  }
-
-  enterViaAdministration(option: 'buy' | 'key' | 'demo') {
-    if (this.adminAccessCode !== this.defaultAdminAccessCode) {
-      this.toasterService.showError('Código inválido', 'Código especial do administrador incorreto.');
-      return;
-    }
-
-    localStorage.setItem('erp_license_entry_mode', option === 'buy' ? 'BUY' : option === 'key' ? 'KEY' : 'DEMO');
-    this.selectedMode = 'ADMIN';
-    this.finishLogin('admin-page');
-  }
-
-  finishLogin(initialView?: string) {
-    this.onLogin.emit({ mode: this.selectedMode, initialView });
   }
 }
