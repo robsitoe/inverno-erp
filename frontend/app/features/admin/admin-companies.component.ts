@@ -116,7 +116,7 @@ interface SeriesConfig {
       </div>
     </div>
 
-    <!-- Primavera Style Wizard Modal -->
+    <!-- Wizard Modal -->
     <div *ngIf="showWizard" class="fixed inset-0 bg-black/20 flex items-center justify-center z-50 backdrop-blur-[2px]">
       <div class="bg-[#F0F0F0] rounded-lg shadow-2xl w-[700px] flex flex-col overflow-hidden border border-gray-400 animate-fade-in font-sans text-sm">
         

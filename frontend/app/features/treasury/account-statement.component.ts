@@ -32,9 +32,9 @@ interface StatementMovement {
         AccountListModalComponent
     ],
     template: `
-    <div class="flex h-full bg-[#F0F0F0] no-print">
+    <div class="flex h-full bg-[#F0F0F0]">
         <!-- Sidebar Filters -->
-        <div class="w-80 bg-white border-r border-gray-300 flex flex-col shrink-0 overflow-hidden">
+        <div class="w-80 bg-white border-r border-gray-300 flex flex-col shrink-0 overflow-hidden no-print">
             <div class="bg-gradient-to-r from-blue-700 to-blue-800 text-white px-4 py-3 flex items-center gap-2 shrink-0 shadow">
                 <span class="material-symbols-outlined">history</span>
                 <h2 class="font-bold text-sm uppercase tracking-tighter">Extrato de Conta</h2>
@@ -136,7 +136,7 @@ interface StatementMovement {
         <!-- Main Display Area -->
         <div class="flex-1 flex flex-col overflow-hidden relative">
             <!-- Toolbar -->
-            <div class="bg-white border-b border-gray-300 px-4 py-2.5 flex justify-between items-center shrink-0 shadow-sm z-10">
+            <div class="bg-white border-b border-gray-300 px-4 py-2.5 flex justify-between items-center shrink-0 shadow-sm z-10 no-print">
                 <div class="flex items-center gap-6">
                     <button class="flex items-center gap-1.5 text-gray-600 hover:text-blue-700 text-[11px] font-bold uppercase tracking-tight" (click)="windowPrint()">
                         <span class="material-symbols-outlined text-lg">print</span> Imprimir
@@ -169,7 +169,7 @@ interface StatementMovement {
 
 
                 <!-- Template Content (Paper format) -->
-                <div *ngIf="movements.length > 0" class="max-w-4xl mx-auto bg-white p-10 shadow-2xl border border-gray-200 rounded-sm min-h-[1120px] flex flex-col">
+                <div *ngIf="movements.length > 0" class="max-w-4xl mx-auto bg-white p-10 shadow-2xl border border-gray-200 rounded-sm min-h-[1120px] flex flex-col Paper">
                     <!-- Document Header -->
                     <div class="border-b-2 border-gray-900 pb-4 mb-6 flex justify-between items-start">
                         <div>
@@ -215,7 +215,7 @@ interface StatementMovement {
                         </thead>
                         <tbody>
                             <!-- Initial Balance Row -->
-                            <tr class="bg-blue-50/50 border-b border-gray-200 italic font-medium">
+                            <tr class="bg-blue-print border-b border-gray-200 italic font-medium">
                                 <td class="px-3 py-2 text-gray-400">{{ dateFrom | date:'dd/MM/yy' }}</td>
                                 <td class="px-3 py-2">Saldo à data de {{ dateFrom | date:'dd/MM/yyyy' }}</td>
                                 <td class="px-3 py-2 text-right">-</td>
@@ -283,11 +283,57 @@ interface StatementMovement {
     `,
     styles: [`
         @media print {
-            .no-print { display: none !important; }
-            #statement-area { padding: 0 !important; bg: white !important; }
-            .shadow-sm, .shadow-2xl { box-shadow: none !important; }
-            .border { border: 1px solid #111 !important; }
-            .max-w-4xl { max-width: 100% !important; border: none !important; }
+            /* Hide all UI elements except the statement */
+            .no-print, .no-print * { display: none !important; }
+            
+            #statement-area { 
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                overflow: visible !important;
+                display: block !important;
+            }
+
+            /* Paper formatting for A4 */
+            .max-w-4xl { 
+                max-width: none !important; 
+                width: 210mm !important; /* A4 width */
+                margin: 0 auto !important;
+                padding: 15mm !important; 
+                border: none !important; 
+                box-shadow: none !important;
+                min-height: 0 !important;
+                height: auto !important;
+                display: block !important;
+            }
+
+            /* Force background colors to print */
+            .bg-gray-900 { background-color: #111827 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .bg-gray-50 { background-color: #f9fafb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .bg-blue-print { background-color: #eff6ff80 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .bg-white { background-color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+            /* Color forcing */
+            .text-green-700 { color: #15803d !important; -webkit-print-color-adjust: exact; }
+            .text-red-700 { color: #b91c1c !important; -webkit-print-color-adjust: exact; }
+            .text-red-600 { color: #dc2626 !important; -webkit-print-color-adjust: exact; }
+            .text-blue-700 { color: #1d4ed8 !important; -webkit-print-color-adjust: exact; }
+            .text-blue-900 { color: #1e3a8a !important; -webkit-print-color-adjust: exact; }
+            .text-gray-900 { color: #111827 !important; -webkit-print-color-adjust: exact; }
+            
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+            /* Ensure table borders appear */
+            table { border-collapse: collapse !important; }
+            th, td { border-bottom: 1px solid #e5e7eb !important; }
+            .bg-gray-900 th, .bg-gray-900 td { border-color: #111827 !important; }
+        }
+
+        /* Paper effect on screen */
+        .Paper {
+            box-shadow: 0 0 50px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
         }
     `]
 })
@@ -322,7 +368,7 @@ export class AccountStatementComponent implements OnInit {
     totalCredit: number = 0;
     finalBalance: number = 0;
 
-    currentUser = 'admin';
+    currentUser = 'Utilizador';
 
     constructor(
         private accountingService: AccountingService,
@@ -333,6 +379,13 @@ export class AccountStatementComponent implements OnInit {
 
 
     ngOnInit() {
+        // Load current user for footer
+        const storedUser = localStorage.getItem('erp_current_user');
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            this.currentUser = user.username || user.name || 'Utilizador';
+        }
+
         const today = new Date();
         const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
         this.dateFrom = firstDay.toISOString().split('T')[0];

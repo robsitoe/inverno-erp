@@ -12,7 +12,16 @@ import { LicenseService } from './services/license.service';
   standalone: true,
   imports: [CommonModule, FormsModule, HttpClientModule],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-gray-100">
+    <div class="min-h-screen flex items-center justify-center bg-gray-100 relative">
+      <!-- Top Right Management Shortcut -->
+      <div class="absolute top-6 right-6">
+        <button (click)="step = 'ACCESS_GATE'" 
+                class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full shadow-sm text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-blue-600 hover:border-blue-200 transition-all group">
+          <span class="material-symbols-outlined text-[16px] group-hover:rotate-90 transition-transform">settings_suggest</span>
+          Gestão do Sistema
+        </button>
+      </div>
+
       <div class="bg-white p-8 rounded-lg shadow-md w-96 animate-fade-in relative overflow-hidden">
         <!-- Connection Status Badge -->
         <div class="absolute top-0 right-0 p-2">
@@ -79,7 +88,7 @@ import { LicenseService } from './services/license.service';
         <!-- Step 2: Access Gate -->
         <div *ngIf="step === 'ACCESS_GATE'" class="animate-slide-in space-y-4">
           <div class="text-center">
-            <p class="text-gray-700 text-sm font-semibold">Bem-vindo, {{ currentUser?.name || currentUser?.username }}</p>
+            <p class="text-gray-700 text-sm font-semibold">Bem-vindo, {{ currentUser?.name || currentUser?.username || 'Administrador' }}</p>
             <p class="text-gray-500 text-xs mt-1">Antes de usar o ERP, escolha como entrar na Administração</p>
           </div>
 
@@ -88,42 +97,59 @@ import { LicenseService } from './services/license.service';
             <input
               type="password"
               [(ngModel)]="adminAccessCode"
+              (keyup.enter)="onAdminCodeSubmit()"
               class="w-full border border-amber-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-amber-500"
               placeholder="Por agora use: admin"
             >
             <p class="text-[10px] text-amber-700 mt-1">Este código poderá ser alterado futuramente para um valor privado.</p>
           </div>
 
-          <div class="space-y-2">
-            <button
-              (click)="enterViaAdministration('buy')"
-              class="w-full text-left p-3 border border-blue-200 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors"
-            >
-              <p class="text-sm font-bold text-blue-700">Pagar Licença</p>
-              <p class="text-xs text-blue-600">Abre Administração > Gestão de Licenças para pagamento/renovação.</p>
-            </button>
+          <!-- Buttons: Only visible if code is correct -->
+          <div class="space-y-2" *ngIf="adminAccessCode === defaultAdminAccessCode">
+            
+            <!-- PAYMENT PART (Only shows if License is EXPIRED/INVALID) -->
+            <ng-container *ngIf="!licenseService.current?.valid">
+              <button
+                (click)="enterViaAdministration('buy')"
+                class="w-full text-left p-3 border border-blue-200 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors"
+              >
+                <p class="text-sm font-bold text-blue-700">Pagar Licença</p>
+                <p class="text-xs text-blue-600">Abre Administração > Gestão de Licenças para pagamento/renovação.</p>
+              </button>
 
+              <button
+                (click)="enterViaAdministration('key')"
+                class="w-full text-left p-3 border border-indigo-200 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors"
+              >
+                <p class="text-sm font-bold text-indigo-700">Inserir Chave</p>
+                <p class="text-xs text-indigo-600">Abre Administração > Gestão de Licenças para ativação manual.</p>
+              </button>
+
+              <button
+                (click)="enterViaAdministration('demo')"
+                class="w-full text-left p-3 border border-green-200 rounded-lg bg-green-50 hover:bg-green-100 transition-colors"
+              >
+                <p class="text-sm font-bold text-green-700">Entrar em Demonstração</p>
+                <p class="text-xs text-green-600">Continua em modo de demonstração e segue para o painel de administração.</p>
+              </button>
+            </ng-container>
+
+            <!-- MANAGEMENT PART (Only shows if License is VALID) -->
             <button
-              (click)="enterViaAdministration('key')"
+              *ngIf="licenseService.current?.valid"
+              (click)="enterViaAdministration('demo')"
               class="w-full text-left p-3 border border-indigo-200 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors"
             >
-              <p class="text-sm font-bold text-indigo-700">Inserir Chave</p>
-              <p class="text-xs text-indigo-600">Abre Administração > Gestão de Licenças para ativação manual.</p>
+              <p class="text-sm font-bold text-indigo-700">Painel de Administração</p>
+              <p class="text-xs text-indigo-600">Gerir utilizadores, empresas e configurações do sistema.</p>
             </button>
 
-            <button
-              (click)="enterViaAdministration('demo')"
-              class="w-full text-left p-3 border border-green-200 rounded-lg bg-green-50 hover:bg-green-100 transition-colors"
-            >
-              <p class="text-sm font-bold text-green-700">Entrar em Demonstração</p>
-              <p class="text-xs text-green-600">Continua em modo de demonstração e segue para o painel de administração.</p>
-            </button>
-
+            <!-- ALWAYS AVOID ADMIN PANEL AND GO TO ERP -->
             <button
               (click)="enterViaAdministration('erp')"
               class="w-full text-left p-3 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
             >
-              <p class="text-sm font-bold text-gray-700">Entrar no ERP (Modo Operacional)</p>
+              <p class="text-sm font-bold text-gray-700">Ir para o ERP (Modo Operacional)</p>
               <p class="text-xs text-gray-400">Pula a administração e vai direto para as Vendas e Stock.</p>
             </button>
           </div>
@@ -277,6 +303,20 @@ export class LoginComponent implements OnInit {
       return `${host}:${port}/${database}`;
     }
     return 'Armazenamento Local (Navegador)';
+  }
+
+  onAdminCodeSubmit() {
+    if (this.adminAccessCode === this.defaultAdminAccessCode) {
+      // If code is correct, choose the best path automatically on "Enter"
+      const license = this.licenseService.current;
+      if (license?.valid) {
+        this.enterViaAdministration('demo'); // Goes to Admin Panel if valid
+      } else {
+        this.enterViaAdministration('buy');  // Goes to Payments if invalid
+      }
+    } else {
+      this.toasterService.showError('Código inválido', 'Código especial do administrador incorreto.');
+    }
   }
 
   enterViaAdministration(option: 'buy' | 'key' | 'demo' | 'erp') {

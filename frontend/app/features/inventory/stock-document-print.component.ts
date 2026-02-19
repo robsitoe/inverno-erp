@@ -10,7 +10,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="print-container" *ngIf="document">
-      <div *ngFor="let copy of getCopies(); let i = index" class="page-container">
+      <div *ngFor="let copy of getCopies(); let i = index" class="page-container Paper">
         
         <!-- Page Header -->
         <div class="header">
@@ -89,7 +89,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
            </div>
            
            <div class="totals-box w-48 text-sm">
-             <div class="flex justify-between font-bold border-t-2 border-orange-600 pt-2">
+             <div class="flex justify-between font-bold border-t-2 border-[#1e3a8a] pt-2">
                <span>Total Itens:</span>
                <span class="font-mono">{{ getTotalQty() | number:'1.2-2' }}</span>
              </div>
@@ -98,7 +98,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
 
         <!-- Footer -->
         <div class="footer">
-          <p>Processado por computador © Inverno ERP {{ currentUser ? '- Operador: ' + currentUser.username : '' }}</p>
+          <p>Processado por computador © Inverno ERP - Emitido por: {{ currentUser?.username || 'Sistema' }}</p>
           <p>Pág. 1/1</p>
         </div>
 
@@ -108,26 +108,95 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
   `,
   styles: [`
     @media print {
-      @page { size: A4; margin: 0; }
-      body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .print-container { display: block !important; background: white !important; }
-      .no-print { display: none !important; }
+      @page { 
+        size: A4; 
+        margin: 0; 
+      }
+      body { 
+        margin: 0 !important; 
+        padding: 0 !important; 
+        background: white !important;
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important; 
+      }
+      .print-container { 
+        display: block !important; 
+        background: white !important; 
+      }
+      .no-print, .no-print * { 
+        display: none !important; 
+      }
+      
+      /* Force Colors and Backgrounds in PDF/Paper */
+      .header { border-bottom: 3px solid #1e3a8a !important; -webkit-print-color-adjust: exact; }
+      .lines-table th { background: #f1f5f9 !important; border-top: 2px solid #1e3a8a !important; border-bottom: 1px solid #cbd5e1 !important; -webkit-print-color-adjust: exact; }
+      .company-name { color: #1e3a8a !important; -webkit-print-color-adjust: exact; }
+      .totals-box { border-top: 2px solid #1e3a8a !important; -webkit-print-color-adjust: exact; }
+      .page-container { 
+        box-shadow: none !important; 
+        margin: 0 !important; 
+        padding: 15mm !important;
+        width: 100% !important;
+        min-height: initial !important;
+      }
     }
-    .print-container { display: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #374151; }
-    .page-container { width: 210mm; min-height: 297mm; padding: 20mm; margin: 0 auto; background: white; position: relative; box-sizing: border-box; }
-    .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 3px solid #f97316; padding-bottom: 20px; }
-    .company-name { font-size: 24px; font-weight: bold; color: #c2410c; margin: 0; }
-    .doc-title { font-size: 22px; font-weight: bold; color: #374151; margin: 0; }
-    .copy-label { font-weight: bold; text-transform: uppercase; color: #9ca3af; font-size: 11px; margin-top: 5px; }
-    .meta-section { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 12px; }
-    .meta-box { padding: 10px; border: 1px solid #e5e7eb; border-radius: 4px; min-width: 200px; }
-    .lines-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; }
-    .lines-table th { background: #fff7ed; padding: 10px 8px; border-top: 2px solid #f97316; border-bottom: 1px solid #fed7aa; }
-    .lines-table td { padding: 8px; border-bottom: 1px solid #e5e7eb; }
-    .sig-box { text-align: center; width: 150px; }
-    .sig-box .label { font-size: 10px; color: #9ca3af; margin-bottom: 40px; }
-    .sig-box .line { border-bottom: 1px solid #374151; width: 100%; }
-    .footer { position: absolute; bottom: 15mm; left: 20mm; right: 20mm; display: flex; justify-content: space-between; font-size: 9px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 5px; }
+
+    /* Screen Preview Styling (Paper simulation) */
+    .print-container { 
+      font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+      color: #1f2937; 
+      background: #f3f4f6;
+      padding: 40px 0;
+    }
+    .page-container { 
+      width: 210mm; 
+      min-height: 297mm; 
+      padding: 15mm; 
+      margin: 0 auto 30px auto; 
+      background: white; 
+      position: relative; 
+      box-sizing: border-box;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      border-radius: 2px;
+    }
+    
+    .Paper {
+      transition: all 0.3s ease;
+    }
+
+    .header { 
+      display: flex; 
+      justify-content: space-between; 
+      margin-bottom: 25px; 
+      border-bottom: 3px solid #1e40af; 
+      padding-bottom: 15px; 
+    }
+    .company-name { font-size: 20px; font-weight: 800; color: #1e3a8a; margin: 0; text-transform: uppercase; letter-spacing: -0.5px; }
+    .company-info p { margin: 2px 0; font-size: 11px; color: #4b5563; line-height: 1.4; }
+    .logo-container img { max-height: 60px; margin-bottom: 10px; }
+    .logo-placeholder { margin-bottom: 10px; color: #1e3a8a; }
+    
+    .doc-title { font-size: 22px; font-weight: 800; color: #111827; margin: 0; text-transform: uppercase; }
+    .doc-meta { font-size: 11px; margin-top: 8px; color: #374151; }
+    .doc-meta p { margin: 3px 0; }
+    .copy-label { font-weight: 900; text-transform: uppercase; color: #9ca3af; font-size: 10px; margin-top: 5px; letter-spacing: 1.5px; }
+    
+    .meta-section { display: flex; justify-content: space-between; margin-bottom: 25px; font-size: 11px; gap: 15px; }
+    .meta-box { padding: 12px; border: 1px solid #e5e7eb; border-radius: 4px; flex: 1; background: #f9fafb; }
+    .meta-box p { margin: 4px 0; }
+    
+    .lines-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 10.5px; }
+    .lines-table th { background: #f8fafc; padding: 10px 8px; border-top: 2px solid #1e3a8a; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.5px; }
+    .lines-table td { padding: 10px 8px; border-bottom: 1px solid #f1f5f9; color: #374151; }
+    
+    .sig-box { text-align: center; width: 180px; }
+    .sig-box .label { font-size: 9px; font-weight: 700; color: #6b7280; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .sig-box .line { border-bottom: 1px solid #9ca3af; width: 100%; }
+    
+    .footer { position: absolute; bottom: 10mm; left: 15mm; right: 15mm; display: flex; justify-content: space-between; font-size: 9px; color: #9ca3af; border-top: 1px solid #f1f5f9; padding-top: 10px; }
+    .totals-box { border-top: 2px solid #1e3a8a; padding-top: 12px; }
+    
+    .page-break { page-break-after: always; }
   `]
 })
 export class StockDocumentPrintComponent implements OnInit {
@@ -150,7 +219,7 @@ export class StockDocumentPrintComponent implements OnInit {
 
   getCopies(): number[] {
     if (!this.settings) return [1];
-    return Array(this.settings.copies).fill(0);
+    return Array(this.settings.copies || 1).fill(0);
   }
 
   getCopyLabel(index: number): string {
@@ -176,7 +245,7 @@ export class StockDocumentPrintComponent implements OnInit {
   }
 
   getValidLines() {
-    return this.document?.lines.filter(l => l.articleCode && l.quantity > 0) || [];
+    return this.document?.lines.filter(l => l.articleCode && (l.quantity !== 0)) || [];
   }
 
   getTotalQty(): number {

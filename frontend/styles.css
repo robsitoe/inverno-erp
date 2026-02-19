@@ -40,26 +40,38 @@ body {
     body,
     app-root,
     app-main-content,
-    /* Target intermediate divs from AppComponent */
-    app-root>div,
-    app-root>div>div {
+    /* Target ALL intermediate containers to ensure the print flow isn't broken */
+    app-root div,
+    main,
+    section {
         background-color: white !important;
         overflow: visible !important;
         display: block !important;
         height: auto !important;
+        min-height: 0 !important;
         width: 100% !important;
+        position: static !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
     /* printable containers (Modules) */
     app-sales-document-form,
     app-purchase-document-form,
     app-stock-movements,
-    app-treasury-management {
+    app-treasury-management,
+    app-account-statement,
+    app-main-content,
+    .w-full.h-full.block,
+    ng-component {
         display: block !important;
         height: auto !important;
+        min-height: 0 !important;
         overflow: visible !important;
         width: 100% !important;
         background: white !important;
+        position: static !important;
+        padding: 0 !important;
     }
 
     /* The print components themselves */
@@ -72,20 +84,35 @@ body {
         background: white !important;
     }
 }
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
+    animation: fadeIn 0.3s ease-out forwards;
 }
 
 .animate-slide-up {
-  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

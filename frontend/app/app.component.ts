@@ -15,6 +15,7 @@ import { SupplierService } from './shared/supplier.service';
 import { DataService } from './services/data.service';
 import { AuthService } from './services/auth.service';
 import { LicenseService, LicenseInfo } from './services/license.service';
+import { NavigationService } from './services/navigation.service';
 
 import { ToasterComponent } from './shared/toaster.component';
 
@@ -95,7 +96,7 @@ import { ToasterComponent } from './shared/toaster.component';
           </button>
         </div>
 
-        <app-header (onLogout)="handleLogout()"></app-header>
+        <app-header [activeView]="activeView" (onLogout)="handleLogout()"></app-header>
         <div class="flex flex-1 overflow-hidden relative">
           <app-sidebar (onNavigate)="setActiveView($event)" [currentView]="activeView" [mode]="currentMode" [productionMode]="isProductionMode"></app-sidebar>
           <app-main-content [activeView]="activeView" class="flex-1 w-full h-full overflow-hidden"></app-main-content>
@@ -127,7 +128,8 @@ export class AppComponent {
     private supplierService: SupplierService,
     private dataService: DataService,
     private authService: AuthService,
-    public licenseService: LicenseService
+    public licenseService: LicenseService,
+    private navigationService: NavigationService
   ) { }
 
   ngOnInit() {
@@ -138,6 +140,9 @@ export class AppComponent {
     this.licenseService.license$.subscribe(l => {
       this.license = l;
     });
+
+    // Record initial view
+    this.navigationService.recordNavigation(this.activeView);
   }
 
   async checkConnectionAndInit() {
@@ -206,6 +211,7 @@ export class AppComponent {
 
   setActiveView(view: string) {
     this.activeView = view;
+    this.navigationService.recordNavigation(view);
   }
 
   handleLogin(event: string | { mode: string; initialView?: string }) {

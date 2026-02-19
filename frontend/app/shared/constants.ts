@@ -9,11 +9,11 @@ export interface MenuItem {
 }
 
 export const RECENT_ITEMS = [
-  "Extrato de Artigos",
-  "Extrato de Conta",
-  "Compras/Encomendas",
-  "Vendas/Encomendas",
-  "Documentos Stock"
+  { label: "Extrato de Artigos", view: "article-statement" },
+  { label: "Extrato de Conta", view: "account-statement" },
+  { label: "Compras/Encomendas", view: "purchase-form" },
+  { label: "Vendas/Encomendas", view: "sales-form" },
+  { label: "Documentos Stock", view: "stock-movements" }
 ];
 
 export const MENU_ITEMS: MenuItem[] = [

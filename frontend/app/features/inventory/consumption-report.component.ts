@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventoryService } from '../../shared/inventory.service';
+import { ArticleSearchModalComponent } from './article-search-modal.component';
+import { Article } from '../../shared/models';
 
 interface ConsumptionFilters {
   dateFrom: string;
@@ -46,269 +48,330 @@ interface ConsumptionGroup {
 @Component({
   selector: 'app-consumption-report',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ArticleSearchModalComponent],
+  styles: [`
+    @media print {
+      /* Hide all UI elements except the report */
+      .no-print, .no-print * { display: none !important; }
+      
+      #report-area { 
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        overflow: visible !important;
+        display: block !important;
+      }
+
+      /* Paper formatting for A4 */
+      .Paper { 
+        max-width: none !important; 
+        width: 210mm !important; /* A4 width */
+        margin: 0 auto !important;
+        padding: 15mm !important; 
+        border: none !important; 
+        box-shadow: none !important;
+        min-height: 0 !important;
+        height: auto !important;
+        display: block !important;
+        border-radius: 0 !important;
+      }
+
+      /* Force background colors to print */
+      body { 
+        background: white !important;
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important; 
+      }
+      
+      .bg-winter-blue { background-color: #1e3a8a !important; color: white !important; -webkit-print-color-adjust: exact; }
+      .bg-gray-100 { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
+      .bg-blue-50 { background-color: #eff6ff !important; -webkit-print-color-adjust: exact; }
+      
+      /* Force Text Colors */
+      .text-green-700 { color: #15803d !important; -webkit-print-color-adjust: exact; }
+      .text-red-700 { color: #b91c1c !important; -webkit-print-color-adjust: exact; }
+      .text-blue-700 { color: #1d4ed8 !important; -webkit-print-color-adjust: exact; }
+      .text-blue-900 { color: #1e3a8a !important; -webkit-print-color-adjust: exact; }
+      
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+      /* Ensure table borders appear */
+      table { border-collapse: collapse !important; width: 100% !important; }
+      th, td { border-bottom: 1px solid #e5e7eb !important; }
+    }
+
+    /* Screen Preview Styling (Paper simulation) */
+    .Paper {
+      background: white;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+  `],
   template: `
-    <div class="flex h-full bg-[#F0F0F0]">
+    <div class="flex h-full bg-[#f3f4f6]">
       <!-- Left Panel - Filters -->
-      <div class="w-80 bg-white border-r border-gray-300 flex flex-col shrink-0">
+      <div class="w-80 bg-white border-r border-gray-300 flex flex-col shrink-0 no-print">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-2 flex items-center gap-2 shrink-0">
+        <div class="bg-gradient-to-r from-blue-700 to-blue-800 text-white px-3 py-2.5 flex items-center gap-2 shrink-0 shadow">
           <span class="material-symbols-outlined text-[20px]">trending_down</span>
           <h2 class="font-semibold text-sm">Relatório de Consumos</h2>
         </div>
 
         <!-- Filters Form -->
-        <div class="flex-1 overflow-y-auto p-3 space-y-3 text-xs">
+        <div class="flex-1 overflow-y-auto p-3 space-y-4 text-xs">
           <!-- Período -->
-          <div class="border border-gray-300 rounded">
-            <div class="bg-gray-100 px-2 py-1 font-semibold border-b border-gray-300">Período</div>
-            <div class="p-2 space-y-2">
+          <div>
+            <label class="block text-[10px] font-bold text-blue-700 uppercase mb-1.5 ml-1">Período de Consumo</label>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-2.5 space-y-2.5">
               <div>
-                <label class="block text-gray-700 mb-1">Data Inicial:</label>
-                <input type="date" [(ngModel)]="filters.dateFrom" class="w-full px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-500" />
+                <label class="block text-gray-600 text-[10px] mb-1 pl-0.5 font-medium">Data Inicial:</label>
+                <input type="date" [(ngModel)]="filters.dateFrom" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:border-blue-500 transition-all shadow-sm" />
               </div>
               <div>
-                <label class="block text-gray-700 mb-1">Data Final:</label>
-                <input type="date" [(ngModel)]="filters.dateTo" class="w-full px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-500" />
-              </div>
-            </div>
-          </div>
-
-          <!-- Artigo -->
-          <div class="border border-gray-300 rounded">
-            <div class="bg-gray-100 px-2 py-1 font-semibold border-b border-gray-300">Artigo</div>
-            <div class="p-2 space-y-2">
-              <div>
-                <label class="block text-gray-700 mb-1">Código:</label>
-                <input [(ngModel)]="filters.articleCode" class="w-full px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-500" placeholder="Código do artigo" />
-              </div>
-              <div>
-                <label class="block text-gray-700 mb-1">Descrição:</label>
-                <input [(ngModel)]="filters.articleName" class="w-full px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-500" placeholder="Nome do artigo" />
+                <label class="block text-gray-600 text-[10px] mb-1 pl-0.5 font-medium">Data Final:</label>
+                <input type="date" [(ngModel)]="filters.dateTo" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:border-blue-500 transition-all shadow-sm" />
               </div>
             </div>
           </div>
 
-          <!-- Armazém -->
-          <div class="border border-gray-300 rounded">
-            <div class="bg-gray-100 px-2 py-1 font-semibold border-b border-gray-300">Armazém</div>
-            <div class="p-2">
-              <select [(ngModel)]="filters.warehouse" class="w-full px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-500">
-                <option value="">Todos</option>
-                <option *ngFor="let wh of warehouses" [value]="wh.code">{{ wh.code }} - {{ wh.name }}</option>
-              </select>
+          <!-- Filtro de Artigo -->
+          <div>
+            <label class="block text-[10px] font-bold text-blue-700 uppercase mb-1.5 ml-1">Filtro de Artigo</label>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-2.5 space-y-2.5">
+              <div>
+                <label class="block text-gray-600 text-[10px] mb-1 pl-0.5 font-medium">Artigo:</label>
+                <div class="flex gap-1">
+                  <input [(ngModel)]="filters.articleCode" 
+                         (keyup.enter)="generateReport()"
+                         class="flex-1 px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:border-blue-500 transition-all shadow-sm" 
+                         placeholder="Código..." />
+                  <button (click)="openArticleSearch()" 
+                          class="px-2 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-all flex items-center shadow-sm"
+                          title="Procurar artigo (F4)">
+                    <span class="material-symbols-outlined text-[16px]">manage_search</span>
+                  </button>
+                </div>
+              </div>
+              <div *ngIf="filters.articleName">
+                <input [(ngModel)]="filters.articleName" 
+                       readonly
+                       class="w-full px-2 py-1.5 border border-gray-300 bg-white text-gray-500 rounded text-[10px]" />
+              </div>
             </div>
           </div>
 
-          <!-- Dimensões Analíticas -->
-          <div class="border border-gray-300 rounded">
-            <div class="bg-gray-100 px-2 py-1 font-semibold border-b border-gray-300">Dimensões Analíticas</div>
-            <div class="p-2 space-y-2">
+          <!-- Filtros Analíticos -->
+          <div>
+            <label class="block text-[10px] font-bold text-blue-700 uppercase mb-1.5 ml-1">Análise de Custos</label>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-2.5 space-y-2.5">
               <div>
-                <label class="block text-gray-700 mb-1">Centro de Custo:</label>
-                <input [(ngModel)]="filters.costCenter" class="w-full px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-500" placeholder="Centro de custo" />
+                <label class="block text-gray-600 text-[10px] mb-1 pl-0.5 font-medium">Centro de Custo:</label>
+                <input [(ngModel)]="filters.costCenter" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:border-blue-500 transition-all shadow-sm" placeholder="Ex: ADM.01" />
               </div>
               <div>
-                <label class="block text-gray-700 mb-1">Projeto:</label>
-                <input [(ngModel)]="filters.project" class="w-full px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-500" placeholder="Projeto" />
-              </div>
-              <div>
-                <label class="block text-gray-700 mb-1">Analítico:</label>
-                <input [(ngModel)]="filters.analytic" class="w-full px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-500" placeholder="Analítico" />
-              </div>
-              <div>
-                <label class="block text-gray-700 mb-1">Funcional:</label>
-                <input [(ngModel)]="filters.functional" class="w-full px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-500" placeholder="Funcional" />
+                <label class="block text-gray-600 text-[10px] mb-1 pl-0.5 font-medium">Projeto:</label>
+                <input [(ngModel)]="filters.project" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:border-blue-500 transition-all shadow-sm" placeholder="Ex: PROJ.X" />
               </div>
             </div>
           </div>
 
           <!-- Agrupamento -->
-          <div class="border border-gray-300 rounded">
-            <div class="bg-gray-100 px-2 py-1 font-semibold border-b border-gray-300">Agrupamento</div>
-            <div class="p-2 space-y-2">
-              <div>
-                <label class="block text-gray-700 mb-1">Agrupar Por:</label>
-                <select [(ngModel)]="filters.groupBy" class="w-full px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-500">
-                  <option value="article">Artigo</option>
-                  <option value="costCenter">Centro de Custo</option>
-                  <option value="project">Projeto</option>
-                  <option value="warehouse">Armazém</option>
-                  <option value="date">Data</option>
-                </select>
-              </div>
-              <label class="flex items-center gap-2">
-                <input type="checkbox" [(ngModel)]="filters.showDetails" class="rounded" />
-                <span>Mostrar Detalhes</span>
+          <div>
+            <label class="block text-[10px] font-bold text-blue-700 uppercase mb-1.5 ml-1">Agrupamento</label>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-2.5 space-y-2.5">
+              <select [(ngModel)]="filters.groupBy" class="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:border-blue-500 transition-all shadow-sm font-bold">
+                  <option value="article">Por Artigo</option>
+                  <option value="costCenter">Por Centro de Custo</option>
+                  <option value="project">Por Projeto</option>
+                  <option value="warehouse">Por Armazém</option>
+                  <option value="date">Por Data</option>
+              </select>
+              <label class="flex items-center gap-2 cursor-pointer group">
+                <input type="checkbox" [(ngModel)]="filters.showDetails" class="rounded border-gray-300 text-blue-600 shadow-sm" />
+                <span class="group-hover:text-blue-700 transition-colors">Detalhar movimentos</span>
               </label>
             </div>
           </div>
         </div>
 
         <!-- Action Buttons -->
-        <div class="border-t border-gray-300 p-2 space-y-2 shrink-0">
-          <button (click)="generateReport()" class="w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded flex items-center justify-center gap-2 transition-colors">
+        <div class="border-t border-gray-300 p-2.5 space-y-2 shrink-0 bg-white no-print">
+          <button (click)="generateReport()" class="w-full px-3 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded flex items-center justify-center gap-2 transition-all shadow-md active:scale-95">
             <span class="material-symbols-outlined text-[18px]">play_arrow</span>
-            <span>Gerar Relatório</span>
+            <span>GERAR RELATÓRIO</span>
           </button>
-          <button (click)="clearFilters()" class="w-full px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded flex items-center justify-center gap-2 transition-colors">
-            <span class="material-symbols-outlined text-[18px]">refresh</span>
-            <span>Limpar</span>
+          <button (click)="clearFilters()" class="w-full px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-600 font-medium rounded flex items-center justify-center gap-2 transition-all">
+            <span class="material-symbols-outlined text-[16px]">refresh</span>
+            <span>LIMPAR TUDO</span>
           </button>
         </div>
       </div>
 
-      <!-- Right Panel - Report -->
-      <div class="flex-1 flex flex-col bg-white">
+      <!-- Right Panel - Report Area -->
+      <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Toolbar -->
-        <div class="flex items-center justify-between px-3 py-2 border-b border-gray-300 bg-[#F0F0F0] shrink-0">
-          <div class="flex items-center gap-1">
-            <button (click)="exportToPDF()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
-              <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
-              <span>PDF</span>
+        <div class="flex items-center justify-between px-4 py-2 border-b border-gray-300 bg-[#f3f4f6] shrink-0 no-print">
+          <div class="flex items-center gap-1.5">
+            <button (click)="print()" class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded shadow-sm transition-all active:scale-95">
+              <span class="material-symbols-outlined text-[18px]">print</span>
+              <span>IMPRIMIR</span>
             </button>
-            <button (click)="exportToExcel()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
-              <span class="material-symbols-outlined text-[16px]">table_view</span>
+            <div class="w-px h-5 bg-gray-300 mx-2"></div>
+            <button (click)="exportToExcel()" class="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white border border-gray-300 rounded transition-all text-gray-700 text-xs">
+              <span class="material-symbols-outlined text-[18px] text-green-700">table_view</span>
               <span>Excel</span>
             </button>
-            <div class="w-px h-4 bg-gray-300 mx-1"></div>
-            <button (click)="print()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
-              <span class="material-symbols-outlined text-[16px]">print</span>
-              <span>Imprimir</span>
-            </button>
           </div>
-          <div class="text-xs text-gray-600">
-            {{ groups.length }} grupo(s) | {{ getTotalLines() }} consumo(s) | Total: {{ getTotalValue() | number:'1.2-2' }} €
+          <div class="text-[10px] font-bold text-blue-800 uppercase tracking-wider bg-blue-50 px-3 py-1.5 rounded-full border border-blue-200">
+             Análise Detalhada de Consumos de Inventário
           </div>
         </div>
 
-        <!-- Report Content -->
-        <div class="flex-1 overflow-auto p-4">
-          <div *ngIf="!reportGenerated" class="flex flex-col items-center justify-center h-full text-gray-400">
-            <span class="material-symbols-outlined text-[64px] mb-4">trending_down</span>
-            <p class="text-sm">Configure os filtros e clique em "Gerar Relatório"</p>
-          </div>
+        <div id="report-area" class="flex-1 overflow-auto bg-[#F0F0F0] p-8 scroll-smooth no-print-padding">
 
-          <div *ngIf="reportGenerated" class="space-y-6">
-            <!-- Header -->
-            <div class="text-center mb-6">
-              <h1 class="text-lg font-bold text-gray-800">Relatório de Consumos</h1>
-              <p class="text-xs text-gray-600 mt-1">
-                Período: {{ filters.dateFrom | date:'dd/MM/yyyy' }} a {{ filters.dateTo | date:'dd/MM/yyyy' }}
-              </p>
-              <p class="text-xs text-gray-600">
-                Agrupado por: {{ getGroupByLabel() }}
-              </p>
+          <div *ngIf="reportGenerated" class="max-w-4xl mx-auto Paper p-10 min-h-[1120px] flex flex-col mb-10">
+            <!-- Document Header -->
+            <div class="border-b-2 border-WinterBlue pb-4 mb-6 flex justify-between items-start">
+                <div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-12 h-12 bg-WinterBlue rounded shrink-0 flex items-center justify-center text-white">
+                            <span class="material-symbols-outlined text-[32px]">trending_down</span>
+                        </div>
+                        <h1 class="text-2xl font-black text-WinterBlue uppercase tracking-tighter">{{ companyInfo?.name || 'INVERNO ERP' }}</h1>
+                    </div>
+                    <div class="text-[10px] text-gray-600 space-y-0.5 uppercase font-medium">
+                        <p>{{ companyInfo?.address || '---' }}</p>
+                        <p>{{ companyInfo?.city || '---' }} | NUIT: {{ companyInfo?.nif || '---' }}</p>
+                        <p>TEL: {{ companyInfo?.phone || '---' }} | EMAIL: {{ companyInfo?.email || '---' }}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <h2 class="text-xl font-black text-gray-900 uppercase">Relatório de Consumos</h2>
+                    <p class="text-[10px] font-bold text-blue-700 uppercase tracking-widest mt-1">Análise de Saídas de Stock</p>
+                    <div class="mt-4 bg-gray-50 border border-gray-200 rounded p-2 text-right">
+                        <p class="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">Período:</p>
+                        <p class="text-xs font-black">{{ filters.dateFrom | date:'dd/MM/yyyy' }} a {{ filters.dateTo | date:'dd/MM/yyyy' }}</p>
+                    </div>
+                </div>
             </div>
 
-            <!-- Summary Cards -->
-            <div class="grid grid-cols-4 gap-4 mb-6">
-              <div class="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-lg p-3">
-                <div class="text-xs text-red-600 font-semibold mb-1">Total Consumido</div>
-                <div class="text-xl font-bold text-red-700">{{ getTotalValue() | number:'1.2-2' }} €</div>
-              </div>
-              <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-3">
-                <div class="text-xs text-blue-600 font-semibold mb-1">Nº de Consumos</div>
-                <div class="text-xl font-bold text-blue-700">{{ getTotalLines() }}</div>
-              </div>
-              <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-3">
-                <div class="text-xs text-green-600 font-semibold mb-1">Artigos Diferentes</div>
-                <div class="text-xl font-bold text-green-700">{{ getUniqueArticles() }}</div>
-              </div>
-              <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-3">
-                <div class="text-xs text-purple-600 font-semibold mb-1">Média por Consumo</div>
-                <div class="text-xl font-bold text-purple-700">{{ getAverageValue() | number:'1.2-2' }} €</div>
-              </div>
-            </div>
-
-            <!-- Groups -->
-            <div *ngFor="let group of groups" class="border border-gray-300 rounded-lg overflow-hidden mb-4">
-              <!-- Group Header -->
-              <div class="bg-gradient-to-r from-red-50 to-red-100 px-4 py-2 border-b border-gray-300">
-                <div class="flex justify-between items-center">
-                  <div>
-                    <h3 class="font-semibold text-sm text-gray-800">{{ group.groupLabel }}</h3>
-                    <p class="text-xs text-gray-600">{{ group.lines.length }} consumo(s) | {{ group.articleCount }} artigo(s)</p>
+            <!-- Report Body -->
+            <div class="flex-1">
+                <!-- Summary Stats (Dashboard style in report) -->
+                <div class="grid grid-cols-4 gap-2 mb-8 no-print">
+                  <div class="bg-blue-50 border border-blue-100 p-3 rounded text-center">
+                    <p class="text-[8px] font-bold text-blue-600 uppercase">Total Valor</p>
+                    <p class="text-sm font-black text-blue-900">{{ getTotalValue() | number:'1.2-2' }} MT</p>
                   </div>
-                  <div class="text-right">
-                    <div class="text-xs text-gray-600">Total:</div>
-                    <div class="text-lg font-bold text-red-700">{{ group.totalValue | number:'1.2-2' }} €</div>
+                  <div class="bg-blue-50 border border-blue-100 p-3 rounded text-center">
+                    <p class="text-[8px] font-bold text-blue-600 uppercase">Nº Consumos</p>
+                    <p class="text-sm font-black text-blue-900">{{ getTotalLines() }}</p>
+                  </div>
+                  <div class="bg-blue-50 border border-blue-100 p-3 rounded text-center">
+                    <p class="text-[8px] font-bold text-blue-600 uppercase">Artigos</p>
+                    <p class="text-sm font-black text-blue-900">{{ getUniqueArticles() }}</p>
+                  </div>
+                  <div class="bg-blue-50 border border-blue-100 p-3 rounded text-center">
+                    <p class="text-[8px] font-bold text-blue-600 uppercase">Média</p>
+                    <p class="text-sm font-black text-blue-900">{{ getAverageValue() | number:'1.2-2' }} MT</p>
                   </div>
                 </div>
-              </div>
 
-              <!-- Details Table (if enabled) -->
-              <div *ngIf="filters.showDetails">
-                <table class="w-full text-xs">
-                  <thead class="bg-gray-100">
-                    <tr>
-                      <th class="border-b border-gray-300 px-2 py-1 text-left font-semibold">Data</th>
-                      <th class="border-b border-gray-300 px-2 py-1 text-left font-semibold">Documento</th>
-                      <th class="border-b border-gray-300 px-2 py-1 text-left font-semibold">Artigo</th>
-                      <th class="border-b border-gray-300 px-2 py-1 text-left font-semibold">Descrição</th>
-                      <th class="border-b border-gray-300 px-2 py-1 text-left font-semibold">C. Custo</th>
-                      <th class="border-b border-gray-300 px-2 py-1 text-left font-semibold">Projeto</th>
-                      <th class="border-b border-gray-300 px-2 py-1 text-right font-semibold">Qtd</th>
-                      <th class="border-b border-gray-300 px-2 py-1 text-right font-semibold">P. Unit.</th>
-                      <th class="border-b border-gray-300 px-2 py-1 text-right font-semibold">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let line of group.lines" class="hover:bg-red-50">
-                      <td class="border-b border-gray-200 px-2 py-1">{{ line.date | date:'dd/MM/yyyy' }}</td>
-                      <td class="border-b border-gray-200 px-2 py-1">{{ line.documentNumber }}</td>
-                      <td class="border-b border-gray-200 px-2 py-1 font-mono">{{ line.articleCode }}</td>
-                      <td class="border-b border-gray-200 px-2 py-1">{{ line.articleName }}</td>
-                      <td class="border-b border-gray-200 px-2 py-1">{{ line.costCenter }}</td>
-                      <td class="border-b border-gray-200 px-2 py-1">{{ line.project }}</td>
-                      <td class="border-b border-gray-200 px-2 py-1 text-right">{{ line.quantity | number:'1.2-2' }}</td>
-                      <td class="border-b border-gray-200 px-2 py-1 text-right">{{ line.unitPrice | number:'1.2-2' }}</td>
-                      <td class="border-b border-gray-200 px-2 py-1 text-right font-semibold text-red-700">{{ line.totalValue | number:'1.2-2' }}</td>
-                    </tr>
-                  </tbody>
-                  <tfoot class="bg-gray-50 font-semibold">
-                    <tr>
-                      <td colspan="6" class="border-t-2 border-gray-300 px-2 py-1 text-right">Subtotal:</td>
-                      <td class="border-t-2 border-gray-300 px-2 py-1 text-right">{{ group.totalQuantity | number:'1.2-2' }}</td>
-                      <td class="border-t-2 border-gray-300 px-2 py-1"></td>
-                      <td class="border-t-2 border-gray-300 px-2 py-1 text-right text-red-700">{{ group.totalValue | number:'1.2-2' }}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
+                <!-- Groups -->
+                <div *ngFor="let group of groups" class="mb-8 break-inside-avoid">
+                  <!-- Group Header -->
+                  <div class="bg-winter-blue text-white px-4 py-2 flex justify-between items-center rounded-t shadow-sm">
+                    <h3 class="font-black text-xs uppercase tracking-tight">{{ group.groupLabel }}</h3>
+                    <div class="text-right">
+                      <p class="text-[9px] opacity-80 uppercase font-bold">Total Grupo:</p>
+                      <p class="text-sm font-black">{{ group.totalValue | number:'1.2-2' }}</p>
+                    </div>
+                  </div>
 
-              <!-- Summary Only (if details disabled) -->
-              <div *ngIf="!filters.showDetails" class="p-3 bg-gray-50">
-                <div class="grid grid-cols-3 gap-4 text-xs">
-                  <div>
-                    <span class="text-gray-600">Quantidade Total:</span>
-                    <span class="font-semibold ml-2">{{ group.totalQuantity | number:'1.2-2' }}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-600">Valor Total:</span>
-                    <span class="font-semibold ml-2 text-red-700">{{ group.totalValue | number:'1.2-2' }} €</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-600">Artigos:</span>
-                    <span class="font-semibold ml-2">{{ group.articleCount }}</span>
+                  <table class="w-full text-[9px] border-collapse" *ngIf="filters.showDetails">
+                    <thead class="bg-gray-100 uppercase text-gray-700 font-bold tracking-tighter">
+                      <tr>
+                        <th class="px-2 py-2 text-left border-b-2 border-gray-300 w-16">Data</th>
+                        <th class="px-2 py-2 text-left border-b-2 border-gray-300 w-24">Doc.</th>
+                        <th class="px-2 py-2 text-left border-b-2 border-gray-300">Artigo/Descrição</th>
+                        <th class="px-2 py-2 text-left border-b-2 border-gray-300 w-20">Analítica</th>
+                        <th class="px-2 py-2 text-right border-b-2 border-gray-300 w-14">Qtd.</th>
+                        <th class="px-2 py-2 text-right border-b-2 border-gray-300 w-20">P.Unit.</th>
+                        <th class="px-2 py-2 text-right border-b-2 border-gray-300 w-20 bg-blue-50">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                      <tr *ngFor="let line of group.lines" class="hover:bg-blue-50/50 transition-colors">
+                        <td class="px-2 py-2">{{ line.date | date:'dd/MM/yyyy' }}</td>
+                        <td class="px-2 py-2 font-bold">{{ line.documentNumber }}</td>
+                        <td class="px-2 py-2">
+                           <span class="font-black text-blue-800">{{ line.articleCode }}</span> - {{ line.articleName }}
+                        </td>
+                        <td class="px-2 py-2 uppercase text-[8px] font-bold text-gray-400">
+                           {{ line.costCenter || '---' }}
+                        </td>
+                        <td class="px-2 py-2 text-right font-bold text-gray-700">{{ line.quantity | number:'1.2-2' }}</td>
+                        <td class="px-2 py-2 text-right text-gray-500">{{ line.unitPrice | number:'1.2-2' }}</td>
+                        <td class="px-2 py-2 text-right font-black text-blue-900 bg-blue-50/20">{{ line.totalValue | number:'1.2-2' }}</td>
+                      </tr>
+                    </tbody>
+                    <tfoot class="bg-gray-50 font-black border-t border-gray-200">
+                      <tr>
+                        <td colspan="4" class="px-2 py-2 text-right uppercase tracking-tighter text-gray-400">Subtotal:</td>
+                        <td class="px-2 py-2 text-right text-gray-700">{{ group.totalQuantity | number:'1.2-2' }}</td>
+                        <td class="px-2 py-2"></td>
+                        <td class="px-2 py-2 text-right text-blue-900 bg-blue-50">{{ group.totalValue | number:'1.2-2' }}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                  <div *ngIf="!filters.showDetails" class="bg-gray-50 p-3 rounded-b border-x border-b border-gray-200 flex justify-between text-[10px] font-bold text-gray-600 uppercase">
+                     <span>Qtd Total: {{ group.totalQuantity | number:'1.2-2' }}</span>
+                     <span>Valor Total: {{ group.totalValue | number:'1.2-2' }} MT</span>
+                     <span>{{ group.articleCount }} Artigos Diferentes</span>
                   </div>
                 </div>
-              </div>
+
+                <div *ngIf="groups.length === 0" class="text-center py-20 text-gray-400 uppercase tracking-widest text-xs font-bold bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                  Nenhum consumo registado nos filtros aplicados
+                </div>
             </div>
 
-            <!-- No Results -->
-            <div *ngIf="groups.length === 0" class="text-center py-8 text-gray-400 italic">
-              Nenhum consumo encontrado com os filtros selecionados.
+            <!-- Document Footer -->
+            <div class="mt-auto pt-10 border-t-2 border-gray-900">
+                <div class="flex justify-between items-end text-[9px] text-gray-500 font-bold uppercase tracking-tight">
+                    <div>
+                        <p>Processado por Computador © Inverno ERP</p>
+                        <p class="mt-1">Emitido por: {{ currentUser }} | Data: {{ currentDate | date:'dd/MM/yyyy HH:mm:ss' }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p>Página 01 / 01</p>
+                        <div class="mt-2 text-[8px] bg-gray-900 text-white px-2 py-0.5 rounded italic">Software de Gestão Certificado</div>
+                    </div>
+                </div>
             </div>
           </div>
         </div>
 
-        <!-- Footer -->
-        <div class="px-3 py-1.5 bg-[#DCE4F2] border-t border-gray-300 shrink-0 text-xs text-gray-600">
-          Gerado em: {{ currentDate | date:'dd/MM/yyyy HH:mm' }}
-        </div>
-      </div>
-    </div>
+        <!-- App Footer (Status Bar) -->
+        <div class="px-4 py-1.5 bg-[#1e3a8a] text-white shrink-0 text-[10px] flex justify-between items-center no-print">
+          <div class="flex gap-4">
+            <span class="opacity-80">Empresa: <span class="font-bold">{{ companyInfo?.name || 'INVERNO ERP' }}</span></span>
+            <span class="opacity-80">Operador: <span class="font-bold">{{ currentUser }}</span></span>
+          </div>
+          <div class="font-bold">
+            {{ groups.length }} Grupos | {{ getTotalLines() }} Movimentos | total: {{ getTotalValue() | number:'1.2-2' }} MT
+          </div>
+        </div> <!-- Right Panel -->
+    </div> <!-- Root div -->
+
+    <!-- Article Search Modal -->
+    <app-article-search-modal
+      [isOpen]="isArticleSearchOpen"
+      (close)="isArticleSearchOpen = false"
+      (select)="onArticleSelect($event)"
+    ></app-article-search-modal>
   `
 })
 export class ConsumptionReportComponent implements OnInit {
@@ -330,10 +393,26 @@ export class ConsumptionReportComponent implements OnInit {
   groups: ConsumptionGroup[] = [];
   reportGenerated = false;
   currentDate = new Date();
+  companyInfo: any = null;
+  currentUser: string = 'Utilizador';
+  isArticleSearchOpen = false;
 
   constructor(private inventoryService: InventoryService) { }
 
   ngOnInit() {
+    // Load current user for footer
+    const storedUser = localStorage.getItem('erp_current_user');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      this.currentUser = user.username || user.name || 'Utilizador';
+    }
+
+    // Load company info for footer
+    const storedCompany = localStorage.getItem('erp_company_info');
+    if (storedCompany) {
+      this.companyInfo = JSON.parse(storedCompany);
+    }
+
     this.loadWarehouses();
   }
 
@@ -560,5 +639,16 @@ export class ConsumptionReportComponent implements OnInit {
 
   print() {
     window.print();
+  }
+
+  openArticleSearch() {
+    this.isArticleSearchOpen = true;
+  }
+
+  onArticleSelect(article: Article) {
+    this.filters.articleCode = article.code;
+    this.filters.articleName = article.name || article.description;
+    this.isArticleSearchOpen = false;
+    this.generateReport();
   }
 }

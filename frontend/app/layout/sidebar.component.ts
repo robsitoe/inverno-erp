@@ -1,10 +1,11 @@
 
-
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RECENT_ITEMS, MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/constants';
+import { MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/constants';
 import { AppIconComponent } from '../shared/components/app-icon.component';
 import { LicenseService } from '../services/license.service';
+import { NavigationService, NavItem } from '../services/navigation.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-sidebar',
@@ -40,7 +41,15 @@ import { LicenseService } from '../services/license.service';
               <app-icon name="star" [size]="18" color="#eab308" title="Favoritos"></app-icon>
               <h3 *ngIf="!collapsed" class="font-semibold text-xs text-gray-800">Favoritos</h3>
             </div>
-            <p *ngIf="!collapsed" class="pl-9 text-xs text-gray-400 italic">sem favoritos</p>
+            <p *ngIf="!collapsed && !favorites.length" class="pl-9 text-[10px] text-gray-400 italic">sem favoritos</p>
+            <nav *ngIf="!collapsed && favorites.length" class="flex flex-col text-xs pl-9 space-y-1 mt-1">
+              <a *ngFor="let item of favorites" 
+                 class="text-gray-600 hover:text-primary hover:underline block truncate cursor-pointer" 
+                 href="#"
+                 (click)="handleItemClick($event, item.view)">
+                {{ item.label }}
+              </a>
+            </nav>
           </div>
 
           <!-- Recents -->
@@ -49,12 +58,13 @@ import { LicenseService } from '../services/license.service';
               <app-icon name="history" [size]="18" color="#2563eb" title="Recentes"></app-icon>
               <h3 *ngIf="!collapsed" class="font-semibold text-xs text-gray-800">Recentes</h3>
             </div>
-            <nav *ngIf="!collapsed" class="flex flex-col text-xs pl-9 space-y-1 mt-1">
+            <p *ngIf="!collapsed && !recentItems.length" class="pl-9 text-[10px] text-gray-400 italic">sem recentes</p>
+            <nav *ngIf="!collapsed && recentItems.length" class="flex flex-col text-xs pl-9 space-y-1 mt-1">
               <a *ngFor="let item of recentItems" 
                  class="text-gray-600 hover:text-primary hover:underline block truncate cursor-pointer" 
                  href="#"
-                 (click)="$event.preventDefault()">
-                {{ item }}
+                 (click)="handleItemClick($event, item.view)">
+                {{ item.label }}
               </a>
             </nav>
           </div>
@@ -199,7 +209,7 @@ import { LicenseService } from '../services/license.service';
     </aside>
   `
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit, OnDestroy {
   @Input() currentView: string = 'dashboard';
   @Input() mode: string = 'ERP';
   @Input() productionMode: boolean = false;
@@ -207,14 +217,31 @@ export class SidebarComponent {
 
   menuItems = MENU_ITEMS;
   adminMenuItems = ADMIN_MENU_ITEMS;
-  recentItems = RECENT_ITEMS;
-  activeModule: string | null = null;
 
-  constructor(private licenseService: LicenseService) { }
+  recentItems: NavItem[] = [];
+  favorites: NavItem[] = [];
+
+  activeModule: string | null = null;
   activeSubModules = new Set<string>();
   activeSubSubModules = new Set<string>();
   searchQuery = '';
   collapsed = false;
+
+  private subs = new Subscription();
+
+  constructor(
+    private licenseService: LicenseService,
+    private navService: NavigationService
+  ) { }
+
+  ngOnInit() {
+    this.subs.add(this.navService.recents$.subscribe(items => this.recentItems = items));
+    this.subs.add(this.navService.favorites$.subscribe(items => this.favorites = items));
+  }
+
+  ngOnDestroy() {
+    this.subs.unsubscribe();
+  }
 
   get displayedMenuItems() {
     let items = this.mode === 'ADMIN' ? this.adminMenuItems : this.menuItems;
@@ -322,5 +349,10 @@ export class SidebarComponent {
     if (item.view) {
       this.onNavigate.emit(item.view);
     }
+  }
+
+  handleItemClick(e: Event, view: string) {
+    e.preventDefault();
+    this.onNavigate.emit(view);
   }
 }

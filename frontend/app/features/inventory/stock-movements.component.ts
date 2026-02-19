@@ -374,7 +374,8 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
       (confirmEvent)="onPrintConfirm($event)">
     </app-print-settings-modal>
     <app-stock-document-print
-      [document]="currentDoc"
+      *ngIf="documentToPrint"
+      [document]="documentToPrint"
       [settings]="printSettings">
     </app-stock-document-print>
   </div>
@@ -396,6 +397,7 @@ export class StockMovementsComponent implements OnInit {
 
   // Print State
   isPrintSettingsOpen = false;
+  documentToPrint: StockDocument | null = null;
   printSettings: PrintSettings | null = null;
 
   constructor(
@@ -517,6 +519,7 @@ export class StockMovementsComponent implements OnInit {
       // Update document number for new type
       this.getNextDocumentNumber(this.currentDoc.type, this.currentDoc.series).then(n => {
         this.currentDoc.number = n;
+        this.documentToPrint = null; // Hide preview when type changes
         this.cdr.detectChanges();
       });
     }
@@ -911,12 +914,14 @@ export class StockMovementsComponent implements OnInit {
   }
 
   printDocument() {
+    this.documentToPrint = { ...this.currentDoc };
     this.isPrintSettingsOpen = true;
   }
 
   onPrintConfirm(settings: PrintSettings) {
     this.printSettings = settings;
     this.isPrintSettingsOpen = false;
+    this.cdr.detectChanges();
 
     if (this.currentDoc.status === 'DRAFT') {
       if (confirm('A impressão irá confirmar o documento. Deseja continuar?')) {

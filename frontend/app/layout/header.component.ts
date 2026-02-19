@@ -1,7 +1,8 @@
 
-import { Component, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Output, EventEmitter, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../services/data.service';
+import { NavigationService } from '../services/navigation.service';
 
 @Component({
   selector: 'app-header',
@@ -20,6 +21,19 @@ import { DataService } from '../services/data.service';
       </div>
       
       <div class="flex items-center gap-3 text-gray-600">
+        <!-- Favorite Toggle -->
+        <button *ngIf="showFavoriteButton()" 
+                (click)="toggleFavorite()" 
+                class="hover:bg-gray-200 p-1 rounded transition-colors" 
+                [title]="isFavorite() ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'">
+          <span class="material-symbols-outlined text-[18px] align-middle transition-all"
+                [style.font-variation-settings]="'\\'FILL\\' ' + (isFavorite() ? '1' : '0')"
+                [class.text-amber-500]="isFavorite()"
+                [class.scale-125]="isFavorite()">
+            star
+          </span>
+        </button>
+
         <button class="hover:bg-gray-200 p-1 rounded transition-colors" title="Perfil">
           <span class="material-symbols-outlined text-[18px] align-middle">person</span>
         </button>
@@ -42,12 +56,16 @@ import { DataService } from '../services/data.service';
   `
 })
 export class HeaderComponent implements OnInit {
+  @Input() activeView: string = 'dashboard';
   @Output() onLogout = new EventEmitter<void>();
   navLinks = ["SISTEMA", "FERRAMENTAS", "PREFERÊNCIAS", "", ""];
   username = 'Utilizador';
   companyName = '';
 
-  constructor(private dataService: DataService) { }
+  constructor(
+    private dataService: DataService,
+    private navService: NavigationService
+  ) { }
 
   ngOnInit() {
     const storedUser = localStorage.getItem('erp_current_user');
@@ -61,6 +79,20 @@ export class HeaderComponent implements OnInit {
       const company = JSON.parse(storedCompany);
       this.companyName = company.name;
     }
+  }
+
+  showFavoriteButton(): boolean {
+    return this.activeView !== 'dashboard' &&
+      this.activeView !== 'admin-page' &&
+      this.activeView !== 'license-manager';
+  }
+
+  isFavorite(): boolean {
+    return this.navService.isFavorite(this.activeView);
+  }
+
+  toggleFavorite() {
+    this.navService.toggleFavorite(this.activeView);
   }
 
   resetData() {

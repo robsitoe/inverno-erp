@@ -1,5 +1,5 @@
 {
   "name": "Inverno ERP",
-  "description": "A responsive React replica of the Primavera Professional ERP interface, featuring a collapsible sidebar, module navigation, and status bar.",
+  "description": "Inverno ERP interface, featuring a collapsible sidebar, module navigation, and status bar.",
   "requestFramePermissions": []
 }
