@@ -15,6 +15,14 @@ export interface LicenseInfo {
     maxCompanies?: number;
     inGracePeriod: boolean;
     gracePeriodEndsAt?: Date;
+    offline?: boolean;
+    lastServerCheckAt?: Date;
+}
+
+interface LicenseCacheEntry {
+    data: LicenseInfo;
+    cachedAt: number;
+    lastServerCheckAt?: number;
 }
 
 export interface LicensePlanDefinition {
@@ -31,7 +39,6 @@ export interface LicensePlanDefinition {
 }
 
 const CACHE_KEY = 'erp_license_cache';
-const CACHE_TTL_MS = 72 * 60 * 60 * 1000; // 72h offline grace
 
 @Injectable({
     providedIn: 'root'
@@ -61,8 +68,9 @@ export class LicenseService {
         return this.http.post<any>(`${this.apiBase}/activate`, { token }).pipe(
             tap(result => {
                 if (result && result.valid !== undefined) {
-                    this.updateCache(result);
-                    this.licenseSubject.next(result);
+                    const normalized = this.normalizeLicense(result, false, Date.now());
+                    this.updateCache(normalized);
+                    this.licenseSubject.next(normalized);
                 }
             }),
             catchError(err => {
@@ -79,14 +87,15 @@ export class LicenseService {
 
         this.http.get<LicenseInfo>(`${this.apiBase}/status/${cid}`).pipe(
             tap(status => {
-                this.updateCache(status);
-                this.licenseSubject.next(status);
+                const normalized = this.normalizeLicense(status, false, Date.now());
+                this.updateCache(normalized);
+                this.licenseSubject.next(normalized);
             }),
             catchError(() => {
-                // Offline: use cached value if within TTL
-                const cached = this.getCachedLicense();
-                this.licenseSubject.next(cached);
-                return of(cached);
+                const lastKnown = this.licenseSubject.value ?? this.getCachedLicense();
+                const offlineSnapshot = this.normalizeLicense(lastKnown, true, this.resolveLastServerCheck(lastKnown));
+                this.licenseSubject.next(offlineSnapshot);
+                return of(offlineSnapshot);
             })
         ).subscribe();
     }
@@ -116,10 +125,13 @@ export class LicenseService {
 
     private updateCache(license: LicenseInfo): void {
         try {
+            const checkAt = this.resolveLastServerCheck(license) ?? Date.now();
+            const normalized = this.normalizeLicense(license, false, checkAt);
             localStorage.setItem(CACHE_KEY, JSON.stringify({
-                data: license,
-                cachedAt: Date.now()
-            }));
+                data: normalized,
+                cachedAt: Date.now(),
+                lastServerCheckAt: checkAt,
+            } as LicenseCacheEntry));
         } catch { }
     }
 
@@ -127,10 +139,10 @@ export class LicenseService {
         try {
             const stored = localStorage.getItem(CACHE_KEY);
             if (stored) {
-                const { data, cachedAt } = JSON.parse(stored);
-                const age = Date.now() - cachedAt;
-                if (age < CACHE_TTL_MS) {
-                    return data;
+                const { data, cachedAt, lastServerCheckAt } = JSON.parse(stored) as LicenseCacheEntry;
+                if (data) {
+                    const checkAt = lastServerCheckAt ?? cachedAt;
+                    return this.normalizeLicense(data, false, checkAt);
                 }
             }
         } catch { }
@@ -145,6 +157,46 @@ export class LicenseService {
             daysRemaining: 30,
             features: ['SALES', 'PURCHASES', 'BASIC'],
             inGracePeriod: false,
+            offline: false,
+            lastServerCheckAt: undefined,
         };
+    }
+
+    private normalizeLicense(raw: Partial<LicenseInfo>, offline: boolean, lastServerCheckAt?: number): LicenseInfo {
+        const now = Date.now();
+        const expiresAt = raw.expiresAt ? new Date(raw.expiresAt) : new Date(now);
+        const gracePeriodEndsAt = raw.gracePeriodEndsAt ? new Date(raw.gracePeriodEndsAt) : undefined;
+        const effectiveGraceEnd = gracePeriodEndsAt ?? expiresAt;
+
+        const inGracePeriod = expiresAt.getTime() < now && now <= effectiveGraceEnd.getTime();
+        const isExpired = now > effectiveGraceEnd.getTime();
+        const daysRemaining = Math.max(0, Math.ceil((expiresAt.getTime() - now) / (1000 * 60 * 60 * 24)));
+
+        let status: LicenseInfo['status'] = raw.status ?? 'INVALID';
+        if (status !== 'REVOKED' && status !== 'INVALID') {
+            status = isExpired ? 'EXPIRED' : inGracePeriod ? 'GRACE' : 'ACTIVE';
+        }
+
+        return {
+            valid: status === 'ACTIVE' || status === 'GRACE',
+            status,
+            plan: raw.plan ?? 'DEMO',
+            companyName: raw.companyName ?? 'Demo',
+            expiresAt,
+            daysRemaining,
+            features: raw.features ?? ['SALES', 'PURCHASES', 'BASIC'],
+            maxUsers: raw.maxUsers,
+            maxCompanies: raw.maxCompanies,
+            inGracePeriod: status === 'GRACE',
+            gracePeriodEndsAt: effectiveGraceEnd,
+            offline,
+            lastServerCheckAt: lastServerCheckAt ? new Date(lastServerCheckAt) : (raw.lastServerCheckAt ? new Date(raw.lastServerCheckAt) : undefined),
+        };
+    }
+
+    private resolveLastServerCheck(license: Partial<LicenseInfo>): number | undefined {
+        if (!license?.lastServerCheckAt) return undefined;
+        const parsed = new Date(license.lastServerCheckAt).getTime();
+        return Number.isNaN(parsed) ? undefined : parsed;
     }
 }

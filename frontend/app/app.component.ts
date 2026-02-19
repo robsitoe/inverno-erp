@@ -72,11 +72,23 @@ import { ToasterComponent } from './shared/toaster.component';
           </button>
         </div>
 
+
+        <div *ngIf="license?.offline" 
+             class="bg-blue-600 border-b border-blue-700 px-4 py-2 flex items-center justify-between text-white">
+          <div class="flex items-center gap-2 text-xs font-bold">
+            <span class="material-symbols-outlined text-[18px]">cloud_off</span>
+            <span>MODO OFFLINE: exibindo último estado de licença validado em {{ license?.lastServerCheckAt | date:'dd/MM/yyyy HH:mm' }}.</span>
+          </div>
+          <button (click)="licenseService.refreshFromServer()" class="text-[10px] uppercase font-bold bg-white text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors">
+            Tentar Sincronizar
+          </button>
+        </div>
+
         <div *ngIf="!license?.valid" 
              class="bg-red-600 border-b border-red-700 px-4 py-2 flex items-center justify-between text-white">
           <div class="flex items-center gap-2 text-xs font-bold">
             <span class="material-symbols-outlined text-[18px]">gpp_bad</span>
-            <span>LICENÇA INVÁLIDA OU EXPIRADA. O acesso aos módulos foi bloqueado pelo servidor.</span>
+            <span>{{ license?.offline ? 'LICENÇA INVÁLIDA/EXPIRADA NO ÚLTIMO CHECK. Funcionalidades bloqueadas até nova validação.' : 'LICENÇA INVÁLIDA OU EXPIRADA. O acesso aos módulos foi bloqueado pelo servidor.' }}</span>
           </div>
           <button (click)="activeView = 'license-manager'" class="text-[10px] uppercase font-bold bg-white text-red-600 hover:bg-red-50 px-2 py-1 rounded transition-colors">
             Ativar Licença
@@ -115,7 +127,7 @@ export class AppComponent {
     private supplierService: SupplierService,
     private dataService: DataService,
     private authService: AuthService,
-    private licenseService: LicenseService
+    public licenseService: LicenseService
   ) { }
 
   ngOnInit() {
