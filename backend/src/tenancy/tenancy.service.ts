@@ -18,6 +18,8 @@ import { GenericEntity } from '../common-entities/generic-entity.entity';
 import { PaymentMethod } from '../treasury/entities/payment-method.entity';
 import { DocumentType } from '../common-entities/entities/document-type.entity';
 import { PeriodAuditLog } from '../companies/entities/period-audit-log.entity';
+import { TaxRate } from '../taxes/entities/tax-rate.entity';
+import { WorkflowHistory } from '../common/entities/workflow-history.entity';
 import {
     SALES_DOCUMENT_TYPES,
     PURCHASE_DOCUMENT_TYPES,
@@ -90,7 +92,7 @@ export class TenancyService implements OnModuleDestroy {
                     SalesDocument, SalesDocumentLine, PurchaseDocument,
                     PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
                     FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-                    DocumentType, PaymentMethod, PeriodAuditLog
+                    DocumentType, PaymentMethod, PeriodAuditLog, TaxRate, WorkflowHistory
                 ],
                 synchronize: true,
                 logging: ['error', 'warn'],
@@ -309,6 +311,25 @@ export class TenancyService implements OnModuleDestroy {
                 await pmRepo.save(pmDefaults);
                 console.log(`[Tenancy] ✅ Created ${pmDefaults.length} payment methods.`);
             }
+
+            // 4. Tax Rates
+            console.log(`[Tenancy] Checking Tax Rates...`);
+            const taxRepo = ds.getRepository(TaxRate);
+            const taxCount = await taxRepo.count();
+            if (taxCount === 0) {
+                console.log(`[Tenancy] Seeding standard tax rates...`);
+                const taxDefaults = [
+                    { code: '00', description: 'Regime de isenção', rate: 0, type: 'IVA', companyId, isActive: true },
+                    { code: '01', description: 'Isento (artº18)', rate: 0, type: 'IVA', companyId, isActive: true },
+                    { code: '16', description: 'IVA Taxa Normal (16%)', rate: 16, type: 'IVA', companyId, isActive: true },
+                    { code: '17', description: 'IVA Taxa Anterior (17%)', rate: 17, type: 'IVA', companyId, isActive: true },
+                    { code: 'BS', description: 'Bens em segunda mão', rate: 17, type: 'IVA', companyId, isActive: true },
+                    { code: 'OA', description: 'Objectos de arte', rate: 17, type: 'IVA', companyId, isActive: true }
+                ];
+                await taxRepo.save(taxRepo.create(taxDefaults));
+                console.log(`[Tenancy] ✅ Created ${taxDefaults.length} tax rates.`);
+            }
+
             console.log(`[Tenancy] Seeding completed for ${companyId}`);
 
         } catch (err: any) {

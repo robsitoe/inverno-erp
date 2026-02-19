@@ -30,6 +30,8 @@ const generic_entity_entity_1 = require("../common-entities/generic-entity.entit
 const payment_method_entity_1 = require("../treasury/entities/payment-method.entity");
 const document_type_entity_1 = require("../common-entities/entities/document-type.entity");
 const period_audit_log_entity_1 = require("../companies/entities/period-audit-log.entity");
+const tax_rate_entity_1 = require("../taxes/entities/tax-rate.entity");
+const workflow_history_entity_1 = require("../common/entities/workflow-history.entity");
 const initial_data_1 = require("../common-entities/initial-data");
 let TenancyService = class TenancyService {
     mainDataSource;
@@ -83,7 +85,7 @@ let TenancyService = class TenancyService {
                     sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, purchase_entity_1.PurchaseDocument,
                     purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
                     fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity,
-                    document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, period_audit_log_entity_1.PeriodAuditLog
+                    document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, period_audit_log_entity_1.PeriodAuditLog, tax_rate_entity_1.TaxRate, workflow_history_entity_1.WorkflowHistory
                 ],
                 synchronize: true,
                 logging: ['error', 'warn'],
@@ -269,6 +271,22 @@ let TenancyService = class TenancyService {
                 ];
                 await pmRepo.save(pmDefaults);
                 console.log(`[Tenancy] ✅ Created ${pmDefaults.length} payment methods.`);
+            }
+            console.log(`[Tenancy] Checking Tax Rates...`);
+            const taxRepo = ds.getRepository(tax_rate_entity_1.TaxRate);
+            const taxCount = await taxRepo.count();
+            if (taxCount === 0) {
+                console.log(`[Tenancy] Seeding standard tax rates...`);
+                const taxDefaults = [
+                    { code: '00', description: 'Regime de isenção', rate: 0, type: 'IVA', companyId, isActive: true },
+                    { code: '01', description: 'Isento (artº18)', rate: 0, type: 'IVA', companyId, isActive: true },
+                    { code: '16', description: 'IVA Taxa Normal (16%)', rate: 16, type: 'IVA', companyId, isActive: true },
+                    { code: '17', description: 'IVA Taxa Anterior (17%)', rate: 17, type: 'IVA', companyId, isActive: true },
+                    { code: 'BS', description: 'Bens em segunda mão', rate: 17, type: 'IVA', companyId, isActive: true },
+                    { code: 'OA', description: 'Objectos de arte', rate: 17, type: 'IVA', companyId, isActive: true }
+                ];
+                await taxRepo.save(taxRepo.create(taxDefaults));
+                console.log(`[Tenancy] ✅ Created ${taxDefaults.length} tax rates.`);
             }
             console.log(`[Tenancy] Seeding completed for ${companyId}`);
         }
