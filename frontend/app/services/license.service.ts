@@ -17,6 +17,19 @@ export interface LicenseInfo {
     gracePeriodEndsAt?: Date;
 }
 
+export interface LicenseRenewalInfo {
+    id: string;
+    companyId: string;
+    licenseId: string;
+    paidAt: Date;
+    durationDays: number;
+    amount?: number;
+    previousExpiresAt?: Date;
+    newExpiresAt: Date;
+    issuedBy: string;
+    createdAt: Date;
+}
+
 export interface LicensePlanDefinition {
     id: string;
     name: string;
@@ -54,6 +67,10 @@ export class LicenseService {
 
     validatePromoCode(code: string): Observable<any> {
         return this.http.get<any>(`${this.apiBase}/promo/${code}`);
+    }
+
+    getRenewalsByCompany(companyId: string): Observable<LicenseRenewalInfo[]> {
+        return this.http.get<LicenseRenewalInfo[]>(`${this.apiBase}/${companyId}/renewals`);
     }
 
     /** Activate a license token received from the vendor */

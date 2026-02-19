@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, ILike, Repository } from 'typeorm';
+import { LicenseRenewal } from './entities/license-renewal.entity';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { License, LicensePlan, LicenseStatus } from './entities/license.entity';
@@ -139,6 +140,8 @@ export class LicensesService {
     constructor(
         @InjectRepository(License)
         private readonly licenseRepo: Repository<License>,
+        @InjectRepository(LicenseRenewal)
+        private readonly licenseRenewalRepo: Repository<LicenseRenewal>,
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
     ) { }
@@ -160,18 +163,23 @@ export class LicensesService {
     // ─── GENERATE (Admin only) ────────────────────────────────────────────────
 
     async generate(dto: GenerateLicenseDto, issuedBy: string): Promise<{ token: string; license: License }> {
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + dto.durationDays);
-
+        const now = new Date();
         const features = dto.features ?? this.defaultFeaturesForPlan(dto.plan);
         const gracePeriodHours = dto.gracePeriodHours ?? 72;
 
-        // Upsert: if company already has a license, replace it
+        // Upsert: if company already has a license, update it without losing validity history
         let license = await this.licenseRepo.findOne({ where: { companyId: dto.companyId } });
 
         if (!license) {
             license = this.licenseRepo.create();
         }
+
+        const previousExpiresAt = license.expiresAt ? new Date(license.expiresAt) : undefined;
+        const baseDate = license.expiresAt && !license.isRevoked
+            ? new Date(Math.max(now.getTime(), new Date(license.expiresAt).getTime()))
+            : now;
+        const expiresAt = new Date(baseDate);
+        expiresAt.setDate(expiresAt.getDate() + dto.durationDays);
 
         license.companyId = dto.companyId;
         license.companyName = dto.companyName;
@@ -192,6 +200,19 @@ export class LicensesService {
         license.revokedReason = undefined;
 
         await this.licenseRepo.save(license);
+
+        await this.licenseRenewalRepo.save(
+            this.licenseRenewalRepo.create({
+                companyId: dto.companyId,
+                licenseId: license.id,
+                paidAt: now,
+                durationDays: dto.durationDays,
+                amount: dto.price,
+                previousExpiresAt,
+                newExpiresAt: expiresAt,
+                issuedBy,
+            }),
+        );
 
         // Sign JWT with license secret (separate from user auth secret)
         const licenseSecret = this.configService.get<string>('LICENSE_SECRET') || 'license-secret-change-in-production';
@@ -353,6 +374,13 @@ export class LicensesService {
         }
 
         return { blocked: licenses.length };
+    }
+
+    async listRenewalsByCompany(companyId: string): Promise<LicenseRenewal[]> {
+        return this.licenseRenewalRepo.find({
+            where: { companyId },
+            order: { paidAt: 'DESC' },
+        });
     }
 
     // ─── VALIDATE TOKEN (for LicenseGuard) ───────────────────────────────────

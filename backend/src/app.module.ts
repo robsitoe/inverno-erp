@@ -35,6 +35,7 @@ import { WorkflowHistory } from './common/entities/workflow-history.entity';
 import { WorkflowModule } from './common/workflow.module';
 import { LicensesModule } from './licenses/licenses.module';
 import { License } from './licenses/entities/license.entity';
+import { LicenseRenewal } from './licenses/entities/license-renewal.entity';
 
 @Module({
   imports: [
@@ -55,7 +56,7 @@ import { License } from './licenses/entities/license.entity';
               SalesDocument, SalesDocumentLine, User, PurchaseDocument,
               PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
               Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-              DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License
+              DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal
             ],
             synchronize: true,
           };
@@ -73,7 +74,7 @@ import { License } from './licenses/entities/license.entity';
             SalesDocument, SalesDocumentLine, User, PurchaseDocument,
             PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
             Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-            DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License
+            DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal
           ],
           synchronize: true,
         };

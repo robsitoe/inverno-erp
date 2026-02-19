@@ -112,6 +112,18 @@ export class LicensesController {
         return this.licensesService.listActive();
     }
 
+    // ─── RENEWALS HISTORY (Admin only) ───────────────────────────────────────
+    // GET /licenses/:companyId/renewals
+    @UseGuards(JwtAuthGuard)
+    @Get(':companyId/renewals')
+    async listRenewalsByCompany(@Param('companyId') companyId: string, @Req() req: any) {
+        const user = req.user;
+        if (!user?.isSuperAdmin && !user?.isAdmin) {
+            return { error: 'Acesso negado.' };
+        }
+        return this.licensesService.listRenewalsByCompany(companyId);
+    }
+
     // ─── UPDATE PRICING (SuperAdmin only) ────────────────────────────────────
     // PATCH /licenses/pricing
     @UseGuards(JwtAuthGuard)

@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { License } from './entities/license.entity';
+import { LicenseRenewal } from './entities/license-renewal.entity';
 import { LicensesService } from './licenses.service';
 import { LicensesController } from './licenses.controller';
 import { LicenseGuard } from '../auth/guards/license.guard';
@@ -10,7 +11,7 @@ import { LicenseGuard } from '../auth/guards/license.guard';
 @Global()
 @Module({
     imports: [
-        TypeOrmModule.forFeature([License]),
+        TypeOrmModule.forFeature([License, LicenseRenewal]),
         ConfigModule,
         // Use JwtModule without a fixed secret — service will pass secret per-call
         JwtModule.register({}),
