@@ -12,6 +12,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const jwt_1 = require("@nestjs/jwt");
 const config_1 = require("@nestjs/config");
 const license_entity_1 = require("./entities/license.entity");
+const license_renewal_entity_1 = require("./entities/license-renewal.entity");
 const licenses_service_1 = require("./licenses.service");
 const licenses_controller_1 = require("./licenses.controller");
 const license_guard_1 = require("../auth/guards/license.guard");
@@ -22,7 +23,7 @@ exports.LicensesModule = LicensesModule = __decorate([
     (0, common_1.Global)(),
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([license_entity_1.License]),
+            typeorm_1.TypeOrmModule.forFeature([license_entity_1.License, license_renewal_entity_1.LicenseRenewal]),
             config_1.ConfigModule,
             jwt_1.JwtModule.register({}),
         ],

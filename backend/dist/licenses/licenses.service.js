@@ -17,6 +17,7 @@ exports.LicensesService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
+const license_renewal_entity_1 = require("./entities/license-renewal.entity");
 const jwt_1 = require("@nestjs/jwt");
 const config_1 = require("@nestjs/config");
 const license_entity_1 = require("./entities/license.entity");
@@ -89,11 +90,13 @@ const LICENSE_PLANS_CONFIG = [
 ];
 let LicensesService = LicensesService_1 = class LicensesService {
     licenseRepo;
+    licenseRenewalRepo;
     jwtService;
     configService;
     logger = new common_1.Logger(LicensesService_1.name);
-    constructor(licenseRepo, jwtService, configService) {
+    constructor(licenseRepo, licenseRenewalRepo, jwtService, configService) {
         this.licenseRepo = licenseRepo;
+        this.licenseRenewalRepo = licenseRenewalRepo;
         this.jwtService = jwtService;
         this.configService = configService;
     }
@@ -110,14 +113,19 @@ let LicensesService = LicensesService_1 = class LicensesService {
         return promo;
     }
     async generate(dto, issuedBy) {
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + dto.durationDays);
+        const now = new Date();
         const features = dto.features ?? this.defaultFeaturesForPlan(dto.plan);
         const gracePeriodHours = dto.gracePeriodHours ?? 72;
         let license = await this.licenseRepo.findOne({ where: { companyId: dto.companyId } });
         if (!license) {
             license = this.licenseRepo.create();
         }
+        const previousExpiresAt = license.expiresAt ? new Date(license.expiresAt) : undefined;
+        const baseDate = license.expiresAt && !license.isRevoked
+            ? new Date(Math.max(now.getTime(), new Date(license.expiresAt).getTime()))
+            : now;
+        const expiresAt = new Date(baseDate);
+        expiresAt.setDate(expiresAt.getDate() + dto.durationDays);
         license.companyId = dto.companyId;
         license.companyName = dto.companyName;
         license.plan = dto.plan;
@@ -136,6 +144,16 @@ let LicensesService = LicensesService_1 = class LicensesService {
         license.revokedBy = undefined;
         license.revokedReason = undefined;
         await this.licenseRepo.save(license);
+        await this.licenseRenewalRepo.save(this.licenseRenewalRepo.create({
+            companyId: dto.companyId,
+            licenseId: license.id,
+            paidAt: now,
+            durationDays: dto.durationDays,
+            amount: dto.price,
+            previousExpiresAt,
+            newExpiresAt: expiresAt,
+            issuedBy,
+        }));
         const licenseSecret = this.configService.get('LICENSE_SECRET') || 'license-secret-change-in-production';
         const payload = {
             sub: license.id,
@@ -249,6 +267,12 @@ let LicensesService = LicensesService_1 = class LicensesService {
         }
         return { blocked: licenses.length };
     }
+    async listRenewalsByCompany(companyId) {
+        return this.licenseRenewalRepo.find({
+            where: { companyId },
+            order: { paidAt: 'DESC' },
+        });
+    }
     async validateToken(token) {
         const licenseSecret = this.configService.get('LICENSE_SECRET') || 'license-secret-change-in-production';
         try {
@@ -296,7 +320,7 @@ let LicensesService = LicensesService_1 = class LicensesService {
             maxUsers: license.maxUsers,
             maxCompanies: license.maxCompanies,
             inGracePeriod,
-            gracePeriodEndsAt: inGracePeriod ? gracePeriodEnd : undefined,
+            gracePeriodEndsAt: gracePeriodEnd,
             token,
         };
     }
@@ -312,6 +336,7 @@ let LicensesService = LicensesService_1 = class LicensesService {
             daysRemaining: 30,
             features: ['SALES', 'PURCHASES', 'BASIC'],
             inGracePeriod: false,
+            gracePeriodEndsAt: expires,
         };
     }
     defaultFeaturesForPlan(plan) {
@@ -335,7 +360,9 @@ exports.LicensesService = LicensesService;
 exports.LicensesService = LicensesService = LicensesService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(license_entity_1.License)),
+    __param(1, (0, typeorm_1.InjectRepository)(license_renewal_entity_1.LicenseRenewal)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         jwt_1.JwtService,
         config_1.ConfigService])
 ], LicensesService);

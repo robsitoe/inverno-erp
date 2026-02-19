@@ -35,7 +35,7 @@ import { PaymentStatus } from '../../services/payment.service';
           <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between"
                  [ngClass]="{
-                   'bg-green-50': license?.valid && (license?.plan !== 'DEMO'),
+                   'bg-green-50': license?.valid && (license?.plan !== 'DEMO') && !license?.offline,
                    'bg-blue-50': license?.plan === 'DEMO',
                    'bg-amber-50': license?.inGracePeriod,
                    'bg-red-50': !license?.valid
@@ -43,7 +43,7 @@ import { PaymentStatus } from '../../services/payment.service';
               <div class="flex items-center gap-3">
                 <span class="material-symbols-outlined text-2xl"
                       [ngClass]="{
-                        'text-green-600': license?.valid && (license?.plan !== 'DEMO'),
+                        'text-green-600': license?.valid && (license?.plan !== 'DEMO') && !license?.offline,
                         'text-blue-600': license?.plan === 'DEMO',
                         'text-amber-600': license?.inGracePeriod,
                         'text-red-600': !license?.valid
@@ -65,6 +65,11 @@ import { PaymentStatus } from '../../services/payment.service';
                       }">
                   {{ statusLabel }}
                 </span>
+
+                <span *ngIf="license?.offline" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-700">
+                  Offline
+                </span>
+
                 <button (click)="refresh()" title="Atualizar" class="text-gray-400 hover:text-blue-600 transition-colors ml-1">
                   <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="refreshing">refresh</span>
                 </button>
@@ -114,6 +119,11 @@ import { PaymentStatus } from '../../services/payment.service';
               </div>
             </div>
 
+            <!-- Offline Notice -->
+            <div *ngIf="license?.offline" class="mx-6 mb-4 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100 text-[11px] text-blue-700 flex items-center gap-2 font-medium">
+              <span class="material-symbols-outlined text-[16px]">cloud_off</span>
+              Sem conexão ao servidor. Última validação: {{ license?.lastServerCheckAt | date:'dd/MM/yyyy HH:mm' }}.
+            </div>
             <div class="px-6 pb-6 grid md:grid-cols-2 gap-4">
               <div class="bg-blue-50 border border-blue-100 rounded-lg p-4">
                 <p class="text-[10px] text-blue-500 uppercase font-bold tracking-wider mb-1">Próximo Vencimento</p>

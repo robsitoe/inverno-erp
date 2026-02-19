@@ -1,4 +1,5 @@
 import { Repository } from 'typeorm';
+import { LicenseRenewal } from './entities/license-renewal.entity';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { License, LicensePlan, LicenseStatus } from './entities/license.entity';
@@ -27,7 +28,7 @@ export interface LicenseStatusResponse {
     maxUsers?: number;
     maxCompanies?: number;
     inGracePeriod: boolean;
-    gracePeriodEndsAt?: Date;
+    gracePeriodEndsAt: Date;
     token?: string;
 }
 export interface PromoCode {
@@ -52,10 +53,11 @@ export interface LicensePlanDefinition {
 }
 export declare class LicensesService {
     private readonly licenseRepo;
+    private readonly licenseRenewalRepo;
     private readonly jwtService;
     private readonly configService;
     private readonly logger;
-    constructor(licenseRepo: Repository<License>, jwtService: JwtService, configService: ConfigService);
+    constructor(licenseRepo: Repository<License>, licenseRenewalRepo: Repository<LicenseRenewal>, jwtService: JwtService, configService: ConfigService);
     getAvailablePlans(): Promise<LicensePlanDefinition[]>;
     validatePromoCode(code: string): Promise<PromoCode | null>;
     generate(dto: GenerateLicenseDto, issuedBy: string): Promise<{
@@ -73,6 +75,7 @@ export declare class LicensesService {
     blockLicenses(blockedBy: string, reason?: string, companyIds?: string[]): Promise<{
         blocked: number;
     }>;
+    listRenewalsByCompany(companyId: string): Promise<LicenseRenewal[]>;
     validateToken(token: string): Promise<LicensePayload | null>;
     private syncStatus;
     private buildStatusResponse;

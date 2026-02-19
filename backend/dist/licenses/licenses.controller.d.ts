@@ -48,6 +48,9 @@ export declare class LicensesController {
     listActive(req: any): Promise<import("./entities/license.entity").License[] | {
         error: string;
     }>;
+    listRenewalsByCompany(companyId: string, req: any): Promise<import("./entities/license-renewal.entity").LicenseRenewal[] | {
+        error: string;
+    }>;
     updatePricing(dto: UpdateLicensePricingDto, req: any): Promise<{
         error: string;
     } | {

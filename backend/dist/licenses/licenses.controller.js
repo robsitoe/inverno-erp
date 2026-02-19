@@ -77,6 +77,13 @@ let LicensesController = class LicensesController {
         }
         return this.licensesService.listActive();
     }
+    async listRenewalsByCompany(companyId, req) {
+        const user = req.user;
+        if (!user?.isSuperAdmin && !user?.isAdmin) {
+            return { error: 'Acesso negado.' };
+        }
+        return this.licensesService.listRenewalsByCompany(companyId);
+    }
     async updatePricing(dto, req) {
         const user = req.user;
         if (!user?.isSuperAdmin) {
@@ -160,6 +167,15 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], LicensesController.prototype, "listActive", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)(':companyId/renewals'),
+    __param(0, (0, common_1.Param)('companyId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], LicensesController.prototype, "listRenewalsByCompany", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Patch)('pricing'),

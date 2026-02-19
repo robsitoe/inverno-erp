@@ -38,7 +38,7 @@ export interface LicenseStatusResponse {
     maxUsers?: number;
     maxCompanies?: number;
     inGracePeriod: boolean;
-    gracePeriodEndsAt?: Date;
+    gracePeriodEndsAt: Date;
     token?: string; // returned on activation
 }
 
@@ -439,7 +439,7 @@ export class LicensesService {
             maxUsers: license.maxUsers,
             maxCompanies: license.maxCompanies,
             inGracePeriod,
-            gracePeriodEndsAt: inGracePeriod ? gracePeriodEnd : undefined,
+            gracePeriodEndsAt: gracePeriodEnd,
             token,
         };
     }
@@ -457,6 +457,7 @@ export class LicensesService {
             daysRemaining: 30,
             features: ['SALES', 'PURCHASES', 'BASIC'],
             inGracePeriod: false,
+            gracePeriodEndsAt: expires,
         };
     }
 

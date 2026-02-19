@@ -44,6 +44,7 @@ const workflow_history_entity_1 = require("./common/entities/workflow-history.en
 const workflow_module_1 = require("./common/workflow.module");
 const licenses_module_1 = require("./licenses/licenses.module");
 const license_entity_1 = require("./licenses/entities/license.entity");
+const license_renewal_entity_1 = require("./licenses/entities/license-renewal.entity");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer
@@ -71,7 +72,7 @@ exports.AppModule = AppModule = __decorate([
                                 sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, user_entity_1.User, purchase_entity_1.PurchaseDocument,
                                 purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
                                 company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity,
-                                document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog, license_entity_1.License
+                                document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog, license_entity_1.License, license_renewal_entity_1.LicenseRenewal
                             ],
                             synchronize: true,
                         };
@@ -88,7 +89,7 @@ exports.AppModule = AppModule = __decorate([
                             sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, user_entity_1.User, purchase_entity_1.PurchaseDocument,
                             purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
                             company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity,
-                            document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog, license_entity_1.License
+                            document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog, license_entity_1.License, license_renewal_entity_1.LicenseRenewal
                         ],
                         synchronize: true,
                     };
