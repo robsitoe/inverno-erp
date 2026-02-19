@@ -606,6 +606,7 @@ export class StockMovementsComponent implements OnInit {
 
   async newDocument() {
     this.currentDoc = this.getEmptyDocument();
+    this.documentToPrint = null; // Reset preview
     // Load next number logic
     this.currentDoc.number = await this.getNextDocumentNumber(this.currentDoc.type, this.currentDoc.series);
     this.addLine(); // Start with one empty line

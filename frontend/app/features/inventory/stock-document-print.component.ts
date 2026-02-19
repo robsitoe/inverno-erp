@@ -143,6 +143,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
 
     /* Screen Preview Styling (Paper simulation) */
     .print-container { 
+      display: none; /* Hidden on screen to avoid cluttering forms */
       font-family: 'Inter', system-ui, -apple-system, sans-serif; 
       color: #1f2937; 
       background: #f3f4f6;
