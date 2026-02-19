@@ -3615,3 +3615,478 @@
   }
 }
 ---
+{
+  "timestamp": "2026-02-19T17:22:00.924Z",
+  "path": "/sales/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-19T17:29:21.250Z",
+  "path": "/inventory/articles",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"code\" of relation \"articles\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"code\" of relation \"articles\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:467:25)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": [
+    {
+      "id": "67d99bcb-e95e-4175-a23a-681912588c80",
+      "companyId": "003",
+      "code": "A001",
+      "name": "Produto1",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "2500.00",
+      "ivaRate": "16.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "99.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T13:38:59.750Z",
+      "updatedAt": "2026-02-08T19:11:37.272Z"
+    },
+    {
+      "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+      "companyId": "003",
+      "code": "GS001",
+      "name": "Produo",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "2500.00",
+      "ivaRate": "17.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "2008.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T14:09:47.707Z",
+      "updatedAt": "2026-02-17T13:26:33.895Z"
+    },
+    [
+      {
+        "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+        "companyId": "003",
+        "code": "GS001",
+        "name": "Produo",
+        "description": "",
+        "familyId": "",
+        "type": "PRODUCT",
+        "unit": "UN",
+        "purchasePrice": "0.00",
+        "salePrice": "2500.00",
+        "ivaRate": 16,
+        "ivaCode": "01",
+        "stockControl": true,
+        "currentStock": "2008.00",
+        "minStock": "0.00",
+        "maxStock": "100.00",
+        "revenueAccountId": "71",
+        "cogsAccountId": "61",
+        "inventoryAccountId": "31",
+        "isActive": true,
+        "createdAt": "2026-02-06T14:09:47.707Z",
+        "updatedAt": "2026-02-19T15:29:03.835Z"
+      }
+    ]
+  ],
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-19T17:29:31.122Z",
+  "path": "/inventory/articles",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"code\" of relation \"articles\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"code\" of relation \"articles\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:467:25)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": [
+    {
+      "id": "67d99bcb-e95e-4175-a23a-681912588c80",
+      "companyId": "003",
+      "code": "A001",
+      "name": "Produto1",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "2500.00",
+      "ivaRate": "16.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "99.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T13:38:59.750Z",
+      "updatedAt": "2026-02-08T19:11:37.272Z"
+    },
+    {
+      "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+      "companyId": "003",
+      "code": "GS001",
+      "name": "Produo",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "2500.00",
+      "ivaRate": "17.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "2008.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T14:09:47.707Z",
+      "updatedAt": "2026-02-17T13:26:33.895Z"
+    },
+    {
+      "0": {
+        "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+        "companyId": "003",
+        "code": "GS001",
+        "name": "Produo",
+        "description": "",
+        "familyId": "",
+        "type": "PRODUCT",
+        "unit": "UN",
+        "purchasePrice": "0.00",
+        "salePrice": "2500.00",
+        "ivaRate": 16,
+        "ivaCode": "01",
+        "stockControl": true,
+        "currentStock": "2008.00",
+        "minStock": "0.00",
+        "maxStock": "100.00",
+        "revenueAccountId": "71",
+        "cogsAccountId": "61",
+        "inventoryAccountId": "31",
+        "isActive": true,
+        "createdAt": "2026-02-06T14:09:47.707Z",
+        "updatedAt": "2026-02-17T13:26:33.895Z"
+      }
+    }
+  ],
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-19T17:29:58.720Z",
+  "path": "/inventory/articles",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"code\" of relation \"articles\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"code\" of relation \"articles\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:467:25)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": [
+    {
+      "id": "67d99bcb-e95e-4175-a23a-681912588c80",
+      "companyId": "003",
+      "code": "A001",
+      "name": "Produto1",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "2500.00",
+      "ivaRate": "16.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "99.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T13:38:59.750Z",
+      "updatedAt": "2026-02-08T19:11:37.272Z"
+    },
+    {
+      "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+      "companyId": "003",
+      "code": "GS001",
+      "name": "Produo",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "2500.00",
+      "ivaRate": "17.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "2008.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T14:09:47.707Z",
+      "updatedAt": "2026-02-17T13:26:33.895Z"
+    },
+    {
+      "0": {
+        "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+        "companyId": "003",
+        "code": "GS001",
+        "name": "Produo",
+        "description": "",
+        "familyId": "",
+        "type": "PRODUCT",
+        "unit": "UN",
+        "purchasePrice": "0.00",
+        "salePrice": "2500.00",
+        "ivaRate": 16,
+        "ivaCode": "01",
+        "stockControl": true,
+        "currentStock": "2008.00",
+        "minStock": "0.00",
+        "maxStock": "100.00",
+        "revenueAccountId": "71",
+        "cogsAccountId": "61",
+        "inventoryAccountId": "31",
+        "isActive": true,
+        "createdAt": "2026-02-06T14:09:47.707Z",
+        "updatedAt": "2026-02-19T15:29:56.452Z"
+      }
+    }
+  ],
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-19T17:31:39.383Z",
+  "path": "/inventory/articles",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"code\" of relation \"articles\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"code\" of relation \"articles\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:467:25)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": [
+    {
+      "id": "67d99bcb-e95e-4175-a23a-681912588c80",
+      "companyId": "003",
+      "code": "A001",
+      "name": "Produto1",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "2500.00",
+      "ivaRate": "16.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "99.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T13:38:59.750Z",
+      "updatedAt": "2026-02-08T19:11:37.272Z"
+    },
+    {
+      "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+      "companyId": "003",
+      "code": "GS001",
+      "name": "Produo",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "2500.00",
+      "ivaRate": "17.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "2008.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T14:09:47.707Z",
+      "updatedAt": "2026-02-17T13:26:33.895Z"
+    },
+    {
+      "0": {
+        "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+        "companyId": "003",
+        "code": "GS001",
+        "name": "Produo",
+        "description": "",
+        "familyId": "",
+        "type": "PRODUCT",
+        "unit": "UN",
+        "purchasePrice": "0.00",
+        "salePrice": "2500.00",
+        "ivaRate": "17.00",
+        "ivaCode": "16",
+        "stockControl": true,
+        "currentStock": "2008.00",
+        "minStock": "0.00",
+        "maxStock": "100.00",
+        "revenueAccountId": "71",
+        "cogsAccountId": "61",
+        "inventoryAccountId": "31",
+        "isActive": true,
+        "createdAt": "2026-02-06T14:09:47.707Z",
+        "updatedAt": "2026-02-17T13:26:33.895Z"
+      }
+    }
+  ],
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-19T17:31:46.755Z",
+  "path": "/inventory/articles",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"code\" of relation \"articles\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"code\" of relation \"articles\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:467:25)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": [
+    {
+      "id": "67d99bcb-e95e-4175-a23a-681912588c80",
+      "companyId": "003",
+      "code": "A001",
+      "name": "Produto1",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "2500.00",
+      "ivaRate": "16.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "99.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T13:38:59.750Z",
+      "updatedAt": "2026-02-08T19:11:37.272Z"
+    },
+    {
+      "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+      "companyId": "003",
+      "code": "GS001",
+      "name": "Produo",
+      "description": "",
+      "familyId": "",
+      "type": "PRODUCT",
+      "unit": "UN",
+      "purchasePrice": "0.00",
+      "salePrice": "2500.00",
+      "ivaRate": "17.00",
+      "ivaCode": "01",
+      "stockControl": true,
+      "currentStock": "2008.00",
+      "minStock": "0.00",
+      "maxStock": "100.00",
+      "revenueAccountId": "71",
+      "cogsAccountId": "61",
+      "inventoryAccountId": "31",
+      "isActive": true,
+      "createdAt": "2026-02-06T14:09:47.707Z",
+      "updatedAt": "2026-02-17T13:26:33.895Z"
+    },
+    {
+      "0": {
+        "id": "7b6b163f-d673-4331-b94b-a0691bbfd0c2",
+        "companyId": "003",
+        "code": "GS001",
+        "name": "Produo",
+        "description": "",
+        "familyId": "",
+        "type": "PRODUCT",
+        "unit": "UN",
+        "purchasePrice": "0.00",
+        "salePrice": "2500.00",
+        "ivaRate": 16,
+        "ivaCode": "16",
+        "stockControl": true,
+        "currentStock": "2008.00",
+        "minStock": "0.00",
+        "maxStock": "100.00",
+        "revenueAccountId": "71",
+        "cogsAccountId": "61",
+        "inventoryAccountId": "31",
+        "isActive": true,
+        "createdAt": "2026-02-06T14:09:47.707Z",
+        "updatedAt": "2026-02-19T15:31:45.573Z"
+      }
+    }
+  ],
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-19T18:08:09.746Z",
+  "path": "/taxes?companyId=003",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"TaxRate\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"TaxRate\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at TaxesService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\taxes\\taxes.service.ts:39:21)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---

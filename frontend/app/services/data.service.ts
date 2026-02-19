@@ -641,6 +641,25 @@ export class DataService {
         }
     }
 
+    // Taxes
+    getTaxes(companyId?: string): Observable<any[]> {
+        const url = companyId ? `${this.baseUrl}/taxes?companyId=${companyId}` : `${this.baseUrl}/taxes`;
+        return this.http.get<any[]>(url);
+    }
+
+    saveTax(tax: any): Observable<any> {
+        if (tax.id && !tax.id.startsWith('new_')) {
+            return this.http.patch(`${this.baseUrl}/taxes/${tax.id}`, tax);
+        } else {
+            const { id, ...data } = tax;
+            return this.http.post(`${this.baseUrl}/taxes`, data);
+        }
+    }
+
+    deleteTax(id: string): Observable<any> {
+        return this.http.delete(`${this.baseUrl}/taxes/${id}`);
+    }
+
     getTreasuryDocuments(): Observable<any[]> {
         if (this.isLocalBrowser()) {
             const stored = localStorage.getItem('erp_treasury_documents');

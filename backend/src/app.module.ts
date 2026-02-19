@@ -36,6 +36,8 @@ import { WorkflowModule } from './common/workflow.module';
 import { LicensesModule } from './licenses/licenses.module';
 import { License } from './licenses/entities/license.entity';
 import { LicenseRenewal } from './licenses/entities/license-renewal.entity';
+import { TaxRate } from './taxes/entities/tax-rate.entity';
+import { TaxesModule } from './taxes/taxes.module';
 
 @Module({
   imports: [
@@ -56,7 +58,7 @@ import { LicenseRenewal } from './licenses/entities/license-renewal.entity';
               SalesDocument, SalesDocumentLine, User, PurchaseDocument,
               PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
               Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-              DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal
+              DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate
             ],
             synchronize: true,
           };
@@ -74,7 +76,7 @@ import { LicenseRenewal } from './licenses/entities/license-renewal.entity';
             SalesDocument, SalesDocumentLine, User, PurchaseDocument,
             PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
             Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-            DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal
+            DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate
           ],
           synchronize: true,
         };
@@ -92,6 +94,7 @@ import { LicenseRenewal } from './licenses/entities/license-renewal.entity';
     WorkflowModule,
     PeriodsModule,
     LicensesModule,
+    TaxesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

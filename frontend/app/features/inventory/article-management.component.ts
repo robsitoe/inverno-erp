@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { DataService } from '../../services/data.service';
 
 import { AppIconComponent } from '../../shared/components/app-icon.component';
+import { IVA_RATES } from '../../shared/constants';
 
 @Component({
   selector: 'app-article-management',
@@ -176,7 +177,7 @@ import { AppIconComponent } from '../../shared/components/app-icon.component';
                   <input 
                     type="number" 
                     [(ngModel)]="selectedArticle.ivaRate"
-                    step="1"
+                    step="0.1"
                     class="w-full px-2 py-1 border border-gray-300 rounded text-xs text-right focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -184,11 +185,15 @@ import { AppIconComponent } from '../../shared/components/app-icon.component';
                 <!-- Código IVA -->
                 <div>
                   <label class="block text-xs font-medium text-gray-700 mb-1">Código IVA</label>
-                  <input 
-                    type="text" 
+                  <select 
                     [(ngModel)]="selectedArticle.ivaCode"
+                    (ngModelChange)="onVatCodeChange($event)"
                     class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:border-blue-500"
-                  />
+                  >
+                    <option *ngFor="let vat of vatRates" [value]="vat.code">
+                      {{ vat.code }} - {{ vat.description }} ({{ vat.rate }}%)
+                    </option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -306,6 +311,8 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
   searchTerm = '';
   activeTab = 0;
   tabs = ['Geral', 'Stock', 'Contabilidade'];
+  vatRates: any[] = [];
+
   private subscription = new Subscription();
 
   constructor(
@@ -315,6 +322,7 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadArticles();
+    this.loadVatRates();
     this.subscription.add(
       this.inventoryService.articlesUpdated$.subscribe(() => {
         this.loadArticles();
@@ -329,6 +337,21 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
   loadArticles() {
     this.articles = this.inventoryService.getArticles();
     this.filterArticles();
+  }
+
+  loadVatRates() {
+    const activeCompany = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
+    this.dataService.getTaxes(activeCompany.id).subscribe({
+      next: (taxes) => {
+        this.vatRates = taxes;
+        // If no taxes found, maybe offer to seed? 
+        // For now, if empty, we might still want to see the constants as fallback or just empty.
+        if (this.vatRates.length === 0) {
+          this.vatRates = IVA_RATES;
+        }
+      },
+      error: (err) => console.error('Error loading VAT rates:', err)
+    });
   }
 
   filterArticles() {
@@ -350,6 +373,14 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
     this.activeTab = 0;
   }
 
+  onVatCodeChange(code: string) {
+    if (!this.selectedArticle) return;
+    const vat = this.vatRates.find(v => v.code === code);
+    if (vat) {
+      this.selectedArticle.ivaRate = vat.rate;
+    }
+  }
+
   newArticle() {
     const activeCompany = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
     this.selectedArticle = {
@@ -362,8 +393,8 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
       unit: 'UN',
       purchasePrice: 0,
       salePrice: 0,
-      ivaRate: 17,
-      ivaCode: '01',
+      ivaRate: 16,
+      ivaCode: '16',
       stockControl: true,
       currentStock: 0,
       minStock: 0,
@@ -392,12 +423,15 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
 
     this.dataService.saveArticle(this.selectedArticle).subscribe({
       next: (savedArticle) => {
-        alert(`Artigo ${this.selectedArticle?.code} gravado com sucesso!`);
+        alert(`Artigo ${savedArticle.code} gravado com sucesso!`);
+
+        // Update selected article with server response
+        this.selectedArticle = { ...savedArticle };
 
         // Find if it's a new or existing article
-        const isNew = !this.articles.find(a => a.id === savedArticle.id);
+        const index = this.articles.findIndex(a => a.id === savedArticle.id || (a.id.startsWith('ART') && a.code === savedArticle.code));
 
-        if (isNew) {
+        if (index === -1) {
           this.inventoryService.addArticle(savedArticle);
         } else {
           this.inventoryService.updateArticle(savedArticle);

@@ -293,11 +293,17 @@ export class InventoryService {
     }
 
     private saveArticles() {
-        this.dataService.saveArticle(this.allArticles).subscribe(() => {
-            this.loadData().then(() => {
-                this.articlesUpdated$.next();
+        if (this.dataService.isLocalBrowser()) {
+            this.dataService.saveArticle(this.allArticles).subscribe(() => {
+                this.loadData().then(() => {
+                    this.articlesUpdated$.next();
+                });
             });
-        });
+        } else {
+            // In backend mode, articles are saved individually via DataService.
+            // We just notify that the local list has changed.
+            this.articlesUpdated$.next();
+        }
     }
 
     private saveWarehouses() {
