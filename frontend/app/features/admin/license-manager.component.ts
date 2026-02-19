@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { LicenseService, LicenseInfo, LicensePlanDefinition } from '../../services/license.service';
+import { LicenseService, LicenseInfo, LicensePlanDefinition, LicenseRenewalInfo } from '../../services/license.service';
 import { MobilePaymentFormComponent } from './mobile-payment-form.component';
 import { PaymentStatus } from '../../services/payment.service';
 
@@ -111,6 +111,35 @@ import { PaymentStatus } from '../../services/payment.service';
                       class="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-100 font-medium tracking-wide">
                   {{ f }}
                 </span>
+              </div>
+            </div>
+
+            <div class="px-6 pb-6 grid md:grid-cols-2 gap-4">
+              <div class="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                <p class="text-[10px] text-blue-500 uppercase font-bold tracking-wider mb-1">Próximo Vencimento</p>
+                <p class="text-base font-bold text-blue-700">{{ nextExpiration | date:'dd/MM/yyyy HH:mm' }}</p>
+                <p class="text-xs text-blue-600 mt-1">Baseado na vigência acumulada de renovações.</p>
+              </div>
+
+              <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Últimas Renovações</p>
+                  <button (click)="loadRenewals()" class="text-[10px] font-bold text-blue-600 hover:text-blue-700">Atualizar</button>
+                </div>
+                <div *ngIf="loadingRenewals" class="text-xs text-gray-500">A carregar histórico...</div>
+                <div *ngIf="!loadingRenewals && !renewals.length" class="text-xs text-gray-500">Sem renovações registadas.</div>
+                <div *ngIf="!loadingRenewals && renewals.length" class="space-y-2">
+                  <div *ngFor="let renewal of renewals | slice:0:3" class="text-xs bg-white rounded border border-gray-200 px-3 py-2">
+                    <div class="flex justify-between gap-2">
+                      <span class="font-semibold text-gray-700">{{ renewal.paidAt | date:'dd/MM/yyyy' }}</span>
+                      <span class="text-gray-500">+{{ renewal.durationDays }} dias</span>
+                    </div>
+                    <div class="text-gray-600 mt-1">
+                      Novo vencimento: <span class="font-semibold">{{ renewal.newExpiresAt | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                    <div *ngIf="renewal.amount !== null && renewal.amount !== undefined" class="text-gray-500">Valor: {{ renewal.amount | number:'1.2-2' }} MZN</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -273,6 +302,8 @@ export class LicenseManagerComponent implements OnInit {
   paymentMethod: 'MPESA' | 'EMOLA' | null = null;
   availablePlans: LicensePlanDefinition[] = [];
   loadingPlans = false;
+  renewals: LicenseRenewalInfo[] = [];
+  loadingRenewals = false;
 
   constructor(
     public licenseService: LicenseService,
@@ -284,6 +315,7 @@ export class LicenseManagerComponent implements OnInit {
     });
     this.loadPlans();
     this.refresh();
+    this.loadRenewals();
   }
 
   loadPlans() {
@@ -314,6 +346,40 @@ export class LicenseManagerComponent implements OnInit {
     this.refreshing = true;
     this.licenseService.refreshFromServer();
     setTimeout(() => this.refreshing = false, 1500);
+  }
+
+  get nextExpiration(): Date | null {
+    if (this.renewals.length) {
+      return new Date(this.renewals[0].newExpiresAt);
+    }
+    return this.license?.expiresAt ? new Date(this.license.expiresAt) : null;
+  }
+
+  loadRenewals() {
+    const companyId = this.getCompanyId();
+    if (!companyId) return;
+
+    this.loadingRenewals = true;
+    this.licenseService.getRenewalsByCompany(companyId).subscribe({
+      next: (renewals) => {
+        this.renewals = renewals;
+        this.loadingRenewals = false;
+      },
+      error: () => {
+        this.renewals = [];
+        this.loadingRenewals = false;
+      }
+    });
+  }
+
+  private getCompanyId(): string | null {
+    try {
+      const info = localStorage.getItem('erp_company_info');
+      if (!info) return null;
+      return JSON.parse(info).id || null;
+    } catch {
+      return null;
+    }
   }
 
   getPlanPrice(planId: string): number {
