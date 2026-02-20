@@ -81,8 +81,8 @@ export class AccountingController {
 
   @Post('accounts/presets/:presetName')
   @ApiOperation({ summary: 'Load a predefined chart of accounts' })
-  loadPreset(@Param('presetName') presetName: string) {
-    return this.accountingService.loadPresetAccountSystem(presetName);
+  loadPreset(@Param('presetName') presetName: string, @Query('companyId') companyId?: string) {
+    return this.accountingService.loadPresetAccountSystem(presetName, companyId);
   }
 
 

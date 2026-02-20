@@ -109,6 +109,7 @@ class CreatePurchaseDto {
     seriesNumber;
     date;
     dueDate;
+    supplierCode;
     supplierId;
     supplierName;
     supplierNif;
@@ -170,6 +171,12 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreatePurchaseDto.prototype, "dueDate", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'SUP001', description: 'Supplier Code', required: false }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreatePurchaseDto.prototype, "supplierCode", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'supplier-id', description: 'Supplier ID', required: false }),
     (0, class_validator_1.IsString)(),

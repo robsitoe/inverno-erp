@@ -105,6 +105,11 @@ export class CreatePurchaseDto {
     @IsNotEmpty()
     dueDate: string;
 
+    @ApiProperty({ example: 'SUP001', description: 'Supplier Code', required: false })
+    @IsString()
+    @IsOptional()
+    supplierCode?: string;
+
     @ApiProperty({ example: 'supplier-id', description: 'Supplier ID', required: false })
     @IsString()
     @IsOptional()

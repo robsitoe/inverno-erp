@@ -429,13 +429,26 @@ export class DataService {
         }
     }
 
+    deleteAccount(id: string): Observable<any> {
+        if (this.isLocalBrowser()) {
+            const stored = localStorage.getItem('erp_accounts_v2');
+            if (stored) {
+                const accounts = JSON.parse(stored).filter((a: any) => a.id !== id);
+                localStorage.setItem('erp_accounts_v2', JSON.stringify(accounts));
+            }
+            return of(true);
+        } else {
+            return this.http.delete(`${this.baseUrl}/accounting/accounts/${id}`);
+        }
+    }
 
-    loadAccountsPreset(presetName: string): Observable<any> {
+
+    loadAccountsPreset(presetName: string, companyId?: string): Observable<any> {
         if (this.isLocalBrowser()) {
             // No local preset logic yet, usually just returns error or does nothing
             return throwError(() => new Error('Presets not supported in BROWSER mode yet.'));
         } else {
-            return this.http.post(`${this.baseUrl}/accounting/accounts/presets/${presetName}`, {});
+            return this.http.post(`${this.baseUrl}/accounting/accounts/presets/${presetName}?companyId=${companyId || ''}`, {});
         }
     }
 
@@ -547,6 +560,16 @@ export class DataService {
         }
     }
 
+    getSalesDocument(id: string): Observable<any> {
+        if (this.isLocalBrowser()) {
+            const stored = localStorage.getItem('erp_sales_documents');
+            const docs = stored ? JSON.parse(stored) : [];
+            return of(docs.find((d: any) => d.id === id) || null);
+        } else {
+            return this.http.get<any>(`${this.baseUrl}/sales/documents/${id}`);
+        }
+    }
+
     getPurchaseDocuments(companyId?: string): Observable<any[]> {
         if (this.isLocalBrowser()) {
             const stored = localStorage.getItem('erp_purchase_documents');
@@ -573,6 +596,16 @@ export class DataService {
             return of(doc || null);
         } else {
             return this.http.get<any>(`${this.baseUrl}/purchases/documents/find?companyId=${companyId}&type=${type}&series=${series}&number=${number}`);
+        }
+    }
+
+    getPurchaseDocument(id: string): Observable<any> {
+        if (this.isLocalBrowser()) {
+            const stored = localStorage.getItem('erp_purchase_documents');
+            const docs = stored ? JSON.parse(stored) : [];
+            return of(docs.find((d: any) => d.id === id) || null);
+        } else {
+            return this.http.get<any>(`${this.baseUrl}/purchases/documents/${id}`);
         }
     }
 

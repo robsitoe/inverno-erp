@@ -105,11 +105,32 @@ let AccountingService = class AccountingService {
         }
         const jeRepo = await this.getJournalEntryRepo();
         const jlRepo = await this.getJournalLineRepo();
+        const accRepo = await this.getAccountRepo();
+        const preparedLines = await Promise.all(lines.map(async (line) => {
+            let jl = jlRepo.create(line);
+            if (!jl.id || jl.id.includes('TEMP')) {
+                jl.id = `JL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+            }
+            if (!jl.accountCode || !jl.accountName) {
+                const acc = await accRepo.findOne({ where: { id: jl.accountId } });
+                if (acc) {
+                    jl.accountCode = acc.code;
+                    jl.accountName = acc.name;
+                }
+            }
+            return jl;
+        }));
         const journalEntry = jeRepo.create({
             ...createJournalEntryDto,
-            lines: lines.map(line => jlRepo.create(line)),
+            lines: preparedLines,
         });
-        return jeRepo.save(journalEntry);
+        try {
+            return await jeRepo.save(journalEntry);
+        }
+        catch (err) {
+            console.error('[AccountingService] Error saving Journal Entry:', err);
+            throw new common_1.BadRequestException(`Erro ao gravar lançamento: ${err.message}`);
+        }
     }
     async findAllJournalEntries(companyId) {
         const listCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
@@ -189,13 +210,14 @@ let AccountingService = class AccountingService {
             movements
         };
     }
-    async loadPresetAccountSystem(presetName) {
-        const repo = await this.getAccountRepo();
-        const companyId = tenancy_context_1.TenancyContext.getCompanyId();
+    async loadPresetAccountSystem(presetName, companyId) {
+        const targetId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getAccountRepo(targetId);
         const count = await repo.count();
-        console.log(`[AccountingService] Checking preset for company ${companyId}. Current account count: ${count}`);
+        console.log(`[AccountingService] Checking preset for company ${targetId}. Current account count: ${count}`);
         if (count > 0) {
-            throw new common_1.BadRequestException('O sistema de contas já foi inicializado para esta empresa.');
+            console.log(`[AccountingService] Preset already loaded for company ${targetId}. Returning existing accounts.`);
+            return repo.find({ order: { code: 'ASC' } });
         }
         const preset = accounting_presets_1.ACCOUNT_PRESETS[presetName];
         if (!preset) {
@@ -203,9 +225,9 @@ let AccountingService = class AccountingService {
         }
         const accountsToSave = preset.map(acc => ({
             ...acc,
-            companyId
+            companyId: targetId
         }));
-        console.log(`[AccountingService] Loading ${accountsToSave.length} accounts from preset "${presetName}" for company ${companyId}`);
+        console.log(`[AccountingService] Loading ${accountsToSave.length} accounts from preset "${presetName}" for company ${targetId}`);
         return await repo.save(accountsToSave);
     }
     async listCostCenters() {

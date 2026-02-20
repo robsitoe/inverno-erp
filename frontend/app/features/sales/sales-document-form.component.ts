@@ -1,7 +1,8 @@
-import { Component, Input, HostListener, ViewChild, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, Input, HostListener, ViewChild, ChangeDetectorRef, NgZone, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { DocumentTypeModalComponent } from '../../shared/components/document-type-modal.component';
 import { EntityListModalComponent } from '../../shared/components/entity-list-modal.component';
 import { ArticleListModalComponent } from '../../shared/components/article-list-modal.component';
@@ -14,6 +15,7 @@ import { SalesDocument, SalesDocumentLine, WorkflowStatus, WorkflowHistory } fro
 import { AuditService } from '../../shared/audit.service';
 import { PeriodService } from '../../shared/period.service';
 import { DataService } from '../../services/data.service';
+import { NavigationService } from '../../services/navigation.service';
 import { SalesDocumentSearchModalComponent } from './sales-document-search-modal.component';
 import { WarehouseSearchModalComponent } from '../inventory/warehouse-search-modal.component';
 import { LocationSearchModalComponent } from '../inventory/location-search-modal.component';
@@ -610,7 +612,8 @@ interface GridRow {
     </div>
   `
 })
-export class SalesDocumentFormComponent {
+export class SalesDocumentFormComponent implements OnDestroy {
+  private destroy$ = new Subject<void>();
   @Input() viewMode: string = 'sales-form';
 
   activeCompanyId: string | null = null;
@@ -641,6 +644,22 @@ export class SalesDocumentFormComponent {
   ngOnInit() {
     this.loadActiveCompany();
     // loadSeries and loadNextNumber are now called inside loadActiveCompany
+
+    // Subscribe to navigation parameters
+    this.navigationService.params$.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      if (params && params.docId && params._targetView === 'sales-form') {
+        this.dataService.getSalesDocument(params.docId).subscribe(doc => {
+          if (doc) {
+            this.loadDocument(doc);
+          }
+        });
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadActiveCompany() {
@@ -1196,6 +1215,7 @@ export class SalesDocumentFormComponent {
     private auditService: AuditService,
     private periodService: PeriodService,
     private dataService: DataService,
+    private navigationService: NavigationService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
   ) {
@@ -1492,6 +1512,7 @@ export class SalesDocumentFormComponent {
       if (index < 20) {
         this.rows[index] = {
           ...this.rows[index],
+          articleId: line.articleId,
           articleCode: line.articleCode,
           description: line.articleName,
           quantity: line.quantity,
@@ -1541,7 +1562,7 @@ export class SalesDocumentFormComponent {
 
       return {
         id: `LINE${index + 1}`,
-        articleId: row.articleCode,
+        articleId: row.articleId || row.articleCode,
         articleCode: row.articleCode,
         articleName: row.description,
         quantity: row.quantity,
@@ -1556,7 +1577,7 @@ export class SalesDocumentFormComponent {
     });
 
     return {
-      id: `DOC${Date.now()}`, // This ID might be wrong for existing docs, but okay for print preview
+      id: this.currentId || `DOC${Date.now()}`,
       documentType: this.selectedDocType,
       documentNumber: documentNumber,
       series: this.currentSeries,
@@ -1938,6 +1959,15 @@ export class SalesDocumentFormComponent {
       next: (res) => {
         this.status = res.status;
         this.loadWorkflowHistory();
+
+        // If posted, trigger the accounting integration side effects
+        if (action === 'POST') {
+          const doc = this.getCurrentDocument();
+          // Ensure we use the latest status from resolution
+          doc.status = res.status;
+          this.processPostSaveActions(doc, this.currentId!, doc.documentNumber, false, false);
+        }
+
         alert(`Documento ${action === 'SUBMIT' ? 'submetido' : action === 'APPROVE' ? 'aprovado' : action === 'REJECT' ? 'rejeitado' : 'lançado'} com sucesso.`);
       },
       error: (err) => {

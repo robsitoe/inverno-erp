@@ -78,6 +78,10 @@ export class JournalLine {
     @Column()
     accountId: string;
 
+    @ManyToOne(() => Account)
+    @JoinColumn({ name: 'accountId' })
+    account: Account;
+
     @Column({ nullable: true })
     accountCode: string;
 

@@ -1,8 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Account, JournalEntry, JournalLine, SalesDocument, Article, AuditLog, Journal, FinancialReportConfig } from './models';
+
+export interface AccountingIssue {
+    type: 'IMBALANCE' | 'MISSING_ACCOUNT' | 'SYNTHETIC_POSTING' | 'INVALID_TRANSACTION' | 'DATA_CORRUPTION' | 'MISSING_POSTING' | 'UNKNOWN';
+    severity: 'CRITICAL' | 'WARNING' | 'INFO';
+    description: string;
+    relatedId?: string;
+    details?: any;
+}
 import { DEFAULT_ACCOUNTS, DEFAULT_JOURNALS } from './sample-data';
 import { DataService } from '../services/data.service';
-import { lastValueFrom, Observable } from 'rxjs';
+import { lastValueFrom, Observable, BehaviorSubject } from 'rxjs';
+import { ToasterService } from '../services/toaster.service';
 
 @Injectable({
     providedIn: 'root'
@@ -23,10 +32,21 @@ export class AccountingService {
     private allReportConfigs: FinancialReportConfig[] = [];
     private reportConfigs: FinancialReportConfig[] = [];
 
-    private nextJournalId = 1;
-    private activeCompanyId: string | null = null;
+    // Reactive Data Streams
+    private accounts$ = new BehaviorSubject<Account[]>([]);
+    private journalEntries$ = new BehaviorSubject<JournalEntry[]>([]);
+    private journals$ = new BehaviorSubject<Journal[]>([]);
+    public accountsChanged$ = this.accounts$.asObservable();
+    public entriesChanged$ = this.journalEntries$.asObservable();
+    public journalsChanged$ = this.journals$.asObservable();
 
-    constructor(private dataService: DataService) {
+    private activeCompanyId: string | null = null;
+    private nextJournalId = 1;
+
+    constructor(
+        private dataService: DataService,
+        private toasterService: ToasterService
+    ) {
         this.dataService.activeCompany$.subscribe(company => {
             if (company) {
                 this.activeCompanyId = company.id;
@@ -88,13 +108,14 @@ export class AccountingService {
             this.allAccounts = [];
             throw e; // Propagate error so UI can handle it
         }
-        this.accounts = this.allAccounts;
+        this.accounts = this.filterByCompany(this.allAccounts);
+        this.accounts$.next(this.accounts);
     }
 
     async loadAccountsPreset(presetName: string) {
         if (!this.activeCompanyId) return;
         try {
-            await lastValueFrom(this.dataService.loadAccountsPreset(presetName));
+            await lastValueFrom(this.dataService.loadAccountsPreset(presetName, this.activeCompanyId || undefined));
             await this.loadAccounts(); // Refresh
             await this.loadJournals(); // Refresh journals as well just in case
         } catch (e) {
@@ -111,9 +132,18 @@ export class AccountingService {
         // Actually, the previous implementation was doing a loop. 
         // Let's try to use the backend preset "PGC-NIR" by default if it's the first time.
         try {
-            await this.loadAccountsPreset('PGC-NIR');
-        } catch (e) {
-            // Fallback to manual loop if backend endpoint fails or doesn't exist
+            await lastValueFrom(this.dataService.loadAccountsPreset('PGC-NIR', this.activeCompanyId || undefined));
+            await this.loadAccounts(); // Final refresh to ensure all variables are in sync
+        } catch (e: any) {
+            // If it's a conflict (already initialized), just reload and ignore error
+            if (e.status === 400 || (e.error && e.error.message && e.error.message.includes('inicializado'))) {
+                console.log('Accounts already initialized on server. Syncing...');
+                await this.loadAccounts();
+                return;
+            }
+
+            console.warn('Backend preset failed, attempting manual local initialization...', e);
+
             const newAccounts: Account[] = DEFAULT_ACCOUNTS.map(acc => ({
                 ...acc,
                 id: `ACC${this.activeCompanyId}${acc.code.replace(/\./g, '')}`, // Unique ID per company
@@ -133,9 +163,13 @@ export class AccountingService {
 
             // Save to backend
             for (const acc of newAccounts) {
-                await lastValueFrom(this.dataService.saveAccount(acc));
+                try {
+                    await lastValueFrom(this.dataService.saveAccount(acc));
+                } catch (saveErr) {
+                    console.error(`Failed to save account ${acc.code} during manual init:`, saveErr);
+                }
             }
-            this.allAccounts = newAccounts;
+            await this.loadAccounts(); // Refresh after manual init
         }
     }
 
@@ -166,17 +200,39 @@ export class AccountingService {
             throw e;
         }
         this.journals = this.allJournals;
+        this.journals$.next(this.journals);
     }
 
     private async loadJournalEntries() {
         try {
             this.allJournalEntries = await lastValueFrom(this.dataService.getJournalEntries(this.activeCompanyId || undefined));
-            const maxId = Math.max(...this.allJournalEntries.map(e => parseInt(e.id.replace('JE', '')) || 0), 0);
+
+            // Sanitize data: Ensure all numeric fields are actual numbers to avoid string concatenation errors in templates
+            this.allJournalEntries = this.allJournalEntries.map(entry => ({
+                ...entry,
+                lines: (entry.lines || []).map(line => ({
+                    ...line,
+                    debit: Number(line.debit) || 0,
+                    credit: Number(line.credit) || 0
+                }))
+            }));
+
+            // Safer ID parsing for the next ID generator
+            const ids = this.allJournalEntries
+                .map(e => {
+                    const match = e.id.match(/\d+/);
+                    return match ? parseInt(match[0]) : 0;
+                })
+                .filter(id => !isNaN(id));
+
+            const maxId = ids.length > 0 ? Math.max(...ids) : 0;
             this.nextJournalId = maxId + 1;
         } catch (e) {
+            console.error('Failed to load journal entries:', e);
             this.allJournalEntries = [];
         }
-        this.journalEntries = this.allJournalEntries;
+        this.journalEntries = this.filterByCompany(this.allJournalEntries);
+        this.journalEntries$.next(this.journalEntries);
     }
 
     private loadAuditLogs() {
@@ -404,6 +460,20 @@ export class AccountingService {
     }
 
     createSalesJournalEntry(salesDoc: SalesDocument, customer: any, articles: Article[], paymentCondition: 'PRONTO' | 'PRAZO' = 'PRONTO', paymentAccountId?: string): JournalEntry {
+        // Prevent duplicate entries for the same document
+        const existing = this.allJournalEntries.find(e => e.sourceDocument === salesDoc.id && e.sourceType === 'SALE' && !e.description?.includes('CMV'));
+
+        if (existing) {
+            const shouldBePosted = salesDoc.status === 'POSTED' || salesDoc.status === 'APPROVED' || paymentCondition === 'PRONTO' || salesDoc.documentType === 'VD';
+            if (existing.status === 'DRAFT' && shouldBePosted) {
+                existing.status = 'POSTED';
+                this.updateAccountBalances(existing.lines);
+                this.saveEntryResiliently(existing);
+                this.logAudit('UPDATE', 'JOURNAL_ENTRY', existing.id, `Status updated to POSTED for sales doc ${salesDoc.documentNumber}`);
+            }
+            return existing;
+        }
+
         const lines: JournalLine[] = [];
         const entryId = `JE${this.nextJournalId++}`;
         const salesJournal = this.journals.find(j => j.type === 'SALES') || this.journals[0];
@@ -449,7 +519,7 @@ export class AccountingService {
         const revenueMap = new Map<string, number>(); // AccountID -> Amount
 
         salesDoc.lines.forEach(line => {
-            const article = articles.find(a => a.id === line.articleId);
+            const article = articles.find(a => a.id === line.articleId || a.code === line.articleCode);
             const revenueAccountId = article?.revenueAccountId || '58'; // 58 = Vendas de Mercadorias (Default)
 
             const currentAmount = revenueMap.get(revenueAccountId) || 0;
@@ -500,16 +570,105 @@ export class AccountingService {
 
         this.allJournalEntries.push(entry);
         this.journalEntries = this.filterByCompany(this.allJournalEntries);
-        this.dataService.saveJournalEntry(entry).subscribe();
+        this.saveEntryResiliently(entry);
 
-        const statusMsg = entry.status === 'POSTED' ? 'posted' : 'DRAFT status';
+        const statusMsg = entry.status === 'POSTED' ? 'lançado' : 'como rascunho';
+        this.toasterService.showSuccess('Integração Contabilística', `Lançamento ${entry.id} criado ${statusMsg} para ${salesDoc.documentNumber}.`);
         this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, `Automatic sales journal entry created in ${statusMsg}`);
 
+
+        if (entry.status === 'POSTED') {
+            this.updateAccountBalances(entry.lines);
+        }
+
+        return entry;
+    }
+
+    /**
+     * Creates journal entries for Purchase Documents
+     */
+    createPurchaseJournalEntry(purchaseDoc: any, supplier: any): JournalEntry {
+        const lines: JournalLine[] = [];
+        const entryId = `JE${this.nextJournalId++}`;
+        const journal = this.journals.find(j => j.type === 'PURCHASES') || this.journals.find(j => j.code === 'PUR') || this.journals[0];
+
+        // 1. Débito no Inventário / Gastos
+        lines.push({
+            id: `${entryId}-1`,
+            accountId: '22', // Default Inventory
+            accountCode: '31.1.1',
+            accountName: 'Mercadorias',
+            debit: Number(purchaseDoc.merchandiseTotal) || 0,
+            credit: 0,
+            description: 'Compra de mercadorias'
+        });
+
+        // 2. Débito no IVA
+        if (Number(purchaseDoc.taxTotal) > 0) {
+            lines.push({
+                id: `${entryId}-2`,
+                accountId: '53', // IVA Recuperável
+                accountCode: '32.2',
+                accountName: 'IVA a Recuperar',
+                debit: Number(purchaseDoc.taxTotal),
+                credit: 0,
+                description: 'IVA dedutível'
+            });
+        }
+
+        // 3. Crédito no Fornecedor
+        const supplierAccountId = purchaseDoc.supplierAccountId || supplier?.payableAccountId || '49';
+        const supplierAcc = this.accounts.find(a => a.id === supplierAccountId || a.code === '44.1.1');
+
+        lines.push({
+            id: `${entryId}-3`,
+            accountId: supplierAcc?.id || supplierAccountId,
+            accountCode: supplierAcc?.code || '44.1.1',
+            accountName: supplierAcc?.name || 'Fornecedores Nacionais',
+            debit: 0,
+            credit: Number(purchaseDoc.totalValue) || 0,
+            description: `Fornecedor: ${purchaseDoc.supplierName}`
+        });
+
+        const entry: JournalEntry = {
+            id: entryId,
+            companyId: this.activeCompanyId || undefined,
+            journalId: journal.id,
+            date: purchaseDoc.date,
+            description: `Compra ${purchaseDoc.series}/${purchaseDoc.number} - ${purchaseDoc.supplierName}`,
+            reference: purchaseDoc.reference || `${purchaseDoc.series}/${purchaseDoc.number}`,
+            sourceDocument: purchaseDoc.id,
+            sourceType: 'PURCHASE',
+            lines: lines,
+            status: (purchaseDoc.status === 'APPROVED' || purchaseDoc.status === 'POSTED') ? 'POSTED' : 'DRAFT',
+            createdBy: 'Sistema',
+            createdAt: new Date()
+        };
+
+        this.allJournalEntries.push(entry);
+        this.journalEntries = this.filterByCompany(this.allJournalEntries);
+        this.saveEntryResiliently(entry);
+
+        if (entry.status === 'POSTED') {
+            this.updateAccountBalances(entry.lines);
+            this.toasterService.showSuccess('Integração Compras', `Lançamento ${entry.id} criado para ${purchaseDoc.series}/${purchaseDoc.number}.`);
+        }
 
         return entry;
     }
 
     createCOGSEntry(salesDoc: SalesDocument, articles: Article[]): void {
+        // Prevent duplicate entries
+        const existing = this.allJournalEntries.find(e => e.sourceDocument === salesDoc.id && e.sourceType === 'SALE' && e.description?.includes('CMV'));
+        if (existing) {
+            if (existing.status === 'DRAFT' && (salesDoc.status === 'POSTED' || salesDoc.status === 'APPROVED')) {
+                existing.status = 'POSTED';
+                this.updateAccountBalances(existing.lines);
+                this.saveEntryResiliently(existing);
+            }
+            return;
+        }
+
         const lines: JournalLine[] = [];
         const entryId = `JE${this.nextJournalId++}`;
         const generalJournal = this.journals.find(j => j.type === 'GENERAL') || this.journals[0];
@@ -525,9 +684,9 @@ export class AccountingService {
         const cogsGroups: COGSGroup[] = [];
 
         salesDoc.lines.forEach(line => {
-            const article = articles.find(a => a.id === line.articleId);
+            const article = articles.find(a => a.id === line.articleId || a.code === line.articleCode);
             if (article && article.stockControl) {
-                const cogs = article.purchasePrice * line.quantity;
+                const cogs = (article.purchasePrice || 0) * line.quantity;
                 const cogsAccountId = article.cogsAccountId || '61'; // 61 = CMV (Default)
                 const inventoryAccountId = article.inventoryAccountId || '22'; // 22 = Produtos Alimentares (Default)
 
@@ -580,7 +739,7 @@ export class AccountingService {
             sourceDocument: salesDoc.id,
             sourceType: 'SALE',
             lines: lines,
-            status: 'DRAFT',
+            status: (salesDoc.status === 'POSTED' || salesDoc.status === 'APPROVED') ? 'POSTED' : 'DRAFT',
             createdBy: 'Sistema',
             createdAt: new Date()
         };
@@ -588,11 +747,31 @@ export class AccountingService {
         this.allJournalEntries.push(entry);
         this.journalEntries = this.filterByCompany(this.allJournalEntries);
         this.dataService.saveJournalEntry(entry).subscribe();
-        this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, 'Automatic COGS entry created in DRAFT status');
+
+        if (entry.status === 'POSTED') {
+            this.updateAccountBalances(entry.lines);
+            this.toasterService.showSuccess('Integração CMV', `Lançamento de CMV ${entry.id} criado para ${salesDoc.documentNumber}.`);
+        }
+
+        this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, 'Automatic COGS entry created');
     }
 
     createManualJournalEntry(entry: JournalEntry): void {
-        // Ensure ID is unique if not provided or conflict
+        // Prevent duplicate entries for automated integrations
+        if (entry.sourceDocument) {
+            const existing = this.allJournalEntries.find(e => e.sourceDocument === entry.sourceDocument && e.sourceType === entry.sourceType);
+            if (existing) {
+                if (existing.status === 'DRAFT' && entry.status === 'POSTED') {
+                    existing.status = 'POSTED';
+                    this.updateAccountBalances(existing.lines);
+                    this.saveEntryResiliently(existing);
+                    this.journalEntries$.next(this.journalEntries);
+                }
+                return;
+            }
+        }
+
+        // Ensure ID is unique
         if (!entry.id || this.journalEntries.find(e => e.id === entry.id)) {
             entry.id = `JE${this.nextJournalId++}`;
         }
@@ -600,71 +779,52 @@ export class AccountingService {
         // Ensure Journal ID
         if (!entry.journalId) {
             const generalJournal = this.journals.find(j => j.type === 'GENERAL');
-            entry.journalId = generalJournal ? generalJournal.id : this.journals[0].id;
+            entry.journalId = generalJournal ? generalJournal.id : (this.journals[0]?.id || 'GENERAL');
         }
 
-        // VALIDATION: Check if accounts allow posting (Rule: No posting to synthetic accounts)
+        // VALIDATION: No synthetic accounts
         for (const line of entry.lines) {
             const account = this.accounts.find(a => a.id === line.accountId);
             if (account && !account.allowPosting) {
-                throw new Error(`Conta ${account.code} - ${account.name} é uma conta sintética e não permite lançamentos diretos.`);
+                this.toasterService.showError('Erro de Validação', `Conta ${account.code} é sintética e não permite lançamentos.`);
+                return;
             }
         }
 
         if (this.activeCompanyId) {
             entry.companyId = this.activeCompanyId;
         }
+
         this.allJournalEntries.push(entry);
         this.journalEntries = this.filterByCompany(this.allJournalEntries);
+        this.journalEntries$.next(this.journalEntries);
 
-        // Only update balances if POSTED
         if (entry.status === 'POSTED') {
             this.updateAccountBalances(entry.lines);
         }
 
-        // Clean object for backend (remove auto-generated fields that might be rejected)
-        const entryToSave = { ...entry };
-        delete (entryToSave as any).createdAt;
-        delete (entryToSave as any).createdBy;
-        delete (entryToSave as any).updatedAt;
-        delete (entryToSave as any).updatedBy;
-
-        this.dataService.saveJournalEntry(entryToSave).subscribe({
-            next: (saved) => {
-                // Update with backend response (e.g. valid ID)
-                Object.assign(entry, saved);
-                this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, 'Manual journal entry created', entry.createdBy);
-            },
-            error: (err) => {
-                console.error('Failed to save manual journal entry:', err);
-                if (err.error && err.error.message) {
-                    console.error('Server validation error:', err.error.message);
-                }
-            }
-        });
+        this.saveEntryResiliently(entry);
     }
 
     createJournalEntry(entry: JournalEntry): void {
         this.createManualJournalEntry(entry);
     }
 
-    // Reverse a journal entry (Estorno)
     reverseJournalEntry(entryId: string, reason: string, userId: string): void {
         const originalEntry = this.journalEntries.find(e => e.id === entryId);
         if (!originalEntry) throw new Error('Lançamento original não encontrado');
-        if (originalEntry.status !== 'POSTED') throw new Error('Apenas lançamentos lançados podem ser estornados');
 
-        // Create Reversal Entry
         const reversalId = `JE${this.nextJournalId++}`;
         const reversalLines = originalEntry.lines.map(line => ({
             ...line,
-            id: `${reversalId}-${line.id.split('-')[1]}`,
-            debit: line.credit, // Swap debit/credit
+            id: `${reversalId}-${line.id.split('-')[1] || Math.random().toString(36).substr(2, 4)}`,
+            debit: line.credit,
             credit: line.debit
         }));
 
         const reversalEntry: JournalEntry = {
             id: reversalId,
+            companyId: this.activeCompanyId || originalEntry.companyId,
             journalId: originalEntry.journalId,
             date: new Date(),
             description: `Estorno de ${originalEntry.id} - ${originalEntry.description}`,
@@ -672,53 +832,6 @@ export class AccountingService {
             sourceDocument: originalEntry.sourceDocument,
             sourceType: 'REVERSAL',
             lines: reversalLines,
-            status: 'DRAFT', // Created as DRAFT
-            createdBy: userId,
-            createdAt: new Date(),
-            correctionReason: reason,
-            relatedEntryId: originalEntry.id
-        };
-
-        // Save Reversal (Original status remains POSTED until Reversal is POSTED)
-        if (this.activeCompanyId) {
-            reversalEntry.companyId = this.activeCompanyId;
-        }
-        this.allJournalEntries.push(reversalEntry);
-        this.journalEntries = this.filterByCompany(this.allJournalEntries);
-        this.dataService.saveJournalEntry(reversalEntry).subscribe();
-
-        // Audit
-        this.logAudit('CREATE', 'JOURNAL_ENTRY', reversalEntry.id, `Reversal draft created for ${originalEntry.id}`, userId, reason);
-    }
-
-    // Correct a journal entry
-    correctJournalEntry(originalEntryId: string, correctedEntryData: Partial<JournalEntry>, reason: string, userId: string): void {
-        const originalEntry = this.journalEntries.find(e => e.id === originalEntryId);
-        if (!originalEntry) throw new Error('Lançamento original não encontrado');
-        if (originalEntry.status !== 'POSTED') throw new Error('Apenas lançamentos lançados podem ser corrigidos');
-
-        // 1. Create Reversal Entry (POSTED immediately for Correction flow, or should it be draft too? 
-        // For now, keeping correction flow atomic/automatic as it creates BOTH reversal and new entry)
-        // However, to be consistent, maybe we should use the new reverse logic? 
-        // But correction is usually an atomic operation. Let's keep it as is for now unless requested.
-
-        const reversalId = `JE${this.nextJournalId++}`;
-        const reversalLines = originalEntry.lines.map(line => ({
-            ...line,
-            id: `${reversalId}-${line.id.split('-')[1]}`,
-            debit: line.credit, // Swap debit/credit
-            credit: line.debit
-        }));
-
-        const reversalEntry: JournalEntry = {
-            id: reversalId,
-            journalId: originalEntry.journalId, // Keep same journal
-            date: new Date(),
-            description: `Estorno de ${originalEntry.id} - ${originalEntry.description}`,
-            reference: originalEntry.reference,
-            sourceDocument: originalEntry.sourceDocument,
-            sourceType: 'REVERSAL',
-            lines: reversalLines,
             status: 'POSTED',
             createdBy: userId,
             createdAt: new Date(),
@@ -726,50 +839,94 @@ export class AccountingService {
             relatedEntryId: originalEntry.id
         };
 
-        // 2. Create Corrected Entry
+        this.allJournalEntries.push(reversalEntry);
+        this.journalEntries = this.filterByCompany(this.allJournalEntries);
+        this.updateAccountBalances(reversalLines);
+        this.saveEntryResiliently(reversalEntry);
+
+        this.logAudit('CREATE', 'JOURNAL_ENTRY', reversalEntry.id, `Estorno criado para ${originalEntry.id}`, userId, reason);
+    }
+
+    correctJournalEntry(originalEntryId: string, correctedEntryData: Partial<JournalEntry>, reason: string, userId: string): void {
+        this.reverseJournalEntry(originalEntryId, reason, userId);
+
+        const originalEntryId_copy = originalEntryId;
         const correctedId = `JE${this.nextJournalId++}`;
+        const originalEntry = this.journalEntries.find(e => e.id === originalEntryId_copy);
+
         const correctedEntry: JournalEntry = {
-            ...originalEntry,
+            ...originalEntry!,
             ...correctedEntryData,
             id: correctedId,
-            journalId: originalEntry.journalId, // Keep same journal
-            date: new Date(), // Correction date is now
-            description: `Correção de ${originalEntry.id} - ${correctedEntryData.description || originalEntry.description}`,
+            date: new Date(),
+            description: `Correção: ${correctedEntryData.description || originalEntry?.description}`,
             sourceType: 'CORRECTION',
             status: 'POSTED',
             createdBy: userId,
             createdAt: new Date(),
             correctionReason: reason,
-            relatedEntryId: originalEntry.id,
-            lines: correctedEntryData.lines || [] // Must provide lines
+            relatedEntryId: originalEntryId_copy,
+            lines: correctedEntryData.lines || []
         };
 
-        // 3. Update Original Entry Status
-        const oldStatus = originalEntry.status;
-        originalEntry.status = 'CORRECTED';
-        originalEntry.updatedBy = userId;
-        originalEntry.updatedAt = new Date();
-        originalEntry.correctionReason = reason;
-
-        // 4. Save Everything
-        if (this.activeCompanyId) {
-            reversalEntry.companyId = this.activeCompanyId;
-            correctedEntry.companyId = this.activeCompanyId;
-        }
-        this.allJournalEntries.push(reversalEntry);
         this.allJournalEntries.push(correctedEntry);
         this.journalEntries = this.filterByCompany(this.allJournalEntries);
-
-        // Update balances: Reversal (undo original impact) + New Entry (apply new impact)
-        this.updateAccountBalances(reversalLines);
         this.updateAccountBalances(correctedEntry.lines);
+        this.saveEntryResiliently(correctedEntry);
 
-        this.dataService.saveJournalEntry(reversalEntry).subscribe();
-        this.dataService.saveJournalEntry(correctedEntry).subscribe();
-        this.dataService.saveJournalEntry(originalEntry).subscribe();
+        // Mark original as corrected
+        if (originalEntry) {
+            originalEntry.status = 'CORRECTED';
+            this.saveEntryResiliently(originalEntry);
+        }
+    }
 
-        // 5. Audit
-        this.logAudit('CORRECT', 'JOURNAL_ENTRY', originalEntry.id, `Entry corrected. Reversal: ${reversalId}, New: ${correctedId}`, userId, reason, { status: oldStatus }, { status: 'CORRECTED' });
+    private saveEntryResiliently(entry: JournalEntry): void {
+        const dto: any = {
+            id: entry.id,
+            companyId: entry.companyId || null,
+            journalId: entry.journalId,
+            description: entry.description,
+            date: this.ensureIsoDate(entry.date),
+            status: entry.status,
+            reference: entry.reference || '',
+            sourceDocument: entry.sourceDocument,
+            sourceType: entry.sourceType,
+            lines: (entry.lines || []).map(l => ({
+                id: l.id,
+                accountId: l.accountId,
+                accountCode: l.accountCode,
+                accountName: l.accountName,
+                description: l.description || entry.description,
+                debit: Number(l.debit) || 0,
+                credit: Number(l.credit) || 0
+            }))
+        };
+
+        this.dataService.saveJournalEntry(dto).subscribe({
+            next: (saved) => {
+                if (saved && saved.id) {
+                    const local = this.allJournalEntries.find(e => e.id === entry.id);
+                    if (local) Object.assign(local, saved);
+                    this.journalEntries$.next(this.journalEntries);
+                }
+            },
+            error: (err) => {
+                console.error(`[AccountingService] Failed to save entry ${entry.id}:`, err);
+                const apiError = err.error?.message || err.message || 'Error';
+                this.toasterService.showError('Erro de Integração', `Falha ao gravar ${entry.id}: ${apiError}`);
+            }
+        });
+    }
+
+    private ensureIsoDate(date: any): string {
+        try {
+            if (!date) return new Date().toISOString().split('T')[0];
+            const d = new Date(date);
+            return isNaN(d.getTime()) ? new Date().toISOString().split('T')[0] : d.toISOString().split('T')[0];
+        } catch (e) {
+            return new Date().toISOString().split('T')[0];
+        }
     }
 
     // Safe cleanup of zero-value entries
@@ -1131,5 +1288,413 @@ export class AccountingService {
 
             return { account, debit, credit };
         });
+    }
+
+    /**
+     * Smart Diagnostics: Analyzes the accounting data to find possible causes of imbalances
+     */
+    /**
+     * Smart Diagnostics: Analyzes the accounting data to find possible causes of imbalances
+     */
+    runAccountingDiagnostics(salesDocs: any[] = [], purchaseDocs: any[] = []): AccountingIssue[] {
+        const issues: AccountingIssue[] = [];
+
+        // 1. Check for unbalanced Journal Entries (POSTED only)
+        const postedEntries = this.journalEntries.filter(e => e.status === 'POSTED');
+        postedEntries.forEach(entry => {
+            const totalDebit = entry.lines.reduce((sum, line) => sum + (line.debit || 0), 0);
+            const totalCredit = entry.lines.reduce((sum, line) => sum + (line.credit || 0), 0);
+
+            if (Math.abs(totalDebit - totalCredit) > 0.01) {
+                issues.push({
+                    type: 'IMBALANCE',
+                    severity: 'CRITICAL',
+                    description: `Lançamento ${entry.id} está desequilibrado: Débito (${totalDebit.toFixed(2)}) ≠ Crédito (${totalCredit.toFixed(2)})`,
+                    relatedId: entry.id,
+                    details: { diff: Math.abs(totalDebit - totalCredit) }
+                });
+            }
+        });
+
+        // 2. Check for postings to synthetic accounts (POSTED only)
+        postedEntries.forEach(entry => {
+            entry.lines.forEach(line => {
+                const account = this.accounts.find(a => a.id === line.accountId);
+                if (account && !account.allowPosting) {
+                    issues.push({
+                        type: 'SYNTHETIC_POSTING',
+                        severity: 'WARNING',
+                        description: `Lançamento ${entry.id} contém movimentação na conta sintética ${account.code} - ${account.name}`,
+                        relatedId: entry.id
+                    });
+                }
+                if (!account) {
+                    issues.push({
+                        type: 'MISSING_ACCOUNT',
+                        severity: 'CRITICAL',
+                        description: `Lançamento ${entry.id} refere-se a uma conta inexistente (ID: ${line.accountId})`,
+                        relatedId: entry.id
+                    });
+                }
+            });
+        });
+
+        // 3. Document Integration Check (MISSING_POSTING)
+        // Check Sales Documents
+        salesDocs.forEach(doc => {
+            const isFinalState = doc.status === 'APPROVED' || doc.status === 'POSTED';
+            if (isFinalState) {
+                const hasPosting = postedEntries.some(e => e.sourceDocument === doc.id);
+                if (!hasPosting) {
+                    issues.push({
+                        type: 'MISSING_POSTING',
+                        severity: 'WARNING',
+                        description: `Fatura de Venda ${doc.series}/${doc.seriesNumber} está ${doc.status === 'POSTED' ? 'Lançada' : 'Aprovada'}, mas não possui registo na contabilidade.`,
+                        relatedId: doc.id,
+                        details: { docType: 'SALES', docRef: `${doc.series}/${doc.seriesNumber}`, docId: doc.id }
+                    });
+                }
+            }
+        });
+
+        // Check Purchase Documents
+        purchaseDocs.forEach(doc => {
+            const isFinalState = doc.status === 'APPROVED' || doc.status === 'POSTED';
+            if (isFinalState) {
+                const hasPosting = postedEntries.some(e => e.sourceDocument === doc.id);
+                if (!hasPosting) {
+                    issues.push({
+                        type: 'MISSING_POSTING',
+                        severity: 'WARNING',
+                        description: `Fatura de Compra ${doc.series}/${doc.number} está ${doc.status === 'POSTED' ? 'Lançada' : 'Aprovada'}, mas não possui registo na contabilidade.`,
+                        relatedId: doc.id,
+                        details: { docType: 'PURCHASES', docRef: `${doc.series}/${doc.number}`, docId: doc.id }
+                    });
+                }
+            }
+        });
+
+        // 4. Data Integrity: Sum of all root account balances (those without parents in the list)
+        let globalDebitSum = 0;
+        const currentAccountIds = new Set(this.accounts.map(a => a.id));
+
+        this.accounts.filter(a => !a.parentId || !currentAccountIds.has(a.parentId)).forEach(account => {
+            const balance = Number(account.balance) || 0;
+            if (account.type === 'ASSET' || account.type === 'EXPENSE') {
+                globalDebitSum += balance;
+            } else {
+                globalDebitSum -= balance;
+            }
+        });
+
+        if (Math.abs(globalDebitSum) > 0.01) {
+            // Smart Diff Analysis: Look for entries matching the difference
+            const diffValue = Math.abs(globalDebitSum);
+            const suspiciousEntries = postedEntries.filter(e => {
+                const entrySum = e.lines.reduce((s, l) => s + (l.debit || 0), 0);
+                return Math.abs(entrySum - diffValue) < 0.01;
+            });
+
+            issues.push({
+                type: 'DATA_CORRUPTION',
+                severity: 'CRITICAL',
+                description: `O Somatório Global do Balanço não é zero (Diferencial: ${globalDebitSum.toFixed(2)} MT). Isto indica que alguns lançamentos foram registados sem atualizar corretamente os saldos.`,
+                details: {
+                    diff: globalDebitSum,
+                    suspiciousEntryIds: suspiciousEntries.map(e => e.id)
+                }
+            });
+
+            if (suspiciousEntries.length > 0) {
+                issues.push({
+                    type: 'UNKNOWN',
+                    severity: 'INFO',
+                    description: `Análise Inteligente: Detetámos ${suspiciousEntries.length} lançamentos que coincidem com o valor da diferença. Estes são os candidatos mais prováveis para o desequilíbrio.`,
+                    details: { entries: suspiciousEntries }
+                });
+            }
+        }
+
+        // 5. Check for Drafts that should be posted (Just INFO/WARNING)
+        const drafts = this.journalEntries.filter(e => e.status === 'DRAFT');
+        if (drafts.length > 0) {
+            issues.push({
+                type: 'INVALID_TRANSACTION',
+                severity: 'INFO',
+                description: `Existem ${drafts.length} lançamentos em RASCUNHO que não estão refletidos nos saldos atuais.`,
+                details: { count: drafts.length }
+            });
+        }
+
+        // 7. Hierarchy Integrity Check (Orphan detection)
+        this.accounts.forEach(acc => {
+            if (acc.parentId && !currentAccountIds.has(acc.parentId)) {
+                issues.push({
+                    type: 'DATA_CORRUPTION',
+                    severity: 'CRITICAL',
+                    description: `Divergência de Hierarquia: A conta ${acc.code} é órfã (Pai ID: ${acc.parentId}). Isso impede a consolidação correta dos saldos no Balancete.`,
+                    relatedId: acc.id,
+                    details: { id: acc.id, code: acc.code, parentId: acc.parentId }
+                });
+            }
+        });
+
+        return issues;
+    }
+
+    /**
+     * Recalculates all account balances from scratch based on POSTED journal entries
+     * This is the extreme "Repair" function
+     */
+    /**
+     * Recalculates all account balances from scratch based on POSTED journal entries
+     * This is the extreme "Repair" function
+     */
+    recalculateAllBalances(): Observable<void> {
+        return new Observable(observer => {
+            try {
+                // 1. DEDUPLICATE FIRST (Safety measure)
+                this.repairAccountDuplication().then(async () => {
+
+                    // 1b. REPAIR ORPHAN HIERARCHY (Fix stale parentIds)
+                    await this.repairOrphanHierarchy();
+
+                    // 2. Reset all account balances to 0
+                    this.accounts.forEach(acc => acc.balance = 0);
+
+                    // 3. Identify all posted entries (use allJournalEntries, NOT filtered)
+                    const postedEntries = this.allJournalEntries.filter(e => e.status === 'POSTED');
+
+                    // 4. Process each line of each entry
+                    postedEntries.forEach(entry => {
+                        entry.lines.forEach(line => {
+                            let account = this.accounts.find(a => a.id === line.accountId);
+                            if (account) {
+                                const amount = (account.type === 'ASSET' || account.type === 'EXPENSE')
+                                    ? (Number(line.debit) - Number(line.credit))
+                                    : (Number(line.credit) - Number(line.debit));
+
+                                // Walk up the tree
+                                let currentAcc: Account | undefined = account;
+                                let depthIdx = 0;
+                                const maxDepth = 10; // Safety against circular refs
+
+                                while (currentAcc && depthIdx < maxDepth) {
+                                    currentAcc.balance = Number((currentAcc.balance || 0).toFixed(2)) + Number(amount.toFixed(2));
+
+                                    if (currentAcc.parentId) {
+                                        const parent = this.accounts.find(a => a.id === currentAcc!.parentId);
+                                        if (!parent) {
+                                            console.warn(`[AccountingService] Orphan detected! Account ${currentAcc.code} has parentId ${currentAcc.parentId} but it was not found.`);
+                                        }
+                                        currentAcc = parent;
+                                    } else {
+                                        currentAcc = undefined;
+                                    }
+                                    depthIdx++;
+                                }
+                            }
+                        });
+                    });
+
+                    // 5. Save all accounts to backend
+                    this.persistAllAccountBalances().then(() => {
+                        observer.next();
+                        observer.complete();
+                    });
+                });
+
+            } catch (err) {
+                observer.error(err);
+            }
+        });
+    }
+
+    /**
+     * Repairs orphaned accounts by rebuilding parentId links from account codes.
+     * An account like '11.2.1' should have a parent with code '11.2'.
+     * This handles the case where parentIds are stale (numeric old IDs that no longer exist).
+     */
+    async repairOrphanHierarchy(): Promise<number> {
+        const currentIds = new Set(this.accounts.map(a => a.id));
+        const repaired: Account[] = [];
+
+        for (const acc of this.accounts) {
+            const isOrphan = acc.parentId && !currentIds.has(acc.parentId);
+            if (!isOrphan) continue;
+
+            // Derive parent code from account code (e.g., '11.2.1' → '11.2', '21.1' → '21')
+            const codeParts = acc.code.split('.');
+            if (codeParts.length <= 1) {
+                // Top-level account, should have no parent
+                console.log(`[HierarchyRepair] Account ${acc.code} is top-level, clearing stale parentId.`);
+                acc.parentId = undefined;
+                repaired.push(acc);
+                continue;
+            }
+
+            codeParts.pop(); // Remove last segment
+            const expectedParentCode = codeParts.join('.');
+            const correctParent = this.accounts.find(a => a.code === expectedParentCode);
+
+            if (correctParent) {
+                console.log(`[HierarchyRepair] Repaired ${acc.code}: parentId ${acc.parentId} → ${correctParent.id} (${correctParent.code})`);
+                acc.parentId = correctParent.id;
+                repaired.push(acc);
+            } else {
+                // Parent code doesn't exist either - clear the stale link to avoid blocking
+                console.warn(`[HierarchyRepair] Cannot find parent '${expectedParentCode}' for account ${acc.code}. Clearing stale parentId.`);
+                acc.parentId = undefined;
+                repaired.push(acc);
+            }
+        }
+
+        if (repaired.length > 0) {
+            console.log(`[HierarchyRepair] Repaired ${repaired.length} orphaned account(s). Persisting...`);
+            for (const acc of repaired) {
+                try {
+                    await lastValueFrom(this.dataService.saveAccount({
+                        id: acc.id,
+                        companyId: acc.companyId || null,
+                        code: acc.code,
+                        name: acc.name,
+                        description: acc.description || '',
+                        type: acc.type,
+                        level: acc.level,
+                        parentId: acc.parentId || null,
+                        allowPosting: acc.allowPosting,
+                        balance: isNaN(Number(acc.balance)) ? 0 : Number(acc.balance),
+                        isActive: acc.isActive
+                    }));
+                } catch (e) {
+                    console.error(`[HierarchyRepair] Failed to save account ${acc.code}:`, e);
+                }
+            }
+        }
+
+        return repaired.length;
+    }
+
+    async repairAccountDuplication(): Promise<void> {
+        console.log('[AccountingService] Starting Account Deduplication...');
+        const codeGroups = new Map<string, Account[]>();
+
+        this.allAccounts.forEach(acc => {
+            const list = codeGroups.get(acc.code) || [];
+            list.push(acc);
+            codeGroups.set(acc.code, list);
+        });
+
+        for (const [code, group] of codeGroups.entries()) {
+            if (group.length > 1) {
+                console.warn(`[AccountingService] Found ${group.length} accounts for code ${code}. Cleaning up...`);
+
+                // Keep the first one (usually the oldest or preset one)
+                const keep = group[0];
+                const toDelete = group.slice(1);
+
+                for (const dupe of toDelete) {
+                    // 1. Link entries to the kept ID
+                    this.allJournalEntries.forEach(entry => {
+                        entry.lines.forEach(line => {
+                            if (line.accountId === dupe.id) {
+                                line.accountId = keep.id;
+                            }
+                        });
+                    });
+                    // 2. Re-link children accounts to the kept ID
+                    this.allAccounts.forEach(acc => {
+                        if (acc.parentId === dupe.id) {
+                            acc.parentId = keep.id;
+                            console.log(`[AccountingService] Re-linked child account ${acc.code} to new parent ${keep.code}`);
+                        }
+                    });
+
+                    // 3. Delete from server
+                    try {
+                        await lastValueFrom(this.dataService.deleteAccount(dupe.id));
+                        console.log(`[AccountingService] Deleted duplicate account: ${dupe.id} (${code})`);
+                    } catch (e) {
+                        console.error(`[AccountingService] Failed to delete account ${dupe.id}`, e);
+                    }
+                }
+            }
+        }
+
+        await this.loadAccounts(); // Refresh global list
+    }
+
+    /**
+     * Automatically attempts to post journal entries for documents that are missing them
+     */
+    autoFixMissingPostings(salesDocs: any[], purchaseDocs: any[]): Observable<number> {
+        return new Observable(observer => {
+            let fixedCount = 0;
+            // Always check against ALL entries to avoid matching against filtered subset
+            const postedEntries = this.allJournalEntries.filter(e => e.status === 'POSTED');
+
+            // Fix Sales
+            salesDocs.forEach(doc => {
+                if ((doc.status === 'POSTED' || doc.status === 'APPROVED') && !postedEntries.some(e => e.sourceDocument === doc.id)) {
+                    try {
+                        this.createSalesJournalEntry(doc, null, []);
+                        fixedCount++;
+                    } catch (e) { console.warn('[AutoFix] Sales entry failed:', e); }
+                }
+            });
+
+            // Fix Purchases
+            purchaseDocs.forEach(doc => {
+                if ((doc.status === 'POSTED' || doc.status === 'APPROVED') && !postedEntries.some(e => e.sourceDocument === doc.id)) {
+                    try {
+                        this.createPurchaseJournalEntry(doc, null);
+                        fixedCount++;
+                    } catch (e) { console.warn('[AutoFix] Purchase entry failed:', e); }
+                }
+            });
+
+            console.log(`[AutoFix] Created ${fixedCount} missing entries. Triggering balance recalculation...`);
+
+            if (fixedCount > 0) {
+                // Give the async saves a moment to start, then recalculate balances from scratch
+                setTimeout(() => {
+                    this.recalculateAllBalances().subscribe({
+                        next: () => {
+                            console.log('[AutoFix] Balance recalculation complete.');
+                            observer.next(fixedCount);
+                            observer.complete();
+                        },
+                        error: (err) => {
+                            console.error('[AutoFix] Balance recalculation failed:', err);
+                            observer.next(fixedCount); // Still report success
+                            observer.complete();
+                        }
+                    });
+                }, 1500);
+            } else {
+                observer.next(0);
+                observer.complete();
+            }
+        });
+    }
+
+    private async persistAllAccountBalances() {
+        // Save to backend
+        for (const acc of this.accounts) {
+            const dtoFields = {
+                id: acc.id,
+                companyId: acc.companyId || null,
+                code: acc.code,
+                name: acc.name,
+                description: acc.description || '',
+                type: acc.type,
+                level: acc.level,
+                parentId: acc.parentId || null,
+                allowPosting: acc.allowPosting,
+                balance: isNaN(Number(acc.balance)) ? 0 : Number(acc.balance),
+                isActive: acc.isActive
+            };
+            await lastValueFrom(this.dataService.saveAccount(dtoFields));
+        }
     }
 }

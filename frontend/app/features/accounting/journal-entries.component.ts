@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountingService } from '../../shared/accounting.service';
 import { JournalEntry, JournalLine, Journal, Account } from '../../shared/models';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-journal-entries',
@@ -14,6 +15,7 @@ import { JournalEntry, JournalLine, Journal, Account } from '../../shared/models
         <div>
           <h2 class="text-lg font-semibold text-gray-800">Lançamentos Contabilísticos</h2>
           <p class="text-xs text-gray-600 mt-0.5">Total: {{ filteredEntries.length }} lançamento(s)</p>
+          <div *ngIf="isLoading" class="text-[10px] text-blue-500 font-bold animate-pulse">A carregar dados do servidor...</div>
         </div>
         
         <div class="flex items-center gap-3">
@@ -60,7 +62,10 @@ import { JournalEntry, JournalLine, Journal, Account } from '../../shared/models
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let entry of filteredEntries" class="hover:bg-gray-50 cursor-pointer" (click)="selectedEntry = entry">
+            <tr *ngFor="let entry of filteredEntries" 
+                class="hover:bg-gray-50 cursor-pointer transition-colors border-b" 
+                [class.opacity-50]="!entry.id"
+                (click)="onSelectEntry(entry)">
               <td class="p-2 border">{{ formatDate(entry.date) }}</td>
               <td class="p-2 border">
                 <span class="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[10px] font-bold border border-gray-200">
@@ -445,36 +450,85 @@ export class JournalEntriesComponent implements OnInit {
   correctionReason = '';
   editingEntry: Partial<JournalEntry> & { lines: JournalLine[] } = { lines: [] };
 
-  // Create New Entry State
   showCreateModal = false;
   newEntry: Partial<JournalEntry> & { lines: JournalLine[] } = { lines: [] };
   newEntryDate: string = new Date().toISOString().split('T')[0];
+  isLoading = false;
 
-  constructor(private accountingService: AccountingService) { }
+  private subs = new Subscription();
+
+  constructor(
+    private accountingService: AccountingService,
+    private cdr: ChangeDetectorRef
+  ) { }
 
   ngOnInit() {
+    this.isLoading = true;
+
+    // Subscribe to Journals
+    this.subs.add(
+      this.accountingService.journalsChanged$.subscribe(journals => {
+        this.journals = journals;
+        this.cdr.detectChanges();
+      })
+    );
+
+    // Subscribe to Accounts
+    this.subs.add(
+      this.accountingService.accountsChanged$.subscribe(accounts => {
+        this.accounts = accounts;
+        this.cdr.detectChanges();
+      })
+    );
+
+    // Subscribe to Entries
+    this.subs.add(
+      this.accountingService.entriesChanged$.subscribe(entries => {
+        this.entries = entries;
+        this.filterEntries();
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      })
+    );
+
+    // Initial check (in case data is already there)
     this.journals = this.accountingService.getJournals();
-    // Only load accounts that allow posting for the dropdowns
-    this.accounts = this.accountingService.getAccounts()
-      // .filter(a => a.allowPosting) // REMOVED FOR TESTING VALIDATION
-      .sort((a, b) => a.code.localeCompare(b.code));
+    this.accounts = this.accountingService.getAccounts().sort((a, b) => a.code.localeCompare(b.code));
     this.loadEntries();
   }
 
+  ngOnDestroy() {
+    this.subs.unsubscribe();
+  }
+
   loadEntries() {
-    this.entries = this.accountingService.getJournalEntries()
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    this.entries = this.accountingService.getJournalEntries();
     this.filterEntries();
   }
 
   filterEntries() {
-    let entries = this.entries.filter(e => e.status !== 'CANCELLED' && e.status !== 'VOIDED');
+    // Filter out logically deleted records and entries that are completely empty/incomplete
+    let entries = this.entries.filter(e =>
+      e.id &&
+      e.status !== 'CANCELLED' &&
+      e.status !== 'VOIDED'
+    );
+
+    // Sort by date (descending)
+    entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     if (this.selectedJournalId === 'ALL') {
-      this.filteredEntries = entries;
+      this.filteredEntries = [...entries];
     } else {
       this.filteredEntries = entries.filter(e => e.journalId === this.selectedJournalId);
     }
+
+    this.cdr.detectChanges();
+  }
+
+  onSelectEntry(entry: JournalEntry) {
+    if (!entry.id) return;
+    this.selectedEntry = entry;
   }
 
   getJournalCode(journalId: string): string {
@@ -493,11 +547,13 @@ export class JournalEntriesComponent implements OnInit {
   }
 
   getTotalDebit(entry: JournalEntry | { lines: JournalLine[] }): number {
-    return entry.lines.reduce((sum, line) => sum + (line.debit || 0), 0);
+    if (!entry || !entry.lines) return 0;
+    return entry.lines.reduce((sum, line) => sum + (Number(line.debit) || 0), 0);
   }
 
   getTotalCredit(entry: JournalEntry | { lines: JournalLine[] }): number {
-    return entry.lines.reduce((sum, line) => sum + (line.credit || 0), 0);
+    if (!entry || !entry.lines) return 0;
+    return entry.lines.reduce((sum, line) => sum + (Number(line.credit) || 0), 0);
   }
 
   getSourceLabel(type?: string): string {

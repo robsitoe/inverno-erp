@@ -237,6 +237,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.subs.add(this.navService.recents$.subscribe(items => this.recentItems = items));
     this.subs.add(this.navService.favorites$.subscribe(items => this.favorites = items));
+    // React to external collapse requests (e.g. from trial balance row click)
+    this.subs.add(this.navService.sidebarCollapsed$.subscribe(v => this.collapsed = v));
   }
 
   ngOnDestroy() {
@@ -326,6 +328,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   toggleCollapsed() {
     this.collapsed = !this.collapsed;
+    // Keep service in sync so external listeners know the state
+    if (this.collapsed) {
+      this.navService.collapseSidebar();
+    } else {
+      this.navService.expandSidebar();
+    }
   }
 
   getIconColor(label: string): string {

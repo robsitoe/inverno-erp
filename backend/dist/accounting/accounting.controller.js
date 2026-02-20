@@ -52,8 +52,8 @@ let AccountingController = class AccountingController {
         const drafts = includeDrafts === 'true';
         return this.accountingService.getAccountStatement(accountId, fromDate, toDate, companyId, drafts);
     }
-    loadPreset(presetName) {
-        return this.accountingService.loadPresetAccountSystem(presetName);
+    loadPreset(presetName, companyId) {
+        return this.accountingService.loadPresetAccountSystem(presetName, companyId);
     }
     listCostCenters() {
         return this.accountingService.listCostCenters();
@@ -158,8 +158,9 @@ __decorate([
     (0, common_1.Post)('accounts/presets/:presetName'),
     (0, swagger_1.ApiOperation)({ summary: 'Load a predefined chart of accounts' }),
     __param(0, (0, common_1.Param)('presetName')),
+    __param(1, (0, common_1.Query)('companyId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], AccountingController.prototype, "loadPreset", null);
 __decorate([

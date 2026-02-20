@@ -4120,3 +4120,1299 @@
   }
 }
 ---
+{
+  "timestamp": "2026-02-19T20:45:40.720Z",
+  "path": "/sales/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-20T07:02:29.475Z",
+  "path": "/accounting/accounts/presets/PGC-NIR",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "O sistema de contas já foi inicializado para esta empresa.",
+    "stack": "BadRequestException: O sistema de contas já foi inicializado para esta empresa.\n    at AccountingService.loadPresetAccountSystem (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:279:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {},
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T07:02:45.096Z",
+  "path": "/accounting/accounts/presets/PGC-NIR",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "O sistema de contas já foi inicializado para esta empresa.",
+    "stack": "BadRequestException: O sistema de contas já foi inicializado para esta empresa.\n    at AccountingService.loadPresetAccountSystem (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:279:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {},
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T07:13:15.617Z",
+  "path": "/purchases/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-20T11:15:39.410Z",
+  "path": "/sales/documents?companyId=003",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "003"
+  }
+}
+---
+{
+  "timestamp": "2026-02-20T11:38:25.151Z",
+  "path": "/sales/documents/127538ad-23e3-4d44-b316-2b95e402fedb/workflow",
+  "method": "PATCH",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "invalid input syntax for type uuid: \"A001\"",
+    "stack": "QueryFailedError: invalid input syntax for type uuid: \"A001\"\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async SelectQueryBuilder.loadRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3868:25)\n    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3614:26)\n    at async SelectQueryBuilder.getRawAndEntities (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1671:29)\n    at async SelectQueryBuilder.getOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1698:25)\n    at async InventoryService.findOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:69:19)\n    at async InventoryService.createStockMovement (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:177:21)\n    at async SalesService.createStockMovementsForSales (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\sales\\sales.service.ts:266:7)\n    at async SalesService.processWorkflow (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\sales\\sales.service.ts:218:7)"
+  },
+  "body": {
+    "action": "POST",
+    "notes": ""
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T11:39:49.687Z",
+  "path": "/sales/documents/127538ad-23e3-4d44-b316-2b95e402fedb/workflow",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /sales/documents/127538ad-23e3-4d44-b316-2b95e402fedb/workflow",
+    "stack": "NotFoundException: Cannot GET /sales/documents/127538ad-23e3-4d44-b316-2b95e402fedb/workflow\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:14:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T11:39:49.825Z",
+  "path": "/favicon.ico",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /favicon.ico",
+    "stack": "NotFoundException: Cannot GET /favicon.ico\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:14:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T11:40:12.172Z",
+  "path": "/purchases/documents/2daf9c2f-a424-40ed-a33d-fb29619b1183",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Purchase document 2daf9c2f-a424-40ed-a33d-fb29619b1183 not found",
+    "stack": "NotFoundException: Purchase document 2daf9c2f-a424-40ed-a33d-fb29619b1183 not found\n    at PurchasesService.findOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\purchases\\purchases.service.ts:106:21)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T11:53:14.009Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE-1771588393917",
+    "journalId": "PURCHASES",
+    "status": "POSTED",
+    "date": "2026-02-09T00:00:00.000Z",
+    "description": "Compra FC2026/1 - GALP",
+    "reference": "2026/1",
+    "sourceDocument": "5494b9b1-b2a0-467e-b6a2-6ecef2696dfd",
+    "sourceType": "PURCHASE",
+    "lines": [
+      {
+        "id": "JEL-1771588393917-1",
+        "accountId": "22",
+        "accountCode": "31.1.1",
+        "accountName": "Mercadorias - Produtos Alimentares",
+        "debit": "500.00",
+        "credit": 0,
+        "description": "Compra de mercadorias"
+      },
+      {
+        "id": "JEL-1771588393917-2",
+        "accountId": "53",
+        "accountCode": "32.2",
+        "accountName": "IVA a Recuperar",
+        "debit": "80.00",
+        "credit": 0,
+        "description": "IVA dedutível"
+      },
+      {
+        "id": "JEL-1771588393917-3",
+        "accountId": "49",
+        "accountCode": "22.1",
+        "accountName": "Fornecedores Nacionais",
+        "debit": 0,
+        "credit": "580.00",
+        "description": "Fornecedor: GALP"
+      }
+    ],
+    "companyId": "003"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T11:54:42.594Z",
+  "path": "/purchases/documents/0b23e8db-f711-4756-b0d8-ea51376aa80f",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found",
+    "stack": "NotFoundException: Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found\n    at PurchasesService.findOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\purchases\\purchases.service.ts:106:21)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T11:54:42.647Z",
+  "path": "/purchases/documents/0b23e8db-f711-4756-b0d8-ea51376aa80f",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found",
+    "stack": "NotFoundException: Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found\n    at PurchasesService.findOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\purchases\\purchases.service.ts:106:21)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T11:55:16.084Z",
+  "path": "/purchases/documents/0b23e8db-f711-4756-b0d8-ea51376aa80f",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found",
+    "stack": "NotFoundException: Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found\n    at PurchasesService.findOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\purchases\\purchases.service.ts:106:21)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T11:55:16.106Z",
+  "path": "/purchases/documents/0b23e8db-f711-4756-b0d8-ea51376aa80f",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found",
+    "stack": "NotFoundException: Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found\n    at PurchasesService.findOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\purchases\\purchases.service.ts:106:21)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T11:55:36.407Z",
+  "path": "/purchases/documents/0b23e8db-f711-4756-b0d8-ea51376aa80f",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found",
+    "stack": "NotFoundException: Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found\n    at PurchasesService.findOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\purchases\\purchases.service.ts:106:21)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T11:55:36.449Z",
+  "path": "/purchases/documents/0b23e8db-f711-4756-b0d8-ea51376aa80f",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found",
+    "stack": "NotFoundException: Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found\n    at PurchasesService.findOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\purchases\\purchases.service.ts:106:21)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T11:56:10.090Z",
+  "path": "/purchases/documents/0b23e8db-f711-4756-b0d8-ea51376aa80f",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found",
+    "stack": "NotFoundException: Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found\n    at PurchasesService.findOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\purchases\\purchases.service.ts:106:21)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T11:56:10.126Z",
+  "path": "/purchases/documents/0b23e8db-f711-4756-b0d8-ea51376aa80f",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found",
+    "stack": "NotFoundException: Purchase document 0b23e8db-f711-4756-b0d8-ea51376aa80f not found\n    at PurchasesService.findOne (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\purchases\\purchases.service.ts:106:21)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:17:34.407Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165117",
+    "companyId": "003",
+    "journalId": "JNL-VENDAS-004",
+    "date": "2026-02-09",
+    "description": "Venda FA 2026/3 - Roberto",
+    "reference": "FA 2026/3",
+    "sourceDocument": "0b23e8db-f711-4756-b0d8-ea51376aa80f",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771572165117-1",
+        "accountId": "17",
+        "accountCode": "21.1.1",
+        "accountName": "Clientes a Dinheiro",
+        "debit": "8775.00",
+        "credit": 0,
+        "description": "Venda a Roberto () - FA 2026/3"
+      },
+      {
+        "id": "JE1771572165117-2",
+        "accountId": "58",
+        "accountCode": "71.1",
+        "accountName": "Vendas de Mercadorias",
+        "debit": 0,
+        "credit": "07500.00",
+        "description": "Venda - FA 2026/3"
+      },
+      {
+        "id": "JE1771572165117-3",
+        "accountId": "52",
+        "accountCode": "32.1",
+        "accountName": "IVA a Pagar",
+        "debit": 0,
+        "credit": "1275.00",
+        "description": "IVA - FA 2026/3"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:17:34.393Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:18:03.387Z",
+  "path": "/accounting/accounts/49",
+  "method": "DELETE",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "update or delete on table \"accounts\" violates foreign key constraint \"FK_d9eecc536593997a18359db2b47\" on table \"journal_lines\"",
+    "stack": "QueryFailedError: update or delete on table \"accounts\" violates foreign key constraint \"FK_d9eecc536593997a18359db2b47\" on table \"journal_lines\"\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async DeleteQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\DeleteQueryBuilder.ts:77:33)\n    at async SubjectExecutor.executeRemoveOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:715:17)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:156:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:18:03.632Z",
+  "path": "/accounting/accounts/22",
+  "method": "DELETE",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "update or delete on table \"accounts\" violates foreign key constraint \"FK_d9eecc536593997a18359db2b47\" on table \"journal_lines\"",
+    "stack": "QueryFailedError: update or delete on table \"accounts\" violates foreign key constraint \"FK_d9eecc536593997a18359db2b47\" on table \"journal_lines\"\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async DeleteQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\DeleteQueryBuilder.ts:77:33)\n    at async SubjectExecutor.executeRemoveOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:715:17)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:156:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:24:11.380Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165117",
+    "companyId": "003",
+    "journalId": "JNL-VENDAS-004",
+    "date": "2026-02-09",
+    "description": "Venda FA 2026/3 - Roberto",
+    "reference": "FA 2026/3",
+    "sourceDocument": "0b23e8db-f711-4756-b0d8-ea51376aa80f",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771572165117-1",
+        "accountId": "17",
+        "accountCode": "21.1.1",
+        "accountName": "Clientes a Dinheiro",
+        "debit": "8775.00",
+        "credit": 0,
+        "description": "Venda a Roberto () - FA 2026/3"
+      },
+      {
+        "id": "JE1771572165117-2",
+        "accountId": "58",
+        "accountCode": "71.1",
+        "accountName": "Vendas de Mercadorias",
+        "debit": 0,
+        "credit": "07500.00",
+        "description": "Venda - FA 2026/3"
+      },
+      {
+        "id": "JE1771572165117-3",
+        "accountId": "52",
+        "accountCode": "32.1",
+        "accountName": "IVA a Pagar",
+        "debit": 0,
+        "credit": "1275.00",
+        "description": "IVA - FA 2026/3"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:24:11.363Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:24:11.451Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165118",
+    "companyId": "003",
+    "journalId": "JNL-VENDAS-004",
+    "date": "2026-02-08",
+    "description": "Venda FA 2026/2 - Roberto",
+    "reference": "FA 2026/2",
+    "sourceDocument": "2daf9c2f-a424-40ed-a33d-fb29619b1183",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771572165118-1",
+        "accountId": "17",
+        "accountCode": "21.1.1",
+        "accountName": "Clientes a Dinheiro",
+        "debit": "2900.00",
+        "credit": 0,
+        "description": "Venda a Roberto () - FA 2026/2"
+      },
+      {
+        "id": "JE1771572165118-2",
+        "accountId": "58",
+        "accountCode": "71.1",
+        "accountName": "Vendas de Mercadorias",
+        "debit": 0,
+        "credit": "02500.00",
+        "description": "Venda - FA 2026/2"
+      },
+      {
+        "id": "JE1771572165118-3",
+        "accountId": "52",
+        "accountCode": "32.1",
+        "accountName": "IVA a Pagar",
+        "debit": 0,
+        "credit": "400.00",
+        "description": "IVA - FA 2026/2"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:24:11.381Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:24:11.538Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165119",
+    "companyId": "003",
+    "journalId": "JNL-VENDAS-004",
+    "date": "2026-02-08",
+    "description": "Venda FA 2026/1 - Roberto",
+    "reference": "FA 2026/1",
+    "sourceDocument": "127538ad-23e3-4d44-b316-2b95e402fedb",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771572165119-1",
+        "accountId": "17",
+        "accountCode": "21.1.1",
+        "accountName": "Clientes a Dinheiro",
+        "debit": "2900.00",
+        "credit": 0,
+        "description": "Venda a Roberto () - FA 2026/1"
+      },
+      {
+        "id": "JE1771572165119-2",
+        "accountId": "58",
+        "accountCode": "71.1",
+        "accountName": "Vendas de Mercadorias",
+        "debit": 0,
+        "credit": "02500.00",
+        "description": "Venda - FA 2026/1"
+      },
+      {
+        "id": "JE1771572165119-3",
+        "accountId": "52",
+        "accountCode": "32.1",
+        "accountName": "IVA a Pagar",
+        "debit": 0,
+        "credit": "400.00",
+        "description": "IVA - FA 2026/1"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:24:11.402Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:24:11.860Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165120",
+    "companyId": "003",
+    "journalId": "JNL-COMPRAS-003",
+    "date": "2026-02-09",
+    "description": "Compra 2026/2 - GALP",
+    "reference": "2026/2",
+    "sourceDocument": "469085a2-1a0d-4651-8993-bbded741b223",
+    "sourceType": "PURCHASE",
+    "lines": [
+      {
+        "id": "JE1771572165120-1",
+        "accountId": "22",
+        "accountCode": "31.1.1",
+        "accountName": "Mercadorias",
+        "debit": 1000,
+        "credit": 0,
+        "description": "Compra de mercadorias"
+      },
+      {
+        "id": "JE1771572165120-2",
+        "accountId": "53",
+        "accountCode": "32.2",
+        "accountName": "IVA a Recuperar",
+        "debit": 160,
+        "credit": 0,
+        "description": "IVA dedutível"
+      },
+      {
+        "id": "JE1771572165120-3",
+        "accountId": "49",
+        "accountCode": "22.1",
+        "accountName": "Fornecedores Nacionais",
+        "debit": 0,
+        "credit": 1160,
+        "description": "Fornecedor: GALP"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:24:11.422Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:24:11.970Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165121",
+    "companyId": "003",
+    "journalId": "JNL-COMPRAS-003",
+    "date": "2026-02-09",
+    "description": "Compra 2026/3 - GALP",
+    "reference": "2026/3",
+    "sourceDocument": "5f3e240e-b971-4aa7-a164-e894f5812d56",
+    "sourceType": "PURCHASE",
+    "lines": [
+      {
+        "id": "JE1771572165121-1",
+        "accountId": "22",
+        "accountCode": "31.1.1",
+        "accountName": "Mercadorias",
+        "debit": 500,
+        "credit": 0,
+        "description": "Compra de mercadorias"
+      },
+      {
+        "id": "JE1771572165121-2",
+        "accountId": "53",
+        "accountCode": "32.2",
+        "accountName": "IVA a Recuperar",
+        "debit": 80,
+        "credit": 0,
+        "description": "IVA dedutível"
+      },
+      {
+        "id": "JE1771572165121-3",
+        "accountId": "49",
+        "accountCode": "22.1",
+        "accountName": "Fornecedores Nacionais",
+        "debit": 0,
+        "credit": 580,
+        "description": "Fornecedor: GALP"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:24:11.442Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:24:12.159Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165122",
+    "companyId": "003",
+    "journalId": "JNL-COMPRAS-003",
+    "date": "2026-02-20",
+    "description": "Compra 2026/4 - GALP",
+    "reference": "2026/4",
+    "sourceDocument": "3228b4f5-2dc7-4f23-adfe-6701e09f91c2",
+    "sourceType": "PURCHASE",
+    "lines": [
+      {
+        "id": "JE1771572165122-1",
+        "accountId": "22",
+        "accountCode": "31.1.1",
+        "accountName": "Mercadorias",
+        "debit": 2500,
+        "credit": 0,
+        "description": "Compra de mercadorias"
+      },
+      {
+        "id": "JE1771572165122-2",
+        "accountId": "53",
+        "accountCode": "32.2",
+        "accountName": "IVA a Recuperar",
+        "debit": 400,
+        "credit": 0,
+        "description": "IVA dedutível"
+      },
+      {
+        "id": "JE1771572165122-3",
+        "accountId": "49",
+        "accountCode": "22.1",
+        "accountName": "Fornecedores Nacionais",
+        "debit": 0,
+        "credit": 2900,
+        "description": "Fornecedor: GALP"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:24:11.459Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:24:12.971Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165123",
+    "companyId": "003",
+    "journalId": "JNL-COMPRAS-003",
+    "date": "2026-02-09",
+    "description": "Compra 2026/1 - GALP",
+    "reference": "2026/1",
+    "sourceDocument": "5494b9b1-b2a0-467e-b6a2-6ecef2696dfd",
+    "sourceType": "PURCHASE",
+    "lines": [
+      {
+        "id": "JE1771572165123-1",
+        "accountId": "22",
+        "accountCode": "31.1.1",
+        "accountName": "Mercadorias",
+        "debit": 500,
+        "credit": 0,
+        "description": "Compra de mercadorias"
+      },
+      {
+        "id": "JE1771572165123-2",
+        "accountId": "53",
+        "accountCode": "32.2",
+        "accountName": "IVA a Recuperar",
+        "debit": 80,
+        "credit": 0,
+        "description": "IVA dedutível"
+      },
+      {
+        "id": "JE1771572165123-3",
+        "accountId": "49",
+        "accountCode": "22.1",
+        "accountName": "Fornecedores Nacionais",
+        "debit": 0,
+        "credit": 580,
+        "description": "Fornecedor: GALP"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:24:11.479Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:28:02.909Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165117",
+    "companyId": "003",
+    "journalId": "JNL-VENDAS-004",
+    "date": "2026-02-09",
+    "description": "Venda FA 2026/3 - Roberto",
+    "reference": "FA 2026/3",
+    "sourceDocument": "0b23e8db-f711-4756-b0d8-ea51376aa80f",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771572165117-1",
+        "accountId": "17",
+        "accountCode": "21.1.1",
+        "accountName": "Clientes a Dinheiro",
+        "debit": "8775.00",
+        "credit": 0,
+        "description": "Venda a Roberto () - FA 2026/3"
+      },
+      {
+        "id": "JE1771572165117-2",
+        "accountId": "58",
+        "accountCode": "71.1",
+        "accountName": "Vendas de Mercadorias",
+        "debit": 0,
+        "credit": "07500.00",
+        "description": "Venda - FA 2026/3"
+      },
+      {
+        "id": "JE1771572165117-3",
+        "accountId": "52",
+        "accountCode": "32.1",
+        "accountName": "IVA a Pagar",
+        "debit": 0,
+        "credit": "1275.00",
+        "description": "IVA - FA 2026/3"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:28:02.896Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:28:02.993Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165118",
+    "companyId": "003",
+    "journalId": "JNL-VENDAS-004",
+    "date": "2026-02-08",
+    "description": "Venda FA 2026/2 - Roberto",
+    "reference": "FA 2026/2",
+    "sourceDocument": "2daf9c2f-a424-40ed-a33d-fb29619b1183",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771572165118-1",
+        "accountId": "17",
+        "accountCode": "21.1.1",
+        "accountName": "Clientes a Dinheiro",
+        "debit": "2900.00",
+        "credit": 0,
+        "description": "Venda a Roberto () - FA 2026/2"
+      },
+      {
+        "id": "JE1771572165118-2",
+        "accountId": "58",
+        "accountCode": "71.1",
+        "accountName": "Vendas de Mercadorias",
+        "debit": 0,
+        "credit": "02500.00",
+        "description": "Venda - FA 2026/2"
+      },
+      {
+        "id": "JE1771572165118-3",
+        "accountId": "52",
+        "accountCode": "32.1",
+        "accountName": "IVA a Pagar",
+        "debit": 0,
+        "credit": "400.00",
+        "description": "IVA - FA 2026/2"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:28:02.914Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:28:03.624Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165120",
+    "companyId": "003",
+    "journalId": "JNL-COMPRAS-003",
+    "date": "2026-02-09",
+    "description": "Compra 2026/2 - GALP",
+    "reference": "2026/2",
+    "sourceDocument": "469085a2-1a0d-4651-8993-bbded741b223",
+    "sourceType": "PURCHASE",
+    "lines": [
+      {
+        "id": "JE1771572165120-1",
+        "accountId": "22",
+        "accountCode": "31.1.1",
+        "accountName": "Mercadorias",
+        "debit": 1000,
+        "credit": 0,
+        "description": "Compra de mercadorias"
+      },
+      {
+        "id": "JE1771572165120-2",
+        "accountId": "53",
+        "accountCode": "32.2",
+        "accountName": "IVA a Recuperar",
+        "debit": 160,
+        "credit": 0,
+        "description": "IVA dedutível"
+      },
+      {
+        "id": "JE1771572165120-3",
+        "accountId": "49",
+        "accountCode": "22.1",
+        "accountName": "Fornecedores Nacionais",
+        "debit": 0,
+        "credit": 1160,
+        "description": "Fornecedor: GALP"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:28:02.969Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:28:03.756Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165121",
+    "companyId": "003",
+    "journalId": "JNL-COMPRAS-003",
+    "date": "2026-02-09",
+    "description": "Compra 2026/3 - GALP",
+    "reference": "2026/3",
+    "sourceDocument": "5f3e240e-b971-4aa7-a164-e894f5812d56",
+    "sourceType": "PURCHASE",
+    "lines": [
+      {
+        "id": "JE1771572165121-1",
+        "accountId": "22",
+        "accountCode": "31.1.1",
+        "accountName": "Mercadorias",
+        "debit": 500,
+        "credit": 0,
+        "description": "Compra de mercadorias"
+      },
+      {
+        "id": "JE1771572165121-2",
+        "accountId": "53",
+        "accountCode": "32.2",
+        "accountName": "IVA a Recuperar",
+        "debit": 80,
+        "credit": 0,
+        "description": "IVA dedutível"
+      },
+      {
+        "id": "JE1771572165121-3",
+        "accountId": "49",
+        "accountCode": "22.1",
+        "accountName": "Fornecedores Nacionais",
+        "debit": 0,
+        "credit": 580,
+        "description": "Fornecedor: GALP"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:28:02.993Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:28:03.819Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165119",
+    "companyId": "003",
+    "journalId": "JNL-VENDAS-004",
+    "date": "2026-02-08",
+    "description": "Venda FA 2026/1 - Roberto",
+    "reference": "FA 2026/1",
+    "sourceDocument": "127538ad-23e3-4d44-b316-2b95e402fedb",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771572165119-1",
+        "accountId": "17",
+        "accountCode": "21.1.1",
+        "accountName": "Clientes a Dinheiro",
+        "debit": "2900.00",
+        "credit": 0,
+        "description": "Venda a Roberto () - FA 2026/1"
+      },
+      {
+        "id": "JE1771572165119-2",
+        "accountId": "58",
+        "accountCode": "71.1",
+        "accountName": "Vendas de Mercadorias",
+        "debit": 0,
+        "credit": "02500.00",
+        "description": "Venda - FA 2026/1"
+      },
+      {
+        "id": "JE1771572165119-3",
+        "accountId": "52",
+        "accountCode": "32.1",
+        "accountName": "IVA a Pagar",
+        "debit": 0,
+        "credit": "400.00",
+        "description": "IVA - FA 2026/1"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:28:02.943Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:28:03.886Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165122",
+    "companyId": "003",
+    "journalId": "JNL-COMPRAS-003",
+    "date": "2026-02-20",
+    "description": "Compra 2026/4 - GALP",
+    "reference": "2026/4",
+    "sourceDocument": "3228b4f5-2dc7-4f23-adfe-6701e09f91c2",
+    "sourceType": "PURCHASE",
+    "lines": [
+      {
+        "id": "JE1771572165122-1",
+        "accountId": "22",
+        "accountCode": "31.1.1",
+        "accountName": "Mercadorias",
+        "debit": 2500,
+        "credit": 0,
+        "description": "Compra de mercadorias"
+      },
+      {
+        "id": "JE1771572165122-2",
+        "accountId": "53",
+        "accountCode": "32.2",
+        "accountName": "IVA a Recuperar",
+        "debit": 400,
+        "credit": 0,
+        "description": "IVA dedutível"
+      },
+      {
+        "id": "JE1771572165122-3",
+        "accountId": "49",
+        "accountCode": "22.1",
+        "accountName": "Fornecedores Nacionais",
+        "debit": 0,
+        "credit": 2900,
+        "description": "Fornecedor: GALP"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:28:03.019Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T12:28:04.018Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165123",
+    "companyId": "003",
+    "journalId": "JNL-COMPRAS-003",
+    "date": "2026-02-09",
+    "description": "Compra 2026/1 - GALP",
+    "reference": "2026/1",
+    "sourceDocument": "5494b9b1-b2a0-467e-b6a2-6ecef2696dfd",
+    "sourceType": "PURCHASE",
+    "lines": [
+      {
+        "id": "JE1771572165123-1",
+        "accountId": "22",
+        "accountCode": "31.1.1",
+        "accountName": "Mercadorias",
+        "debit": 500,
+        "credit": 0,
+        "description": "Compra de mercadorias"
+      },
+      {
+        "id": "JE1771572165123-2",
+        "accountId": "53",
+        "accountCode": "32.2",
+        "accountName": "IVA a Recuperar",
+        "debit": 80,
+        "credit": 0,
+        "description": "IVA dedutível"
+      },
+      {
+        "id": "JE1771572165123-3",
+        "accountId": "49",
+        "accountCode": "22.1",
+        "accountName": "Fornecedores Nacionais",
+        "debit": 0,
+        "credit": 580,
+        "description": "Fornecedor: GALP"
+      }
+    ],
+    "status": "POSTED",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T12:28:03.044Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T13:47:32.525Z",
+  "path": "/sales/documents?companyId=",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": ""
+  }
+}
+---
+{
+  "timestamp": "2026-02-20T13:47:32.567Z",
+  "path": "/purchases/documents?companyId=",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": ""
+  }
+}
+---
+{
+  "timestamp": "2026-02-20T14:48:47.785Z",
+  "path": "/sales/documents?companyId=",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": ""
+  }
+}
+---
+{
+  "timestamp": "2026-02-20T14:48:47.815Z",
+  "path": "/purchases/documents?companyId=",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": ""
+  }
+}
+---
+{
+  "timestamp": "2026-02-20T14:59:25.090Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165126",
+    "companyId": "003",
+    "journalId": "JNL-GERAL-004",
+    "date": "2026-02-20",
+    "description": "CMV FA 2026/4",
+    "reference": "FA 2026/4",
+    "sourceDocument": "ef88815e-634a-465a-ba79-a9ab050321bb",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771572165126-1",
+        "accountId": "61",
+        "accountCode": "62.1",
+        "accountName": "Custo das Mercadorias Vendidas",
+        "debit": 0,
+        "credit": 0,
+        "description": "CMV - FA 2026/4"
+      },
+      {
+        "id": "JE1771572165126-2",
+        "accountId": "31",
+        "accountCode": "31.1.1",
+        "accountName": "Mercadorias",
+        "debit": 0,
+        "credit": 0,
+        "description": "Saída Stock - FA 2026/4"
+      }
+    ],
+    "status": "DRAFT",
+    "createdBy": "Sistema",
+    "createdAt": "2026-02-20T14:59:25.048Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-20T14:59:25.159Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro ao gravar lançamento: insert or update on table \"journal_lines\" violates foreign key constraint \"FK_d9eecc536593997a18359db2b47\"",
+    "stack": "BadRequestException: Erro ao gravar lançamento: insert or update on table \"journal_lines\" violates foreign key constraint \"FK_d9eecc536593997a18359db2b47\"\n    at AccountingService.createJournalEntry (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:168:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771572165125",
+    "companyId": "003",
+    "journalId": "JNL-VENDAS-004",
+    "description": "Venda FA 2026/4 - Roberto",
+    "date": "2026-02-20",
+    "status": "POSTED",
+    "reference": "FA 2026/4",
+    "sourceDocument": "ef88815e-634a-465a-ba79-a9ab050321bb",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771572165125-1",
+        "accountId": "3",
+        "accountCode": "11.1.1",
+        "accountName": "Caixa Principal",
+        "description": "Venda a Roberto (C001) - FA 2026/4",
+        "debit": 5800,
+        "credit": 0
+      },
+      {
+        "id": "JE1771572165125-2",
+        "accountId": "71",
+        "accountCode": "71.1",
+        "accountName": "Vendas de Mercadorias",
+        "description": "Venda - FA 2026/4",
+        "debit": 0,
+        "credit": 5000
+      },
+      {
+        "id": "JE1771572165125-3",
+        "accountId": "52",
+        "accountCode": "32.1",
+        "accountName": "IVA a Pagar",
+        "description": "IVA - FA 2026/4",
+        "debit": 0,
+        "credit": 800
+      }
+    ]
+  },
+  "query": {}
+}
+---

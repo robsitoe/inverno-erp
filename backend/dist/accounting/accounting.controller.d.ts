@@ -14,7 +14,7 @@ export declare class AccountingController {
     findAllJournalEntries(companyId?: string): Promise<import("./entities/journal-entry.entity").JournalEntry[]>;
     findOneJournalEntry(id: string): Promise<import("./entities/journal-entry.entity").JournalEntry>;
     getStatement(accountId: string, fromDate?: string, toDate?: string, companyId?: string, includeDrafts?: string): Promise<any>;
-    loadPreset(presetName: string): Promise<any>;
+    loadPreset(presetName: string, companyId?: string): Promise<any>;
     listCostCenters(): Promise<any>;
     createCostCenter(payload: {
         code: string;

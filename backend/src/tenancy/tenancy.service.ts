@@ -102,6 +102,20 @@ export class TenancyService implements OnModuleDestroy {
 
             try {
                 await tenantDS.initialize();
+
+                // Manual Patch: Ensure ivaCode column exists in articles table
+                try {
+                    const queryRunner = tenantDS.createQueryRunner();
+                    const table = await queryRunner.getTable('articles');
+                    if (table && !table.findColumnByName('ivaCode')) {
+                        console.log(`[Tenancy] Patching 'articles' table in ${targetDbName}: Adding 'ivaCode' column`);
+                        await queryRunner.query('ALTER TABLE "articles" ADD COLUMN "ivaCode" character varying');
+                    }
+                    await queryRunner.release();
+                } catch (patchErr) {
+                    console.warn(`[Tenancy] Failed to patch articles table in ${targetDbName}`, patchErr);
+                }
+
                 console.log(`[Tenancy] Connection established for ${targetDbName}`);
             } catch (error: any) {
                 // If DB doesn't exist (Error 3D000 in Postgres), try to create it

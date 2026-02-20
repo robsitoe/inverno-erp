@@ -21,6 +21,7 @@ export declare class CreatePurchaseDto {
     seriesNumber?: number;
     date: string;
     dueDate: string;
+    supplierCode?: string;
     supplierId?: string;
     supplierName?: string;
     supplierNif?: string;

@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountingService } from '../../shared/accounting.service';
 import { JournalEntry, JournalLine, Account } from '../../shared/models';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-journal-entries-review',
@@ -354,18 +355,47 @@ export class JournalEntriesReviewComponent implements OnInit {
         { label: 'Todos', value: 'all' as const, count: 0 }
     ];
 
-    constructor(private accountingService: AccountingService) { }
+    private subs = new Subscription();
+
+    constructor(
+        private accountingService: AccountingService,
+        private cdr: ChangeDetectorRef
+    ) { }
 
     ngOnInit() {
+        // Subscribe to Entries
+        this.subs.add(
+            this.accountingService.entriesChanged$.subscribe(entries => {
+                this.allEntries = entries;
+                this.draftEntries = entries.filter(e => e.status === 'DRAFT');
+                this.updateFilterCounts();
+                this.cdr.detectChanges();
+            })
+        );
+
+        // Subscribe to Accounts
+        this.subs.add(
+            this.accountingService.accountsChanged$.subscribe(accounts => {
+                this.accounts = accounts;
+                this.cdr.detectChanges();
+            })
+        );
+
         this.loadEntries();
         this.loadAccounts();
     }
 
+    ngOnDestroy() {
+        this.subs.unsubscribe();
+    }
+
     loadEntries() {
         this.allEntries = this.accountingService.getJournalEntries();
-        this.draftEntries = this.accountingService.getDraftEntries();
+        this.draftEntries = this.allEntries.filter(e => e.status === 'DRAFT');
+        this.updateFilterCounts();
+    }
 
-        // Update filter counts
+    private updateFilterCounts() {
         this.filters[0].count = this.draftEntries.length;
         this.filters[1].count = this.allEntries.filter(e => e.status === 'POSTED').length;
         this.filters[2].count = this.allEntries.filter(e => e.status === 'CANCELLED' || e.status === 'VOIDED').length;
@@ -377,16 +407,22 @@ export class JournalEntriesReviewComponent implements OnInit {
     }
 
     get filteredEntries(): JournalEntry[] {
+        let entries: JournalEntry[] = [];
         switch (this.currentFilter) {
             case 'draft':
-                return this.draftEntries;
+                entries = this.draftEntries;
+                break;
             case 'posted':
-                return this.allEntries.filter(e => e.status === 'POSTED');
+                entries = this.allEntries.filter(e => e.status === 'POSTED');
+                break;
             case 'cancelled':
-                return this.allEntries.filter(e => e.status === 'CANCELLED' || e.status === 'VOIDED');
+                entries = this.allEntries.filter(e => e.status === 'CANCELLED' || e.status === 'VOIDED');
+                break;
             default:
-                return this.allEntries;
+                entries = this.allEntries;
         }
+        // Strict filter for valid entries
+        return entries.filter(e => e.id && e.date);
     }
 
     toggleSelection(entryId: string) {
@@ -595,10 +631,12 @@ export class JournalEntriesReviewComponent implements OnInit {
     }
 
     getTotalDebit(entry: JournalEntry): number {
+        if (!entry || !entry.lines) return 0;
         return entry.lines.reduce((sum, line) => sum + (line.debit || 0), 0);
     }
 
     getTotalCredit(entry: JournalEntry): number {
+        if (!entry || !entry.lines) return 0;
         return entry.lines.reduce((sum, line) => sum + (line.credit || 0), 0);
     }
 

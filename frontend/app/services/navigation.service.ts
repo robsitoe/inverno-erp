@@ -15,13 +15,35 @@ export class NavigationService {
     private readonly FAVORITE_KEY = 'erp_favorite_views';
     private readonly MAX_RECENTS = 5;
 
+    // Navigation Events
+    private navigationSubject = new BehaviorSubject<{ view: string; params?: any }>({ view: 'dashboard' });
+    public navigation$ = this.navigationSubject.asObservable();
+
+    private paramsSubject = new BehaviorSubject<any>(null);
+    public params$ = this.paramsSubject.asObservable();
+
     private recentSubject = new BehaviorSubject<NavItem[]>(this.loadFromStorage(this.RECENT_KEY));
     public recents$ = this.recentSubject.asObservable();
 
     private favoriteSubject = new BehaviorSubject<NavItem[]>(this.loadFromStorage(this.FAVORITE_KEY));
     public favorites$ = this.favoriteSubject.asObservable();
 
+    // Sidebar collapse control — any component can request sidebar to collapse/expand
+    private sidebarCollapsedSubject = new BehaviorSubject<boolean>(false);
+    public sidebarCollapsed$ = this.sidebarCollapsedSubject.asObservable();
+
+    collapseSidebar() { this.sidebarCollapsedSubject.next(true); }
+    expandSidebar() { this.sidebarCollapsedSubject.next(false); }
+    toggleSidebar() { this.sidebarCollapsedSubject.next(!this.sidebarCollapsedSubject.value); }
+
     constructor() { }
+
+    /** Trigger navigation to a specific view with optional parameters */
+    navigate(view: string, params?: any) {
+        const enrichedParams = params ? { ...params, _targetView: view } : { _targetView: view };
+        this.paramsSubject.next(enrichedParams);
+        this.navigationSubject.next({ view, params: enrichedParams });
+    }
 
     /** Record a navigation to a specific view */
     recordNavigation(view: string) {

@@ -1,3 +1,4 @@
+import { Account } from './account.entity';
 export declare enum JournalEntryStatus {
     DRAFT = "DRAFT",
     POSTED = "POSTED",
@@ -25,6 +26,7 @@ export declare class JournalLine {
     id: string;
     journalEntry: JournalEntry;
     accountId: string;
+    account: Account;
     accountCode: string;
     accountName: string;
     description: string;

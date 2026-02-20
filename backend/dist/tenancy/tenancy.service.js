@@ -93,6 +93,18 @@ let TenancyService = class TenancyService {
             const tenantDS = new typeorm_1.DataSource(tenantOptions);
             try {
                 await tenantDS.initialize();
+                try {
+                    const queryRunner = tenantDS.createQueryRunner();
+                    const table = await queryRunner.getTable('articles');
+                    if (table && !table.findColumnByName('ivaCode')) {
+                        console.log(`[Tenancy] Patching 'articles' table in ${targetDbName}: Adding 'ivaCode' column`);
+                        await queryRunner.query('ALTER TABLE "articles" ADD COLUMN "ivaCode" character varying');
+                    }
+                    await queryRunner.release();
+                }
+                catch (patchErr) {
+                    console.warn(`[Tenancy] Failed to patch articles table in ${targetDbName}`, patchErr);
+                }
                 console.log(`[Tenancy] Connection established for ${targetDbName}`);
             }
             catch (error) {

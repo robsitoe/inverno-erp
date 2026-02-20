@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JournalLine = exports.JournalEntry = exports.JournalEntryStatus = void 0;
 const typeorm_1 = require("typeorm");
+const account_entity_1 = require("./account.entity");
 var JournalEntryStatus;
 (function (JournalEntryStatus) {
     JournalEntryStatus["DRAFT"] = "DRAFT";
@@ -115,6 +116,7 @@ let JournalLine = class JournalLine {
     id;
     journalEntry;
     accountId;
+    account;
     accountCode;
     accountName;
     description;
@@ -135,6 +137,11 @@ __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], JournalLine.prototype, "accountId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => account_entity_1.Account),
+    (0, typeorm_1.JoinColumn)({ name: 'accountId' }),
+    __metadata("design:type", account_entity_1.Account)
+], JournalLine.prototype, "account", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

@@ -57,7 +57,7 @@ export declare class AccountingService {
             balance: number;
         }[];
     }>;
-    loadPresetAccountSystem(presetName: string): Promise<any>;
+    loadPresetAccountSystem(presetName: string, companyId?: string): Promise<any>;
     listCostCenters(): Promise<AccountingMvpRecord[]>;
     createCostCenter(payload: {
         code: string;

@@ -134,13 +134,39 @@ export class AccountingService {
 
     const jeRepo = await this.getJournalEntryRepo();
     const jlRepo = await this.getJournalLineRepo();
+    const accRepo = await this.getAccountRepo();
+
+    // Map lines and ensure account details + valid IDs
+    const preparedLines = await Promise.all(lines.map(async line => {
+      let jl = jlRepo.create(line);
+
+      // If id is TEMP or missing, generate one or let it be generated (though we use PrimaryColumn so we MUST provide it)
+      if (!jl.id || jl.id.includes('TEMP')) {
+        jl.id = `JL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      }
+
+      // Ensure account code and name are present
+      if (!jl.accountCode || !jl.accountName) {
+        const acc = await accRepo.findOne({ where: { id: jl.accountId } });
+        if (acc) {
+          jl.accountCode = acc.code;
+          jl.accountName = acc.name;
+        }
+      }
+      return jl;
+    }));
 
     const journalEntry = jeRepo.create({
       ...createJournalEntryDto,
-      lines: lines.map(line => jlRepo.create(line)),
+      lines: preparedLines,
     });
 
-    return jeRepo.save(journalEntry);
+    try {
+      return await jeRepo.save(journalEntry);
+    } catch (err: any) {
+      console.error('[AccountingService] Error saving Journal Entry:', err);
+      throw new BadRequestException(`Erro ao gravar lançamento: ${err.message}`);
+    }
   }
 
   async findAllJournalEntries(companyId?: string) {
@@ -241,16 +267,17 @@ export class AccountingService {
     };
   }
 
-  async loadPresetAccountSystem(presetName: string) {
-    const repo = await this.getAccountRepo();
-    const companyId = TenancyContext.getCompanyId();
+  async loadPresetAccountSystem(presetName: string, companyId?: string) {
+    const targetId = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getAccountRepo(targetId);
 
     // Check if accounts already exist
     const count = await repo.count();
-    console.log(`[AccountingService] Checking preset for company ${companyId}. Current account count: ${count}`);
+    console.log(`[AccountingService] Checking preset for company ${targetId}. Current account count: ${count}`);
 
     if (count > 0) {
-      throw new BadRequestException('O sistema de contas já foi inicializado para esta empresa.');
+      console.log(`[AccountingService] Preset already loaded for company ${targetId}. Returning existing accounts.`);
+      return repo.find({ order: { code: 'ASC' } });
     }
 
     const preset = ACCOUNT_PRESETS[presetName];
@@ -262,10 +289,10 @@ export class AccountingService {
     // Assign companyId to all accounts
     const accountsToSave = preset.map(acc => ({
       ...acc,
-      companyId
+      companyId: targetId
     }));
 
-    console.log(`[AccountingService] Loading ${accountsToSave.length} accounts from preset "${presetName}" for company ${companyId}`);
+    console.log(`[AccountingService] Loading ${accountsToSave.length} accounts from preset "${presetName}" for company ${targetId}`);
     return await repo.save(accountsToSave);
   }
 

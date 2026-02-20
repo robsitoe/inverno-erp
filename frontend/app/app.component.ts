@@ -141,6 +141,13 @@ export class AppComponent {
       this.license = l;
     });
 
+    // Subscribe to navigation events
+    this.navigationService.navigation$.subscribe(nav => {
+      if (nav.view && nav.view !== this.activeView) {
+        this.activeView = nav.view;
+      }
+    });
+
     // Record initial view
     this.navigationService.recordNavigation(this.activeView);
   }

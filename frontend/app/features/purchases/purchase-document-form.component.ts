@@ -1,6 +1,7 @@
-import { Component, Input, HostListener, ViewEncapsulation, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, Input, HostListener, ViewEncapsulation, ChangeDetectorRef, NgZone, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { PurchaseDocumentTypeModalComponent } from './purchase-document-type-modal.component';
 import { SupplierSearchModalComponent } from './supplier-search-modal.component';
 import { ArticleSearchModalComponent } from '../inventory/article-search-modal.component';
@@ -15,6 +16,7 @@ import { InventoryService } from '../../shared/inventory.service';
 import { AuditService } from '../../shared/audit.service';
 import { PeriodService } from '../../shared/period.service';
 import { DataService } from '../../services/data.service';
+import { NavigationService } from '../../services/navigation.service';
 import { WorkflowStatus, WorkflowHistory, PurchaseDocument, PurchaseDocumentLine } from '../../shared/models';
 import { AppIconComponent } from '../../shared/components/app-icon.component';
 import { PrintSettingsModalComponent, PrintSettings } from '../../shared/components/print-settings-modal.component';
@@ -126,7 +128,7 @@ interface CompanyInfo {
                   <select [(ngModel)]="currentDoc.series" (change)="loadNextNumber(); validateSeriesDate()" [disabled]="isLocked" class="h-5 border border-gray-300 bg-white rounded-sm text-[11px] w-16">
                     <option *ngFor="let s of availableSeries" [value]="s.code">{{ s.code }}</option>
                   </select>
-                  <input type="number" [(ngModel)]="currentDoc.number" (change)="onNumberChange()" class="h-5 border border-gray-300 px-1 w-16 rounded-sm text-right text-[11px]" min="1" />
+                  <input type="number" [ngModel]="currentDoc.number" (ngModelChange)="onNumberChange($event)" class="h-5 border border-gray-300 px-1 w-16 rounded-sm text-right text-[11px]" min="1" />
                 </div>
                 <div class="flex items-center gap-1 ml-2">
                   <label class="font-medium text-[11px]">Data Doc.:</label>
@@ -464,7 +466,8 @@ interface CompanyInfo {
     </ng-template>
   `
 })
-export class PurchaseDocumentFormComponent {
+export class PurchaseDocumentFormComponent implements OnDestroy {
+  private destroy$ = new Subject<void>();
   @Input() viewMode: string = 'purchase-form';
 
   activeCompanyId: string | null = null;
@@ -562,12 +565,29 @@ export class PurchaseDocumentFormComponent {
     private auditService: AuditService,
     private periodService: PeriodService,
     private dataService: DataService,
+    private navigationService: NavigationService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
   ) { }
 
   ngOnInit() {
     this.loadActiveCompany();
+
+    // Subscribe to navigation parameters
+    this.navigationService.params$.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      if (params && params.docId && params._targetView === 'purchase-form') {
+        this.dataService.getPurchaseDocument(params.docId).subscribe(doc => {
+          if (doc) {
+            this.onDocumentSelect(doc);
+          }
+        });
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadActiveCompany() {
@@ -689,7 +709,11 @@ export class PurchaseDocumentFormComponent {
     });
   }
 
-  onNumberChange() {
+  onNumberChange(newNumber?: number) {
+    if (newNumber !== undefined) {
+      this.currentDoc.number = newNumber;
+    }
+
     const type = this.currentDoc.type;
     const series = this.currentDoc.series;
     const num = this.currentDoc.number;
@@ -697,16 +721,21 @@ export class PurchaseDocumentFormComponent {
     if (!type || !series || !num || !this.activeCompanyId) return;
 
     this.dataService.getPurchaseDocumentByNumber(this.activeCompanyId, type, series, num).subscribe(found => {
-      if (found) {
-        this.currentDoc = found;
-        this.loadWorkflowHistory();
-      } else {
-        // If not found, treat as new document with this number
-        this.currentDoc = this.createEmptyDocument();
-        this.currentDoc.type = type;
-        this.currentDoc.series = series;
-        this.currentDoc.number = num;
-      }
+      this.ngZone.run(() => {
+        if (found) {
+          this.currentDoc = found;
+          this.loadWorkflowHistory();
+        } else {
+          // If not found, prepare a new document but preserve the current navigation context
+          this.currentDoc = {
+            ...this.createEmptyDocument(),
+            type: type,
+            series: series,
+            number: num
+          };
+        }
+        this.cdr.detectChanges();
+      });
     });
   }
 
@@ -1250,6 +1279,7 @@ export class PurchaseDocumentFormComponent {
       documentNumber: `${this.currentDoc.type}${this.currentDoc.series}/${this.currentDoc.number}`,
       date: this.currentDoc.date,
       dueDate: this.currentDoc.dueDate || this.currentDoc.date,
+      supplierCode: this.currentDoc.supplierCode,
       supplierId: this.currentDoc.supplierCode, // Map code to ID if needed
       supplierName: this.currentDoc.supplierName,
       supplierNif: this.currentDoc.supplierNif,
@@ -1344,51 +1374,7 @@ export class PurchaseDocumentFormComponent {
   }
 
   createAccountingEntries() {
-    // Create accounting entry for purchase
-    const supplierAccountId = this.currentDoc.supplierAccountId || '49';
-    const supplierAccount = this.accountingService.getAccount(supplierAccountId);
-
-    const entry: any = {
-      id: `JE-${Date.now()}`,
-      journalId: 'PURCHASES',
-      status: 'POSTED',
-      createdBy: 'SYSTEM',
-      createdAt: new Date(),
-      date: new Date(this.currentDoc.date),
-      description: `Compra ${this.currentDoc.type}${this.currentDoc.series}/${this.currentDoc.number} - ${this.currentDoc.supplierName}`,
-      reference: this.currentDoc.reference,
-      lines: [
-        {
-          id: `JEL-${Date.now()}-1`,
-          accountId: '22', // 31.1.1 - Produtos Alimentares (Inventário)
-          accountCode: '31.1.1',
-          accountName: 'Mercadorias - Produtos Alimentares',
-          debit: this.currentDoc.merchandiseTotal,
-          credit: 0,
-          description: 'Compra de mercadorias'
-        },
-        {
-          id: `JEL-${Date.now()}-2`,
-          accountId: '53', // 32.2 - IVA a Recuperar
-          accountCode: '32.2',
-          accountName: 'IVA a Recuperar',
-          debit: this.currentDoc.taxTotal,
-          credit: 0,
-          description: 'IVA dedutível'
-        },
-        {
-          id: `JEL-${Date.now()}-3`,
-          accountId: supplierAccountId,
-          accountCode: supplierAccount?.code || '22.1',
-          accountName: supplierAccount?.name || 'Fornecedores Nacionais',
-          debit: 0,
-          credit: this.currentDoc.totalValue,
-          description: `Fornecedor: ${this.currentDoc.supplierName}`
-        }
-      ]
-    };
-
-    this.accountingService.createJournalEntry(entry);
+    this.accountingService.createPurchaseJournalEntry(this.currentDoc, null);
   }
 
   newDocument() {
@@ -1448,6 +1434,13 @@ export class PurchaseDocumentFormComponent {
           this.currentDoc.status = res.status;
           this.loadWorkflowHistory();
           this.cdr.detectChanges();
+
+          // If posted, trigger side effects
+          if (action === 'POST') {
+            this.createStockMovements();
+            this.createAccountingEntries();
+          }
+
           alert(`Documento ${action === 'SUBMIT' ? 'submetido' : action === 'APPROVE' ? 'aprovado' : action === 'REJECT' ? 'rejeitado' : 'lançado'} com sucesso.`);
         });
       },
