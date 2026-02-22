@@ -67,11 +67,14 @@ let AllExceptionsFilter = class AllExceptionsFilter {
         const logPath = path.join(process.cwd(), 'error-debug.log');
         fs.appendFileSync(logPath, JSON.stringify(errorLog, null, 2) + '\n---\n');
         console.error('[GlobalExceptionFilter] Caught exception:', errorLog.exception);
+        const message = exception instanceof common_1.HttpException
+            ? exception.getResponse().message || exception.message
+            : exception instanceof Error ? exception.message : 'Internal server error';
         response.status(status).json({
             statusCode: status,
             timestamp: new Date().toISOString(),
             path: request.url,
-            message: exception instanceof Error ? exception.message : 'Internal server error',
+            message: Array.isArray(message) ? message.join(', ') : message,
         });
     }
 };

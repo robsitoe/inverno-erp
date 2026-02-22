@@ -49,11 +49,19 @@ let InventoryService = class InventoryService {
             companyId = first.companyId;
         }
         const repo = await this.getArticleRepo(companyId);
+        const sanitize = (dto) => {
+            if (dto.id === '' || (typeof dto.id === 'string' && !dto.id.includes('-') && dto.id.length < 30)) {
+                delete dto.id;
+            }
+            return dto;
+        };
         if (Array.isArray(createArticleDto)) {
-            const articles = repo.create(createArticleDto);
+            const sanitized = createArticleDto.map(d => sanitize({ ...d }));
+            const articles = repo.create(sanitized);
             return repo.save(articles);
         }
-        const article = repo.create(createArticleDto);
+        const sanitized = sanitize({ ...createArticleDto });
+        const article = repo.create(sanitized);
         return repo.save(article);
     }
     async findAll(companyId) {

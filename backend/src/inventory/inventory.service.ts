@@ -47,11 +47,23 @@ export class InventoryService {
     }
 
     const repo = await this.getArticleRepo(companyId);
+
+    // Auto-healing for UUID: if ID is empty string, remove it so Postgres generates a real UUID
+    const sanitize = (dto: any) => {
+      if (dto.id === '' || (typeof dto.id === 'string' && !dto.id.includes('-') && dto.id.length < 30)) {
+        delete dto.id;
+      }
+      return dto;
+    };
+
     if (Array.isArray(createArticleDto)) {
-      const articles = repo.create(createArticleDto);
+      const sanitized = createArticleDto.map(d => sanitize({ ...d }));
+      const articles = repo.create(sanitized);
       return repo.save(articles);
     }
-    const article = repo.create(createArticleDto);
+
+    const sanitized = sanitize({ ...createArticleDto });
+    const article = repo.create(sanitized);
     return repo.save(article);
   }
 

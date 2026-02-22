@@ -174,6 +174,25 @@ let LicensesService = LicensesService_1 = class LicensesService {
         this.logger.log(`License generated for company ${dto.companyId} (${dto.plan}) by ${issuedBy}`);
         return { token, license };
     }
+    async subscribe(companyId, plan) {
+        this.logger.log(`Auto-subscribing company ${companyId} to plan ${plan}`);
+        const planConfig = LICENSE_PLANS_CONFIG.find(p => p.id === plan);
+        if (!planConfig && plan !== license_entity_1.LicensePlan.DEMO) {
+            throw new common_1.BadRequestException('Plano de licença inválido.');
+        }
+        const company = await this.licenseRepo.manager.getRepository(license_entity_1.License).query(`SELECT name FROM companies WHERE id = $1`, [companyId]);
+        const companyName = company && company[0] ? company[0].name : companyId;
+        const dto = {
+            companyId,
+            companyName,
+            plan,
+            durationDays: plan === license_entity_1.LicensePlan.DEMO ? 30 : 365,
+            features: planConfig?.features || this.defaultFeaturesForPlan(plan),
+            price: planConfig?.price || 0,
+        };
+        const result = await this.generate(dto, 'SYSTEM-PAYMENT-AUTO');
+        return this.buildStatusResponse(result.license, result.token);
+    }
     async activate(token, requestIp) {
         const licenseSecret = this.configService.get('LICENSE_SECRET') || 'license-secret-change-in-production';
         let payload;

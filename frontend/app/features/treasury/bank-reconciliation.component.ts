@@ -250,7 +250,7 @@ export class BankReconciliationComponent implements OnInit {
 
     loadBankAccounts() {
         const allAccounts = this.accountingService.getAccounts();
-        this.bankAccounts = allAccounts.filter(a => (a.code.startsWith('12') || a.code.startsWith('11.1.2')) && a.allowPosting);
+        this.bankAccounts = allAccounts.filter(a => (a.code.startsWith('12') || a.code.startsWith('1.2') || a.code.startsWith('11.1.2') || a.code.startsWith('1.1')) && a.allowPosting);
     }
 
     loadMovements() {

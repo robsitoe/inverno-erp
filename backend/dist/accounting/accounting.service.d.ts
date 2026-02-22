@@ -43,6 +43,11 @@ export declare class AccountingService {
     update(id: string, updateAccountDto: UpdateAccountDto): Promise<Account>;
     remove(id: string): Promise<Account>;
     createJournalEntry(createJournalEntryDto: CreateJournalEntryDto): Promise<JournalEntry>;
+    updateAccountBalances(lines: JournalLine[], companyId?: string): Promise<void>;
+    recalculateAllBalances(companyId?: string): Promise<{
+        success: boolean;
+        processedEntries: number;
+    }>;
     findAllJournalEntries(companyId?: string): Promise<JournalEntry[]>;
     findOneJournalEntry(id: string): Promise<JournalEntry>;
     getAccountStatement(accountId: string, fromDate?: string, toDate?: string, companyId?: string, includeDrafts?: boolean): Promise<{
@@ -57,6 +62,7 @@ export declare class AccountingService {
             balance: number;
         }[];
     }>;
+    clearAccounts(companyId?: string): Promise<import("typeorm").DeleteResult>;
     loadPresetAccountSystem(presetName: string, companyId?: string): Promise<any>;
     listCostCenters(): Promise<AccountingMvpRecord[]>;
     createCostCenter(payload: {

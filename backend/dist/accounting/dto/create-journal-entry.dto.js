@@ -73,6 +73,12 @@ class CreateJournalEntryDto {
     reference;
     sourceDocument;
     sourceType;
+    createdBy;
+    updatedBy;
+    correctionReason;
+    relatedEntryId;
+    createdAt;
+    updatedAt;
     lines;
 }
 exports.CreateJournalEntryDto = CreateJournalEntryDto;
@@ -130,6 +136,34 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateJournalEntryDto.prototype, "sourceType", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateJournalEntryDto.prototype, "createdBy", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateJournalEntryDto.prototype, "updatedBy", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateJournalEntryDto.prototype, "correctionReason", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateJournalEntryDto.prototype, "relatedEntryId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], CreateJournalEntryDto.prototype, "createdAt", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], CreateJournalEntryDto.prototype, "updatedAt", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ type: [CreateJournalLineDto], description: 'List of journal lines' }),
     (0, class_validator_1.IsArray)(),

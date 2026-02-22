@@ -157,8 +157,12 @@ exports.TreasuryDocument = TreasuryDocument = __decorate([
 let TreasuryDocumentLine = class TreasuryDocumentLine {
     id;
     document;
+    docType;
     docNumber;
+    originalAmount;
     amount;
+    discount;
+    pendingAfter;
     paymentMode;
 };
 exports.TreasuryDocumentLine = TreasuryDocumentLine;
@@ -172,13 +176,29 @@ __decorate([
     __metadata("design:type", TreasuryDocument)
 ], TreasuryDocumentLine.prototype, "document", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], TreasuryDocumentLine.prototype, "docType", void 0);
+__decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], TreasuryDocumentLine.prototype, "docNumber", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2, nullable: true }),
+    __metadata("design:type", Number)
+], TreasuryDocumentLine.prototype, "originalAmount", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2 }),
     __metadata("design:type", Number)
 ], TreasuryDocumentLine.prototype, "amount", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2, nullable: true, default: 0 }),
+    __metadata("design:type", Number)
+], TreasuryDocumentLine.prototype, "discount", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2, nullable: true }),
+    __metadata("design:type", Number)
+], TreasuryDocumentLine.prototype, "pendingAfter", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

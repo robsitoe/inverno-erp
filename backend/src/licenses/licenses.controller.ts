@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { LicensesService } from './licenses.service';
 import { GenerateLicenseDto, ActivateLicenseDto } from './dto/generate-license.dto';
+import { LicensePlan } from './entities/license.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { BlockLicensesDto, ListLicensesQueryDto, UpdateLicensePricingDto } from './dto/manage-license.dto';
 
@@ -63,6 +64,13 @@ export class LicensesController {
     async activate(@Body() dto: ActivateLicenseDto, @Req() req: any) {
         const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
         return this.licensesService.activate(dto.token, ip);
+    }
+
+    // ─── SUBSCRIBE (Auto-generation after payment) ───────────────────────────
+    @Post('subscribe')
+    @HttpCode(HttpStatus.OK)
+    async subscribe(@Body() body: { companyId: string; plan: LicensePlan }) {
+        return this.licensesService.subscribe(body.companyId, body.plan);
     }
 
     // ─── STATUS (Frontend polls this) ─────────────────────────────────────────

@@ -101,11 +101,23 @@ export class TreasuryDocumentLine {
     @JoinColumn({ name: 'documentId' })
     document: TreasuryDocument;
 
+    @Column({ nullable: true })
+    docType: string; // e.g. 'FA', 'FC'
+
     @Column()
     docNumber: string; // The document being paid/received
 
+    @Column({ type: 'decimal', precision: 14, scale: 2, nullable: true })
+    originalAmount: number; // Total value of the source FA
+
     @Column({ type: 'decimal', precision: 14, scale: 2 })
-    amount: number;
+    amount: number; // Amount being paid/received now
+
+    @Column({ type: 'decimal', precision: 14, scale: 2, nullable: true, default: 0 })
+    discount: number;
+
+    @Column({ type: 'decimal', precision: 14, scale: 2, nullable: true })
+    pendingAfter: number; // Remaining pending after this payment
 
     @Column({ nullable: true })
     paymentMode: string;

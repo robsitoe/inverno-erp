@@ -33,6 +33,10 @@ import { DataService } from '../../services/data.service';
             <span class="material-symbols-outlined text-[18px] text-green-600">add_circle</span>
             <span>Novo</span>
           </button>
+          <button (click)="suggestConfig()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm text-gray-700">
+            <span class="material-symbols-outlined text-[18px] text-orange-600">auto_awesome</span>
+            <span>Sugerir</span>
+          </button>
           <button (click)="delete()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm text-gray-700">
             <span class="material-symbols-outlined text-[18px] text-red-600">block</span>
             <span>Anular</span>
@@ -1153,4 +1157,125 @@ export class DocumentTypeConfigModalComponent implements OnInit {
       this.config.type = 'Liquidações';
     }
   }
+
+  suggestConfig() {
+    if (!this.config.code) {
+      alert('Por favor, introduza primeiro o Código do Documento no campo do canto superior esquerdo para receber sugestões.');
+      return;
+    }
+
+    const code = this.config.code.toUpperCase();
+    const isSales = this.module === 'SALES';
+    const isPurchases = this.module === 'PURCHASES';
+    const isStock = this.module === 'INVENTORY';
+
+    // Auto descrições básicas
+    if (!this.config.description) {
+      const descriptions: Record<string, string> = {
+        'FA': 'Fatura', 'FR': 'Fatura-Recibo', 'VD': 'Venda a Dinheiro', 'NC': 'Nota de Crédito', 'ND': 'Nota de Débito',
+        'GT': 'Guia de Transporte', 'GR': 'Guia de Remessa', 'PP': 'Fatura Pró-forma', 'OR': 'Orçamento',
+        'FE': 'Fatura Encomenda', 'FC': 'Fatura de Compra', 'VVD': 'Venda a Dinheiro (Compra)', 'NCF': 'Nota de Crédito Fornecedor',
+        'EC': 'Encomenda de Cliente', 'EF': 'Encomenda a Fornecedor', 'DC': 'Devolução a Fornecedor',
+        'ENT': 'Entrada de Stock', 'SAI': 'Saída de Stock', 'TRF': 'Transferência de Armazém', 'INV': 'Acerto de Inventário'
+      };
+      if (descriptions[code]) this.config.description = descriptions[code];
+    }
+
+    if (isSales) {
+      if (['FA', 'FR', 'FS', 'FE'].includes(code)) {
+        this.config.type = 'Venda';
+        this.config.nature = 'RECEIVE';
+        this.config.stocks = true;
+        this.config.currentAccounts = true;
+        this.config.treasury = false;
+        this.config.stats = true;
+        this.config.recapitulatives = true;
+      } else if (code === 'VD') {
+        this.config.type = 'Venda';
+        this.config.nature = 'RECEIVE';
+        this.config.stocks = true;
+        this.config.currentAccounts = true;
+        this.config.treasury = true;
+        this.config.treasuryIntegration = true;
+        this.config.autoLiquidation = true;
+      } else if (code === 'NC') {
+        this.config.type = 'Venda';
+        this.config.nature = 'PAY';
+        this.config.stocks = true;
+        this.config.currentAccounts = true;
+        this.config.allowNegativeLines = true;
+        this.config.treasury = false;
+      } else if (code === 'ND') {
+        this.config.type = 'Venda';
+        this.config.nature = 'RECEIVE';
+        this.config.stocks = false;
+        this.config.currentAccounts = true;
+        this.config.treasury = false;
+      } else if (['PP', 'OR'].includes(code)) {
+        this.config.type = 'Venda';
+        this.config.nature = 'RECEIVE';
+        this.config.stocks = false;
+        this.config.currentAccounts = false;
+        this.config.stats = false;
+        this.config.recapitulatives = false;
+      } else if (['GT', 'GR', 'EC'].includes(code)) {
+        this.config.type = 'Venda';
+        this.config.nature = 'RECEIVE';
+        this.config.stocks = true;
+        this.config.currentAccounts = false;
+        this.config.stats = false;
+        this.config.recapitulatives = false;
+      }
+    } else if (isPurchases) {
+      if (['FC'].includes(code)) {
+        this.config.type = 'Compra';
+        this.config.nature = 'PAY';
+        this.config.stocks = true;
+        this.config.currentAccounts = true;
+        this.config.treasury = false;
+      } else if (code === 'VVD') {
+        this.config.type = 'Compra';
+        this.config.nature = 'PAY';
+        this.config.stocks = true;
+        this.config.currentAccounts = true;
+        this.config.treasury = true;
+        this.config.treasuryIntegration = true;
+        this.config.autoLiquidation = true;
+      } else if (code === 'NCF') {
+        this.config.type = 'Compra';
+        this.config.nature = 'RECEIVE';
+        this.config.stocks = true;
+        this.config.currentAccounts = true;
+        this.config.allowNegativeLines = true;
+      } else if (code === 'EF') {
+        this.config.type = 'Compra';
+        this.config.nature = 'PAY';
+        this.config.stocks = false;
+        this.config.currentAccounts = false;
+      } else if (code === 'DC') {
+        this.config.type = 'Compra';
+        this.config.nature = 'RECEIVE';
+        this.config.stocks = true;
+        this.config.currentAccounts = true;
+        this.config.allowNegativeLines = true;
+      }
+    } else if (isStock) {
+      if (['ENT', 'EI', 'EA', 'EO'].includes(code)) {
+        this.config.type = 'Stock';
+        this.config.stockMovementPositiveType = 'Entrada';
+      } else if (['SAI', 'SA', 'SO'].includes(code)) {
+        this.config.type = 'Stock';
+        this.config.stockMovementNegativeType = 'Saída';
+      } else if (['TRF', 'TR'].includes(code)) {
+        this.config.type = 'Stock';
+        this.config.stockMovementPositiveType = 'Transferência';
+        this.config.stockMovementNegativeType = 'Transferência';
+      } else if (code === 'INV') {
+        this.config.type = 'Stock';
+        this.config.stockMovementPositiveType = 'Entrada';
+        this.config.stockMovementNegativeType = 'Saída';
+      }
+    }
+  }
 }
+

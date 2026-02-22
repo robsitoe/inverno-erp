@@ -448,32 +448,46 @@ export class JournalEntriesReviewComponent implements OnInit {
     }
 
     postSingleEntry(entryId: string) {
-        try {
-            this.accountingService.postJournalEntry(entryId, 'Contabilista'); // TODO: Get real user
-            this.showSuccess(`Lançamento ${entryId} validado e postado com sucesso!`);
-            this.loadEntries();
-            this.selectedEntries = this.selectedEntries.filter(id => id !== entryId);
-        } catch (error: any) {
-            this.showError(`Erro ao validar lançamento: ${error.message}`);
-        }
+        this.accountingService.postJournalEntry(entryId, 'Contabilista').subscribe({
+            next: (response) => {
+                this.showSuccess(`Lançamento ${entryId} validado e postado com sucesso!`);
+                this.loadEntries();
+                this.selectedEntries = this.selectedEntries.filter(id => id !== entryId);
+                this.cdr.detectChanges();
+            },
+            error: (error: any) => {
+                // Extract error message from backend response
+                const msg = error.error?.message || error.message || 'Erro desconhecido';
+                const detailedMsg = Array.isArray(msg) ? msg.join(', ') : msg;
+                this.showError(`Erro ao validar lançamento ${entryId}: ${detailedMsg}`);
+                this.cdr.detectChanges();
+            }
+        });
     }
 
     postSelectedEntries() {
         if (this.selectedEntries.length === 0) return;
 
-        const result = this.accountingService.postMultipleEntries(this.selectedEntries, 'Contabilista');
+        this.accountingService.postMultipleEntries(this.selectedEntries, 'Contabilista').subscribe({
+            next: (result) => {
+                if (result.success.length > 0) {
+                    this.showSuccess(`${result.success.length} lançamento(s) validado(s) com sucesso!`);
+                }
 
-        if (result.success.length > 0) {
-            this.showSuccess(`${result.success.length} lançamento(s) validado(s) com sucesso!`);
-        }
+                if (result.failed.length > 0) {
+                    const errors = result.failed.map(f => `${f.id}: ${f.error}`).join('; ');
+                    this.showError(`Falha ao validar ${result.failed.length} lançamento(s): ${errors}`);
+                }
 
-        if (result.failed.length > 0) {
-            const errors = result.failed.map(f => `${f.id}: ${f.error}`).join('; ');
-            this.showError(`Falha ao validar ${result.failed.length} lançamento(s): ${errors}`);
-        }
-
-        this.loadEntries();
-        this.selectedEntries = [];
+                this.loadEntries();
+                this.selectedEntries = [];
+                this.cdr.detectChanges();
+            },
+            error: (err) => {
+                this.showError('Erro inesperado ao processar o lote: ' + err.message);
+                this.cdr.detectChanges();
+            }
+        });
     }
 
     cancelEntry(entryId: string) {

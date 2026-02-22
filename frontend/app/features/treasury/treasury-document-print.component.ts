@@ -104,7 +104,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
                 <td>{{ line.docType || 'FA' }}</td>
                 <td>{{ line.docNumber }}</td>
                 <td>1</td>
-                <td class="text-right">{{ line.originalAmount | number:'1.2-2' }}</td>
+                <td class="text-right">{{ (line.originalAmount || line.amount) | number:'1.2-2' }}</td>
                 <td class="text-right">{{ line.amount | number:'1.2-2' }}</td>
                 <td class="text-right">{{ (line.discount || 0) | number:'1.2-2' }}</td>
                 <td class="text-right">{{ (line.pendingAfter || 0) | number:'1.2-2' }}</td>
@@ -121,10 +121,10 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
         <div class="summary-section">
           <div class="summary-row">
             <span class="summary-label">Total</span>
-            <div class="summary-value-box text-right">{{ document.amount | number:'1.2-2' }}</div>
-            <div class="summary-value-box text-right">{{ document.amount | number:'1.2-2' }}</div>
-            <div class="summary-value-box text-right">0,00</div>
-            <div class="summary-value-box text-right">0,00</div>
+            <div class="summary-value-box text-right">{{ getTotalOriginal() | number:'1.2-2' }}</div>
+            <div class="summary-value-box text-right">{{ getTotalAllocated() | number:'1.2-2' }}</div>
+            <div class="summary-value-box text-right">{{ getTotalDiscount() | number:'1.2-2' }}</div>
+            <div class="summary-value-box text-right">{{ getTotalPending() | number:'1.2-2' }}</div>
           </div>
           
           <div class="final-row">
@@ -405,5 +405,25 @@ export class TreasuryDocumentPrintComponent implements OnInit {
     }
 
     return result.trim();
+  }
+
+  getTotalOriginal(): number {
+    if (!this.document || !this.document.lines) return 0;
+    return this.document.lines.reduce((sum, line) => sum + (line.originalAmount || line.amount || 0), 0);
+  }
+
+  getTotalAllocated(): number {
+    if (!this.document || !this.document.lines) return 0;
+    return this.document.lines.reduce((sum, line) => sum + (line.amount || 0), 0);
+  }
+
+  getTotalDiscount(): number {
+    if (!this.document || !this.document.lines) return 0;
+    return this.document.lines.reduce((sum, line) => sum + (line.discount || 0), 0);
+  }
+
+  getTotalPending(): number {
+    if (!this.document || !this.document.lines) return 0;
+    return this.document.lines.reduce((sum, line) => sum + (line.pendingAfter || 0), 0);
   }
 }

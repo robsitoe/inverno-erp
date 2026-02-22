@@ -1250,7 +1250,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
   loadTreasuryAccounts() {
     this.treasuryAccounts = this.accountingService.getAccounts()
-      .filter(a => a.allowPosting && (a.code.startsWith('11') || a.code.startsWith('12')))
+      .filter(a => a.allowPosting && (a.code.startsWith('11') || a.code.startsWith('12') || a.code.startsWith('1.1') || a.code.startsWith('1.2')))
       .sort((a, b) => a.code.localeCompare(b.code));
 
     if (this.treasuryAccounts.length > 0) {

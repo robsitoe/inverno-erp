@@ -241,6 +241,35 @@ export class LicensesService {
         return { token, license };
     }
 
+    // ─── SUBSCRIBE (Auto-generation after payment) ───────────────────────────
+
+    async subscribe(companyId: string, plan: LicensePlan): Promise<LicenseStatusResponse> {
+        this.logger.log(`Auto-subscribing company ${companyId} to plan ${plan}`);
+
+        const planConfig = LICENSE_PLANS_CONFIG.find(p => p.id === plan);
+        if (!planConfig && plan !== LicensePlan.DEMO) {
+            throw new BadRequestException('Plano de licença inválido.');
+        }
+
+        // Fetch company name from main DB to ensure license record is accurate
+        const company = await this.licenseRepo.manager.getRepository(License).query(
+            `SELECT name FROM companies WHERE id = $1`, [companyId]
+        );
+        const companyName = company && company[0] ? company[0].name : companyId;
+
+        const dto: GenerateLicenseDto = {
+            companyId,
+            companyName,
+            plan,
+            durationDays: plan === LicensePlan.DEMO ? 30 : 365,
+            features: planConfig?.features || this.defaultFeaturesForPlan(plan),
+            price: planConfig?.price || 0,
+        };
+
+        const result = await this.generate(dto, 'SYSTEM-PAYMENT-AUTO');
+        return this.buildStatusResponse(result.license, result.token);
+    }
+
     // ─── ACTIVATE (Client activates their license) ────────────────────────────
 
     async activate(token: string, requestIp: string): Promise<LicenseStatusResponse> {

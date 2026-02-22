@@ -117,6 +117,14 @@ export class InventoryService {
         this.articlesUpdated$.next();
     }
 
+    /**
+     * Re-fetches all inventory data from backend and notifies subscribers.
+     * Use this after server-side mutations to ensure UI is in sync.
+     */
+    public async refreshData() {
+        await this.loadData();
+    }
+
     private filterByCompany<T extends { companyId?: string | null }>(list: T[]): T[] {
         if (!this.activeCompanyId) return [];
         return list.filter(item => !item.companyId || item.companyId === this.activeCompanyId);
@@ -301,8 +309,10 @@ export class InventoryService {
             });
         } else {
             // In backend mode, articles are saved individually via DataService.
-            // We just notify that the local list has changed.
-            this.articlesUpdated$.next();
+            // We refresh the background data to ensure everything (ID, stock, etc) is in sync
+            this.loadData().then(() => {
+                this.articlesUpdated$.next();
+            });
         }
     }
 

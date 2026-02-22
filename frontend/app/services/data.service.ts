@@ -452,6 +452,23 @@ export class DataService {
         }
     }
 
+    clearAccounts(companyId?: string): Observable<any> {
+        if (this.isLocalBrowser()) {
+            localStorage.setItem('erp_accounts_v2', JSON.stringify([]));
+            return of(true);
+        } else {
+            return this.http.delete(`${this.baseUrl}/accounting/accounts?companyId=${companyId || ''}`);
+        }
+    }
+
+    recalculateAccountBalances(companyId?: string): Observable<any> {
+        if (this.isLocalBrowser()) {
+            return of(true);
+        } else {
+            return this.http.post(`${this.baseUrl}/accounting/accounts/recalculate?companyId=${companyId || ''}`, {});
+        }
+    }
+
 
     getAccountStatement(accountId: string, fromDate?: string, toDate?: string, companyId?: string, includeDrafts: boolean = false): Observable<any> {
         if (this.isLocalBrowser()) {

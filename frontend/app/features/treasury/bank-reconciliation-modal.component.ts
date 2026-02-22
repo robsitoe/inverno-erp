@@ -4,21 +4,21 @@ import { FormsModule } from '@angular/forms';
 import { AccountingService } from '../../shared/accounting.service';
 
 interface BankMovement {
-    id: string;
-    date: Date;
-    description: string;
-    reference: string;
-    debit: number;
-    credit: number;
-    reconciled: boolean;
-    reconciledDate?: Date;
+  id: string;
+  date: Date;
+  description: string;
+  reference: string;
+  debit: number;
+  credit: number;
+  reconciled: boolean;
+  reconciledDate?: Date;
 }
 
 @Component({
-    selector: 'app-bank-reconciliation-modal',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-bank-reconciliation-modal',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded shadow-lg w-[1200px] max-h-[90vh] flex flex-col">
         <!-- Header -->
@@ -275,167 +275,167 @@ interface BankMovement {
   `
 })
 export class BankReconciliationModalComponent implements OnInit {
-    @Output() close = new EventEmitter<void>();
-    @Output() saved = new EventEmitter<any>();
+  @Output() close = new EventEmitter<void>();
+  @Output() saved = new EventEmitter<any>();
 
-    selectedBankAccount = '';
-    statementDate = '';
-    statementBalance = 0;
+  selectedBankAccount = '';
+  statementDate = '';
+  statementBalance = 0;
 
-    bankAccounts: any[] = [];
-    systemMovements: BankMovement[] = [];
-    bankStatementMovements: BankMovement[] = [];
+  bankAccounts: any[] = [];
+  systemMovements: BankMovement[] = [];
+  bankStatementMovements: BankMovement[] = [];
 
-    constructor(private accountingService: AccountingService) { }
+  constructor(private accountingService: AccountingService) { }
 
-    ngOnInit() {
-        this.statementDate = new Date().toISOString().split('T')[0];
-        this.loadBankAccounts();
-    }
+  ngOnInit() {
+    this.statementDate = new Date().toISOString().split('T')[0];
+    this.loadBankAccounts();
+  }
 
-    loadBankAccounts() {
-        const allAccounts = this.accountingService.getAccounts();
-        this.bankAccounts = allAccounts.filter(a => a.code.startsWith('12') && a.allowPosting);
-    }
+  loadBankAccounts() {
+    const allAccounts = this.accountingService.getAccounts();
+    this.bankAccounts = allAccounts.filter(a => (a.code.startsWith('12') || a.code.startsWith('1.2') || a.code.startsWith('1.1') || a.code.startsWith('11.1.2')) && a.allowPosting);
+  }
 
-    loadMovements() {
-        if (!this.selectedBankAccount) return;
+  loadMovements() {
+    if (!this.selectedBankAccount) return;
 
-        // Load REAL system movements from accounting
-        const allEntries = this.accountingService.getJournalEntries();
-        this.systemMovements = [];
+    // Load REAL system movements from accounting
+    const allEntries = this.accountingService.getJournalEntries();
+    this.systemMovements = [];
 
-        allEntries.forEach(entry => {
-            // Find lines affecting the selected account
-            const accountLines = entry.lines.filter(line => line.accountId === this.selectedBankAccount);
+    allEntries.forEach(entry => {
+      // Find lines affecting the selected account
+      const accountLines = entry.lines.filter(line => line.accountId === this.selectedBankAccount);
 
-            accountLines.forEach(line => {
-                // Only add if not already reconciled (logic to be implemented, assuming all open for now)
-                this.systemMovements.push({
-                    id: line.id,
-                    date: new Date(entry.date),
-                    description: line.description || entry.description,
-                    reference: entry.reference,
-                    debit: line.debit || 0,
-                    credit: line.credit || 0,
-                    reconciled: false
-                });
-            });
+      accountLines.forEach(line => {
+        // Only add if not already reconciled (logic to be implemented, assuming all open for now)
+        this.systemMovements.push({
+          id: line.id,
+          date: new Date(entry.date),
+          description: line.description || entry.description,
+          reference: entry.reference,
+          debit: line.debit || 0,
+          credit: line.credit || 0,
+          reconciled: false
         });
+      });
+    });
 
-        // Sort by date descending
-        this.systemMovements.sort((a, b) => b.date.getTime() - a.date.getTime());
+    // Sort by date descending
+    this.systemMovements.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-        // Clear bank movements (user must import or load sample)
-        this.bankStatementMovements = [];
+    // Clear bank movements (user must import or load sample)
+    this.bankStatementMovements = [];
+  }
+
+  importSampleStatement() {
+    this.bankStatementMovements = this.generateSampleBankMovements();
+  }
+
+  generateSampleBankMovements(): BankMovement[] {
+    return [
+      {
+        id: 'B1',
+        date: new Date('2025-12-01'),
+        description: 'DEPOSITO - CLIENTE ABC',
+        reference: 'DEP001',
+        debit: 15000,
+        credit: 0,
+        reconciled: false
+      },
+      {
+        id: 'B2',
+        date: new Date('2025-12-02'),
+        description: 'TRANSFERENCIA - FORNECEDOR XYZ',
+        reference: 'TRF001',
+        debit: 0,
+        credit: 5000,
+        reconciled: false
+      },
+      {
+        id: 'B3',
+        date: new Date('2025-12-03'),
+        description: 'DEPOSITO',
+        reference: 'DEP002',
+        debit: 10000,
+        credit: 0,
+        reconciled: false
+      },
+      {
+        id: 'B4',
+        date: new Date('2025-12-04'),
+        description: 'TAXA BANCARIA',
+        reference: 'TAXA',
+        debit: 0,
+        credit: 50,
+        reconciled: false
+      }
+    ];
+  }
+
+  toggleAllSystem(event: any) {
+    const checked = event.target.checked;
+    this.systemMovements.forEach(m => {
+      if (!m.reconciled) m.reconciled = checked;
+    });
+  }
+
+  toggleAllBank(event: any) {
+    const checked = event.target.checked;
+    this.bankStatementMovements.forEach(m => m.reconciled = checked);
+  }
+
+  getSystemBalance(): number {
+    return this.systemMovements.reduce((sum, m) => sum + m.debit - m.credit, 0);
+  }
+
+  getSystemSelectedCount(): number {
+    return this.systemMovements.filter(m => m.reconciled).length;
+  }
+
+  getBankSelectedCount(): number {
+    return this.bankStatementMovements.filter(m => m.reconciled).length;
+  }
+
+  getDifference(): number {
+    const systemSelected = this.systemMovements
+      .filter(m => m.reconciled)
+      .reduce((sum, m) => sum + m.debit - m.credit, 0);
+
+    const bankSelected = this.bankStatementMovements
+      .filter(m => m.reconciled)
+      .reduce((sum, m) => sum + m.debit - m.credit, 0);
+
+    return Math.abs(systemSelected - bankSelected);
+  }
+
+  saveReconciliation() {
+    if (this.getDifference() !== 0) {
+      alert('A diferença deve ser zero para gravar a reconciliação');
+      return;
     }
 
-    importSampleStatement() {
-        this.bankStatementMovements = this.generateSampleBankMovements();
-    }
+    const reconciliation = {
+      id: `RECON${Date.now()}`,
+      accountId: this.selectedBankAccount,
+      date: new Date(this.statementDate),
+      statementBalance: this.statementBalance,
+      systemMovements: this.systemMovements.filter(m => m.reconciled),
+      bankMovements: this.bankStatementMovements.filter(m => m.reconciled),
+      reconciledBy: 'user',
+      reconciledAt: new Date()
+    };
 
-    generateSampleBankMovements(): BankMovement[] {
-        return [
-            {
-                id: 'B1',
-                date: new Date('2025-12-01'),
-                description: 'DEPOSITO - CLIENTE ABC',
-                reference: 'DEP001',
-                debit: 15000,
-                credit: 0,
-                reconciled: false
-            },
-            {
-                id: 'B2',
-                date: new Date('2025-12-02'),
-                description: 'TRANSFERENCIA - FORNECEDOR XYZ',
-                reference: 'TRF001',
-                debit: 0,
-                credit: 5000,
-                reconciled: false
-            },
-            {
-                id: 'B3',
-                date: new Date('2025-12-03'),
-                description: 'DEPOSITO',
-                reference: 'DEP002',
-                debit: 10000,
-                credit: 0,
-                reconciled: false
-            },
-            {
-                id: 'B4',
-                date: new Date('2025-12-04'),
-                description: 'TAXA BANCARIA',
-                reference: 'TAXA',
-                debit: 0,
-                credit: 50,
-                reconciled: false
-            }
-        ];
-    }
+    // Save reconciliation
+    const stored = localStorage.getItem('erp_reconciliations');
+    const reconciliations = stored ? JSON.parse(stored) : [];
+    reconciliations.push(reconciliation);
+    localStorage.setItem('erp_reconciliations', JSON.stringify(reconciliations));
 
-    toggleAllSystem(event: any) {
-        const checked = event.target.checked;
-        this.systemMovements.forEach(m => {
-            if (!m.reconciled) m.reconciled = checked;
-        });
-    }
-
-    toggleAllBank(event: any) {
-        const checked = event.target.checked;
-        this.bankStatementMovements.forEach(m => m.reconciled = checked);
-    }
-
-    getSystemBalance(): number {
-        return this.systemMovements.reduce((sum, m) => sum + m.debit - m.credit, 0);
-    }
-
-    getSystemSelectedCount(): number {
-        return this.systemMovements.filter(m => m.reconciled).length;
-    }
-
-    getBankSelectedCount(): number {
-        return this.bankStatementMovements.filter(m => m.reconciled).length;
-    }
-
-    getDifference(): number {
-        const systemSelected = this.systemMovements
-            .filter(m => m.reconciled)
-            .reduce((sum, m) => sum + m.debit - m.credit, 0);
-
-        const bankSelected = this.bankStatementMovements
-            .filter(m => m.reconciled)
-            .reduce((sum, m) => sum + m.debit - m.credit, 0);
-
-        return Math.abs(systemSelected - bankSelected);
-    }
-
-    saveReconciliation() {
-        if (this.getDifference() !== 0) {
-            alert('A diferença deve ser zero para gravar a reconciliação');
-            return;
-        }
-
-        const reconciliation = {
-            id: `RECON${Date.now()}`,
-            accountId: this.selectedBankAccount,
-            date: new Date(this.statementDate),
-            statementBalance: this.statementBalance,
-            systemMovements: this.systemMovements.filter(m => m.reconciled),
-            bankMovements: this.bankStatementMovements.filter(m => m.reconciled),
-            reconciledBy: 'user',
-            reconciledAt: new Date()
-        };
-
-        // Save reconciliation
-        const stored = localStorage.getItem('erp_reconciliations');
-        const reconciliations = stored ? JSON.parse(stored) : [];
-        reconciliations.push(reconciliation);
-        localStorage.setItem('erp_reconciliations', JSON.stringify(reconciliations));
-
-        alert('Reconciliação gravada com sucesso!');
-        this.saved.emit(reconciliation);
-        this.close.emit();
-    }
+    alert('Reconciliação gravada com sucesso!');
+    this.saved.emit(reconciliation);
+    this.close.emit();
+  }
 }

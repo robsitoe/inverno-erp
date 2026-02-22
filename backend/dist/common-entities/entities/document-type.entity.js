@@ -20,6 +20,7 @@ let DocumentType = class DocumentType {
     description;
     nature;
     series;
+    settings;
     isActive;
     createdAt;
     updatedAt;
@@ -57,6 +58,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'jsonb', nullable: true }),
     __metadata("design:type", Array)
 ], DocumentType.prototype, "series", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'jsonb', nullable: true }),
+    __metadata("design:type", Object)
+], DocumentType.prototype, "settings", void 0);
 __decorate([
     (0, typeorm_1.Column)({ default: true }),
     __metadata("design:type", Boolean)

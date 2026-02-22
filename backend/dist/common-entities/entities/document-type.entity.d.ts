@@ -7,6 +7,7 @@ export declare class DocumentType {
     description: string;
     nature: string;
     series: any[];
+    settings: any;
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;

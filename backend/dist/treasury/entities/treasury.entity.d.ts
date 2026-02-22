@@ -33,7 +33,11 @@ export declare class TreasuryDocument {
 export declare class TreasuryDocumentLine {
     id: string;
     document: TreasuryDocument;
+    docType: string;
     docNumber: string;
+    originalAmount: number;
     amount: number;
+    discount: number;
+    pendingAfter: number;
     paymentMode: string;
 }

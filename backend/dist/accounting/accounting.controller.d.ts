@@ -14,7 +14,12 @@ export declare class AccountingController {
     findAllJournalEntries(companyId?: string): Promise<import("./entities/journal-entry.entity").JournalEntry[]>;
     findOneJournalEntry(id: string): Promise<import("./entities/journal-entry.entity").JournalEntry>;
     getStatement(accountId: string, fromDate?: string, toDate?: string, companyId?: string, includeDrafts?: string): Promise<any>;
+    clearAccounts(companyId?: string): Promise<import("typeorm").DeleteResult>;
     loadPreset(presetName: string, companyId?: string): Promise<any>;
+    recalculateBalances(companyId?: string): Promise<{
+        success: boolean;
+        processedEntries: number;
+    }>;
     listCostCenters(): Promise<any>;
     createCostCenter(payload: {
         code: string;

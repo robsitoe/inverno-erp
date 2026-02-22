@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventoryService } from '../../shared/inventory.service';
@@ -317,7 +317,8 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
 
   constructor(
     private inventoryService: InventoryService,
-    private dataService: DataService
+    private dataService: DataService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -337,6 +338,7 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
   loadArticles() {
     this.articles = this.inventoryService.getArticles();
     this.filterArticles();
+    this.cdr.detectChanges();
   }
 
   loadVatRates() {
@@ -384,7 +386,7 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
   newArticle() {
     const activeCompany = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
     this.selectedArticle = {
-      id: `ART${Date.now()}`,
+      id: '',
       companyId: activeCompany.id,
       code: '',
       name: '',
@@ -422,22 +424,18 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
     }
 
     this.dataService.saveArticle(this.selectedArticle).subscribe({
-      next: (savedArticle) => {
-        alert(`Artigo ${savedArticle.code} gravado com sucesso!`);
+      next: async (response) => {
+        // Handle both single article and array response (DataService can send array)
+        const savedArticle = Array.isArray(response) ? response[0] : response;
 
-        // Update selected article with server response
+        // Update selected article with server response (fetches UUID and metadata)
         this.selectedArticle = { ...savedArticle };
 
-        // Find if it's a new or existing article
-        const index = this.articles.findIndex(a => a.id === savedArticle.id || (a.id.startsWith('ART') && a.code === savedArticle.code));
+        // Force a REAL REFRESH from the database to ensure the list is updated
+        await this.inventoryService.refreshData();
 
-        if (index === -1) {
-          this.inventoryService.addArticle(savedArticle);
-        } else {
-          this.inventoryService.updateArticle(savedArticle);
-        }
-
-        this.loadArticles();
+        alert(`Artigo ${savedArticle.code} gravado com sucesso!`);
+        this.loadArticles(); // Reload local state from the refreshed service 
       },
       error: (err) => {
         console.error('Error saving article:', err);

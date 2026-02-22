@@ -6,6 +6,7 @@ import { AuditService } from '../../shared/audit.service';
 import { PeriodService } from '../../shared/period.service';
 import { SupplierListModalComponent } from '../../shared/components/supplier-list-modal.component';
 import { DataService } from '../../services/data.service';
+import { forkJoin } from 'rxjs';
 
 interface PendingDocRow {
   selected: boolean;
@@ -448,7 +449,7 @@ export class PaymentModalComponent implements OnInit {
 
   loadTreasuryAccounts() {
     this.treasuryAccounts = this.accountingService.getAccounts()
-      .filter(a => a.allowPosting && (a.code.startsWith('11') || a.code.startsWith('12')));
+      .filter(a => a.allowPosting && (a.code.startsWith('11') || a.code.startsWith('12') || a.code.startsWith('1.1') || a.code.startsWith('1.2')));
 
     if (this.treasuryAccounts.length > 0) {
       this.selectedTreasuryAccount = this.treasuryAccounts[0].id;
@@ -485,55 +486,66 @@ export class PaymentModalComponent implements OnInit {
   }
 
   loadPendingDocuments() {
-    if (!this.supplierName) return;
+    if (!this.supplierName && !this.supplierCode) return;
 
-    const storedPurchases = localStorage.getItem('erp_purchase_documents');
-    const storedPayments = localStorage.getItem('erp_payments');
+    forkJoin({
+      purchases: this.dataService.getPurchaseDocuments(this.activeCompanyId || undefined),
+      payments: this.dataService.getPayments(this.activeCompanyId || undefined)
+    }).subscribe({
+      next: ({ purchases, payments }) => {
+        // Filter documents for this entity that are POSTED or CONFIRMED
+        const entityDocs = (purchases || []).filter((d: any) =>
+          (d.supplierName === this.supplierName || d.supplierCode === this.supplierCode) &&
+          (d.status === 'POSTED' || d.status === 'CONFIRMED')
+        );
 
-    if (!storedPurchases) {
-      this.pendingRows = [];
-      return;
-    }
+        this.pendingRows = entityDocs.map((doc: any) => {
+          // Calculate already paid amount
+          let paidAmount = 0;
+          const rawDocType = doc.documentType || doc.type || 'FC';
+          const docNum = doc.documentNumber || `${rawDocType} ${doc.series}/${doc.number}`;
 
-    const purchases = JSON.parse(storedPurchases);
-    const payments = storedPayments ? JSON.parse(storedPayments) : [];
+          (payments || []).forEach((p: any) => {
+            if (p.lines && p.lines.length > 0) {
+              const line = p.lines.find((l: any) => l.docNumber === docNum);
+              if (line) paidAmount += (line.amount || 0);
+            } else if (p.relatedDocument === docNum) {
+              paidAmount += (p.amount || 0);
+            }
+          });
 
-    // Filter documents for this entity that are POSTED or CONFIRMED
-    const entityDocs = purchases.filter((d: any) =>
-      (d.supplierName === this.supplierName || d.supplierCode === this.supplierCode) &&
-      (d.status === 'POSTED' || d.status === 'CONFIRMED')
-    );
+          const pending = (doc.totalValue || doc.total || 0) - paidAmount;
 
-    this.pendingRows = entityDocs.map((doc: any) => {
-      // Calculate already paid amount
-      const relatedPayments = payments.filter((p: any) => p.relatedDocument === doc.documentNumber);
-      const paidAmount = relatedPayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
-      const pending = (doc.total || 0) - paidAmount;
+          if (pending <= 0.01) return null;
 
-      if (pending <= 1) return null;
+          const isPreSelected = this.pendingDocument && this.pendingDocument.documentNumber === docNum;
 
-      const isPreSelected = this.pendingDocument && this.pendingDocument.documentNumber === doc.documentNumber;
+          return {
+            selected: isPreSelected,
+            id: doc.id,
+            date: doc.date,
+            dueDate: doc.dueDate,
+            currency: 'MT',
+            docType: rawDocType,
+            docNumber: docNum,
+            total: doc.totalValue || doc.total,
+            pending: pending,
+            toPay: isPreSelected ? pending : 0,
+            discount: 0,
+            paymentMode: 'PGNUM',
+            paymentCode: '1',
+            commercialEntity: this.supplierCode,
+            originalDoc: doc
+          };
+        }).filter((r: any) => r !== null);
 
-      return {
-        selected: isPreSelected,
-        id: doc.id,
-        date: doc.date,
-        dueDate: doc.dueDate,
-        currency: 'MT',
-        docType: doc.type || 'FC', // Default to FC if missing
-        docNumber: `${doc.type || 'FC'} ${doc.series}/${doc.number}`, // Reconstruct full number if needed
-        total: doc.totalValue || doc.total,
-        pending: pending,
-        toPay: isPreSelected ? pending : 0,
-        discount: 0,
-        paymentMode: 'PGNUM',
-        paymentCode: '1',
-        commercialEntity: this.supplierCode,
-        originalDoc: doc
-      };
-    }).filter((r: any) => r !== null);
-
-    this.calculateTotals();
+        this.calculateTotals();
+      },
+      error: (err) => {
+        console.error('Error loading pending documents:', err);
+        this.pendingRows = [];
+      }
+    });
   }
 
   calculateTotals() {
@@ -665,23 +677,30 @@ export class PaymentModalComponent implements OnInit {
       description: `Pagamento a ${this.supplierName}`,
       relatedDocument: selectedRows[0].docNumber,
       lines: selectedRows.map(r => ({
+        docType: r.docType,
         docNumber: r.docNumber,
-        amount: r.toPay
+        originalAmount: r.total,
+        amount: r.toPay,
+        discount: r.discount || 0,
+        pendingAfter: r.pending - r.toPay
       }))
     };
 
-    // Save to localStorage
-    const stored = localStorage.getItem('erp_payments');
-    const payments = stored ? JSON.parse(stored) : [];
-    payments.push(payment);
-    localStorage.setItem('erp_payments', JSON.stringify(payments));
+    // Save to Backend
+    this.dataService.savePayment(payment).subscribe({
+      next: () => {
+        // Create Accounting Entry
+        this.createAccountingEntry(payment, selectedRows);
 
-    // Create Accounting Entry
-    this.createAccountingEntry(payment, selectedRows);
-
-    alert(`Pagamento ${this.paymentNumberString} gravado com sucesso!`);
-    this.saved.emit(payment);
-    this.close.emit();
+        alert(`Pagamento ${this.paymentNumberString} gravado com sucesso!`);
+        this.saved.emit(payment);
+        this.close.emit();
+      },
+      error: (err) => {
+        console.error('Erro ao guardar pagamento:', err);
+        alert('Erro ao guardar pagamento.');
+      }
+    });
   }
 
   createAccountingEntry(payment: any, rows: PendingDocRow[]) {
@@ -849,8 +868,8 @@ export class PaymentModalComponent implements OnInit {
     });
 
     let journalId = 'JNL-GEN';
-    if (treasuryAccount?.code.startsWith('11')) journalId = 'JNL-CSH';
-    else if (treasuryAccount?.code.startsWith('12')) journalId = 'JNL-BNK';
+    if (treasuryAccount?.code.startsWith('11') || treasuryAccount?.code.startsWith('1.1')) journalId = 'JNL-CSH';
+    else if (treasuryAccount?.code.startsWith('12') || treasuryAccount?.code.startsWith('1.2')) journalId = 'JNL-BNK';
 
     const entry: any = {
       id: entryId,

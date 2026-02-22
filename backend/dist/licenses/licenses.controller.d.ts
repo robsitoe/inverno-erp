@@ -1,5 +1,6 @@
 import { LicensesService } from './licenses.service';
 import { GenerateLicenseDto, ActivateLicenseDto } from './dto/generate-license.dto';
+import { LicensePlan } from './entities/license.entity';
 import { BlockLicensesDto, ListLicensesQueryDto, UpdateLicensePricingDto } from './dto/manage-license.dto';
 export declare class LicensesController {
     private readonly licensesService;
@@ -26,12 +27,16 @@ export declare class LicensesController {
         token: string;
         licenseId: string;
         companyId: string;
-        plan: import("./entities/license.entity").LicensePlan;
+        plan: LicensePlan;
         expiresAt: Date;
         message: string;
         error?: undefined;
     }>;
     activate(dto: ActivateLicenseDto, req: any): Promise<import("./licenses.service").LicenseStatusResponse>;
+    subscribe(body: {
+        companyId: string;
+        plan: LicensePlan;
+    }): Promise<import("./licenses.service").LicenseStatusResponse>;
     getStatus(companyId: string): Promise<import("./licenses.service").LicenseStatusResponse>;
     revoke(companyId: string, body: {
         reason: string;

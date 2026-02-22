@@ -6,7 +6,7 @@ import { CreateStockDocumentDto } from './dto/create-stock-document.dto';
 export declare class InventoryController {
     private readonly inventoryService;
     constructor(inventoryService: InventoryService);
-    create(createArticleDto: CreateArticleDto | CreateArticleDto[]): Promise<import("./entities/article.entity").Article | import("./entities/article.entity").Article[]>;
+    create(createArticleDto: CreateArticleDto | CreateArticleDto[]): Promise<import("./entities/article.entity").Article[]>;
     findAll(companyId?: string): Promise<import("./entities/article.entity").Article[]>;
     findOne(id: string): Promise<import("./entities/article.entity").Article>;
     update(id: string, updateArticleDto: UpdateArticleDto): Promise<import("./entities/article.entity").Article>;

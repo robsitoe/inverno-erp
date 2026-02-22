@@ -6,6 +6,7 @@ import { AuditService } from '../../shared/audit.service';
 import { PeriodService } from '../../shared/period.service';
 import { EntityListModalComponent } from '../../shared/components/entity-list-modal.component';
 import { DataService } from '../../services/data.service';
+import { forkJoin } from 'rxjs';
 
 
 interface PendingDocRow {
@@ -192,10 +193,11 @@ interface PendingDocRow {
                     <th class="w-12 py-1 border-r border-gray-200 text-center">Moeda</th>
                     <th class="w-24 py-1 border-r border-gray-200 text-left px-1 text-blue-600">Documento</th>
                     <th class="w-16 py-1 border-r border-gray-200 text-left px-1 text-blue-600">N.º Doc.</th>
-                    <th class="w-24 py-1 border-r border-gray-200 text-right px-1">Total</th>
-                    <th class="w-24 py-1 border-r border-gray-200 text-right px-1 text-blue-600">Pendente</th>
+                    <th class="w-24 py-1 border-r border-gray-200 text-right px-1">Total FA</th>
+                    <th class="w-24 py-1 border-r border-gray-200 text-right px-1 text-orange-600">Pendente</th>
                     <th class="w-24 py-1 border-r border-gray-200 text-right px-1 font-bold">A Pagar</th>
                     <th class="w-16 py-1 border-r border-gray-200 text-right px-1">Desc.</th>
+                    <th class="w-24 py-1 border-r border-gray-200 text-right px-1 text-green-700">Pend. Após</th>
                     <th class="w-20 py-1 border-r border-gray-200 text-left px-1">Modo Pag.</th>
                     <th class="w-16 py-1 border-r border-gray-200 text-left px-1">Cd. Pag.</th>
                     <th class="py-1 text-left px-1">Entidade Comer.</th>
@@ -210,19 +212,20 @@ interface PendingDocRow {
                     <td class="px-1 border-r border-gray-100 text-red-600">{{ row.dueDate | date:'dd/MM/yyyy' }}</td>
                     <td class="px-1 border-r border-gray-100 text-center">{{ row.currency }}</td>
                     <td class="px-1 border-r border-gray-100">{{ row.docType }}</td>
-                    <td class="px-1 border-r border-gray-100">{{ row.docNumber.split('/')[1] }}</td>
-                    <td class="px-1 border-r border-gray-100 text-right">{{ row.total | number:'1.2-2' }}</td>
-                    <td class="px-1 border-r border-gray-100 text-right text-blue-600">{{ row.pending | number:'1.2-2' }}</td>
+                    <td class="px-1 border-r border-gray-100">{{ row.docNumber }}</td>
+                    <td class="px-1 border-r border-gray-100 text-right font-medium">{{ row.total | number:'1.2-2' }}</td>
+                    <td class="px-1 border-r border-gray-100 text-right font-bold text-orange-600">{{ row.pending | number:'1.2-2' }}</td>
                     <td class="px-1 border-r border-gray-100 text-right font-medium relative p-0">
                       <input type="number" [(ngModel)]="row.toPay" (change)="onAmountChange(row)" class="w-full h-full text-right px-1 border-none bg-transparent focus:bg-white focus:ring-1 focus:ring-blue-500">
                     </td>
-                    <td class="px-1 border-r border-gray-100 text-right">{{ row.discount | number:'1.2-2' }}</td>
+                    <td class="px-1 border-r border-gray-100 text-right">{{ (row.discount || 0) | number:'1.2-2' }}</td>
+                    <td class="px-1 border-r border-gray-100 text-right text-green-700 font-medium">{{ (row.pending - row.toPay) | number:'1.2-2' }}</td>
                     <td class="px-1 border-r border-gray-100">{{ row.paymentMode }}</td>
                     <td class="px-1 border-r border-gray-100">{{ row.paymentCode }}</td>
                     <td class="px-1">{{ row.commercialEntity }}</td>
                   </tr>
                   <tr *ngIf="pendingRows.length === 0">
-                    <td colspan="13" class="text-center py-8 text-gray-400 italic">
+                    <td colspan="14" class="text-center py-8 text-gray-400 italic">
                       Nenhum documento pendente encontrado para esta entidade.
                     </td>
                   </tr>
@@ -459,7 +462,7 @@ export class ReceiptModalComponent implements OnInit {
 
   loadTreasuryAccounts() {
     this.treasuryAccounts = this.accountingService.getAccounts()
-      .filter(a => a.allowPosting && (a.code.startsWith('11') || a.code.startsWith('12')));
+      .filter(a => a.allowPosting && (a.code.startsWith('11') || a.code.startsWith('12') || a.code.startsWith('1.1') || a.code.startsWith('1.2')));
 
     if (this.treasuryAccounts.length > 0) {
       this.selectedTreasuryAccount = this.treasuryAccounts[0].id;
@@ -498,67 +501,65 @@ export class ReceiptModalComponent implements OnInit {
 
 
   loadPendingDocuments() {
-    if (!this.customerName) return;
+    if (!this.customerName && !this.customerCode) return;
 
-    const storedSales = localStorage.getItem('erp_sales_documents');
-    const storedReceipts = localStorage.getItem('erp_receipts');
+    forkJoin({
+      sales: this.dataService.getSalesDocuments(this.activeCompanyId || undefined),
+      receipts: this.dataService.getReceipts(this.activeCompanyId || undefined)
+    }).subscribe({
+      next: ({ sales, receipts }) => {
+        // Filter documents for this entity that are CONFIRMED, INVOICED or POSTED
+        const entityDocs = (sales || []).filter((d: any) =>
+          (d.customerName === this.customerName || d.customerId === this.customerCode) &&
+          (d.status === 'CONFIRMED' || d.status === 'INVOICED' || d.status === 'POSTED')
+        );
 
-    if (!storedSales) {
-      this.pendingRows = [];
-      return;
-    }
+        this.pendingRows = entityDocs.map((doc: any) => {
+          // Calculate already paid amount by checking all receipts and their lines
+          let paidAmount = 0;
+          (receipts || []).forEach((r: any) => {
+            if (r.lines && r.lines.length > 0) {
+              const line = r.lines.find((l: any) => l.docNumber === doc.documentNumber);
+              if (line) paidAmount += Number(line.amount) || 0;
+            } else if (r.relatedDocument === doc.documentNumber) {
+              paidAmount += Number(r.amount) || 0;
+            }
+          });
 
-    const sales = JSON.parse(storedSales);
-    const receipts = storedReceipts ? JSON.parse(storedReceipts) : [];
+          const docTotal = Number(doc.total) || 0;
+          const pending = docTotal - paidAmount;
 
-    // Filter documents for this entity that are CONFIRMED, INVOICED or POSTED
-    const entityDocs = sales.filter((d: any) =>
-      (d.customerName === this.customerName || d.customerId === this.customerCode) &&
-      (d.status === 'CONFIRMED' || d.status === 'INVOICED' || d.status === 'POSTED')
-    );
+          if (pending <= 0.01) return null; // Skip fully paid (tolerance 0.01)
 
-    this.pendingRows = entityDocs.map((doc: any) => {
-      // Calculate already paid amount by checking all receipts and their lines
-      let paidAmount = 0;
-      receipts.forEach((r: any) => {
-        if (r.lines && r.lines.length > 0) {
-          // New logic: check detail lines
-          const line = r.lines.find((l: any) => l.docNumber === doc.documentNumber);
-          if (line) paidAmount += (line.amount || 0);
-        } else if (r.relatedDocument === doc.documentNumber) {
-          // Backward compatibility: check main reference
-          paidAmount += (r.amount || 0);
-        }
-      });
+          // Check if this specific doc was passed as pendingDocument to pre-select it
+          const isPreSelected = this.pendingDocument && this.pendingDocument.documentNumber === doc.documentNumber;
 
-      const pending = (doc.total || 0) - paidAmount;
+          return {
+            selected: isPreSelected,
+            id: doc.id,
+            date: doc.date,
+            dueDate: doc.dueDate,
+            currency: 'MT',
+            docType: doc.documentType,
+            docNumber: doc.documentNumber,
+            total: docTotal,
+            pending: pending,
+            toPay: isPreSelected ? pending : 0,
+            discount: 0,
+            paymentMode: 'PGNUM',
+            paymentCode: '1',
+            commercialEntity: this.customerCode,
+            originalDoc: doc
+          };
+        }).filter((r: any) => r !== null);
 
-      if (pending <= 0.01) return null; // Skip fully paid (tolerance 0.01)
-
-
-      // Check if this specific doc was passed as pendingDocument to pre-select it
-      const isPreSelected = this.pendingDocument && this.pendingDocument.documentNumber === doc.documentNumber;
-
-      return {
-        selected: isPreSelected,
-        id: doc.id,
-        date: doc.date,
-        dueDate: doc.dueDate,
-        currency: 'MT',
-        docType: doc.documentType,
-        docNumber: doc.documentNumber,
-        total: doc.total,
-        pending: pending,
-        toPay: isPreSelected ? pending : 0, // Default to 0 unless pre-selected
-        discount: 0,
-        paymentMode: 'PGNUM',
-        paymentCode: '1',
-        commercialEntity: this.customerCode,
-        originalDoc: doc
-      };
-    }).filter((r: any) => r !== null);
-
-    this.calculateTotals();
+        this.calculateTotals();
+      },
+      error: (err) => {
+        console.error('Error loading pending documents:', err);
+        this.pendingRows = [];
+      }
+    });
   }
 
   onRowSelect(row: PendingDocRow) {
@@ -693,28 +694,30 @@ export class ReceiptModalComponent implements OnInit {
       // but ideally we should store lines or multiple relations
       relatedDocument: selectedRows[0].docNumber,
       lines: selectedRows.map(r => ({
+        docType: r.docType,
         docNumber: r.docNumber,
-        amount: r.toPay
+        originalAmount: r.total,
+        amount: r.toPay,
+        discount: r.discount || 0,
+        pendingAfter: r.pending - r.toPay
       }))
     };
 
-    // Save to localStorage (Local Cache)
-    const stored = localStorage.getItem('erp_receipts');
-    const receipts = stored ? JSON.parse(stored) : [];
-    receipts.push(receipt);
-    localStorage.setItem('erp_receipts', JSON.stringify(receipts));
-
     // Save to Backend (Permanent Sync)
     this.dataService.saveReceipt(receipt).subscribe({
-      error: (err) => console.error('Erro ao guardar recibo no servidor:', err)
+      next: () => {
+        // Create Accounting Entry
+        this.createAccountingEntry(receipt, selectedRows);
+
+        alert(`Recibo ${this.receiptNumberString} gravado com sucesso!`);
+        this.saved.emit(receipt);
+        this.close.emit();
+      },
+      error: (err) => {
+        console.error('Erro ao guardar recibo no servidor:', err);
+        alert('Erro ao gravar recibo. Tente novamente.');
+      }
     });
-
-    // Create Accounting Entry
-    this.createAccountingEntry(receipt, selectedRows);
-
-    alert(`Recibo ${this.receiptNumberString} gravado com sucesso!`);
-    this.saved.emit(receipt);
-    this.close.emit();
   }
 
   createAccountingEntry(receipt: any, rows: PendingDocRow[]) {
@@ -885,8 +888,8 @@ export class ReceiptModalComponent implements OnInit {
     });
 
     let journalId = 'JNL-GEN';
-    if (treasuryAccount?.code.startsWith('11')) journalId = 'JNL-CSH';
-    else if (treasuryAccount?.code.startsWith('12')) journalId = 'JNL-BNK';
+    if (treasuryAccount?.code.startsWith('11') || treasuryAccount?.code.startsWith('1.1')) journalId = 'JNL-CSH';
+    else if (treasuryAccount?.code.startsWith('12') || treasuryAccount?.code.startsWith('1.2')) journalId = 'JNL-BNK';
 
     const entry: any = {
       id: entryId,

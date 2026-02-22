@@ -279,17 +279,26 @@ export class AppController {
       }
 
       const repo = await this.getRepo(Customer, companyId);
+
+      const sanitizeId = (id: string | any) => {
+        // If it looks like a temporary frontend ID (NEW_...) or is not a valid UUID string, remove it
+        if (typeof id === 'string' && (id.startsWith('NEW_') || id.length < 30)) {
+          return undefined;
+        }
+        return id;
+      };
+
       if (Array.isArray(customer)) {
-        // Ensure all items have an ID if it's a primary column
         const processed = customer.map(c => ({
           ...c,
-          id: c.id || `CUST-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+          id: sanitizeId(c.id)
         }));
         return await repo.save(processed);
       }
+
       const toSave = {
         ...customer,
-        id: (customer as any).id || `CUST-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+        id: sanitizeId((customer as any).id)
       };
       return await repo.save(toSave);
     } catch (error) {
@@ -321,16 +330,26 @@ export class AppController {
       }
 
       const repo = await this.getRepo(Supplier, companyId);
+
+      const sanitizeId = (id: string | any) => {
+        // If it looks like a temporary frontend ID (NEW_...) or is not a valid UUID string, remove it
+        if (typeof id === 'string' && (id.startsWith('NEW_') || id.length < 30)) {
+          return undefined;
+        }
+        return id;
+      };
+
       if (Array.isArray(supplier)) {
         const processed = supplier.map(s => ({
           ...s,
-          id: s.id || `SUPP-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+          id: sanitizeId(s.id)
         }));
         return await repo.save(processed);
       }
+
       const toSave = {
         ...supplier,
-        id: (supplier as any).id || `SUPP-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+        id: sanitizeId((supplier as any).id)
       };
       return await repo.save(toSave);
     } catch (error) {
@@ -444,9 +463,17 @@ export class AppController {
       if (normalized === 'STOCK') moduleQueries.push('INVENTORY');
       if (normalized === 'INVENTORY') moduleQueries.push('STOCK');
 
-      return await repo.find({
+      const records = await repo.find({
         where: moduleQueries.map(m => ({ module: m })),
         order: { code: 'ASC' } as any
+      });
+
+      return records.map((r: any) => {
+        const { settings, ...core } = r;
+        return {
+          ...core,
+          ...(settings || {})
+        };
       });
     } catch (error: any) {
       console.error(`[AppController] Error in getDocumentTypes:`, error.message);
@@ -460,12 +487,21 @@ export class AppController {
     const companyId = TenancyContext.getCompanyId();
 
     // We expect an array of types for a specific module
-    const processed = data.types.map(t => ({
-      ...t,
-      module: data.module,
-      companyId: t.companyId || companyId,
-      id: t.id || `${data.module}-${t.code}-${companyId || 'GLOBAL'}`
-    }));
+    const processed = data.types.map(t => {
+      const { id, companyId: cid, module: mod, code, name, description, nature, series, isActive, createdAt, updatedAt, ...settings } = t;
+      return {
+        id: id || `${data.module}-${code}-${cid || companyId || 'GLOBAL'}`,
+        companyId: cid || companyId,
+        module: data.module,
+        code,
+        name: name || description || code,
+        description,
+        nature,
+        series: series || [],
+        isActive: isActive !== false,
+        settings // Pack everything else into the settings JSON column
+      };
+    });
 
     return await repo.save(processed);
   }

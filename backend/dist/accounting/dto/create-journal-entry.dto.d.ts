@@ -17,5 +17,11 @@ export declare class CreateJournalEntryDto {
     reference?: string;
     sourceDocument?: string;
     sourceType?: string;
+    createdBy?: string;
+    updatedBy?: string;
+    correctionReason?: string;
+    relatedEntryId?: string;
+    createdAt?: any;
+    updatedAt?: any;
     lines: CreateJournalLineDto[];
 }

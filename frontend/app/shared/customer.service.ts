@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Customer } from './models';
-import { SAMPLE_CUSTOMERS } from './sample-data';
 import { DataService } from '../services/data.service';
 import { lastValueFrom } from 'rxjs';
 
@@ -15,10 +14,8 @@ export class CustomerService {
         this.dataService.activeCompany$.subscribe(company => {
             if (company) {
                 this.activeCompanyId = company.id;
-
                 const token = localStorage.getItem('access_token');
                 const isLocal = localStorage.getItem('erp_system_config')?.includes('BROWSER');
-
                 if (token || isLocal) {
                     this.loadCustomers();
                 }
@@ -31,24 +28,11 @@ export class CustomerService {
 
     public async loadCustomers() {
         try {
-            const allCustomers = await lastValueFrom(this.dataService.getCustomers());
-            // Filter: 
-            // 1. If it matches current company ID
-            // 2. OR if it has NO company ID and we are in the main company (001)
-            this.customers = allCustomers;
-
-            // Only load local samples if truly empty for the DEFAULT company 001
-            if (this.customers.length === 0 && this.activeCompanyId === '001') {
-                this.customers = [...SAMPLE_CUSTOMERS].map(c => ({ ...c, companyId: '001' }));
-            }
+            this.customers = await lastValueFrom(this.dataService.getCustomers());
         } catch (e) {
+            console.error('Failed to load customers:', e);
             this.customers = [];
         }
-    }
-
-
-    private saveCustomers() {
-        this.dataService.saveCustomer(this.customers).subscribe();
     }
 
     getCustomers(): Customer[] {
@@ -63,15 +47,25 @@ export class CustomerService {
         const index = this.customers.findIndex(c => c.id === customer.id);
         if (index !== -1) {
             this.customers[index] = customer;
-            this.saveCustomers();
         }
+        // Save only the single customer to backend
+        this.dataService.saveCustomer(customer).subscribe({
+            next: (saved) => {
+                if (saved?.id) this.customers[index] = saved;
+            },
+            error: (err) => console.error('Error saving customer:', err)
+        });
     }
 
     createCustomer(customer: Customer): void {
         if (this.activeCompanyId) {
             customer.companyId = this.activeCompanyId;
         }
-        this.customers.push(customer);
-        this.saveCustomers();
+        this.dataService.saveCustomer(customer).subscribe({
+            next: (saved) => {
+                if (saved) this.customers.push(saved);
+            },
+            error: (err) => console.error('Error creating customer:', err)
+        });
     }
 }

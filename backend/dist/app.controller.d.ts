@@ -108,7 +108,7 @@ export declare class AppController {
     saveJournal(journal: CreateJournalDto | CreateJournalDto[]): Promise<any>;
     getCustomers(companyId?: string): Promise<Customer[]>;
     saveCustomer(customer: CreateCustomerDto | CreateCustomerDto[]): Promise<({
-        id: string;
+        id: any;
         companyId?: string;
         code: string;
         name: string;
@@ -144,7 +144,7 @@ export declare class AppController {
     } & Customer)>;
     getSuppliers(companyId?: string): Promise<Supplier[]>;
     saveSupplier(supplier: CreateSupplierDto | CreateSupplierDto[]): Promise<({
-        id: string;
+        id: any;
         companyId?: string;
         code: string;
         name: string;
@@ -184,11 +184,22 @@ export declare class AppController {
         success: boolean;
         message: string;
     }>;
-    getDocumentTypes(module: string, companyId?: string): Promise<DocumentType[]>;
+    getDocumentTypes(module: string, companyId?: string): Promise<any[]>;
     saveDocumentTypes(data: {
         module: string;
         types: any[];
-    }): Promise<any[]>;
+    }): Promise<({
+        id: any;
+        companyId: any;
+        module: string;
+        code: any;
+        name: any;
+        description: any;
+        nature: any;
+        series: any;
+        isActive: boolean;
+        settings: any;
+    } & DocumentType)[]>;
     getPaymentMethods(companyId?: string): Promise<PaymentMethod[]>;
     savePaymentMethod(method: any): Promise<any>;
     syncPush(data: any): Promise<{

@@ -18,12 +18,11 @@ import { Account } from '../../shared/models';
           <div class="flex items-center gap-2 ml-4 border-l pl-4">
             <span class="text-xs text-gray-500 font-bold uppercase">Ações Rápidas:</span>
             <button 
-              (click)="loadPreset('PGC-NIR')"
+              (click)="loadPreset('PGC-PE')"
               class="px-2 py-1 text-xs border border-blue-600 text-blue-600 rounded hover:bg-blue-50 transition-colors"
-              [disabled]="accounts.length > 0"
-              [title]="accounts.length > 0 ? 'Plano já inicializado' : 'Carregar PGC-NIR'"
+              title="Carregar ou Restaurar Contas PGC-PE"
             >
-              Carregar PGC-NIR
+              Atualizar p/ PGC-PE
             </button>
             <button 
               (click)="triggerCsvUpload()"
@@ -109,6 +108,13 @@ import { Account } from '../../shared/models';
                     title="Editar Conta"
                   >
                     <span class="material-symbols-outlined text-[18px]">edit</span>
+                  </button>
+                  <button 
+                    (click)="toggleAccountStatus(account)"
+                    [class]="account.isActive ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'"
+                    [title]="account.isActive ? 'Desativar Conta' : 'Ativar Conta'"
+                  >
+                    <span class="material-symbols-outlined text-[18px]">{{ account.isActive ? 'block' : 'check_circle' }}</span>
                   </button>
                   <button 
                     (click)="openAddSubAccountModal(account)"
@@ -231,11 +237,12 @@ export class ChartOfAccountsComponent implements OnInit {
   }
 
   async loadPreset(name: string) {
-    if (confirm(`Tem a certeza que deseja carregar o modelo ${name}? Isso irá inicializar o plano de contas padrão.`)) {
+    if (confirm(`Tem a certeza que deseja SUBSTITUIR todo o plano de contas pelo modelo ${name}? \n\nATENÇÃO: Todas as contas atuais serão apagadas e substituídas pelas novas definições do PGC-PE.`)) {
       try {
+        await this.accountingService.resetAccounts();
         await this.accountingService.loadAccountsPreset(name);
         this.loadAccounts();
-        alert('Plano de contas carregado com sucesso!');
+        alert('Plano de contas substituído com sucesso pelo novo padrão PGC-PE!');
       } catch (e: any) {
         alert('Erro ao carregar plano: ' + (e.error?.message || e.message));
       }
@@ -413,6 +420,19 @@ export class ChartOfAccountsComponent implements OnInit {
         this.loadAccounts();
         this.showAddAccount = false;
       }
+    }
+  }
+
+  toggleAccountStatus(account: Account) {
+    const action = account.isActive ? 'desativar' : 'ativar';
+    const warning = account.isActive
+      ? `\n\nContas desativadas deixam de poder ser usadas em novos lançamentos, mas permanecem no histórico.`
+      : '';
+
+    if (confirm(`Tem a certeza que deseja ${action} a conta ${account.code} - ${account.name}?${warning}`)) {
+      account.isActive = !account.isActive;
+      this.accountingService.updateAccount(account);
+      this.loadAccounts();
     }
   }
 

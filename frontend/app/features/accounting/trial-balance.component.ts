@@ -4,12 +4,13 @@ import { AccountingService, AccountingIssue } from '../../shared/accounting.serv
 import { DataService } from '../../services/data.service';
 import { NavigationService } from '../../services/navigation.service';
 import { Account, JournalEntry } from '../../shared/models';
+import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-trial-balance',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="flex flex-col h-full bg-[#f8fafc]">
       <!-- Header -->
@@ -27,9 +28,15 @@ import { forkJoin } from 'rxjs';
               <button (click)="loadTrialBalance()" class="p-2 hover:bg-slate-100 rounded-full transition-all text-slate-600">
                   <span class="material-symbols-outlined">refresh</span>
               </button>
-              <div [class]="'px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 shadow-sm ' + (isBalanced ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700')">
-                  <span class="material-symbols-outlined text-lg">{{ isBalanced ? 'check_circle' : 'error' }}</span>
-                  {{ isBalanced ? 'CONSISTENTE' : 'DESEQUILIBRADO' }}
+              <button (click)="recalculateBalances()" title="Recalcular Todos os Saldos"
+                      [disabled]="isRepairing"
+                      class="flex items-center gap-2 px-3 py-2 bg-rose-50 hover:bg-rose-100 rounded-lg text-rose-600 text-xs font-bold border border-rose-200 transition-all active:scale-95 disabled:opacity-50">
+                  <span class="material-symbols-outlined text-sm">{{ isRepairing ? 'sync' : 'auto_fix_high' }}</span>
+                  {{ isRepairing ? 'A processar...' : 'Reparar Dados' }}
+              </button>
+              <div [class]="'px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 shadow-sm ' + (isBalanced && issues.length === 0 && (totalDebit > 0 || totalCredit > 0) ? 'bg-emerald-100 text-emerald-700' : (issues.length > 0 ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'))">
+                  <span class="material-symbols-outlined text-lg">{{ isBalanced && issues.length === 0 && (totalDebit > 0 || totalCredit > 0) ? 'check_circle' : (issues.length > 0 ? 'health_and_safety' : 'warning') }}</span>
+                  {{ isBalanced && issues.length === 0 && (totalDebit > 0 || totalCredit > 0) ? 'CONSISTENTE' : (issues.length > 0 ? 'DETETADOS ERROS' : (totalDebit === 0 ? 'DADOS EM FALTA' : 'DESEQUILIBRADO')) }}
               </div>
           </div>
       </div>
@@ -59,7 +66,14 @@ import { forkJoin } from 'rxjs';
                             <span class="material-symbols-outlined text-sm">{{ getIssueIcon(issue.severity) }}</span>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs font-medium leading-relaxed">{{ issue.description }}</p>
+                            <p class="text-xs font-medium leading-relaxed bg-white/50 inline-block p-1.5 rounded"
+                               [class.cursor-pointer]="true" 
+                               [class.hover:text-indigo-600]="true" 
+                               [class.hover:bg-indigo-50]="true"
+                               (click)="viewIssueDetails(issue)">
+                                {{ issue.description }}
+                                <span class="material-symbols-outlined text-[10px] ml-1 align-baseline opacity-50">open_in_new</span>
+                            </p>
                         </div>
                     </div>
 
@@ -112,6 +126,113 @@ import { forkJoin } from 'rxjs';
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Issue Details Modal -->
+        <div *ngIf="selectedIssueDetails" class="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[100] backdrop-blur-sm p-4" (click)="closeIssueDetails()">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200 border border-slate-200" (click)="$event.stopPropagation()">
+                <div class="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl">
+                    <div class="flex items-center gap-3">
+                        <div [class]="'w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ' + getIconBg(selectedIssueDetails.severity)">
+                            <span class="material-symbols-outlined">{{ getIssueIcon(selectedIssueDetails.severity) }}</span>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800">Detalhes do Diagnóstico</h2>
+                            <p class="text-xs text-slate-500 capitalize">{{ selectedIssueDetails.type.replace('_', ' ').toLowerCase() }}</p>
+                        </div>
+                    </div>
+                    <button (click)="closeIssueDetails()" class="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                
+                <div class="p-6 overflow-y-auto bg-[#f8fafc] flex-1">
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-5">
+                       <p class="text-sm text-slate-700 font-medium">{{ selectedIssueDetails.description }}</p>
+                    </div>
+                    
+                    <div *ngIf="selectedIssueEntry" class="bg-white border text-sm border-slate-200 shadow-sm rounded-xl overflow-hidden mb-5">
+                        <div class="bg-slate-50 p-3 text-xs font-bold text-slate-600 border-b border-slate-200 flex justify-between items-center">
+                            <span>
+                                Lançamento Contabilístico: 
+                                <span *ngIf="!isEditingIssueEntry" class="font-mono text-indigo-600 ml-1">{{ selectedIssueEntry.id }}</span>
+                                <span *ngIf="isEditingIssueEntry" class="text-indigo-600 ml-1 text-[10px] bg-indigo-100 px-2 py-0.5 rounded-full">Pré-visualização Automática</span>
+                            </span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                  [class.bg-emerald-100]="selectedIssueEntry.status === 'POSTED'"
+                                  [class.text-emerald-700]="selectedIssueEntry.status === 'POSTED'"
+                                  [class.bg-amber-100]="selectedIssueEntry.status !== 'POSTED'"
+                                  [class.text-amber-700]="selectedIssueEntry.status !== 'POSTED'">
+                                {{ selectedIssueEntry.status }}
+                            </span>
+                        </div>
+                        <div class="divide-y divide-slate-100">
+                            <div *ngFor="let line of selectedIssueEntry.lines; let i = index" class="p-3 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                                <div class="flex flex-col flex-1 mr-4">
+                                   <!-- Read Only Mode -->
+                                   <ng-container *ngIf="!isEditingIssueEntry">
+                                      <span class="font-bold text-slate-700 text-xs">{{ line.accountCode }} <span class="text-slate-500 font-normal mx-1">-</span> {{ line.accountName }}</span>
+                                      <span class="text-[10px] text-slate-400 mt-0.5" *ngIf="line.accountId">Int ID: {{ line.accountId }}</span>
+                                   </ng-container>
+
+                                   <!-- Edit Mode -->
+                                   <ng-container *ngIf="isEditingIssueEntry">
+                                      <div class="flex gap-2 mb-1">
+                                          <input [(ngModel)]="line.accountCode" class="text-xs font-mono font-bold text-slate-700 w-24 border border-slate-200 focus:border-indigo-500 rounded px-2 py-1 outline-none" placeholder="Cta (e.g 44)" />
+                                          <input [(ngModel)]="line.accountName" class="text-xs text-slate-500 w-full border border-slate-200 focus:border-indigo-500 rounded px-2 py-1 outline-none" placeholder="Nome da Conta" />
+                                      </div>
+                                      <input [(ngModel)]="line.description" class="text-[10px] text-slate-400 border border-slate-200 focus:border-indigo-500 rounded px-2 py-1 outline-none w-full" placeholder="Descrição do movimento" />
+                                   </ng-container>
+                                </div>
+                                <div class="flex gap-2 text-xs font-mono w-48 justify-end shrink-0" *ngIf="isEditingIssueEntry">
+                                   <input type="number" [(ngModel)]="line.debit" class="w-16 text-right border border-slate-200 focus:border-indigo-500 rounded px-1 text-emerald-700 font-bold outline-none" placeholder="Déb." />
+                                   <input type="number" [(ngModel)]="line.credit" class="w-16 text-right border border-slate-200 focus:border-indigo-500 rounded px-1 text-rose-600 font-bold outline-none" placeholder="Créd." />
+                                   <button (click)="removeLine(i)" class="text-rose-500 hover:text-rose-700 ml-1"><span class="material-symbols-outlined text-sm pt-1">delete</span></button>
+                                </div>
+                                <div class="flex gap-4 text-xs font-mono w-40 justify-end shrink-0" *ngIf="!isEditingIssueEntry">
+                                    <div class="text-right w-16" [class.text-slate-300]="!line.debit" [class.text-emerald-700]="line.debit > 0" [class.font-bold]="line.debit > 0">
+                                       {{ line.debit > 0 ? (line.debit | number:'1.2-2') : '0,00' }} <span class="text-[8px] opacity-50" *ngIf="line.debit>0">D</span>
+                                    </div>
+                                    <div class="text-right w-16" [class.text-slate-300]="!line.credit" [class.text-rose-600]="line.credit > 0" [class.font-bold]="line.credit > 0">
+                                       {{ line.credit > 0 ? (line.credit | number:'1.2-2') : '0,00' }} <span class="text-[8px] opacity-50" *ngIf="line.credit>0">C</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 p-2 flex justify-between items-center border-t border-slate-200" *ngIf="isEditingIssueEntry">
+                            <button (click)="addLine()" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 mx-2">
+                                <span class="material-symbols-outlined text-sm">add</span> Adicionar Linha
+                            </button>
+                            <div class="flex gap-4 text-xs font-mono w-48 justify-end shrink-0 pr-8">
+                                <div class="w-16 text-right font-bold" [class.text-emerald-700]="isPreviewBalanced" [class.text-rose-500]="!isPreviewBalanced">{{ previewDebitTotal | number:'1.2-2' }}</div>
+                                <div class="w-16 text-right font-bold" [class.text-rose-600]="isPreviewBalanced" [class.text-rose-500]="!isPreviewBalanced">{{ previewCreditTotal | number:'1.2-2' }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div *ngIf="selectedIssueDetails.details" class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                         <div class="bg-slate-50 px-4 py-2 text-xs font-bold text-slate-600 border-b border-slate-200">
+                            Dados Têcnicos Anexados
+                         </div>
+                         <div class="p-4 bg-slate-900 overflow-x-auto">
+                            <pre class="text-[11px] font-mono text-emerald-400 w-full mb-0">{{ selectedIssueDetails.details | json }}</pre>
+                         </div>
+                    </div>
+                </div>
+                <div class="p-4 border-t border-slate-200 bg-white flex items-center gap-3 rounded-b-2xl" [class.justify-end]="!isEditingIssueEntry" [class.justify-between]="isEditingIssueEntry">
+                    <div *ngIf="isEditingIssueEntry" class="text-[10px] text-rose-500 font-bold" [class.invisible]="isPreviewBalanced">
+                        Os totais de débito e crédito devem ser iguais!
+                    </div>
+                    <div class="flex gap-2">
+                        <button (click)="closeIssueDetails()" class="px-5 py-2 text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg text-xs font-bold transition-all active:scale-95">
+                            Cancelar
+                        </button>
+                        <button *ngIf="isEditingIssueEntry" (click)="savePreviewEntry()" [disabled]="!isPreviewBalanced || isRepairing" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[14px]">{{ isRepairing ? 'sync' : 'save' }}</span> Gravar Lançamento
+                        </button>
                     </div>
                 </div>
             </div>
@@ -265,6 +386,10 @@ export class TrialBalanceComponent implements OnInit {
   selectedAccountDebit = 0;
   selectedAccountCredit = 0;
 
+  selectedIssueDetails: AccountingIssue | null = null;
+  selectedIssueEntry: JournalEntry | undefined = undefined;
+  isEditingIssueEntry = false;
+
   constructor(
     private accountingService: AccountingService,
     private dataService: DataService,
@@ -316,6 +441,118 @@ export class TrialBalanceComponent implements OnInit {
       'REVERSAL': 'bg-rose-100 text-rose-700',
     };
     return map[sourceType] || 'bg-gray-100 text-gray-600';
+  }
+
+  // ─── Issues Details & Modal ───────────────────────────────────────────────
+
+  viewIssueDetails(issue: AccountingIssue) {
+    this.selectedIssueDetails = issue;
+    this.selectedIssueEntry = undefined;
+    this.isEditingIssueEntry = false;
+
+    // Se o issue tiver id relacionado, e NAO for um MISSING_POSTING
+    if (issue.relatedId && issue.type !== 'MISSING_POSTING') {
+      const entries: JournalEntry[] = (this.accountingService as any)['journalEntries'] || (this.accountingService as any)['allJournalEntries'] || [];
+      const entry = entries.find(e => e.id === issue.relatedId);
+      if (entry) {
+        this.selectedIssueEntry = entry;
+      }
+    }
+
+    if (issue.type === 'MISSING_POSTING' && issue.relatedId) {
+      this.isEditingIssueEntry = true;
+      if (issue.details && issue.details['docType'] === 'SALES') {
+        this.dataService.getSalesDocuments().subscribe(docs => {
+          const doc = docs.find((d: any) => d.id === issue.relatedId);
+          if (doc) {
+            try {
+              this.selectedIssueEntry = (this.accountingService as any).createSalesJournalEntry(doc, null, [], 'PRONTO', undefined, true);
+            } catch (error) {
+              console.error('Failed to preview sales entry:', error);
+            }
+            this.cdr.detectChanges();
+          }
+        });
+      } else if (issue.details && issue.details['docType'] === 'PURCHASES') {
+        this.dataService.getPurchaseDocuments().subscribe(docs => {
+          const doc = docs.find((d: any) => d.id === issue.relatedId);
+          if (doc) {
+            try {
+              this.selectedIssueEntry = (this.accountingService as any).createPurchaseJournalEntry(doc, null, true);
+            } catch (error) {
+              console.error('Failed to preview purchase entry:', error);
+            }
+            this.cdr.detectChanges();
+          }
+        });
+      }
+    } else {
+      if (!this.selectedIssueEntry && issue.details && issue.details['entry']) {
+        this.selectedIssueEntry = issue.details['entry'];
+      }
+    }
+  }
+
+  get previewDebitTotal(): number {
+    return this.selectedIssueEntry?.lines?.reduce((acc, l) => acc + (l.debit || 0), 0) || 0;
+  }
+
+  get previewCreditTotal(): number {
+    return this.selectedIssueEntry?.lines?.reduce((acc, l) => acc + (l.credit || 0), 0) || 0;
+  }
+
+  get isPreviewBalanced(): boolean {
+    const d = this.previewDebitTotal;
+    const c = this.previewCreditTotal;
+    return Math.abs(d - c) < 0.01 && d > 0;
+  }
+
+  addLine() {
+    if (!this.selectedIssueEntry) return;
+    this.selectedIssueEntry.lines.push({
+      id: `TEMP-${Date.now()}-${Math.random()}`,
+      accountId: '',
+      accountCode: '',
+      accountName: '',
+      description: this.selectedIssueEntry.description || '',
+      debit: 0,
+      credit: 0
+    });
+  }
+
+  removeLine(index: number) {
+    if (!this.selectedIssueEntry) return;
+    this.selectedIssueEntry.lines.splice(index, 1);
+  }
+
+  savePreviewEntry() {
+    if (!this.selectedIssueEntry || !this.isPreviewBalanced) return;
+
+    this.isRepairing = true;
+    try {
+      // Enforce account IDs from codes if possible (as manual lets them type loosely)
+      // AccountingService has a fallback for this inside generate/saveEntryResiliently
+
+      // Remove 'preview' status and save as POSTED
+      this.selectedIssueEntry.status = 'POSTED';
+      this.selectedIssueEntry.id = ''; // Let it auto-generate ID
+
+      this.accountingService.createManualJournalEntry(this.selectedIssueEntry);
+
+      (this.accountingService as any)['toasterService']?.showSuccess('Lançamento Guardado', 'O lançamento foi registado com sucesso a partir da previsão.');
+      this.isRepairing = false;
+      this.closeIssueDetails();
+      this.loadTrialBalance();
+    } catch (e: any) {
+      this.isRepairing = false;
+      (this.accountingService as any)['toasterService']?.showError('Erro', 'Ocorreu um erro ao gravar: ' + e.message);
+    }
+  }
+
+  closeIssueDetails() {
+    this.selectedIssueDetails = null;
+    this.selectedIssueEntry = undefined;
+    this.isEditingIssueEntry = false;
   }
 
   // ─── Print ────────────────────────────────────────────────────────────────
@@ -439,38 +676,56 @@ export class TrialBalanceComponent implements OnInit {
   // ─── Load Trial Balance ────────────────────────────────────────────────────
 
   loadTrialBalance() {
-    this.trialBalance = this.accountingService.getTrialBalance();
-
-    // Sum root accounts only (no parent or parent not in list) to avoid double-counting
-    const accountIds = new Set(this.trialBalance.map(i => i.account.id));
-
-    this.totalDebit = this.trialBalance
-      .filter(item => !item.account.parentId || !accountIds.has(item.account.parentId))
-      .reduce((sum, item) => sum + item.debit, 0);
-
-    this.totalCredit = this.trialBalance
-      .filter(item => !item.account.parentId || !accountIds.has(item.account.parentId))
-      .reduce((sum, item) => sum + item.credit, 0);
-
-    this.isBalanced = Math.abs(this.totalDebit - this.totalCredit) < 0.01;
-
-    setTimeout(() => {
-      forkJoin({
-        sales: this.dataService.getSalesDocuments(),
-        purchases: this.dataService.getPurchaseDocuments()
-      }).subscribe({
-        next: (data) => {
-          this.issues = this.accountingService.runAccountingDiagnostics(data.sales, data.purchases);
-          this.cdr.detectChanges();
-        },
-        error: () => {
-          this.issues = this.accountingService.runAccountingDiagnostics();
-          this.cdr.detectChanges();
-        }
-      });
-    }, 0);
-
+    this.issues = []; // Limpar imediante para não dar falsa sensação de "Consistente"
     this.cdr.detectChanges();
+
+    this.accountingService.loadJournalEntries().then(() => {
+      // Use setTimeout to ensure we are in a new tick and avoid NG0100
+      setTimeout(() => {
+        this.trialBalance = this.accountingService.getTrialBalance();
+
+        // Sum root accounts only (no parent or parent not in list) to avoid double-counting
+        const accountIds = new Set(this.trialBalance.map(i => i.account.id));
+
+        this.totalDebit = this.trialBalance
+          .filter(item => !item.account.parentId || !accountIds.has(item.account.parentId))
+          .reduce((sum, item) => sum + item.debit, 0);
+
+        this.totalCredit = this.trialBalance
+          .filter(item => !item.account.parentId || !accountIds.has(item.account.parentId))
+          .reduce((sum, item) => sum + item.credit, 0);
+
+        this.isBalanced = Math.abs(this.totalDebit - this.totalCredit) < 0.01;
+
+        this.cdr.detectChanges();
+
+        // LOG de Depuração
+        console.log(`[TrialBalance] Fresh data loaded. Balanced: ${this.isBalanced}. Total Debit: ${this.totalDebit}`);
+
+        forkJoin({
+          sales: this.dataService.getSalesDocuments(this.accountingService.activeCompanyId || undefined),
+          purchases: this.dataService.getPurchaseDocuments(this.accountingService.activeCompanyId || undefined),
+          treasury: this.dataService.getTreasuryDocuments()
+        }).subscribe({
+          next: (data) => {
+            const results = this.accountingService.runAccountingDiagnostics(data.sales, data.purchases, data.treasury);
+            console.log(`[TrialBalance] Diagnostic Results: Found ${results.length} issues.`);
+            if (results.length > 0) {
+              console.log(`[TrialBalance] First issue: ${results[0].description}`);
+            }
+            this.issues = results;
+            this.cdr.detectChanges();
+          },
+          error: (err) => {
+            console.error('[TrialBalance] Failed to load documents for diagnostic:', err);
+            this.issues = this.accountingService.runAccountingDiagnostics();
+            this.cdr.detectChanges();
+          }
+        });
+      });
+    }).catch(err => {
+      console.error('Error refreshing trial balance:', err);
+    });
   }
 
   // ─── Computed helpers ─────────────────────────────────────────────────────
@@ -502,94 +757,153 @@ export class TrialBalanceComponent implements OnInit {
   // ─── Repair actions ───────────────────────────────────────────────────────
 
   repairHierarchy() {
-    this.isRepairing = true;
-    (this.accountingService as any)['toasterService']?.showSuccess('A reparar...', 'A analisar e corrigir hierarquia de contas orfas.');
+    setTimeout(() => {
+      this.isRepairing = true;
+      this.cdr.detectChanges();
 
-    this.accountingService.repairOrphanHierarchy().then(count => {
-      if (count > 0) {
-        this.accountingService.recalculateAllBalances().subscribe({
-          next: () => {
+      (this.accountingService as any)['toasterService']?.showSuccess('A reparar...', 'A analisar e corrigir hierarquia de contas orfas.');
+
+      this.accountingService.repairOrphanHierarchy().then(count => {
+        if (count > 0) {
+          this.accountingService.recalculateAllBalances().subscribe({
+            next: () => {
+              setTimeout(() => {
+                this.isRepairing = false;
+                this.loadTrialBalance();
+                this.cdr.detectChanges();
+              });
+              (this.accountingService as any)['toasterService']?.showSuccess(
+                'Hierarquia Reparada',
+                `${count} conta(s) re-vinculadas corretamente. Saldos recalculados.`
+              );
+            },
+            error: () => {
+              setTimeout(() => {
+                this.isRepairing = false;
+                this.loadTrialBalance();
+                this.cdr.detectChanges();
+              });
+              (this.accountingService as any)['toasterService']?.showError('Atencao', 'Hierarquia reparada mas houve um erro ao recalcular saldos.');
+            }
+          });
+        } else {
+          setTimeout(() => {
             this.isRepairing = false;
             this.loadTrialBalance();
-            (this.accountingService as any)['toasterService']?.showSuccess(
-              'Hierarquia Reparada',
-              `${count} conta(s) re-vinculadas corretamente. Saldos recalculados.`
-            );
-          },
-          error: () => {
-            this.isRepairing = false;
-            this.loadTrialBalance();
-            (this.accountingService as any)['toasterService']?.showError('Atencao', 'Hierarquia reparada mas houve um erro ao recalcular saldos.');
-          }
+            this.cdr.detectChanges();
+          });
+          (this.accountingService as any)['toasterService']?.showSuccess('Sem Orfas', 'Nenhuma conta orfa detectada.');
+        }
+      }).catch(() => {
+        setTimeout(() => {
+          this.isRepairing = false;
+          this.cdr.detectChanges();
         });
-      } else {
-        this.isRepairing = false;
-        this.loadTrialBalance();
-        (this.accountingService as any)['toasterService']?.showSuccess('Sem Orfas', 'Nenhuma conta orfa detectada.');
-      }
-    }).catch(() => {
-      this.isRepairing = false;
-      (this.accountingService as any)['toasterService']?.showError('Erro', 'Falha ao reparar hierarquia.');
+        (this.accountingService as any)['toasterService']?.showError('Erro', 'Falha ao reparar hierarquia.');
+      });
     });
   }
 
   recalculateBalances() {
-    if (!confirm('Esta operacao ira:\n1. Remover contas duplicadas\n2. Re-vincular lancamentos orfaos\n3. Recalcular todos os saldos do zero\n\nDeseja continuar?')) return;
+    if (!confirm('Esta operação irá:\n1. Adicionar lançamentos perdidos\n2. Reconfigurar lançamentos aos Tipos de Documentos recentes\n3. Recalcular todos os saldos do zero\n\nDeseja continuar?')) return;
 
-    this.isRepairing = true;
-    this.accountingService.recalculateAllBalances().subscribe({
-      next: () => {
-        this.isRepairing = false;
-        this.loadTrialBalance();
-        (this.accountingService as any)['toasterService']?.showSuccess('Reparacao Concluida', 'Estrutura de dados e saldos reconstruidos com sucesso.');
-      },
-      error: (err: any) => {
-        this.isRepairing = false;
-        alert('Erro ao recalcular saldos: ' + (err.message || err));
-      }
+    // Wrap start in setTimeout to avoid NG0100
+    setTimeout(() => {
+      this.isRepairing = true;
+      this.cdr.detectChanges();
+
+      (this.accountingService as any)['toasterService']?.showSuccess('A Reconstruir...', 'A analisar configurações e regerar lançamentos...');
+
+      forkJoin({
+        sales: this.dataService.getSalesDocuments(this.accountingService.activeCompanyId || undefined),
+        purchases: this.dataService.getPurchaseDocuments(this.accountingService.activeCompanyId || undefined),
+        treasury: this.dataService.getTreasuryDocuments()
+      }).subscribe({
+        next: (data) => {
+          // Pass boolean "true" for forceRecreate as 4th argument. treasuryDocs is 3rd.
+          this.accountingService.autoFixMissingPostings(data.sales, data.purchases, data.treasury, true).subscribe({
+            next: (count) => {
+              setTimeout(() => {
+                this.isRepairing = false;
+                this.loadTrialBalance();
+                this.cdr.detectChanges();
+              });
+              (this.accountingService as any)['toasterService']?.showSuccess('Reparação Concluída', `Foram regerados ou recriados ${count} lançamentos a partir das configurações atuais.`);
+            },
+            error: (err: any) => {
+              setTimeout(() => {
+                this.isRepairing = false;
+                this.cdr.detectChanges();
+              });
+              alert('Erro ao reconstruir integração: ' + (err.message || err));
+            }
+          });
+        },
+        error: (err) => {
+          setTimeout(() => {
+            this.isRepairing = false;
+            this.cdr.detectChanges();
+          });
+          alert('Erro ao consultar documentos de faturação: ' + (err.message || err));
+        }
+      });
     });
   }
 
   fixAllMissingPostings() {
-    this.isRepairing = true;
+    setTimeout(() => {
+      this.isRepairing = true;
+      this.cdr.detectChanges();
 
-    forkJoin({
-      sales: this.dataService.getSalesDocuments(),
-      purchases: this.dataService.getPurchaseDocuments()
-    }).subscribe({
-      next: (data) => {
-        (this.accountingService as any)['toasterService']?.showSuccess(
-          'A processar...',
-          'A criar lancamentos em falta e a recalcular saldos. Aguarde...'
-        );
+      forkJoin({
+        sales: this.dataService.getSalesDocuments(this.accountingService.activeCompanyId || undefined),
+        purchases: this.dataService.getPurchaseDocuments(this.accountingService.activeCompanyId || undefined),
+        treasury: this.dataService.getTreasuryDocuments()
+      }).subscribe({
+        next: (data) => {
+          (this.accountingService as any)['toasterService']?.showSuccess(
+            'A processar...',
+            'A criar lancamentos em falta e a recalcular saldos. Aguarde...'
+          );
 
-        this.accountingService.autoFixMissingPostings(data.sales, data.purchases).subscribe({
-          next: (count) => {
-            this.isRepairing = false;
-            this.loadTrialBalance();
-            if (count > 0) {
-              (this.accountingService as any)['toasterService']?.showSuccess(
-                'Sincronizacao Concluida',
-                `${count} documento(s) integrado(s) e saldos recalculados com sucesso.`
-              );
-            } else {
-              (this.accountingService as any)['toasterService']?.showSuccess(
-                'Tudo em Ordem',
-                'Nao foram encontrados documentos sem integracao contabilistica.'
-              );
+          this.accountingService.autoFixMissingPostings(data.sales, data.purchases, data.treasury).subscribe({
+            next: (count) => {
+              setTimeout(() => {
+                this.isRepairing = false;
+                this.loadTrialBalance();
+                this.cdr.detectChanges();
+              });
+              if (count > 0) {
+                (this.accountingService as any)['toasterService']?.showSuccess(
+                  'Sincronizacao Concluida',
+                  `${count} documento(s) integrado(s) e saldos recalculados com sucesso.`
+                );
+              } else {
+                (this.accountingService as any)['toasterService']?.showSuccess(
+                  'Tudo em Ordem',
+                  'Nao foram encontrados documentos sem integracao contabilistica.'
+                );
+              }
+            },
+            error: () => {
+              setTimeout(() => {
+                this.isRepairing = false;
+                this.loadTrialBalance();
+                this.cdr.detectChanges();
+              });
+              (this.accountingService as any)['toasterService']?.showError('Erro', 'Falha durante a sincronizacao automatica.');
             }
-          },
-          error: () => {
+          });
+        },
+        error: () => {
+          setTimeout(() => {
             this.isRepairing = false;
             this.loadTrialBalance();
-            (this.accountingService as any)['toasterService']?.showError('Erro', 'Falha durante a sincronizacao automatica.');
-          }
-        });
-      },
-      error: () => {
-        this.isRepairing = false;
-        (this.accountingService as any)['toasterService']?.showError('Erro', 'Erro ao carregar documentos para reparacao.');
-      }
+            this.cdr.detectChanges();
+          });
+          (this.accountingService as any)['toasterService']?.showError('Erro', 'Erro ao carregar documentos para reparacao.');
+        }
+      });
     });
   }
 
@@ -602,8 +916,11 @@ export class TrialBalanceComponent implements OnInit {
         const doc = docs.find((d: any) => d.id === issue.relatedId);
         if (doc) {
           this.accountingService.createSalesJournalEntry(doc, null, []);
-          this.isRepairing = false;
-          this.loadTrialBalance();
+          setTimeout(() => {
+            this.isRepairing = false;
+            this.loadTrialBalance();
+            this.cdr.detectChanges();
+          });
         }
       });
     } else {
@@ -611,8 +928,11 @@ export class TrialBalanceComponent implements OnInit {
         const doc = docs.find((d: any) => d.id === issue.relatedId);
         if (doc) {
           this.accountingService.createPurchaseJournalEntry(doc, null);
-          this.isRepairing = false;
-          this.loadTrialBalance();
+          setTimeout(() => {
+            this.isRepairing = false;
+            this.loadTrialBalance();
+            this.cdr.detectChanges();
+          });
         }
       });
     }

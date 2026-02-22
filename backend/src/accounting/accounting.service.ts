@@ -113,6 +113,13 @@ export class AccountingService {
 
   async remove(id: string) {
     const repo = await this.getAccountRepo();
+    const jlRepo = await this.getJournalLineRepo();
+
+    const usages = await jlRepo.count({ where: { accountId: id } });
+    if (usages > 0) {
+      throw new BadRequestException('Esta conta não pode ser eliminada porque possui lançamentos associados. Por favor, desative-a.');
+    }
+
     const account = await this.findOne(id);
     return repo.remove(account);
   }
@@ -132,9 +139,9 @@ export class AccountingService {
       throw new BadRequestException(`Journal entry is not balanced. Debit: ${totalDebit}, Credit: ${totalCredit}`);
     }
 
-    const jeRepo = await this.getJournalEntryRepo();
-    const jlRepo = await this.getJournalLineRepo();
-    const accRepo = await this.getAccountRepo();
+    const jeRepo = await this.getJournalEntryRepo(createJournalEntryDto.companyId);
+    const jlRepo = await this.getJournalLineRepo(createJournalEntryDto.companyId);
+    const accRepo = await this.getAccountRepo(createJournalEntryDto.companyId);
 
     // Map lines and ensure account details + valid IDs
     const preparedLines = await Promise.all(lines.map(async line => {
@@ -145,13 +152,42 @@ export class AccountingService {
         jl.id = `JL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       }
 
-      // Ensure account code and name are present
+      // Ensure account details + valid IDs
+      let acc = await accRepo.findOne({ where: { id: jl.accountId } });
+
+      if (!acc) {
+        // Fallback 1: Literal code match
+        acc = await accRepo.findOne({ where: { code: jl.accountId } });
+      }
+
+      if (!acc && typeof jl.accountId === 'string') {
+        // Fallback 2: Formatted code handle (e.g. '71' -> '7.1')
+        // Use a database-side normalization for comparison
+        const cleanTarget = jl.accountId.replace(/\./g, '');
+        acc = await accRepo.createQueryBuilder('acc')
+          .where("REPLACE(acc.code, '.', '') = :code", { code: cleanTarget })
+          .getOne();
+      }
+
+      if (!acc) {
+        console.error(`[AccountingService] Account not found for ID/Code: ${jl.accountId}`);
+        throw new BadRequestException(`Conta com ID/Código '${jl.accountId}' não encontrada. Verifique se o Plano de Contas está carregado para esta empresa.`);
+      }
+
+      if (acc.allowPosting === false) {
+        throw new BadRequestException(`A conta '${acc.code} - ${acc.name}' é uma conta de soma/índice e não permite lançamentos diretos. Por favor, use uma de suas sub-contas (nível final).`);
+      }
+
+      if (acc.isActive === false) {
+        throw new BadRequestException(`A conta '${acc.code} - ${acc.name}' encontra-se inativa.`);
+      }
+
+      // Override the accountId with the internal database ID from the found account
+      jl.accountId = acc.id;
+
       if (!jl.accountCode || !jl.accountName) {
-        const acc = await accRepo.findOne({ where: { id: jl.accountId } });
-        if (acc) {
-          jl.accountCode = acc.code;
-          jl.accountName = acc.name;
-        }
+        jl.accountCode = acc.code;
+        jl.accountName = acc.name;
       }
       return jl;
     }));
@@ -162,11 +198,106 @@ export class AccountingService {
     });
 
     try {
-      return await jeRepo.save(journalEntry);
+      console.log(`[AccountingService] Saving Journal Entry ${journalEntry.id} with ${journalEntry.lines?.length} lines`);
+      const savedEntry = await jeRepo.save(journalEntry);
+
+      // Point 6: Synchronize balances if POSTED
+      if (savedEntry.status === 'POSTED') {
+        console.log(`[AccountingService] Entry is POSTED, updating account balances...`);
+        await this.updateAccountBalances(savedEntry.lines, createJournalEntryDto.companyId);
+      }
+
+      return savedEntry;
     } catch (err: any) {
       console.error('[AccountingService] Error saving Journal Entry:', err);
-      throw new BadRequestException(`Erro ao gravar lançamento: ${err.message}`);
+      // If it's already an HttpException, just throw it
+      if (err.status && err.getResponse) throw err;
+      throw new BadRequestException(`Erro ao gravar lançamento na base de dados: ${err.message}`);
     }
+  }
+
+  /**
+   * Atualiza os saldos das contas com base nas linhas de lançamento.
+   * Suporta atualização incremental e hierárquica.
+   */
+  async updateAccountBalances(lines: JournalLine[], companyId?: string) {
+    const accRepo = await this.getAccountRepo(companyId);
+
+    // Agrupar mudanças por conta para minimizar queries
+    const changes = new Map<string, { debit: number, credit: number }>();
+    for (const line of lines) {
+      const current = changes.get(line.accountId) || { debit: 0, credit: 0 };
+      changes.set(line.accountId, {
+        debit: current.debit + Number(line.debit),
+        credit: current.credit + Number(line.credit)
+      });
+    }
+
+    for (const [accountId, delta] of changes.entries()) {
+      let account = await accRepo.findOne({ where: { id: accountId } });
+
+      if (!account) {
+        // Fallback: Check if the accountId is actually a code (common with preset hardcoded IDs)
+        account = await accRepo.findOne({ where: { code: accountId } });
+      }
+
+      if (!account) {
+        console.warn(`[AccountingService] Skipping balance update for unknown account ID/Code: ${accountId}`);
+        continue;
+      }
+
+      const upperType = (account.type || '').toUpperCase();
+      const isAssetSide = ['ASSET', 'EXPENSE', 'ATIVO', 'GASTO'].includes(upperType);
+      const amount = isAssetSide ? (delta.debit - delta.credit) : (delta.credit - delta.debit);
+
+      // Atualizar conta atual
+      account.balance = Number(account.balance) + amount;
+      await accRepo.save(account);
+
+      // Atualizar pais recursivamente
+      let parentId = account.parentId;
+      while (parentId) {
+        const parent = await accRepo.findOne({ where: { id: parentId } });
+        if (!parent) break;
+        parent.balance = Number(parent.balance) + amount;
+        await accRepo.save(parent);
+        parentId = parent.parentId;
+      }
+    }
+  }
+
+  /**
+   * Recalcula todos os saldos de todas as contas do zero.
+   * Essencial para reparar inconsistências.
+   */
+  async recalculateAllBalances(companyId?: string) {
+    const targetCompanyId = companyId || TenancyContext.getCompanyId();
+    const accRepo = await this.getAccountRepo(targetCompanyId);
+    const jeRepo = await this.getJournalEntryRepo(targetCompanyId);
+
+    console.log(`[AccountingService] Recalculating all balances for company: ${targetCompanyId}`);
+
+    // 1. Resetar todos os saldos para zero
+    await accRepo.createQueryBuilder('acc')
+      .update(Account)
+      .set({ balance: 0 })
+      .execute();
+
+    // 2. Obter todos os lançamentos postados (ordenados por data para consistência, embora para balanço final não importe a ordem)
+    const entries = await jeRepo.find({
+      where: { status: 'POSTED' },
+      relations: ['lines'],
+      order: { date: 'ASC' }
+    });
+
+    console.log(`[AccountingService] Found ${entries.length} posted entries to process.`);
+
+    // 3. Aplicar cada lançamento
+    for (const entry of entries) {
+      await this.updateAccountBalances(entry.lines, targetCompanyId);
+    }
+
+    return { success: true, processedEntries: entries.length };
   }
 
   async findAllJournalEntries(companyId?: string) {
@@ -267,6 +398,21 @@ export class AccountingService {
     };
   }
 
+  async clearAccounts(companyId?: string) {
+    const targetId = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getAccountRepo(targetId);
+    const jlRepo = await this.getJournalLineRepo(targetId);
+
+    // Verificação de segurança: não permitir apagar se houver lançamentos
+    const count = await jlRepo.count();
+    if (count > 0) {
+      throw new BadRequestException('Não é possível substituir o plano de contas porque já existem lançamentos contabilísticos registados.');
+    }
+
+    console.log(`[AccountingService] Cleaning all accounts for company ${targetId}`);
+    return await repo.delete({ companyId: targetId });
+  }
+
   async loadPresetAccountSystem(presetName: string, companyId?: string) {
     const targetId = companyId || TenancyContext.getCompanyId();
     const repo = await this.getAccountRepo(targetId);
@@ -275,10 +421,8 @@ export class AccountingService {
     const count = await repo.count();
     console.log(`[AccountingService] Checking preset for company ${targetId}. Current account count: ${count}`);
 
-    if (count > 0) {
-      console.log(`[AccountingService] Preset already loaded for company ${targetId}. Returning existing accounts.`);
-      return repo.find({ order: { code: 'ASC' } });
-    }
+    // Removida a limitação if (count > 0) return; para permitir Upsert (Atualização em massa do PGC-PE)
+    console.log(`[AccountingService] Updating preset for company ${targetId}. Current account count was: ${count}`);
 
     const preset = ACCOUNT_PRESETS[presetName];
 

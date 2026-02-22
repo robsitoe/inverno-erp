@@ -5,7 +5,7 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { finalize } from 'rxjs';
 import { LicenseService, LicenseInfo, LicensePlanDefinition, LicenseRenewalInfo } from '../../services/license.service';
 import { MobilePaymentFormComponent } from './mobile-payment-form.component';
-import { PaymentStatus } from '../../services/payment.service';
+import { PaymentService, PaymentStatus } from '../../services/payment.service';
 
 @Component({
   selector: 'app-license-manager',
@@ -318,6 +318,7 @@ export class LicenseManagerComponent implements OnInit {
 
   constructor(
     public licenseService: LicenseService,
+    private paymentService: PaymentService
   ) { }
 
   ngOnInit() {
@@ -465,11 +466,28 @@ export class LicenseManagerComponent implements OnInit {
   }
 
   handlePaymentDone(status: PaymentStatus) {
-    // Aqui simularíamos que o backend gera um token novo após o pagamento
-    // Por agora, vamos apenas mostrar sucesso e refrescar
     console.log('Pagamento recebido:', status);
-    this.activationSuccess = 'Pagamento confirmado! A sua licença foi renovada.';
-    this.activeTab = 'status';
-    this.refresh();
+
+    // Obter o companyId atual
+    const companyId = this.getCompanyId();
+    if (!companyId || !this.selectedPlan) {
+      console.error('Dados insuficientes para confirmar subscrição.');
+      return;
+    }
+
+    // Efetivar a subscrição no servidor para sair do estado DEMO
+    this.refreshing = true;
+    this.paymentService.confirmSubscription(companyId, this.selectedPlan).subscribe({
+      next: () => {
+        this.activationSuccess = 'Pagamento confirmado e licença ativada com sucesso!';
+        this.activeTab = 'status';
+        this.refresh();
+      },
+      error: (err) => {
+        console.error('Erro ao efetivar subscrição no servidor:', err);
+        // Mesmo com erro no backend, vamos tentar refrescar
+        this.refresh();
+      }
+    });
   }
 }

@@ -64,6 +64,7 @@ export declare class LicensesService {
         token: string;
         license: License;
     }>;
+    subscribe(companyId: string, plan: LicensePlan): Promise<LicenseStatusResponse>;
     activate(token: string, requestIp: string): Promise<LicenseStatusResponse>;
     getStatus(companyId: string): Promise<LicenseStatusResponse>;
     revoke(companyId: string, reason: string, revokedBy: string): Promise<void>;

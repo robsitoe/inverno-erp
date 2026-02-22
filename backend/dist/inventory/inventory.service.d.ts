@@ -17,7 +17,7 @@ export declare class InventoryService {
     private getArticleRepo;
     private getStockMovementRepo;
     private getStockDocumentRepo;
-    create(createArticleDto: CreateArticleDto | CreateArticleDto[]): Promise<Article | Article[]>;
+    create(createArticleDto: CreateArticleDto | CreateArticleDto[]): Promise<Article[]>;
     findAll(companyId?: string): Promise<Article[]>;
     findOne(id: string, companyId?: string): Promise<Article>;
     update(id: string, updateArticleDto: UpdateArticleDto): Promise<Article>;

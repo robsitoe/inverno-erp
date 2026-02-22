@@ -84,6 +84,28 @@ export class CreateJournalEntryDto {
     @IsOptional()
     sourceType?: string;
 
+    @IsString()
+    @IsOptional()
+    createdBy?: string;
+
+    @IsString()
+    @IsOptional()
+    updatedBy?: string;
+
+    @IsString()
+    @IsOptional()
+    correctionReason?: string;
+
+    @IsString()
+    @IsOptional()
+    relatedEntryId?: string;
+
+    @IsOptional()
+    createdAt?: any;
+
+    @IsOptional()
+    updatedAt?: any;
+
     @ApiProperty({ type: [CreateJournalLineDto], description: 'List of journal lines' })
     @IsArray()
     @ValidateNested({ each: true })

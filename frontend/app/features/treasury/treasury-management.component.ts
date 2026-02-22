@@ -267,10 +267,11 @@ interface PendingDocRow {
                   <th class="w-12 py-1 border-r border-gray-200 text-center">Moeda</th>
                   <th class="w-24 py-1 border-r border-gray-200 text-left px-1 text-blue-600">Documento</th>
                   <th class="w-16 py-1 border-r border-gray-200 text-left px-1 text-blue-600">N.º Doc.</th>
-                  <th class="w-24 py-1 border-r border-gray-200 text-right px-1">Total</th>
-                  <th class="w-24 py-1 border-r border-gray-200 text-right px-1 text-blue-600">Pendente</th>
+                  <th class="w-24 py-1 border-r border-gray-200 text-right px-1">Total FA</th>
+                  <th class="w-24 py-1 border-r border-gray-200 text-right px-1 text-orange-600">Pendente</th>
                   <th class="w-24 py-1 border-r border-gray-200 text-right px-1 font-bold">A Pagar</th>
                   <th class="w-16 py-1 border-r border-gray-200 text-right px-1">Desc.</th>
+                  <th class="w-24 py-1 border-r border-gray-200 text-right px-1 text-green-700">Pend. Após</th>
                   <th class="w-20 py-1 border-r border-gray-200 text-left px-1">Modo Pag.</th>
                   <th class="w-16 py-1 border-r border-gray-200 text-left px-1">Cd. Pag.</th>
                   <th class="py-1 text-left px-1">Entidade Comer.</th>
@@ -285,13 +286,14 @@ interface PendingDocRow {
                   <td class="px-1 border-r border-gray-100 text-red-600">{{ row.dueDate | date:'dd/MM/yyyy' }}</td>
                   <td class="px-1 border-r border-gray-100 text-center">{{ row.currency }}</td>
                   <td class="px-1 border-r border-gray-100">{{ row.docType }}</td>
-                  <td class="px-1 border-r border-gray-100">{{ row.docNumber.split('/')[1] }}</td>
-                  <td class="px-1 border-r border-gray-100 text-right">{{ row.total | number:'1.2-2' }}</td>
-                  <td class="px-1 border-r border-gray-100 text-right text-blue-600">{{ row.pending | number:'1.2-2' }}</td>
+                  <td class="px-1 border-r border-gray-100">{{ row.docNumber }}</td>
+                  <td class="px-1 border-r border-gray-100 text-right font-medium">{{ row.total | number:'1.2-2' }}</td>
+                  <td class="px-1 border-r border-gray-100 text-right font-bold text-orange-600">{{ row.pending | number:'1.2-2' }}</td>
                   <td class="px-1 border-r border-gray-100 text-right font-medium relative p-0">
                     <input type="number" [(ngModel)]="row.toPay" (change)="onAmountChange(row)" class="w-full h-full text-right px-1 border-none bg-transparent focus:bg-white focus:ring-1 focus:ring-blue-500">
                   </td>
-                  <td class="px-1 border-r border-gray-100 text-right">{{ row.discount | number:'1.2-2' }}</td>
+                  <td class="px-1 border-r border-gray-100 text-right">{{ (row.discount || 0) | number:'1.2-2' }}</td>
+                  <td class="px-1 border-r border-gray-100 text-right text-green-700 font-medium">{{ (row.pending - row.toPay) | number:'1.2-2' }}</td>
                   <td class="px-1 border-r border-gray-100 p-0 relative group">
                     <input type="text" [(ngModel)]="row.paymentMode" (keydown.f4)="openPaymentModeModal(row)" readonly
                            class="w-full h-full px-1 border-none bg-transparent cursor-pointer focus:bg-blue-50 focus:ring-1 focus:ring-blue-500"
@@ -304,7 +306,7 @@ interface PendingDocRow {
                   <td class="px-1">{{ row.commercialEntity }}</td>
                 </tr>
                 <tr *ngIf="pendingRows.length === 0">
-                  <td colspan="13" class="text-center py-8 text-gray-400 italic">
+                  <td colspan="14" class="text-center py-8 text-gray-400 italic">
                     Nenhum documento pendente encontrado para esta entidade.
                   </td>
                 </tr>
@@ -699,8 +701,12 @@ export class TreasuryManagementComponent implements OnInit {
       relatedDocument: selectedRows[0].docNumber,
       lines: selectedRows.map((r, index) => ({
         id: `${docId}-L${index + 1}`,
+        docType: r.docType,
         docNumber: r.docNumber,
-        amount: r.toPay,
+        originalAmount: r.total,       // Total da FA original
+        amount: r.toPay,               // Valor pago agora
+        discount: r.discount || 0,     // Desconto aplicado
+        pendingAfter: r.pending - r.toPay, // Valor pendente após este pagamento
         paymentMode: r.paymentMode
       }))
     };
@@ -942,6 +948,13 @@ export class TreasuryManagementComponent implements OnInit {
     this.loadActiveCompany();
     this.loadTreasuryAccounts();
     this.loadPaymentMethods();
+
+    // Subscribe to account changes to ensure treasury accounts stay in sync
+    this.accountingService.accountsChanged$.subscribe(() => {
+      this.loadTreasuryAccounts();
+      this.cdr.detectChanges();
+    });
+
     // onEntityTypeChange will be called inside loadActiveCompany once companyId is ready
   }
 
@@ -991,6 +1004,7 @@ export class TreasuryManagementComponent implements OnInit {
       if (info) {
         this.activeCompanyId = info.id;
         // Only load dependent data if company is valid
+        this.loadTreasuryAccounts();
         this.loadPaymentMethods();
         this.cancelEditPaymentMethod(); // Reset any edit state
         this.onEntityTypeChange();
@@ -1381,7 +1395,7 @@ export class TreasuryManagementComponent implements OnInit {
         selected: true,
         id: l.id,
         date: doc.date,
-        docType: l.docType || (this.entityType === 'CUSTOMER' ? 'FC' : 'VFA'),
+        docType: l.docType || (this.entityType === 'CUSTOMER' ? 'FA' : 'FC'),
         docNumber: l.docNumber,
         total: Number(l.amount) || 0,
         pending: 0,
@@ -1405,11 +1419,25 @@ export class TreasuryManagementComponent implements OnInit {
   }
 
   loadTreasuryAccounts() {
-    this.treasuryAccounts = this.accountingService.getAccounts()
-      .filter(a => a.allowPosting && (a.code.startsWith('11') || a.code.startsWith('12')));
+    console.log('[Treasury] Loading accounts for fallback/selection...');
+    const accounts = this.accountingService.getAccounts();
 
+    // Se estiver vazio, tenta forçar um load no serviço caso tenha empresa ativa
+    if (accounts.length === 0 && this.activeCompanyId) {
+      this.accountingService.loadAccounts();
+    }
+
+    this.treasuryAccounts = accounts
+      .filter(a => a.allowPosting && (a.code.startsWith('11') || a.code.startsWith('12') || a.code.startsWith('1.1') || a.code.startsWith('1.2')));
+
+    console.log(`[Treasury] Found ${this.treasuryAccounts.length} candidate accounts.`);
+
+    // Só define padrão se não houver seleção ou se a seleção atual não existir na lista nova
     if (this.treasuryAccounts.length > 0) {
-      this.selectedTreasuryAccount = this.treasuryAccounts[0].id;
+      const selectionExists = this.treasuryAccounts.some(a => a.id === this.selectedTreasuryAccount);
+      if (!this.selectedTreasuryAccount || !selectionExists) {
+        this.selectedTreasuryAccount = this.treasuryAccounts[0].id;
+      }
     }
   }
 
@@ -1498,7 +1526,7 @@ export class TreasuryManagementComponent implements OnInit {
   processPendingDocuments(entityDocs: any[], existingPayments: any[]) {
     this.pendingRows = entityDocs.map((doc: any) => {
       // Calculate already paid amount
-      const rawDocType = doc.documentType || doc.type || 'FC';
+      const rawDocType = doc.documentType || doc.type || (this.entityType === 'CUSTOMER' ? 'FA' : 'FC');
       const docNum = doc.documentNumber || `${rawDocType} ${doc.series}/${doc.number}`;
 
       const relatedDocs = existingPayments.filter((p: any) => p.relatedDocument === docNum);
@@ -1806,8 +1834,8 @@ export class TreasuryManagementComponent implements OnInit {
     let journalId = 'JNL-GEN';
     const firstGroup = Array.from(paymentMethodGroups.values())[0];
     if (firstGroup) {
-      if (firstGroup.accountCode.startsWith('11')) journalId = 'JNL-CSH';
-      else if (firstGroup.accountCode.startsWith('12')) journalId = 'JNL-BNK';
+      if (firstGroup.accountCode.startsWith('11') || firstGroup.accountCode.startsWith('1.1')) journalId = 'JNL-CSH';
+      else if (firstGroup.accountCode.startsWith('12') || firstGroup.accountCode.startsWith('1.2')) journalId = 'JNL-BNK';
     }
 
     const entry: any = {
@@ -1985,7 +2013,6 @@ export class TreasuryManagementComponent implements OnInit {
         credit: 0,
         description: `Adiantamento a ${this.entityName}`
       });
-
       // Credit: Treasury
       lines.push({
         id: `${entryId}-2`,
@@ -2000,8 +2027,8 @@ export class TreasuryManagementComponent implements OnInit {
 
     // Determine Journal ID based on treasury account type
     let journalId = 'JNL-GEN';
-    if (treasuryAccountCode.startsWith('11')) journalId = 'JNL-CSH';
-    else if (treasuryAccountCode.startsWith('12')) journalId = 'JNL-BNK';
+    if (treasuryAccountCode.startsWith('11') || treasuryAccountCode.startsWith('1.1')) journalId = 'JNL-CSH';
+    else if (treasuryAccountCode.startsWith('12') || treasuryAccountCode.startsWith('1.2')) journalId = 'JNL-BNK';
 
     const entry: any = {
       id: entryId,

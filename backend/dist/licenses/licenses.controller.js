@@ -52,6 +52,9 @@ let LicensesController = class LicensesController {
         const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
         return this.licensesService.activate(dto.token, ip);
     }
+    async subscribe(body) {
+        return this.licensesService.subscribe(body.companyId, body.plan);
+    }
     async getStatus(companyId) {
         return this.licensesService.getStatus(companyId);
     }
@@ -133,6 +136,14 @@ __decorate([
     __metadata("design:paramtypes", [generate_license_dto_1.ActivateLicenseDto, Object]),
     __metadata("design:returntype", Promise)
 ], LicensesController.prototype, "activate", null);
+__decorate([
+    (0, common_1.Post)('subscribe'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], LicensesController.prototype, "subscribe", null);
 __decorate([
     (0, common_1.Get)('status/:companyId'),
     __param(0, (0, common_1.Param)('companyId')),

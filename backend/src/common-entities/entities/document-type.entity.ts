@@ -26,6 +26,9 @@ export class DocumentType {
     @Column({ type: 'jsonb', nullable: true })
     series: any[]; // Array of series configurations
 
+    @Column({ type: 'jsonb', nullable: true })
+    settings: any; // All other custom configuration flags
+
     @Column({ default: true })
     isActive: boolean;
 

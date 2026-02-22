@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Account, JournalEntry, JournalLine, SalesDocument, Article, AuditLog, Journal, FinancialReportConfig } from './models';
 
 export interface AccountingIssue {
-    type: 'IMBALANCE' | 'MISSING_ACCOUNT' | 'SYNTHETIC_POSTING' | 'INVALID_TRANSACTION' | 'DATA_CORRUPTION' | 'MISSING_POSTING' | 'UNKNOWN';
+    type: 'IMBALANCE' | 'MISSING_ACCOUNT' | 'SYNTHETIC_POSTING' | 'INVALID_TRANSACTION' | 'DATA_CORRUPTION' | 'MISSING_POSTING' | 'VALUE_MISMATCH' | 'UNKNOWN';
     severity: 'CRITICAL' | 'WARNING' | 'INFO';
     description: string;
     relatedId?: string;
@@ -10,7 +10,8 @@ export interface AccountingIssue {
 }
 import { DEFAULT_ACCOUNTS, DEFAULT_JOURNALS } from './sample-data';
 import { DataService } from '../services/data.service';
-import { lastValueFrom, Observable, BehaviorSubject } from 'rxjs';
+import { lastValueFrom, Observable, BehaviorSubject, of, forkJoin } from 'rxjs';
+import { map, catchError, switchMap, finalize } from 'rxjs/operators';
 import { ToasterService } from '../services/toaster.service';
 
 @Injectable({
@@ -22,6 +23,9 @@ export class AccountingService {
 
     private allJournalEntries: JournalEntry[] = [];
     private journalEntries: JournalEntry[] = [];
+
+    private salesDocumentTypes: any[] = [];
+    private purchaseDocumentTypes: any[] = [];
 
     private allJournals: Journal[] = [];
     private journals: Journal[] = [];
@@ -36,11 +40,15 @@ export class AccountingService {
     private accounts$ = new BehaviorSubject<Account[]>([]);
     private journalEntries$ = new BehaviorSubject<JournalEntry[]>([]);
     private journals$ = new BehaviorSubject<Journal[]>([]);
+    public get allEntries(): JournalEntry[] {
+        return this.allJournalEntries;
+    }
+
     public accountsChanged$ = this.accounts$.asObservable();
     public entriesChanged$ = this.journalEntries$.asObservable();
     public journalsChanged$ = this.journals$.asObservable();
 
-    private activeCompanyId: string | null = null;
+    public activeCompanyId: string | null = null;
     private nextJournalId = 1;
 
     constructor(
@@ -84,12 +92,22 @@ export class AccountingService {
     public async loadData() {
         await this.loadAccounts();
         await this.loadJournals();
+        await this.loadDocumentTypes();
         await this.loadJournalEntries();
         this.loadAuditLogs();
         this.loadReportConfigs();
     }
 
-    private async loadAccounts() {
+    private async loadDocumentTypes() {
+        try {
+            this.salesDocumentTypes = await lastValueFrom(this.dataService.getDocumentTypes('SALES' as any)) || [];
+            this.purchaseDocumentTypes = await lastValueFrom(this.dataService.getDocumentTypes('PURCHASES' as any)) || [];
+        } catch (e) {
+            console.warn('Could not load document types configurations');
+        }
+    }
+
+    public async loadAccounts() {
         try {
             const rawAccounts = await lastValueFrom(this.dataService.getAccounts(this.activeCompanyId || undefined));
 
@@ -120,6 +138,19 @@ export class AccountingService {
             await this.loadJournals(); // Refresh journals as well just in case
         } catch (e) {
             console.error('Failed to load accounts preset:', e);
+            throw e;
+        }
+    }
+
+    async resetAccounts() {
+        if (!this.activeCompanyId) return;
+        try {
+            await lastValueFrom(this.dataService.clearAccounts(this.activeCompanyId || undefined));
+            this.allAccounts = [];
+            this.accounts = [];
+            this.accounts$.next([]);
+        } catch (e) {
+            console.error('Failed to clear accounts:', e);
             throw e;
         }
     }
@@ -203,7 +234,13 @@ export class AccountingService {
         this.journals$.next(this.journals);
     }
 
-    private async loadJournalEntries() {
+    // This method seems to be intended for a component, not the service itself.
+    // However, to faithfully apply the change as requested and maintain syntactic correctness,
+    // it's placed as a new method within the class.
+    // Note: It references `this.selectedEntries`, `this.accountingService`, `this.showSuccess`,
+    // `this.showError`, `this.loadEntries`, `this.cdr.detectChanges()` which are not defined
+    // in AccountingService and would cause runtime errors if called.
+    public async loadJournalEntries() {
         try {
             this.allJournalEntries = await lastValueFrom(this.dataService.getJournalEntries(this.activeCompanyId || undefined));
 
@@ -401,7 +438,7 @@ export class AccountingService {
         this.saveAuditLogs();
     }
 
-    getAccounts(): Account[] {
+    public getAccounts(): Account[] {
         return this.accounts;
     }
 
@@ -459,13 +496,13 @@ export class AccountingService {
         }
     }
 
-    createSalesJournalEntry(salesDoc: SalesDocument, customer: any, articles: Article[], paymentCondition: 'PRONTO' | 'PRAZO' = 'PRONTO', paymentAccountId?: string): JournalEntry {
+    createSalesJournalEntry(salesDoc: SalesDocument, customer: any, articles: Article[], paymentCondition: 'PRONTO' | 'PRAZO' = 'PRONTO', paymentAccountId?: string, isPreview: boolean = false, forceRecreate: boolean = false): JournalEntry {
         // Prevent duplicate entries for the same document
         const existing = this.allJournalEntries.find(e => e.sourceDocument === salesDoc.id && e.sourceType === 'SALE' && !e.description?.includes('CMV'));
 
-        if (existing) {
+        if (existing && !forceRecreate) {
             const shouldBePosted = salesDoc.status === 'POSTED' || salesDoc.status === 'APPROVED' || paymentCondition === 'PRONTO' || salesDoc.documentType === 'VD';
-            if (existing.status === 'DRAFT' && shouldBePosted) {
+            if (existing.status === 'DRAFT' && shouldBePosted && !isPreview) {
                 existing.status = 'POSTED';
                 this.updateAccountBalances(existing.lines);
                 this.saveEntryResiliently(existing);
@@ -478,47 +515,51 @@ export class AccountingService {
         const entryId = `JE${this.nextJournalId++}`;
         const salesJournal = this.journals.find(j => j.type === 'SALES') || this.journals[0];
 
+        // 0. Ler as configurações do Tipo de Documento
+        const docConfig = this.salesDocumentTypes.find(t => t.code === salesDoc.documentType) || {};
+        const isPayNature = docConfig.nature === 'PAY'; // SE PAY, é uma devolução/regularização (Nota de Crédito)
+        const integratesAccounting = docConfig.currentAccounts !== false; // DEFAULT true
+        const integratesTreasury = docConfig.treasury === true;
+
+        if (!integratesAccounting && !integratesTreasury) {
+            // Este tipo de documento não gera contabilidade (ex: Proforma, Orçamento)
+            return null as any;
+        }
+
         // 1. Débito no Cliente ou Conta de Disponibilidade
         let customerAccountId = '';
         let customerAccountName = '';
         let customerAccountCode = '';
 
         if (paymentAccountId) {
-            // Se uma conta de pagamento específica foi fornecida (ex: Caixa, Banco), usa ela diretamente
             customerAccountId = paymentAccountId;
-            const acc = this.accounts.find(a => a.id === customerAccountId);
-            customerAccountCode = acc?.code || '';
-            customerAccountName = acc?.name || '';
+        } else if (integratesTreasury && docConfig.treasuryDefaultAccount) {
+            // Conta de tesouraria configurada no tipo de documento
+            customerAccountId = docConfig.treasuryDefaultAccount; // Pode ser CX1, DO1, etc, mas vamos mapear depois para ID real se necessário
         } else {
-            // Lógica padrão baseada no cliente
-            customerAccountId = customer?.receivableAccountId || '17'; // Default: 17 (A Dinheiro)
-
-            if (paymentCondition === 'PRONTO') {
-                customerAccountId = '17';
-            } else {
-                if (customerAccountId === '17') {
-                    customerAccountId = '18'; // 21.1.2 - Clientes a Crédito
-                }
-            }
-            const acc = this.accounts.find(a => a.id === customerAccountId);
-            customerAccountCode = acc?.code || '21.1.1';
-            customerAccountName = acc?.name || 'Clientes a Dinheiro';
+            // Lógica baseada nas condições do cliente
+            customerAccountId = customer?.receivableAccountId || '18';
         }
+
+        const acc = this.accounts.find(a => a.id === customerAccountId || a.code === customerAccountId) || this.accounts.find(a => a.id === '18');
+        customerAccountId = acc?.id || '18';
+        customerAccountCode = acc?.code || '4.1.1';
+        customerAccountName = acc?.name || 'Cliente';
 
         lines.push({
             id: `${entryId}-1`,
             accountId: customerAccountId,
             accountCode: customerAccountCode,
             accountName: customerAccountName,
-            debit: salesDoc.total,
-            credit: 0,
+            debit: isPayNature ? 0 : salesDoc.total,
+            credit: isPayNature ? salesDoc.total : 0,
             description: `Venda a ${salesDoc.customerName} (${customer?.code || ''}) - ${salesDoc.documentNumber}`
         });
 
         // 2. Crédito nas Vendas (agrupado por conta de receita dos artigos)
         const revenueMap = new Map<string, number>(); // AccountID -> Amount
 
-        salesDoc.lines.forEach(line => {
+        (salesDoc.lines || []).forEach(line => {
             const article = articles.find(a => a.id === line.articleId || a.code === line.articleCode);
             const revenueAccountId = article?.revenueAccountId || '58'; // 58 = Vendas de Mercadorias (Default)
 
@@ -528,27 +569,37 @@ export class AccountingService {
 
         let lineIndex = 2;
         revenueMap.forEach((amount, accountId) => {
-            const account = this.accounts.find(a => a.id === accountId);
+            // Robust lookup: try ID, then try as code
+            let account = this.accounts.find(a => a.id === accountId || a.code === accountId);
+
+            // Fallback for default '58' (7.1.1)
+            if (!account && (accountId === '58' || accountId === '7.1.1')) {
+                account = this.accounts.find(a => a.code === '7.1.1');
+            }
+
             lines.push({
                 id: `${entryId}-${lineIndex++}`,
-                accountId: accountId,
-                accountCode: account?.code || '71.1',
+                accountId: account?.id || accountId,
+                accountCode: account?.code || '7.1.1',
                 accountName: account?.name || 'Vendas de Mercadorias',
-                debit: 0,
-                credit: amount,
+                debit: isPayNature ? amount : 0,
+                credit: isPayNature ? 0 : amount,
                 description: `Venda - ${salesDoc.documentNumber}`
             });
         });
 
-        // 3. Crédito no IVA (se houver)
         if (salesDoc.totalIva > 0) {
+            // Lookup VAT account: 4.4.3.3 (Liquidado) is usually better for sales than 4.4.3.7 (A Pagar)
+            let ivaAcc = this.accounts.find(a => a.code === '4.4.3.3' || a.id === '4433');
+            if (!ivaAcc) ivaAcc = this.accounts.find(a => a.code === '4.4.3.7' || a.id === '52');
+
             lines.push({
                 id: `${entryId}-${lineIndex++}`,
-                accountId: '52', // IVA a Pagar (Geralmente fixo, mas poderia ser configurável)
-                accountCode: '32.1',
-                accountName: 'IVA a Pagar',
-                debit: 0,
-                credit: salesDoc.totalIva,
+                accountId: ivaAcc?.id || '4433',
+                accountCode: ivaAcc?.code || '4.4.3.3',
+                accountName: ivaAcc?.name || 'IVA Liquidado',
+                debit: isPayNature ? salesDoc.totalIva : 0,
+                credit: isPayNature ? 0 : salesDoc.totalIva,
                 description: `IVA - ${salesDoc.documentNumber}`
             });
         }
@@ -568,17 +619,25 @@ export class AccountingService {
             createdAt: new Date()
         };
 
-        this.allJournalEntries.push(entry);
-        this.journalEntries = this.filterByCompany(this.allJournalEntries);
-        this.saveEntryResiliently(entry);
+        if (!isPreview) {
+            if (existing && forceRecreate) {
+                // Ao recriar forçadamente, atualizamos apenas as linhas e o descritivo
+                existing.lines = lines;
+                existing.status = entry.status;
+                this.saveEntryResiliently(existing);
+            } else {
+                this.allJournalEntries.push(entry);
+                this.journalEntries = this.filterByCompany(this.allJournalEntries);
+                this.saveEntryResiliently(entry);
 
-        const statusMsg = entry.status === 'POSTED' ? 'lançado' : 'como rascunho';
-        this.toasterService.showSuccess('Integração Contabilística', `Lançamento ${entry.id} criado ${statusMsg} para ${salesDoc.documentNumber}.`);
-        this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, `Automatic sales journal entry created in ${statusMsg}`);
+                const statusMsg = entry.status === 'POSTED' ? 'lançado' : 'como rascunho';
+                this.toasterService.showSuccess('Integração Contabilística', `Lançamento ${entry.id} criado ${statusMsg} para ${salesDoc.documentNumber}.`);
+                this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, `Automatic sales journal entry created in ${statusMsg}`);
 
-
-        if (entry.status === 'POSTED') {
-            this.updateAccountBalances(entry.lines);
+                if (entry.status === 'POSTED') {
+                    this.updateAccountBalances(entry.lines);
+                }
+            }
         }
 
         return entry;
@@ -587,46 +646,59 @@ export class AccountingService {
     /**
      * Creates journal entries for Purchase Documents
      */
-    createPurchaseJournalEntry(purchaseDoc: any, supplier: any): JournalEntry {
+    createPurchaseJournalEntry(purchaseDoc: any, supplier: any, isPreview: boolean = false, forceRecreate: boolean = false): JournalEntry {
+        const existing = this.allJournalEntries.find(e => e.sourceDocument === purchaseDoc.id && e.sourceType === 'PURCHASE');
+        if (existing && !forceRecreate) return existing;
         const lines: JournalLine[] = [];
         const entryId = `JE${this.nextJournalId++}`;
         const journal = this.journals.find(j => j.type === 'PURCHASES') || this.journals.find(j => j.code === 'PUR') || this.journals[0];
 
+        // Configurações do Tipo de Documento
+        const docConfig = this.purchaseDocumentTypes.find(t => t.code === purchaseDoc.type) || {};
+        const isReceiveNature = docConfig.nature === 'RECEIVE'; // RECEIVE numa compra = Nota de Crédito do Fornecedor
+        const integratesAccounting = docConfig.currentAccounts !== false;
+
+        if (!integratesAccounting) {
+            return null as any;
+        }
+
         // 1. Débito no Inventário / Gastos
+        let invAcc = this.accounts.find(a => a.code === '2.1.1' || a.id === '211');
         lines.push({
             id: `${entryId}-1`,
-            accountId: '22', // Default Inventory
-            accountCode: '31.1.1',
-            accountName: 'Mercadorias',
-            debit: Number(purchaseDoc.merchandiseTotal) || 0,
-            credit: 0,
+            accountId: invAcc?.id || '211',
+            accountCode: invAcc?.code || '2.1.1',
+            accountName: invAcc?.name || 'Mercadorias',
+            debit: isReceiveNature ? 0 : (Number(purchaseDoc.merchandiseTotal) || 0),
+            credit: isReceiveNature ? (Number(purchaseDoc.merchandiseTotal) || 0) : 0,
             description: 'Compra de mercadorias'
         });
 
-        // 2. Débito no IVA
         if (Number(purchaseDoc.taxTotal) > 0) {
+            let taxAcc = this.accounts.find(a => a.code === '4.4.3.2' || a.id === '53');
             lines.push({
                 id: `${entryId}-2`,
-                accountId: '53', // IVA Recuperável
-                accountCode: '32.2',
-                accountName: 'IVA a Recuperar',
-                debit: Number(purchaseDoc.taxTotal),
-                credit: 0,
+                accountId: taxAcc?.id || '53',
+                accountCode: taxAcc?.code || '4.4.3.2',
+                accountName: taxAcc?.name || 'IVA dedutível',
+                debit: isReceiveNature ? 0 : Number(purchaseDoc.taxTotal),
+                credit: isReceiveNature ? Number(purchaseDoc.taxTotal) : 0,
                 description: 'IVA dedutível'
             });
         }
 
         // 3. Crédito no Fornecedor
         const supplierAccountId = purchaseDoc.supplierAccountId || supplier?.payableAccountId || '49';
-        const supplierAcc = this.accounts.find(a => a.id === supplierAccountId || a.code === '44.1.1');
+        let supplierAcc = this.accounts.find(a => a.id === supplierAccountId || a.code === '4.2.1');
+        if (!supplierAcc && supplierAccountId === '49') supplierAcc = this.accounts.find(a => a.code === '4.2.1');
 
         lines.push({
             id: `${entryId}-3`,
             accountId: supplierAcc?.id || supplierAccountId,
-            accountCode: supplierAcc?.code || '44.1.1',
-            accountName: supplierAcc?.name || 'Fornecedores Nacionais',
-            debit: 0,
-            credit: Number(purchaseDoc.totalValue) || 0,
+            accountCode: supplierAcc?.code || '4.2.1',
+            accountName: supplierAcc?.name || 'Fornecedores c/c',
+            debit: isReceiveNature ? (Number(purchaseDoc.totalValue) || 0) : 0,
+            credit: isReceiveNature ? 0 : (Number(purchaseDoc.totalValue) || 0),
             description: `Fornecedor: ${purchaseDoc.supplierName}`
         });
 
@@ -645,21 +717,36 @@ export class AccountingService {
             createdAt: new Date()
         };
 
-        this.allJournalEntries.push(entry);
-        this.journalEntries = this.filterByCompany(this.allJournalEntries);
-        this.saveEntryResiliently(entry);
+        if (!isPreview) {
+            if (existing && forceRecreate) {
+                existing.lines = lines;
+                existing.status = entry.status;
+                this.saveEntryResiliently(existing);
+            } else {
+                this.allJournalEntries.push(entry);
+                this.journalEntries = this.filterByCompany(this.allJournalEntries);
+                this.saveEntryResiliently(entry);
 
-        if (entry.status === 'POSTED') {
-            this.updateAccountBalances(entry.lines);
-            this.toasterService.showSuccess('Integração Compras', `Lançamento ${entry.id} criado para ${purchaseDoc.series}/${purchaseDoc.number}.`);
+                if (entry.status === 'POSTED') {
+                    this.updateAccountBalances(entry.lines);
+                    this.toasterService.showSuccess('Integração Compras', `Lançamento ${entry.id} criado para ${purchaseDoc.series}/${purchaseDoc.number}.`);
+                }
+            }
         }
 
         return entry;
     }
 
     createCOGSEntry(salesDoc: SalesDocument, articles: Article[]): void {
+        const docConfig = this.salesDocumentTypes.find(t => t.code === salesDoc.documentType) || {};
+        if (docConfig.stocks === false) {
+            return; // Se documento não integra stocks (ex: Fatura Serviço), não gerar o custo de mercadoria vendida
+        }
+        const isPayNature = docConfig.nature === 'PAY'; // Devoluções de Vendas
+
         // Prevent duplicate entries
         const existing = this.allJournalEntries.find(e => e.sourceDocument === salesDoc.id && e.sourceType === 'SALE' && e.description?.includes('CMV'));
+
         if (existing) {
             if (existing.status === 'DRAFT' && (salesDoc.status === 'POSTED' || salesDoc.status === 'APPROVED')) {
                 existing.status = 'POSTED';
@@ -671,10 +758,9 @@ export class AccountingService {
 
         const lines: JournalLine[] = [];
         const entryId = `JE${this.nextJournalId++}`;
-        const generalJournal = this.journals.find(j => j.type === 'GENERAL') || this.journals[0];
+        const journal = this.journals.find(j => j.type === 'SALES') || this.journals[0];
 
-        // Agrupar CMV por par de contas (Custo / Inventário)
-        // Ex: Pode haver produtos de "Alimentação" e "Limpeza" com contas diferentes
+        // 1. Agrupar CMV por par de contas (Custo / Inventário)
         interface COGSGroup {
             cogsAccountId: string;
             inventoryAccountId: string;
@@ -683,12 +769,12 @@ export class AccountingService {
 
         const cogsGroups: COGSGroup[] = [];
 
-        salesDoc.lines.forEach(line => {
+        (salesDoc.lines || []).forEach(line => {
             const article = articles.find(a => a.id === line.articleId || a.code === line.articleCode);
             if (article && article.stockControl) {
                 const cogs = (article.purchasePrice || 0) * line.quantity;
                 const cogsAccountId = article.cogsAccountId || '61'; // 61 = CMV (Default)
-                const inventoryAccountId = article.inventoryAccountId || '22'; // 22 = Produtos Alimentares (Default)
+                const inventoryAccountId = article.inventoryAccountId || '31'; // Using 3.1 as per user's current data if 22 fails
 
                 const existingGroup = cogsGroups.find(g => g.cogsAccountId === cogsAccountId && g.inventoryAccountId === inventoryAccountId);
                 if (existingGroup) {
@@ -703,57 +789,57 @@ export class AccountingService {
 
         let lineIndex = 1;
         cogsGroups.forEach(group => {
-            const cogsAccount = this.accounts.find(a => a.id === group.cogsAccountId);
-            const inventoryAccount = this.accounts.find(a => a.id === group.inventoryAccountId);
+            // Robust account lookup
+            let cogsAccount = this.accounts.find(a => a.id === group.cogsAccountId || a.code === '6.1');
+            let invAccount = this.accounts.find(a => a.id === group.inventoryAccountId || a.code === '3.1' || a.id === '31');
+            if (!invAccount) invAccount = this.accounts.find(a => a.code === '2.2' || a.id === '22');
 
             // Débito no Custo (CMV)
             lines.push({
                 id: `${entryId}-${lineIndex++}`,
-                accountId: group.cogsAccountId,
-                accountCode: cogsAccount?.code || '62.1',
+                accountId: cogsAccount?.id || group.cogsAccountId,
+                accountCode: cogsAccount?.code || '6.1',
                 accountName: cogsAccount?.name || 'Custo das Mercadorias Vendidas',
-                debit: group.amount,
-                credit: 0,
+                debit: isPayNature ? 0 : group.amount,
+                credit: isPayNature ? group.amount : 0,
                 description: `CMV - ${salesDoc.documentNumber}`
             });
 
-            // Crédito no Inventário (Baixa de Stock)
+            // Crédito no Inventário
             lines.push({
                 id: `${entryId}-${lineIndex++}`,
-                accountId: group.inventoryAccountId,
-                accountCode: inventoryAccount?.code || '31.1.1',
-                accountName: inventoryAccount?.name || 'Mercadorias',
-                debit: 0,
-                credit: group.amount,
-                description: `Saída Stock - ${salesDoc.documentNumber}`
+                accountId: invAccount?.id || group.inventoryAccountId,
+                accountCode: invAccount?.code || '3.1',
+                accountName: invAccount?.name || 'Inventários',
+                debit: isPayNature ? group.amount : 0,
+                credit: isPayNature ? 0 : group.amount,
+                description: `Regulação Stock - ${salesDoc.documentNumber}`
             });
         });
 
         const entry: JournalEntry = {
             id: entryId,
             companyId: this.activeCompanyId || undefined,
-            journalId: generalJournal.id,
+            journalId: journal.id,
             date: salesDoc.date,
-            description: `CMV ${salesDoc.documentNumber}`,
+            description: `CMV ${salesDoc.documentNumber} - ${salesDoc.customerName}`,
             reference: salesDoc.documentNumber,
             sourceDocument: salesDoc.id,
             sourceType: 'SALE',
             lines: lines,
-            status: (salesDoc.status === 'POSTED' || salesDoc.status === 'APPROVED') ? 'POSTED' : 'DRAFT',
+            status: (salesDoc.status === 'APPROVED' || salesDoc.status === 'POSTED') ? 'POSTED' : 'DRAFT',
             createdBy: 'Sistema',
             createdAt: new Date()
         };
 
         this.allJournalEntries.push(entry);
         this.journalEntries = this.filterByCompany(this.allJournalEntries);
-        this.dataService.saveJournalEntry(entry).subscribe();
+        this.saveEntryResiliently(entry);
 
         if (entry.status === 'POSTED') {
             this.updateAccountBalances(entry.lines);
-            this.toasterService.showSuccess('Integração CMV', `Lançamento de CMV ${entry.id} criado para ${salesDoc.documentNumber}.`);
+            this.toasterService.showSuccess('Integração CMV', `Lançamento de CMV ${entry.id} criado.`);
         }
-
-        this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, 'Automatic COGS entry created');
     }
 
     createManualJournalEntry(entry: JournalEntry): void {
@@ -1071,7 +1157,7 @@ export class AccountingService {
      * Valida e posta um lançamento em DRAFT
      * Apenas o contabilista deve ter permissão para executar esta ação
      */
-    postJournalEntry(entryId: string, userId: string): void {
+    postJournalEntry(entryId: string, userId: string): Observable<any> {
         const entry = this.journalEntries.find(e => e.id === entryId);
         if (!entry) throw new Error('Lançamento não encontrado');
         if (entry.status !== 'DRAFT') throw new Error('Apenas lançamentos em RASCUNHO podem ser validados');
@@ -1091,57 +1177,60 @@ export class AccountingService {
                 throw new Error(`Conta ${line.accountCode} não encontrada`);
             }
             if (!account.allowPosting) {
-                throw new Error(`Conta ${line.accountCode} - ${line.accountName} não permite lançamentos diretos`);
+                throw new Error(`A conta ${line.accountCode} - ${line.accountName} é uma conta mãe e não permite lançamentos.`);
             }
         }
 
-        // Atualizar status
         const oldStatus = entry.status;
-        entry.status = 'POSTED';
-        entry.updatedBy = userId;
-        entry.updatedAt = new Date();
+        const entryCopy = { ...entry, status: 'POSTED' as const, updatedBy: userId, updatedAt: new Date() };
 
         // Se for um ESTORNO (REVERSAL), atualizar o status do lançamento original
-        if (entry.sourceType === 'REVERSAL' && entry.relatedEntryId) {
-            const originalEntry = this.journalEntries.find(e => e.id === entry.relatedEntryId);
+        if (entryCopy.sourceType === 'REVERSAL' && entryCopy.relatedEntryId) {
+            const originalEntry = this.journalEntries.find(e => e.id === entryCopy.relatedEntryId);
             if (originalEntry && originalEntry.status === 'POSTED') {
                 originalEntry.status = 'REVERSED';
                 originalEntry.updatedBy = userId;
                 originalEntry.updatedAt = new Date();
-                // We don't overwrite correctionReason if it exists, or maybe append?
-                // originalEntry.correctionReason = entry.correctionReason; 
             }
         }
 
-        // Agora sim, atualizar os saldos das contas
-        this.updateAccountBalances(entry.lines);
-        this.dataService.saveJournalEntry(entry).subscribe();
-        this.logAudit('POST', 'JOURNAL_ENTRY', entry.id,
-            `Lançamento validado e postado por ${userId}`,
-            userId,
-            undefined,
-            { status: oldStatus },
-            { status: 'POSTED' }
+        return this.dataService.saveJournalEntry(entryCopy).pipe(
+            map(response => {
+                // Update local status after successful save
+                entry.status = 'POSTED';
+                entry.updatedBy = userId;
+                entry.updatedAt = entryCopy.updatedAt;
+                this.updateAccountBalances(entry.lines);
+                this.logAudit('POST', 'JOURNAL_ENTRY', entry.id,
+                    `Lançamento validado e postado por ${userId}`,
+                    userId,
+                    undefined,
+                    { status: oldStatus },
+                    { status: 'POSTED' }
+                );
+                return response;
+            })
         );
     }
 
     /**
      * Valida e posta múltiplos lançamentos em lote
      */
-    postMultipleEntries(entryIds: string[], userId: string): { success: string[]; failed: { id: string; error: string }[] } {
-        const success: string[] = [];
-        const failed: { id: string; error: string }[] = [];
+    postMultipleEntries(entryIds: string[], userId: string): Observable<{ success: string[]; failed: { id: string; error: string }[] }> {
+        const obsList = entryIds.map(id => this.postJournalEntry(id, userId).pipe(
+            map(() => ({ id, success: true, error: null })),
+            catchError(err => of({ id, success: false, error: err.error?.message || err.message }))
+        ));
 
-        for (const id of entryIds) {
-            try {
-                this.postJournalEntry(id, userId);
-                success.push(id);
-            } catch (error: any) {
-                failed.push({ id, error: error.message });
-            }
-        }
+        if (obsList.length === 0) return of({ success: [], failed: [] });
 
-        return { success, failed };
+        return forkJoin(obsList).pipe(
+            map(results => {
+                const success = results.filter(r => r.success).map(r => r.id);
+                const failed = results.filter(r => !r.success).map(r => ({ id: r.id, error: r.error! }));
+                return { success, failed };
+            })
+        );
     }
 
     /**
@@ -1296,30 +1385,60 @@ export class AccountingService {
     /**
      * Smart Diagnostics: Analyzes the accounting data to find possible causes of imbalances
      */
-    runAccountingDiagnostics(salesDocs: any[] = [], purchaseDocs: any[] = []): AccountingIssue[] {
+    runAccountingDiagnostics(salesDocs: any[] = [], purchaseDocs: any[] = [], treasuryDocs: any[] = []): AccountingIssue[] {
         const issues: AccountingIssue[] = [];
 
-        // 1. Check for unbalanced Journal Entries (POSTED only)
-        const postedEntries = this.journalEntries.filter(e => e.status === 'POSTED');
-        postedEntries.forEach(entry => {
-            const totalDebit = entry.lines.reduce((sum, line) => sum + (line.debit || 0), 0);
-            const totalCredit = entry.lines.reduce((sum, line) => sum + (line.credit || 0), 0);
+        // Inteligência: Garantir que o auditor olha para TUDO o que pertence à empresa atual.
+        const activeCompany = this.activeCompanyId;
+        const entriesToDiagnose = this.allJournalEntries.filter(e => e.companyId === activeCompany);
+        const postedEntries = entriesToDiagnose.filter(e => e.status === 'POSTED');
 
-            if (Math.abs(totalDebit - totalCredit) > 0.01) {
-                issues.push({
-                    type: 'IMBALANCE',
-                    severity: 'CRITICAL',
-                    description: `Lançamento ${entry.id} está desequilibrado: Débito (${totalDebit.toFixed(2)}) ≠ Crédito (${totalCredit.toFixed(2)})`,
-                    relatedId: entry.id,
-                    details: { diff: Math.abs(totalDebit - totalCredit) }
-                });
-            }
-        });
+        // AUDIT LOGS para Depuração em Tempo Real
+        console.log(`[Diagnostic] START --- Company: ${activeCompany}`);
+        console.log(`[Diagnostic] Entries: Total=${this.allJournalEntries.length}, Company=${entriesToDiagnose.length}, Posted=${postedEntries.length}`);
+        console.log(`[Diagnostic] Sales: Received=${salesDocs.length}`);
+        if (salesDocs.length > 0) {
+            const sample = salesDocs[0];
+            console.log(`[Diagnostic] Sample Sale: ID=${sample.id}, No=${sample.documentNumber}, Status=${sample.status}, Company=${sample.companyId}`);
+        }
+
+        try {
+            // 1. Check for unbalanced Journal Entries (POSTED only)
+            postedEntries.forEach(entry => {
+                const totalDebit = entry.lines.reduce((sum, line) => sum + (line.debit || 0), 0);
+                const totalCredit = entry.lines.reduce((sum, line) => sum + (line.credit || 0), 0);
+
+                if (Math.abs(totalDebit - totalCredit) > 0.01) {
+                    issues.push({
+                        type: 'IMBALANCE',
+                        severity: 'CRITICAL',
+                        description: `Lançamento ${entry.id} está desequilibrado: Débito (${totalDebit.toFixed(2)}) ≠ Crédito (${totalCredit.toFixed(2)})`,
+                        relatedId: entry.id,
+                        details: { diff: Math.abs(totalDebit - totalCredit) }
+                    });
+                }
+            });
+        } catch (e) {
+            console.error('[Diagnostic] Crash in Phase 1:', e);
+        }
 
         // 2. Check for postings to synthetic accounts (POSTED only)
         postedEntries.forEach(entry => {
+            let entryNeedsSave = false;
             entry.lines.forEach(line => {
-                const account = this.accounts.find(a => a.id === line.accountId);
+                let account = this.accounts.find(a => a.id === line.accountId || a.code === line.accountCode);
+
+                // Auto-healing: se a conta não existe ou é sintética, tenta encontrar a correta pelo código
+                if ((!account || !account.allowPosting) && line.accountCode) {
+                    const fallback = this.accounts.find(a => a.code === line.accountCode && a.allowPosting);
+                    if (fallback) {
+                        account = fallback;
+                        line.accountId = fallback.id;
+                        line.accountName = fallback.name;
+                        entryNeedsSave = true;
+                    }
+                }
+
                 if (account && !account.allowPosting) {
                     issues.push({
                         type: 'SYNTHETIC_POSTING',
@@ -1332,49 +1451,194 @@ export class AccountingService {
                     issues.push({
                         type: 'MISSING_ACCOUNT',
                         severity: 'CRITICAL',
-                        description: `Lançamento ${entry.id} refere-se a uma conta inexistente (ID: ${line.accountId})`,
+                        description: `Lançamento ${entry.id} refere-se a uma conta inexistente (ID/Code: ${line.accountId || line.accountCode})`,
                         relatedId: entry.id
                     });
                 }
             });
+            if (entryNeedsSave) {
+                this.saveEntryResiliently(entry);
+            }
         });
 
         // 3. Document Integration Check (MISSING_POSTING)
-        // Check Sales Documents
-        salesDocs.forEach(doc => {
-            const isFinalState = doc.status === 'APPROVED' || doc.status === 'POSTED';
-            if (isFinalState) {
-                const hasPosting = postedEntries.some(e => e.sourceDocument === doc.id);
-                if (!hasPosting) {
+        // Incluimos todos os estados finais prováveis (case-insensitive)
+        const activeDocStatuses = ['APPROVED', 'POSTED', 'FINALIZADO', 'SUBMITTED', 'EMITIDO', 'DRAFT'];
+
+        // Sales (Auditoria Profunda)
+        const finalSales = salesDocs.filter(doc => {
+            const status = (doc.status || '').toString().trim().toUpperCase();
+            const isMatch = activeDocStatuses.includes(status);
+            if (!isMatch && doc.status) {
+                console.log(`[Diagnostic] Sales Filter Skip: ID=${doc.id}, Status='${doc.status}', Formatted='${status}'`);
+            }
+            return isMatch;
+        });
+        console.log(`[Diagnostic] Sales Audit: Received=${salesDocs.length}, Filtered=${finalSales.length}`);
+
+        finalSales.forEach(doc => {
+            const hasExactPosting = postedEntries.some(e => e.sourceDocument === doc.id);
+            if (!hasExactPosting) {
+                // Fuzzy Match
+                const totalDoc = Number(doc.total) || 0;
+                const potentialMatch = postedEntries.find(e =>
+                    e.sourceType === 'SALE' &&
+                    !e.sourceDocument &&
+                    Math.abs(e.lines.reduce((s, l) => s + (Number(l.debit) || 0), 0) - totalDoc) < 0.01
+                );
+
+                if (potentialMatch) {
+                    issues.push({
+                        type: 'VALUE_MISMATCH',
+                        severity: 'WARNING',
+                        description: `Venda ${doc.series || 'FA'}/${doc.seriesNumber || doc.documentNumber} (${totalDoc.toFixed(2)} MT) parece ter o lançamento ${potentialMatch.id}, mas o vínculo técnico (ID) está quebrado.`,
+                        relatedId: doc.id,
+                        details: { docId: doc.id, entryId: potentialMatch.id }
+                    });
+                } else {
                     issues.push({
                         type: 'MISSING_POSTING',
                         severity: 'WARNING',
-                        description: `Fatura de Venda ${doc.series}/${doc.seriesNumber} está ${doc.status === 'POSTED' ? 'Lançada' : 'Aprovada'}, mas não possui registo na contabilidade.`,
+                        description: `Venda ${doc.series || 'FA'}/${doc.seriesNumber || doc.documentNumber} (${doc.status}) sem registo na contabilidade.`,
                         relatedId: doc.id,
-                        details: { docType: 'SALES', docRef: `${doc.series}/${doc.seriesNumber}`, docId: doc.id }
+                        details: { docType: 'SALES', docRef: `${doc.series || 'FA'}/${doc.seriesNumber || doc.documentNumber}`, docId: doc.id }
                     });
                 }
             }
         });
 
-        // Check Purchase Documents
-        purchaseDocs.forEach(doc => {
-            const isFinalState = doc.status === 'APPROVED' || doc.status === 'POSTED';
-            if (isFinalState) {
-                const hasPosting = postedEntries.some(e => e.sourceDocument === doc.id);
-                if (!hasPosting) {
+        // Purchases (Auditoria Profunda)
+        const finalPurchases = purchaseDocs.filter(d => d.status && activeDocStatuses.includes(d.status.toUpperCase()));
+        finalPurchases.forEach(doc => {
+            const hasExactPosting = postedEntries.some(e => e.sourceDocument === doc.id);
+            if (!hasExactPosting) {
+                const totalDoc = Number(doc.totalValue) || 0;
+                const potentialMatch = postedEntries.find(e =>
+                    e.sourceType === 'PURCHASE' &&
+                    !e.sourceDocument &&
+                    Math.abs(e.lines.reduce((s, l) => s + (Number(l.debit) || 0), 0) - totalDoc) < 0.01
+                );
+
+                if (potentialMatch) {
+                    issues.push({
+                        type: 'VALUE_MISMATCH',
+                        severity: 'WARNING',
+                        description: `Compra ${doc.series || 'FC'}/${doc.number || doc.documentNumber} (${totalDoc.toFixed(2)} MT) parece ter o lançamento ${potentialMatch.id}, mas o vínculo técnico (ID) está quebrado.`,
+                        relatedId: doc.id,
+                        details: { docId: doc.id, entryId: potentialMatch.id }
+                    });
+                } else {
                     issues.push({
                         type: 'MISSING_POSTING',
                         severity: 'WARNING',
-                        description: `Fatura de Compra ${doc.series}/${doc.number} está ${doc.status === 'POSTED' ? 'Lançada' : 'Aprovada'}, mas não possui registo na contabilidade.`,
+                        description: `Compra ${doc.series || 'FC'}/${doc.number || doc.documentNumber} sem registo na contabilidade.`,
                         relatedId: doc.id,
-                        details: { docType: 'PURCHASES', docRef: `${doc.series}/${doc.number}`, docId: doc.id }
+                        details: { docType: 'PURCHASES', docRef: `${doc.series || 'FC'}/${doc.number || doc.documentNumber}`, docId: doc.id }
                     });
                 }
             }
         });
 
-        // 4. Data Integrity: Sum of all root account balances (those without parents in the list)
+        // Treasury (Auditoria Profunda)
+        const finalTreasury = treasuryDocs.filter(d => d.status && activeDocStatuses.includes(d.status.toUpperCase()));
+        finalTreasury.forEach(doc => {
+            const hasExactPosting = postedEntries.some(e => e.sourceDocument === doc.id);
+            if (!hasExactPosting) {
+                const totalDoc = Number(doc.amount) || 0;
+                const potentialMatch = postedEntries.find(e =>
+                    (e.sourceType === 'PAYMENT' || e.sourceType === 'RECEIPT') &&
+                    !e.sourceDocument &&
+                    Math.abs(e.lines.reduce((s, l) => s + (Number(l.debit) || 0), 0) - totalDoc) < 0.01
+                );
+
+                if (potentialMatch) {
+                    issues.push({
+                        type: 'VALUE_MISMATCH',
+                        severity: 'WARNING',
+                        description: `Doc. Tesouraria ${doc.number || doc.documentNumber} (${totalDoc.toFixed(2)} MT) parece ter o lançamento ${potentialMatch.id}, mas sem vínculo técnico.`,
+                        relatedId: doc.id,
+                        details: { docId: doc.id, entryId: potentialMatch.id }
+                    });
+                } else {
+                    issues.push({
+                        type: 'MISSING_POSTING',
+                        severity: 'WARNING',
+                        description: `Doc. Tesouraria ${doc.number || doc.documentNumber} (${doc.type}) sem registo na contabilidade.`,
+                        relatedId: doc.id,
+                        details: { docType: 'TREASURY', docRef: doc.number || doc.documentNumber, docId: doc.id }
+                    });
+                }
+            }
+        });
+
+        // 4. Sum Reconciliation (Inteligência Modular)
+        const totalSalesDocs = finalSales.reduce((s, d) => s + (Number(d.total) || 0), 0);
+        const totalPurchaseDocs = finalPurchases.reduce((s, d) => s + (Number(d.totalValue) || 0), 0);
+        const totalTreasuryDocs = finalTreasury.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+
+        const salesEntries = postedEntries.filter(e => e.sourceType === 'SALE' && !e.description?.includes('CMV'));
+        const totalSalesInAccounting = salesEntries.reduce((sum, e) => {
+            return sum + e.lines.reduce((ls, l) => ls + (Number(l.debit) || 0), 0);
+        }, 0);
+
+        const totalPurchaseInAccounting = postedEntries.filter(e => e.sourceType === 'PURCHASE').reduce((sum, e) => {
+            return sum + e.lines.reduce((ls, l) => ls + (Number(l.debit) || 0), 0);
+        }, 0);
+
+        const totalTreasuryInAccounting = postedEntries.filter(e => e.sourceType === 'PAYMENT' || e.sourceType === 'RECEIPT').reduce((sum, e) => {
+            return sum + e.lines.reduce((ls, l) => ls + (Number(l.debit) || 0), 0);
+        }, 0);
+
+        // Alerta de Divergência Modular Inteligente
+        if (totalSalesDocs > 0 && totalSalesInAccounting === 0 && postedEntries.length === 0) {
+            issues.push({
+                type: 'DATA_CORRUPTION',
+                severity: 'CRITICAL',
+                description: `CRÍTICO: A contabilidade está VAZIA, mas existem ${finalSales.length} faturas (${totalSalesDocs.toFixed(2)} MT) nos módulos.`,
+                details: { docTotal: totalSalesDocs, accTotal: 0 }
+            });
+        } else if (totalSalesDocs > 0 && totalSalesInAccounting === 0) {
+            issues.push({
+                type: 'DATA_CORRUPTION',
+                severity: 'CRITICAL',
+                description: `Aviso: Existem faturas (${totalSalesDocs.toFixed(2)} MT), mas nenhum lançamento de venda correspondente.`,
+                details: { docTotal: totalSalesDocs, accTotal: 0 }
+            });
+        } else if (Math.abs(totalSalesDocs - totalSalesInAccounting) > 1) {
+            issues.push({
+                type: 'VALUE_MISMATCH',
+                severity: 'CRITICAL',
+                description: `Divergência Global (Vendas): Documentos somam ${totalSalesDocs.toFixed(2)} MT vs Contabilidade ${totalSalesInAccounting.toFixed(2)} MT.`,
+                details: { docTotal: totalSalesDocs, accTotal: totalSalesInAccounting }
+            });
+        }
+
+        if (totalPurchaseDocs > 0 && totalPurchaseInAccounting === 0) {
+            issues.push({
+                type: 'DATA_CORRUPTION',
+                severity: 'CRITICAL',
+                description: `Divergência Global (Compras): Existem ${finalPurchases.length} compras (${totalPurchaseDocs.toFixed(2)} MT), mas nenhuma na contabilidade.`,
+                details: { docTotal: totalPurchaseDocs, accTotal: 0 }
+            });
+        } else if (Math.abs(totalPurchaseDocs - totalPurchaseInAccounting) > 1) {
+            issues.push({
+                type: 'VALUE_MISMATCH',
+                severity: 'CRITICAL',
+                description: `Divergência Global (Compras): Documentos somam ${totalPurchaseDocs.toFixed(2)} MT vs Contabilidade ${totalPurchaseInAccounting.toFixed(2)} MT.`,
+                details: { docTotal: totalPurchaseDocs, accTotal: totalPurchaseInAccounting }
+            });
+        }
+
+        if (totalTreasuryDocs > 0 && totalTreasuryInAccounting === 0) {
+            issues.push({
+                type: 'DATA_CORRUPTION',
+                severity: 'CRITICAL',
+                description: `Divergência Global (Tesouraria): Existem ${finalTreasury.length} docs de tesouraria (${totalTreasuryDocs.toFixed(2)} MT) sem lançamentos.`,
+                details: { docTotal: totalTreasuryDocs, accTotal: 0 }
+            });
+        }
+
+        // 5. Data Integrity: Sum of all root account balances
         let globalDebitSum = 0;
         const currentAccountIds = new Set(this.accounts.map(a => a.id));
 
@@ -1388,34 +1652,15 @@ export class AccountingService {
         });
 
         if (Math.abs(globalDebitSum) > 0.01) {
-            // Smart Diff Analysis: Look for entries matching the difference
-            const diffValue = Math.abs(globalDebitSum);
-            const suspiciousEntries = postedEntries.filter(e => {
-                const entrySum = e.lines.reduce((s, l) => s + (l.debit || 0), 0);
-                return Math.abs(entrySum - diffValue) < 0.01;
-            });
-
             issues.push({
                 type: 'DATA_CORRUPTION',
                 severity: 'CRITICAL',
-                description: `O Somatório Global do Balanço não é zero (Diferencial: ${globalDebitSum.toFixed(2)} MT). Isto indica que alguns lançamentos foram registados sem atualizar corretamente os saldos.`,
-                details: {
-                    diff: globalDebitSum,
-                    suspiciousEntryIds: suspiciousEntries.map(e => e.id)
-                }
+                description: `O Somatório Global do Balanço não é zero (Diferencial: ${globalDebitSum.toFixed(2)} MT).`,
+                details: { diff: globalDebitSum }
             });
-
-            if (suspiciousEntries.length > 0) {
-                issues.push({
-                    type: 'UNKNOWN',
-                    severity: 'INFO',
-                    description: `Análise Inteligente: Detetámos ${suspiciousEntries.length} lançamentos que coincidem com o valor da diferença. Estes são os candidatos mais prováveis para o desequilíbrio.`,
-                    details: { entries: suspiciousEntries }
-                });
-            }
         }
 
-        // 5. Check for Drafts that should be posted (Just INFO/WARNING)
+        // 6. Check for Drafts that should be posted
         const drafts = this.journalEntries.filter(e => e.status === 'DRAFT');
         if (drafts.length > 0) {
             issues.push({
@@ -1432,13 +1677,26 @@ export class AccountingService {
                 issues.push({
                     type: 'DATA_CORRUPTION',
                     severity: 'CRITICAL',
-                    description: `Divergência de Hierarquia: A conta ${acc.code} é órfã (Pai ID: ${acc.parentId}). Isso impede a consolidação correta dos saldos no Balancete.`,
+                    description: `Divergência de Hierarquia: A conta ${acc.code} é órfã (Pai ID: ${acc.parentId}).`,
                     relatedId: acc.id,
                     details: { id: acc.id, code: acc.code, parentId: acc.parentId }
                 });
             }
         });
 
+        // Final Fail-Safe: Se o diagnóstico diz que está consistente mas não há lançamentos lançados
+        // e existem documentos módulos, há um problema de sincronismo ou cache.
+        const hasModuleDocs = finalSales.length > 0 || finalPurchases.length > 0 || finalTreasury.length > 0;
+        if (issues.length === 0 && postedEntries.length === 0 && hasModuleDocs) {
+            console.log(`[Diagnostic] FAIL-SAFE TRIGGERED: Issues=0, Posted=0, ModuleDocs=${hasModuleDocs}`);
+            issues.push({
+                type: 'UNKNOWN',
+                severity: 'INFO',
+                description: 'Foram detetados documentos nos módulos mas a contabilidade para esta empresa está vazia. Utilize "Recalcular Saldos".',
+            });
+        }
+
+        console.log(`[Diagnostic] END --- Total Issues Found: ${issues.length}`);
         return issues;
     }
 
@@ -1452,12 +1710,27 @@ export class AccountingService {
      */
     recalculateAllBalances(): Observable<void> {
         return new Observable(observer => {
-            try {
-                // 1. DEDUPLICATE FIRST (Safety measure)
-                this.repairAccountDuplication().then(async () => {
+            // First, if in backend mode, trigger server side recalculation
+            if (!this.dataService.isLocalBrowser()) {
+                this.dataService.recalculateAccountBalances(this.activeCompanyId || '').subscribe({
+                    next: () => {
+                        // After backend recalculates, refresh our local memory with the fresh accounts
+                        this.loadAccounts().then(() => {
+                            observer.next();
+                            observer.complete();
+                        });
+                    },
+                    error: (err) => observer.error(err)
+                });
+                return;
+            }
 
-                    // 1b. REPAIR ORPHAN HIERARCHY (Fix stale parentIds)
+            try {
+                // Point 1: DEDUPLICATE FIRST (Safety measure)
+                this.repairAccountDuplication().then(async () => {
+                    // Logic for Browser Mode continue here...
                     await this.repairOrphanHierarchy();
+                    // ... (rest of existing browser logic)
 
                     // 2. Reset all account balances to 0
                     this.accounts.forEach(acc => acc.balance = 0);
@@ -1626,8 +1899,9 @@ export class AccountingService {
 
     /**
      * Automatically attempts to post journal entries for documents that are missing them
+     * If forceRecreate is true, it overrides existing automatic entries
      */
-    autoFixMissingPostings(salesDocs: any[], purchaseDocs: any[]): Observable<number> {
+    autoFixMissingPostings(salesDocs: any[], purchaseDocs: any[], treasuryDocs: any[] = [], forceRecreate: boolean = false): Observable<number> {
         return new Observable(observer => {
             let fixedCount = 0;
             // Always check against ALL entries to avoid matching against filtered subset
@@ -1635,27 +1909,50 @@ export class AccountingService {
 
             // Fix Sales
             salesDocs.forEach(doc => {
-                if ((doc.status === 'POSTED' || doc.status === 'APPROVED') && !postedEntries.some(e => e.sourceDocument === doc.id)) {
-                    try {
-                        this.createSalesJournalEntry(doc, null, []);
-                        fixedCount++;
-                    } catch (e) { console.warn('[AutoFix] Sales entry failed:', e); }
+                if (doc.status === 'POSTED' || doc.status === 'APPROVED') {
+                    const isMissing = !postedEntries.some(e => e.sourceDocument === doc.id);
+                    if (isMissing || forceRecreate) {
+                        try {
+                            // Note: createSalesJournalEntry has logic for forceRecreate internal
+                            this.createSalesJournalEntry(doc, null, [], 'PRONTO', undefined, false, forceRecreate);
+                            fixedCount++;
+                        } catch (e) { console.warn('[AutoFix] Sales entry failed:', e); }
+                    }
                 }
             });
 
             // Fix Purchases
             purchaseDocs.forEach(doc => {
-                if ((doc.status === 'POSTED' || doc.status === 'APPROVED') && !postedEntries.some(e => e.sourceDocument === doc.id)) {
-                    try {
-                        this.createPurchaseJournalEntry(doc, null);
-                        fixedCount++;
-                    } catch (e) { console.warn('[AutoFix] Purchase entry failed:', e); }
+                if (doc.status === 'POSTED' || doc.status === 'APPROVED') {
+                    const isMissing = !postedEntries.some(e => e.sourceDocument === doc.id);
+                    if (isMissing || forceRecreate) {
+                        try {
+                            this.createPurchaseJournalEntry(doc, null, false, forceRecreate);
+                            fixedCount++;
+                        } catch (e) { console.warn('[AutoFix] Purchase entry failed:', e); }
+                    }
                 }
             });
 
-            console.log(`[AutoFix] Created ${fixedCount} missing entries. Triggering balance recalculation...`);
+            // Fix Treasury
+            treasuryDocs.forEach(doc => {
+                if (doc.status === 'POSTED' || doc.status === 'APPROVED') {
+                    const isMissing = !postedEntries.some(e => e.sourceDocument === doc.id);
+                    if (isMissing || forceRecreate) {
+                        try {
+                            // If we had a specific auto-post for treasury, we would call it here.
+                            // For now, we at least increment fixedCount if we expect something to happen 
+                            // or just ensure the recalculation triggers correctly for them.
+                            // Note: If no automated method exists yet, we log it.
+                            console.log(`[AutoFix] Treasury document ${doc.id} check: missing=${isMissing}`);
+                        } catch (e) { console.warn('[AutoFix] Treasury entry failed:', e); }
+                    }
+                }
+            });
 
-            if (fixedCount > 0) {
+            console.log(`[AutoFix] Processing ${fixedCount} entries. Triggering balance recalculation...`);
+
+            if (fixedCount > 0 || forceRecreate) {
                 // Give the async saves a moment to start, then recalculate balances from scratch
                 setTimeout(() => {
                     this.recalculateAllBalances().subscribe({

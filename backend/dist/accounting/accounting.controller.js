@@ -52,8 +52,14 @@ let AccountingController = class AccountingController {
         const drafts = includeDrafts === 'true';
         return this.accountingService.getAccountStatement(accountId, fromDate, toDate, companyId, drafts);
     }
+    clearAccounts(companyId) {
+        return this.accountingService.clearAccounts(companyId);
+    }
     loadPreset(presetName, companyId) {
         return this.accountingService.loadPresetAccountSystem(presetName, companyId);
+    }
+    recalculateBalances(companyId) {
+        return this.accountingService.recalculateAllBalances(companyId);
     }
     listCostCenters() {
         return this.accountingService.listCostCenters();
@@ -155,6 +161,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AccountingController.prototype, "getStatement", null);
 __decorate([
+    (0, common_1.Delete)('accounts'),
+    (0, swagger_1.ApiOperation)({ summary: 'Clear all accounts for current company' }),
+    __param(0, (0, common_1.Query)('companyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AccountingController.prototype, "clearAccounts", null);
+__decorate([
     (0, common_1.Post)('accounts/presets/:presetName'),
     (0, swagger_1.ApiOperation)({ summary: 'Load a predefined chart of accounts' }),
     __param(0, (0, common_1.Param)('presetName')),
@@ -163,6 +177,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], AccountingController.prototype, "loadPreset", null);
+__decorate([
+    (0, common_1.Post)('accounts/recalculate'),
+    (0, swagger_1.ApiOperation)({ summary: 'Recalculate all account balances from posted journal entries' }),
+    __param(0, (0, common_1.Query)('companyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AccountingController.prototype, "recalculateBalances", null);
 __decorate([
     (0, common_1.Get)('cost-centers'),
     (0, swagger_1.ApiOperation)({ summary: 'List cost centers (MVP)' }),

@@ -79,10 +79,22 @@ export class AccountingController {
     return this.accountingService.getAccountStatement(accountId, fromDate, toDate, companyId, drafts);
   }
 
+  @Delete('accounts')
+  @ApiOperation({ summary: 'Clear all accounts for current company' })
+  clearAccounts(@Query('companyId') companyId?: string) {
+    return this.accountingService.clearAccounts(companyId);
+  }
+
   @Post('accounts/presets/:presetName')
   @ApiOperation({ summary: 'Load a predefined chart of accounts' })
   loadPreset(@Param('presetName') presetName: string, @Query('companyId') companyId?: string) {
     return this.accountingService.loadPresetAccountSystem(presetName, companyId);
+  }
+
+  @Post('accounts/recalculate')
+  @ApiOperation({ summary: 'Recalculate all account balances from posted journal entries' })
+  recalculateBalances(@Query('companyId') companyId?: string) {
+    return this.accountingService.recalculateAllBalances(companyId);
   }
 
 

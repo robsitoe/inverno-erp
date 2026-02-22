@@ -40,11 +40,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
         console.error('[GlobalExceptionFilter] Caught exception:', errorLog.exception);
 
+        const message = exception instanceof HttpException
+            ? (exception.getResponse() as any).message || exception.message
+            : exception instanceof Error ? exception.message : 'Internal server error';
+
         response.status(status).json({
             statusCode: status,
             timestamp: new Date().toISOString(),
             path: request.url,
-            message: exception instanceof Error ? exception.message : 'Internal server error',
+            message: Array.isArray(message) ? message.join(', ') : message,
         });
     }
 }

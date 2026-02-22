@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CustomerService } from '../../shared/customer.service';
@@ -9,10 +9,10 @@ import { Customer, Supplier, Account } from '../../shared/models';
 type EntityType = 'CUSTOMER' | 'SUPPLIER';
 
 @Component({
-    selector: 'app-entity-management',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-entity-management',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="flex flex-col h-full bg-[#F0F0F0]">
       <!-- Toolbar -->
       <div class="flex items-center gap-1 px-2 py-1.5 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0">
@@ -239,173 +239,178 @@ type EntityType = 'CUSTOMER' | 'SUPPLIER';
   `
 })
 export class EntityManagementComponent implements OnInit, OnChanges {
-    @Input() viewMode: 'customer-management' | 'supplier-management' = 'customer-management';
+  @Input() viewMode: 'customer-management' | 'supplier-management' = 'customer-management';
 
-    type: EntityType = 'CUSTOMER';
-    entities: any[] = [];
-    filteredEntities: any[] = [];
-    selectedEntity: any | null = null;
-    searchTerm = '';
-    activeTab = 0;
-    tabs = ['Geral', 'Financeiro'];
-    availableAccounts: Account[] = [];
+  type: EntityType = 'CUSTOMER';
+  entities: any[] = [];
+  filteredEntities: any[] = [];
+  selectedEntity: any | null = null;
+  searchTerm = '';
+  activeTab = 0;
+  tabs = ['Geral', 'Financeiro'];
+  availableAccounts: Account[] = [];
 
-    constructor(
-        private customerService: CustomerService,
-        private supplierService: SupplierService,
-        private accountingService: AccountingService
-    ) { }
+  constructor(
+    private customerService: CustomerService,
+    private supplierService: SupplierService,
+    private accountingService: AccountingService,
+    private cdr: ChangeDetectorRef
+  ) { }
 
-    ngOnInit() {
-        this.updateType();
-        this.loadEntities();
-        this.loadAccounts();
+  ngOnInit() {
+    this.updateType();
+    this.loadEntities();
+    this.loadAccounts();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['viewMode']) {
+      this.updateType();
+      this.loadEntities();
+      this.loadAccounts();
+      this.selectedEntity = null;
+    }
+  }
+
+  updateType() {
+    this.type = this.viewMode === 'customer-management' ? 'CUSTOMER' : 'SUPPLIER';
+  }
+
+  async loadEntities() {
+    if (this.type === 'CUSTOMER') {
+      await this.customerService.loadCustomers();
+      this.entities = this.customerService.getCustomers();
+    } else {
+      await this.supplierService.loadSuppliers();
+      this.entities = this.supplierService.getSuppliers();
+    }
+    this.filterEntities();
+    this.cdr.detectChanges();
+  }
+
+  loadAccounts() {
+    const allAccounts = this.accountingService.getAccounts();
+    if (this.type === 'CUSTOMER') {
+      // Load Asset accounts (Class 21 usually)
+      this.availableAccounts = allAccounts
+        .filter(a => a.allowPosting && (a.code.startsWith('21') || a.type === 'ASSET'))
+        .sort((a, b) => a.code.localeCompare(b.code));
+    } else {
+      // Load Liability accounts (Class 22 usually)
+      this.availableAccounts = allAccounts
+        .filter(a => a.allowPosting && (a.code.startsWith('22') || a.type === 'LIABILITY'))
+        .sort((a, b) => a.code.localeCompare(b.code));
+    }
+  }
+
+  filterEntities() {
+    if (!this.searchTerm) {
+      this.filteredEntities = [...this.entities];
+      return;
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes['viewMode']) {
-            this.updateType();
-            this.loadEntities();
-            this.loadAccounts();
-            this.selectedEntity = null;
-        }
+    const query = this.searchTerm.toLowerCase();
+    this.filteredEntities = this.entities.filter(e =>
+      e.name.toLowerCase().includes(query) ||
+      e.code.toLowerCase().includes(query) ||
+      e.nif.includes(query)
+    );
+  }
+
+  selectEntity(entity: any) {
+    this.selectedEntity = { ...entity }; // Clone to avoid direct mutation
+    this.activeTab = 0;
+  }
+
+  newEntity() {
+    const newCode = this.generateNextCode();
+
+    const baseEntity = {
+      id: `NEW_${Date.now()}`,
+      code: newCode,
+      name: 'Nova Entidade',
+      nif: '',
+      address: '',
+      city: '',
+      postalCode: '',
+      country: 'PT',
+      phone: '',
+      email: '',
+      paymentTerms: 30,
+      creditLimit: 0,
+      currentBalance: 0,
+      isActive: true
+    };
+
+    if (this.type === 'CUSTOMER') {
+      this.selectedEntity = {
+        ...baseEntity,
+        receivableAccountId: ''
+      };
+    } else {
+      this.selectedEntity = {
+        ...baseEntity,
+        payableAccountId: ''
+      };
     }
 
-    updateType() {
-        this.type = this.viewMode === 'customer-management' ? 'CUSTOMER' : 'SUPPLIER';
+    this.activeTab = 0;
+  }
+
+  generateNextCode(): string {
+    const prefix = this.type === 'CUSTOMER' ? 'C' : 'F';
+    const maxCode = this.entities
+      .filter(e => e.code.startsWith(prefix))
+      .map(e => parseInt(e.code.substring(1)) || 0)
+      .reduce((max, current) => Math.max(max, current), 0);
+
+    return `${prefix}${(maxCode + 1).toString().padStart(3, '0')}`;
+  }
+
+  saveEntity() {
+    if (!this.selectedEntity) return;
+
+    if (!this.selectedEntity.code || !this.selectedEntity.name) {
+      alert('Código e Nome são obrigatórios.');
+      return;
     }
 
-    loadEntities() {
-        if (this.type === 'CUSTOMER') {
-            this.entities = this.customerService.getCustomers();
-        } else {
-            this.entities = this.supplierService.getSuppliers();
-        }
-        this.filterEntities();
+    if (this.type === 'CUSTOMER') {
+      if (this.selectedEntity.id.startsWith('NEW_')) {
+        this.customerService.createCustomer(this.selectedEntity);
+      } else {
+        this.customerService.updateCustomer(this.selectedEntity);
+      }
+    } else {
+      if (this.selectedEntity.id.startsWith('NEW_')) {
+        this.supplierService.createSupplier(this.selectedEntity);
+      } else {
+        this.supplierService.updateSupplier(this.selectedEntity);
+      }
     }
 
-    loadAccounts() {
-        const allAccounts = this.accountingService.getAccounts();
-        if (this.type === 'CUSTOMER') {
-            // Load Asset accounts (Class 21 usually)
-            this.availableAccounts = allAccounts
-                .filter(a => a.allowPosting && (a.code.startsWith('21') || a.type === 'ASSET'))
-                .sort((a, b) => a.code.localeCompare(b.code));
-        } else {
-            // Load Liability accounts (Class 22 usually)
-            this.availableAccounts = allAccounts
-                .filter(a => a.allowPosting && (a.code.startsWith('22') || a.type === 'LIABILITY'))
-                .sort((a, b) => a.code.localeCompare(b.code));
-        }
+    // Reload list from backend after a short delay to reflect saved changes
+    setTimeout(() => this.loadEntities(), 500);
+    this.selectedEntity = null;
+    alert('Gravado com sucesso!');
+  }
+
+  deleteEntity() {
+    if (!this.selectedEntity) return;
+
+    if (confirm('Tem a certeza que deseja eliminar esta entidade?')) {
+      // Note: Actual deletion logic might need to check for dependencies (documents, etc.)
+      // For now, we'll just toggle isActive to false (soft delete) or implement delete in service
+      // Since services don't have delete method yet, let's just alert
+      alert('Funcionalidade de eliminar ainda não implementada nos serviços. (Recomendado: Inativar)');
     }
+  }
 
-    filterEntities() {
-        if (!this.searchTerm) {
-            this.filteredEntities = [...this.entities];
-            return;
-        }
-
-        const query = this.searchTerm.toLowerCase();
-        this.filteredEntities = this.entities.filter(e =>
-            e.name.toLowerCase().includes(query) ||
-            e.code.toLowerCase().includes(query) ||
-            e.nif.includes(query)
-        );
+  updateAccount(accountId: string) {
+    if (this.type === 'CUSTOMER') {
+      this.selectedEntity.receivableAccountId = accountId;
+    } else {
+      this.selectedEntity.payableAccountId = accountId;
     }
-
-    selectEntity(entity: any) {
-        this.selectedEntity = { ...entity }; // Clone to avoid direct mutation
-        this.activeTab = 0;
-    }
-
-    newEntity() {
-        const newCode = this.generateNextCode();
-
-        const baseEntity = {
-            id: `NEW_${Date.now()}`,
-            code: newCode,
-            name: 'Nova Entidade',
-            nif: '',
-            address: '',
-            city: '',
-            postalCode: '',
-            country: 'PT',
-            phone: '',
-            email: '',
-            paymentTerms: 30,
-            creditLimit: 0,
-            currentBalance: 0,
-            isActive: true
-        };
-
-        if (this.type === 'CUSTOMER') {
-            this.selectedEntity = {
-                ...baseEntity,
-                receivableAccountId: ''
-            };
-        } else {
-            this.selectedEntity = {
-                ...baseEntity,
-                payableAccountId: ''
-            };
-        }
-
-        this.activeTab = 0;
-    }
-
-    generateNextCode(): string {
-        const prefix = this.type === 'CUSTOMER' ? 'C' : 'F';
-        const maxCode = this.entities
-            .filter(e => e.code.startsWith(prefix))
-            .map(e => parseInt(e.code.substring(1)) || 0)
-            .reduce((max, current) => Math.max(max, current), 0);
-
-        return `${prefix}${(maxCode + 1).toString().padStart(3, '0')}`;
-    }
-
-    saveEntity() {
-        if (!this.selectedEntity) return;
-
-        if (!this.selectedEntity.code || !this.selectedEntity.name) {
-            alert('Código e Nome são obrigatórios.');
-            return;
-        }
-
-        if (this.type === 'CUSTOMER') {
-            if (this.selectedEntity.id.startsWith('NEW_')) {
-                this.customerService.createCustomer(this.selectedEntity);
-            } else {
-                this.customerService.updateCustomer(this.selectedEntity);
-            }
-        } else {
-            if (this.selectedEntity.id.startsWith('NEW_')) {
-                this.supplierService.createSupplier(this.selectedEntity);
-            } else {
-                this.supplierService.updateSupplier(this.selectedEntity);
-            }
-        }
-
-        this.loadEntities();
-        this.selectedEntity = null;
-        alert('Gravado com sucesso!');
-    }
-
-    deleteEntity() {
-        if (!this.selectedEntity) return;
-
-        if (confirm('Tem a certeza que deseja eliminar esta entidade?')) {
-            // Note: Actual deletion logic might need to check for dependencies (documents, etc.)
-            // For now, we'll just toggle isActive to false (soft delete) or implement delete in service
-            // Since services don't have delete method yet, let's just alert
-            alert('Funcionalidade de eliminar ainda não implementada nos serviços. (Recomendado: Inativar)');
-        }
-    }
-
-    updateAccount(accountId: string) {
-        if (this.type === 'CUSTOMER') {
-            this.selectedEntity.receivableAccountId = accountId;
-        } else {
-            this.selectedEntity.payableAccountId = accountId;
-        }
-    }
+  }
 }

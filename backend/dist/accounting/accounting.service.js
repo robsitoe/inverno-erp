@@ -92,6 +92,11 @@ let AccountingService = class AccountingService {
     }
     async remove(id) {
         const repo = await this.getAccountRepo();
+        const jlRepo = await this.getJournalLineRepo();
+        const usages = await jlRepo.count({ where: { accountId: id } });
+        if (usages > 0) {
+            throw new common_1.BadRequestException('Esta conta não pode ser eliminada porque possui lançamentos associados. Por favor, desative-a.');
+        }
         const account = await this.findOne(id);
         return repo.remove(account);
     }
@@ -103,20 +108,38 @@ let AccountingService = class AccountingService {
         if (Math.abs(totalDebit - totalCredit) > 0.01) {
             throw new common_1.BadRequestException(`Journal entry is not balanced. Debit: ${totalDebit}, Credit: ${totalCredit}`);
         }
-        const jeRepo = await this.getJournalEntryRepo();
-        const jlRepo = await this.getJournalLineRepo();
-        const accRepo = await this.getAccountRepo();
+        const jeRepo = await this.getJournalEntryRepo(createJournalEntryDto.companyId);
+        const jlRepo = await this.getJournalLineRepo(createJournalEntryDto.companyId);
+        const accRepo = await this.getAccountRepo(createJournalEntryDto.companyId);
         const preparedLines = await Promise.all(lines.map(async (line) => {
             let jl = jlRepo.create(line);
             if (!jl.id || jl.id.includes('TEMP')) {
                 jl.id = `JL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
             }
+            let acc = await accRepo.findOne({ where: { id: jl.accountId } });
+            if (!acc) {
+                acc = await accRepo.findOne({ where: { code: jl.accountId } });
+            }
+            if (!acc && typeof jl.accountId === 'string') {
+                const cleanTarget = jl.accountId.replace(/\./g, '');
+                acc = await accRepo.createQueryBuilder('acc')
+                    .where("REPLACE(acc.code, '.', '') = :code", { code: cleanTarget })
+                    .getOne();
+            }
+            if (!acc) {
+                console.error(`[AccountingService] Account not found for ID/Code: ${jl.accountId}`);
+                throw new common_1.BadRequestException(`Conta com ID/Código '${jl.accountId}' não encontrada. Verifique se o Plano de Contas está carregado para esta empresa.`);
+            }
+            if (acc.allowPosting === false) {
+                throw new common_1.BadRequestException(`A conta '${acc.code} - ${acc.name}' é uma conta de soma/índice e não permite lançamentos diretos. Por favor, use uma de suas sub-contas (nível final).`);
+            }
+            if (acc.isActive === false) {
+                throw new common_1.BadRequestException(`A conta '${acc.code} - ${acc.name}' encontra-se inativa.`);
+            }
+            jl.accountId = acc.id;
             if (!jl.accountCode || !jl.accountName) {
-                const acc = await accRepo.findOne({ where: { id: jl.accountId } });
-                if (acc) {
-                    jl.accountCode = acc.code;
-                    jl.accountName = acc.name;
-                }
+                jl.accountCode = acc.code;
+                jl.accountName = acc.name;
             }
             return jl;
         }));
@@ -125,12 +148,75 @@ let AccountingService = class AccountingService {
             lines: preparedLines,
         });
         try {
-            return await jeRepo.save(journalEntry);
+            console.log(`[AccountingService] Saving Journal Entry ${journalEntry.id} with ${journalEntry.lines?.length} lines`);
+            const savedEntry = await jeRepo.save(journalEntry);
+            if (savedEntry.status === 'POSTED') {
+                console.log(`[AccountingService] Entry is POSTED, updating account balances...`);
+                await this.updateAccountBalances(savedEntry.lines, createJournalEntryDto.companyId);
+            }
+            return savedEntry;
         }
         catch (err) {
             console.error('[AccountingService] Error saving Journal Entry:', err);
-            throw new common_1.BadRequestException(`Erro ao gravar lançamento: ${err.message}`);
+            if (err.status && err.getResponse)
+                throw err;
+            throw new common_1.BadRequestException(`Erro ao gravar lançamento na base de dados: ${err.message}`);
         }
+    }
+    async updateAccountBalances(lines, companyId) {
+        const accRepo = await this.getAccountRepo(companyId);
+        const changes = new Map();
+        for (const line of lines) {
+            const current = changes.get(line.accountId) || { debit: 0, credit: 0 };
+            changes.set(line.accountId, {
+                debit: current.debit + Number(line.debit),
+                credit: current.credit + Number(line.credit)
+            });
+        }
+        for (const [accountId, delta] of changes.entries()) {
+            let account = await accRepo.findOne({ where: { id: accountId } });
+            if (!account) {
+                account = await accRepo.findOne({ where: { code: accountId } });
+            }
+            if (!account) {
+                console.warn(`[AccountingService] Skipping balance update for unknown account ID/Code: ${accountId}`);
+                continue;
+            }
+            const upperType = (account.type || '').toUpperCase();
+            const isAssetSide = ['ASSET', 'EXPENSE', 'ATIVO', 'GASTO'].includes(upperType);
+            const amount = isAssetSide ? (delta.debit - delta.credit) : (delta.credit - delta.debit);
+            account.balance = Number(account.balance) + amount;
+            await accRepo.save(account);
+            let parentId = account.parentId;
+            while (parentId) {
+                const parent = await accRepo.findOne({ where: { id: parentId } });
+                if (!parent)
+                    break;
+                parent.balance = Number(parent.balance) + amount;
+                await accRepo.save(parent);
+                parentId = parent.parentId;
+            }
+        }
+    }
+    async recalculateAllBalances(companyId) {
+        const targetCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const accRepo = await this.getAccountRepo(targetCompanyId);
+        const jeRepo = await this.getJournalEntryRepo(targetCompanyId);
+        console.log(`[AccountingService] Recalculating all balances for company: ${targetCompanyId}`);
+        await accRepo.createQueryBuilder('acc')
+            .update(account_entity_1.Account)
+            .set({ balance: 0 })
+            .execute();
+        const entries = await jeRepo.find({
+            where: { status: 'POSTED' },
+            relations: ['lines'],
+            order: { date: 'ASC' }
+        });
+        console.log(`[AccountingService] Found ${entries.length} posted entries to process.`);
+        for (const entry of entries) {
+            await this.updateAccountBalances(entry.lines, targetCompanyId);
+        }
+        return { success: true, processedEntries: entries.length };
     }
     async findAllJournalEntries(companyId) {
         const listCompanyId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
@@ -210,15 +296,23 @@ let AccountingService = class AccountingService {
             movements
         };
     }
+    async clearAccounts(companyId) {
+        const targetId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getAccountRepo(targetId);
+        const jlRepo = await this.getJournalLineRepo(targetId);
+        const count = await jlRepo.count();
+        if (count > 0) {
+            throw new common_1.BadRequestException('Não é possível substituir o plano de contas porque já existem lançamentos contabilísticos registados.');
+        }
+        console.log(`[AccountingService] Cleaning all accounts for company ${targetId}`);
+        return await repo.delete({ companyId: targetId });
+    }
     async loadPresetAccountSystem(presetName, companyId) {
         const targetId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
         const repo = await this.getAccountRepo(targetId);
         const count = await repo.count();
         console.log(`[AccountingService] Checking preset for company ${targetId}. Current account count: ${count}`);
-        if (count > 0) {
-            console.log(`[AccountingService] Preset already loaded for company ${targetId}. Returning existing accounts.`);
-            return repo.find({ order: { code: 'ASC' } });
-        }
+        console.log(`[AccountingService] Updating preset for company ${targetId}. Current account count was: ${count}`);
         const preset = accounting_presets_1.ACCOUNT_PRESETS[presetName];
         if (!preset) {
             throw new common_1.NotFoundException(`Plano de contas '${presetName}' não encontrado.`);
