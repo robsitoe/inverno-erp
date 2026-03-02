@@ -10177,3 +10177,228 @@
   "query": {}
 }
 ---
+{
+  "timestamp": "2026-03-02T08:18:25.009Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Employee\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Employee\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:48:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T08:18:34.912Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Employee\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Employee\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:48:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T08:18:35.177Z",
+  "path": "/hr/absences?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Absence\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Absence\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAllAbsences (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:85:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T08:18:55.496Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Employee\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Employee\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:48:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T08:19:01.260Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Employee\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Employee\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:48:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T08:20:10.576Z",
+  "path": "/hr/absences?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Absence\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Absence\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAllAbsences (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:85:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T08:20:10.610Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Employee\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Employee\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:48:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T08:20:15.672Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Employee\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Employee\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:48:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T08:24:07.470Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Employee\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Employee\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:48:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T08:31:39.101Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Employee\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Employee\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:48:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T08:32:28.053Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Employee\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Employee\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:48:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T08:32:28.324Z",
+  "path": "/hr/absences?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Absence\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Absence\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAllAbsences (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:85:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T08:35:30.385Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Employee\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Employee\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:48:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T08:35:34.979Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Employee\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Employee\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:48:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T11:46:37.611Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 500,
+  "exception": {
+    "name": "EntityMetadataNotFoundError",
+    "message": "No metadata for \"Employee\" was found.",
+    "stack": "EntityMetadataNotFoundError: No metadata for \"Employee\" was found.\n    at DataSource.getMetadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\data-source\\src\\data-source\\DataSource.ts:451:30)\n    at Repository.get metadata (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:54:40)\n    at Repository.find (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\repository\\src\\repository\\Repository.ts:573:39)\n    at HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:48:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---

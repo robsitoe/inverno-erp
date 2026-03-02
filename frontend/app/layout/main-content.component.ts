@@ -38,6 +38,9 @@ import { BankReconciliationComponent } from '../features/treasury/bank-reconcili
 import { AccountStatementComponent } from '../features/treasury/account-statement.component';
 import { ToasterComponent } from '../shared/toaster.component';
 import { LicenseManagerComponent } from '../features/admin/license-manager.component';
+import { EmployeeListComponent } from '../features/hr/employee-list.component';
+import { PayrollProcessingComponent } from '../features/hr/payroll-processing.component';
+import { AbsencesManagementComponent } from '../features/hr/absences-management.component';
 
 @Component({
   selector: 'app-main-content',
@@ -78,7 +81,10 @@ import { LicenseManagerComponent } from '../features/admin/license-manager.compo
     EntityManagementComponent,
     BankReconciliationComponent,
     AccountStatementComponent,
-    ToasterComponent
+    ToasterComponent,
+    EmployeeListComponent,
+    PayrollProcessingComponent,
+    AbsencesManagementComponent
   ],
   template: `
     <!-- Sales Forms -->
@@ -240,6 +246,21 @@ import { LicenseManagerComponent } from '../features/admin/license-manager.compo
       <app-account-statement class="w-full h-full block"></app-account-statement>
     </ng-container>
 
+    <!-- HR: Employee List -->
+    <ng-container *ngIf="activeView === 'employee-list'">
+      <app-employee-list class="w-full h-full block"></app-employee-list>
+    </ng-container>
+
+    <!-- HR: Payroll Processing -->
+    <ng-container *ngIf="activeView === 'payroll-processing'">
+      <app-payroll-processing class="w-full h-full block"></app-payroll-processing>
+    </ng-container>
+
+    <!-- HR: Absences Management -->
+    <ng-container *ngIf="activeView === 'absences-management'">
+      <app-absences-management class="w-full h-full block"></app-absences-management>
+    </ng-container>
+
     <!-- Document Types (Sales/Purchases) -->
     <ng-container *ngIf="activeView === 'document-types'">
       <app-document-types class="w-full h-full block"></app-document-types>
@@ -368,7 +389,10 @@ export class MainContentComponent {
       'admin-series',
       'customer-management',
       'supplier-management',
-      'license-manager'
+      'license-manager',
+      'employee-list',
+      'payroll-processing',
+      'absences-management'
     ];
     return knownViews.includes(this.activeView);
   }

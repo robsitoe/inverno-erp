@@ -21,6 +21,7 @@ exports.AccountingModule = AccountingModule = __decorate([
         imports: [typeorm_1.TypeOrmModule.forFeature([account_entity_1.Account, journal_entry_entity_1.JournalEntry, journal_entry_entity_1.JournalLine])],
         controllers: [accounting_controller_1.AccountingController],
         providers: [accounting_service_1.AccountingService],
+        exports: [accounting_service_1.AccountingService],
     })
 ], AccountingModule);
 //# sourceMappingURL=accounting.module.js.map

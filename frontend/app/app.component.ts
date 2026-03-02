@@ -1,5 +1,5 @@
 
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { HeaderComponent } from './layout/header.component';
@@ -129,7 +129,8 @@ export class AppComponent {
     private dataService: DataService,
     private authService: AuthService,
     public licenseService: LicenseService,
-    private navigationService: NavigationService
+    private navigationService: NavigationService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -162,6 +163,7 @@ export class AppComponent {
       if (!connected && !this.dataService.isLocalBrowser()) {
         console.error('[Startup] Falha crítica: Backend inacessível em modo operacional.');
         this.backendError = true;
+        this.cdr.markForCheck();
       } else {
         if (!connected && this.dataService.isLocalBrowser()) {
           console.warn('[Startup] Backend inacessível, mas operando em MODO OFFLINE/LOCAL.');
@@ -170,6 +172,7 @@ export class AppComponent {
         }
 
         this.backendError = false;
+        this.cdr.markForCheck();
         this.startupService.init();
         this.validateStoredSession();
       }

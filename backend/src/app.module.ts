@@ -38,6 +38,10 @@ import { License } from './licenses/entities/license.entity';
 import { LicenseRenewal } from './licenses/entities/license-renewal.entity';
 import { TaxRate } from './taxes/entities/tax-rate.entity';
 import { TaxesModule } from './taxes/taxes.module';
+import { Employee } from './hr/entities/employee.entity';
+import { Payroll } from './hr/entities/payroll.entity';
+import { Absence } from './hr/entities/absence.entity';
+import { HRModule } from './hr/hr.module';
 
 @Module({
   imports: [
@@ -58,7 +62,7 @@ import { TaxesModule } from './taxes/taxes.module';
               SalesDocument, SalesDocumentLine, User, PurchaseDocument,
               PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
               Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-              DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate
+              DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate, Employee, Payroll, Absence
             ],
             synchronize: true,
           };
@@ -71,13 +75,13 @@ import { TaxesModule } from './taxes/taxes.module';
           username: configService.get<string>('DB_USERNAME', 'postgres'),
           password: configService.get<string>('DB_PASSWORD', 'postgres'),
           database: configService.get<string>('DB_DATABASE', 'inverno_erp'),
-          entities: [
-            Account, JournalEntry, JournalLine, Article, StockMovement,
-            SalesDocument, SalesDocumentLine, User, PurchaseDocument,
-            PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-            Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-            DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate
-          ],
+            entities: [
+              Account, JournalEntry, JournalLine, Article, StockMovement,
+              SalesDocument, SalesDocumentLine, User, PurchaseDocument,
+              PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
+              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
+              DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate, Employee, Payroll, Absence
+            ],
           synchronize: true,
         };
       },
@@ -95,6 +99,7 @@ import { TaxesModule } from './taxes/taxes.module';
     PeriodsModule,
     LicensesModule,
     TaxesModule,
+    HRModule,
   ],
   controllers: [AppController],
   providers: [AppService],

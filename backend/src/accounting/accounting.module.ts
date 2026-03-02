@@ -9,5 +9,6 @@ import { JournalEntry, JournalLine } from './entities/journal-entry.entity';
   imports: [TypeOrmModule.forFeature([Account, JournalEntry, JournalLine])],
   controllers: [AccountingController],
   providers: [AccountingService],
+  exports: [AccountingService],
 })
 export class AccountingModule { }

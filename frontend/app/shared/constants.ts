@@ -161,6 +161,19 @@ export const MENU_ITEMS: MenuItem[] = [
   },
 
   {
+    label: "Recursos Humanos",
+    icon: "badge",
+    feature: "HR",
+    children: [
+      { label: "Funcionários", icon: "people", view: "employee-list" },
+      { label: "Processamento de Salários", icon: "payments", view: "payroll-processing" },
+      { label: "Férias e Ausências", icon: "event_busy", view: "absences-management" },
+      { label: "Tabelas de IRPS/INSS", icon: "table_rows", view: "tax-tables" },
+      { label: "Relatórios de RH", icon: "assessment", view: "hr-reports" },
+      { label: "Utilitários", icon: "build" }
+    ]
+  },
+  {
     label: "Projetos e Serviços",
     icon: "work",
     feature: "PROJECTS",

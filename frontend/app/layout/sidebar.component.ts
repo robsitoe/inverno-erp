@@ -345,6 +345,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       'Vendas': '#be123c', // rose-700
       'Compras': '#0369a1', // sky-700
       'Projetos e Serviços': '#7e22ce', // purple-700
+      'Recursos Humanos': '#4338ca', // indigo-700
       'Administração': '#4338ca', // indigo-700
       'Tabelas': '#374151', // gray-700
       'Menus do Utilizador': '#0f766e' // teal-700
