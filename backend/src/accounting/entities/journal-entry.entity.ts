@@ -4,7 +4,12 @@ import { Account } from './account.entity';
 export enum JournalEntryStatus {
     DRAFT = 'DRAFT',
     POSTED = 'POSTED',
-    CANCELED = 'CANCELED',
+    CANCELLED = 'CANCELLED',
+    REVERSED = 'REVERSED',
+    CORRECTED = 'CORRECTED',
+    APPROVED = 'APPROVED',
+    FINALIZADO = 'FINALIZADO',
+    SUBMITTED = 'SUBMITTED',
 }
 
 @Entity('journal_entries')
@@ -42,7 +47,7 @@ export class JournalEntry {
 
     @Column({
         type: 'simple-enum',
-        enum: ['DRAFT', 'POSTED', 'CANCELLED', 'REVERSED', 'CORRECTED', 'VOIDED'],
+        enum: ['DRAFT', 'POSTED', 'CANCELLED', 'REVERSED', 'CORRECTED', 'VOIDED', 'APPROVED', 'FINALIZADO', 'SUBMITTED'],
         default: 'DRAFT',
     })
     status: string;

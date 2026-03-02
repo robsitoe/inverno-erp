@@ -33,4 +33,6 @@ export declare class AccountingController {
     }): Promise<any>;
     getExplorationSummary(fromDate?: string, toDate?: string): Promise<any>;
     getUtilitiesAuditLog(page?: number, limit?: number): Promise<any>;
+    getBalanceSheet(companyId?: string): Promise<any>;
+    getIncomeStatement(companyId?: string): Promise<any>;
 }

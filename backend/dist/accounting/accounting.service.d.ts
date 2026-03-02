@@ -102,5 +102,69 @@ export declare class AccountingService {
             createdAt: string;
         }[];
     }>;
+    getBalanceSheet(companyId?: string): Promise<{
+        assets: {
+            nonCurrent: {
+                tangible: number;
+                intangible: number;
+                biological: number;
+                financial: number;
+                total: number;
+            };
+            current: {
+                inventory: number;
+                clients: number;
+                cashAndBanks: number;
+                total: number;
+            };
+            total: number;
+        };
+        equityAndLiabilities: {
+            equity: {
+                capital: number;
+                reservas: number;
+                retainedEarnings: number;
+                netIncome: number;
+                total: number;
+            };
+            liabilities: {
+                nonCurrent: {
+                    loans: number;
+                    provisions: number;
+                    total: number;
+                };
+                current: {
+                    suppliers: number;
+                    loans: number;
+                    taxes: number;
+                    total: number;
+                };
+                total: number;
+            };
+            total: number;
+        };
+        generatedAt: string;
+    }>;
+    getIncomeStatement(companyId?: string): Promise<{
+        revenue: number;
+        varProduction: number;
+        costOfGoods: number;
+        personnelExpenses: number;
+        fse: number;
+        depreciation: number;
+        provisions: number;
+        otherGains: number;
+        otherLosses: number;
+        operatingResult: number;
+        financialResult: {
+            revenue: number;
+            expenses: number;
+            total: number;
+        };
+        currentResult: number;
+        taxes: number;
+        netProfit: number;
+        generatedAt: string;
+    }>;
 }
 export {};

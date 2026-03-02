@@ -36,6 +36,9 @@ export class AccountingService {
     private allReportConfigs: FinancialReportConfig[] = [];
     private reportConfigs: FinancialReportConfig[] = [];
 
+    public get SalesDocumentTypes() { return this.salesDocumentTypes; }
+    public get PurchaseDocumentTypes() { return this.purchaseDocumentTypes; }
+
     // Reactive Data Streams
     private accounts$ = new BehaviorSubject<Account[]>([]);
     private journalEntries$ = new BehaviorSubject<JournalEntry[]>([]);
@@ -497,11 +500,14 @@ export class AccountingService {
     }
 
     createSalesJournalEntry(salesDoc: SalesDocument, customer: any, articles: Article[], paymentCondition: 'PRONTO' | 'PRAZO' = 'PRONTO', paymentAccountId?: string, isPreview: boolean = false, forceRecreate: boolean = false): JournalEntry {
-        // Prevent duplicate entries for the same document
-        const existing = this.allJournalEntries.find(e => e.sourceDocument === salesDoc.id && e.sourceType === 'SALE' && !e.description?.includes('CMV'));
+        // Use company-filtered list to avoid picking up entries from other companies
+        const existing = this.journalEntries.find(e => e.sourceDocument === salesDoc.id && e.sourceType === 'SALE' && !e.description?.includes('CMV'));
+
+        const docStatus = (salesDoc.status || '').toString().trim().toUpperCase();
+        const isFinalStatus = ['POSTED', 'APPROVED', 'FINALIZADO', 'SUBMITTED', 'EMITIDO', 'FECHADO', 'PAGO', 'CONCLUIDO'].includes(docStatus);
 
         if (existing && !forceRecreate) {
-            const shouldBePosted = salesDoc.status === 'POSTED' || salesDoc.status === 'APPROVED' || paymentCondition === 'PRONTO' || salesDoc.documentType === 'VD';
+            const shouldBePosted = isFinalStatus || paymentCondition === 'PRONTO' || salesDoc.documentType === 'VD';
             if (existing.status === 'DRAFT' && shouldBePosted && !isPreview) {
                 existing.status = 'POSTED';
                 this.updateAccountBalances(existing.lines);
@@ -527,30 +533,13 @@ export class AccountingService {
         }
 
         // 1. Débito no Cliente ou Conta de Disponibilidade
-        let customerAccountId = '';
-        let customerAccountName = '';
-        let customerAccountCode = '';
-
-        if (paymentAccountId) {
-            customerAccountId = paymentAccountId;
-        } else if (integratesTreasury && docConfig.treasuryDefaultAccount) {
-            // Conta de tesouraria configurada no tipo de documento
-            customerAccountId = docConfig.treasuryDefaultAccount; // Pode ser CX1, DO1, etc, mas vamos mapear depois para ID real se necessário
-        } else {
-            // Lógica baseada nas condições do cliente
-            customerAccountId = customer?.receivableAccountId || '18';
-        }
-
-        const acc = this.accounts.find(a => a.id === customerAccountId || a.code === customerAccountId) || this.accounts.find(a => a.id === '18');
-        customerAccountId = acc?.id || '18';
-        customerAccountCode = acc?.code || '4.1.1';
-        customerAccountName = acc?.name || 'Cliente';
+        const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivableAccountId || '18', '4.1.1');
 
         lines.push({
             id: `${entryId}-1`,
-            accountId: customerAccountId,
-            accountCode: customerAccountCode,
-            accountName: customerAccountName,
+            accountId: customerAcc.id,
+            accountCode: customerAcc.code,
+            accountName: customerAcc.name,
             debit: isPayNature ? 0 : salesDoc.total,
             credit: isPayNature ? salesDoc.total : 0,
             description: `Venda a ${salesDoc.customerName} (${customer?.code || ''}) - ${salesDoc.documentNumber}`
@@ -569,19 +558,13 @@ export class AccountingService {
 
         let lineIndex = 2;
         revenueMap.forEach((amount, accountId) => {
-            // Robust lookup: try ID, then try as code
-            let account = this.accounts.find(a => a.id === accountId || a.code === accountId);
-
-            // Fallback for default '58' (7.1.1)
-            if (!account && (accountId === '58' || accountId === '7.1.1')) {
-                account = this.accounts.find(a => a.code === '7.1.1');
-            }
+            const revenueAcc = this.findLeafAccount(accountId === '58' ? '7.1' : accountId, '7.1.1');
 
             lines.push({
                 id: `${entryId}-${lineIndex++}`,
-                accountId: account?.id || accountId,
-                accountCode: account?.code || '7.1.1',
-                accountName: account?.name || 'Vendas de Mercadorias',
+                accountId: revenueAcc.id,
+                accountCode: revenueAcc.code,
+                accountName: revenueAcc.name,
                 debit: isPayNature ? amount : 0,
                 credit: isPayNature ? 0 : amount,
                 description: `Venda - ${salesDoc.documentNumber}`
@@ -589,15 +572,14 @@ export class AccountingService {
         });
 
         if (salesDoc.totalIva > 0) {
-            // Lookup VAT account: 4.4.3.3 (Liquidado) is usually better for sales than 4.4.3.7 (A Pagar)
-            let ivaAcc = this.accounts.find(a => a.code === '4.4.3.3' || a.id === '4433');
-            if (!ivaAcc) ivaAcc = this.accounts.find(a => a.code === '4.4.3.7' || a.id === '52');
+            // Lookup VAT account: 4.4.3.3 (Liquidado)
+            const ivaAcc = this.findLeafAccount('4.4.3.3', '4.4.3');
 
             lines.push({
                 id: `${entryId}-${lineIndex++}`,
-                accountId: ivaAcc?.id || '4433',
-                accountCode: ivaAcc?.code || '4.4.3.3',
-                accountName: ivaAcc?.name || 'IVA Liquidado',
+                accountId: ivaAcc.id,
+                accountCode: ivaAcc.code,
+                accountName: ivaAcc.name,
                 debit: isPayNature ? salesDoc.totalIva : 0,
                 credit: isPayNature ? 0 : salesDoc.totalIva,
                 description: `IVA - ${salesDoc.documentNumber}`
@@ -614,12 +596,25 @@ export class AccountingService {
             sourceDocument: salesDoc.id,
             sourceType: 'SALE',
             lines: lines,
-            status: (salesDoc.documentType === 'VD' || paymentCondition === 'PRONTO' || salesDoc.status === 'APPROVED' || salesDoc.status === 'POSTED') ? 'POSTED' : 'DRAFT',
+            status: (salesDoc.documentType === 'VD' || paymentCondition === 'PRONTO' || isFinalStatus) ? 'POSTED' : 'DRAFT',
             createdBy: 'Sistema',
             createdAt: new Date()
         };
 
         if (!isPreview) {
+            // Final safety: check for synthetic accounts BEFORE saving to backend
+            const syntheticLines = lines.filter(l => {
+                const acc = this.accounts.find(a => a.id === l.accountId || a.code === l.accountCode);
+                return acc && !acc.allowPosting;
+            });
+
+            if (syntheticLines.length > 0) {
+                const codes = syntheticLines.map(l => l.accountCode).join(', ');
+                this.toasterService.showError('Erro de Integração', `Não foi possível integrar: as contas (${codes}) são sintéticas.`);
+                console.error(`[AccountingService] HALTED SAVE: Entry uses synthetic accounts: ${codes}`);
+                return entry;
+            }
+
             if (existing && forceRecreate) {
                 // Ao recriar forçadamente, atualizamos apenas as linhas e o descritivo
                 existing.lines = lines;
@@ -643,12 +638,54 @@ export class AccountingService {
         return entry;
     }
 
+    saveConfirmedJournalEntry(entry: JournalEntry): void {
+        const commitEntry = { ...entry };
+
+        const existing = this.allJournalEntries.find(e =>
+            e.id === commitEntry.id ||
+            (e.sourceDocument === commitEntry.sourceDocument && e.sourceType === commitEntry.sourceType && !e.description?.includes('CMV'))
+        );
+
+        if (existing) {
+            existing.lines = commitEntry.lines;
+            existing.journalId = commitEntry.journalId;
+            existing.description = commitEntry.description;
+            existing.date = commitEntry.date;
+            existing.status = commitEntry.status;
+
+            this.saveEntryResiliently(existing);
+            this.logAudit('UPDATE', 'JOURNAL_ENTRY', existing.id, `Confirmed manual update for sales doc ${commitEntry.reference}`);
+
+            if (existing.status === 'POSTED') {
+                this.updateAccountBalances(existing.lines);
+            }
+        } else {
+            this.allJournalEntries.push(commitEntry);
+            this.journalEntries = this.filterByCompany(this.allJournalEntries);
+            this.saveEntryResiliently(commitEntry);
+
+            const statusMsg = commitEntry.status === 'POSTED' ? 'lançado' : 'como rascunho';
+            this.toasterService.showSuccess('Integração Contabilística', `Lançamento ${commitEntry.id} criado ${statusMsg} após confirmação.`);
+            this.logAudit('CREATE', 'JOURNAL_ENTRY', commitEntry.id, `Manual confirmed journal entry created in ${statusMsg}`);
+
+            if (commitEntry.status === 'POSTED') {
+                this.updateAccountBalances(commitEntry.lines);
+            }
+        }
+
+        this.journalEntries$.next(this.journalEntries);
+    }
+
+
     /**
      * Creates journal entries for Purchase Documents
      */
     createPurchaseJournalEntry(purchaseDoc: any, supplier: any, isPreview: boolean = false, forceRecreate: boolean = false): JournalEntry {
-        const existing = this.allJournalEntries.find(e => e.sourceDocument === purchaseDoc.id && e.sourceType === 'PURCHASE');
+        const existing = this.journalEntries.find(e => e.sourceDocument === purchaseDoc.id && e.sourceType === 'PURCHASE');
         if (existing && !forceRecreate) return existing;
+
+        const docStatus = (purchaseDoc.status || '').toString().trim().toUpperCase();
+        const isFinalStatus = ['POSTED', 'APPROVED', 'FINALIZADO', 'SUBMITTED', 'EMITIDO', 'PAGO', 'CONCLUIDO'].includes(docStatus);
         const lines: JournalLine[] = [];
         const entryId = `JE${this.nextJournalId++}`;
         const journal = this.journals.find(j => j.type === 'PURCHASES') || this.journals.find(j => j.code === 'PUR') || this.journals[0];
@@ -663,24 +700,24 @@ export class AccountingService {
         }
 
         // 1. Débito no Inventário / Gastos
-        let invAcc = this.accounts.find(a => a.code === '2.1.1' || a.id === '211');
+        const inventoryAcc = this.findLeafAccount(purchaseDoc.inventoryAccountId || '2.1.1', '2.1.1');
         lines.push({
             id: `${entryId}-1`,
-            accountId: invAcc?.id || '211',
-            accountCode: invAcc?.code || '2.1.1',
-            accountName: invAcc?.name || 'Mercadorias',
+            accountId: inventoryAcc.id,
+            accountCode: inventoryAcc.code,
+            accountName: inventoryAcc.name,
             debit: isReceiveNature ? 0 : (Number(purchaseDoc.merchandiseTotal) || 0),
             credit: isReceiveNature ? (Number(purchaseDoc.merchandiseTotal) || 0) : 0,
             description: 'Compra de mercadorias'
         });
 
         if (Number(purchaseDoc.taxTotal) > 0) {
-            let taxAcc = this.accounts.find(a => a.code === '4.4.3.2' || a.id === '53');
+            const taxAcc = this.findLeafAccount('4.4.3.2', '4.4.3');
             lines.push({
                 id: `${entryId}-2`,
-                accountId: taxAcc?.id || '53',
-                accountCode: taxAcc?.code || '4.4.3.2',
-                accountName: taxAcc?.name || 'IVA dedutível',
+                accountId: taxAcc.id,
+                accountCode: taxAcc.code,
+                accountName: taxAcc.name,
                 debit: isReceiveNature ? 0 : Number(purchaseDoc.taxTotal),
                 credit: isReceiveNature ? Number(purchaseDoc.taxTotal) : 0,
                 description: 'IVA dedutível'
@@ -688,15 +725,13 @@ export class AccountingService {
         }
 
         // 3. Crédito no Fornecedor
-        const supplierAccountId = purchaseDoc.supplierAccountId || supplier?.payableAccountId || '49';
-        let supplierAcc = this.accounts.find(a => a.id === supplierAccountId || a.code === '4.2.1');
-        if (!supplierAcc && supplierAccountId === '49') supplierAcc = this.accounts.find(a => a.code === '4.2.1');
+        const supplierAcc = this.findLeafAccount(purchaseDoc.supplierAccountId || supplier?.payableAccountId || '4.2.1', '4.2.1');
 
         lines.push({
             id: `${entryId}-3`,
-            accountId: supplierAcc?.id || supplierAccountId,
-            accountCode: supplierAcc?.code || '4.2.1',
-            accountName: supplierAcc?.name || 'Fornecedores c/c',
+            accountId: supplierAcc.id,
+            accountCode: supplierAcc.code,
+            accountName: supplierAcc.name,
             debit: isReceiveNature ? (Number(purchaseDoc.totalValue) || 0) : 0,
             credit: isReceiveNature ? 0 : (Number(purchaseDoc.totalValue) || 0),
             description: `Fornecedor: ${purchaseDoc.supplierName}`
@@ -707,12 +742,12 @@ export class AccountingService {
             companyId: this.activeCompanyId || undefined,
             journalId: journal.id,
             date: purchaseDoc.date,
-            description: `Compra ${purchaseDoc.series}/${purchaseDoc.number} - ${purchaseDoc.supplierName}`,
-            reference: purchaseDoc.reference || `${purchaseDoc.series}/${purchaseDoc.number}`,
+            description: `Compra ${(purchaseDoc.type || 'FC')} ${purchaseDoc.series}/${purchaseDoc.number} - ${purchaseDoc.supplierName}`,
+            reference: purchaseDoc.documentNumber || purchaseDoc.reference || `${(purchaseDoc.type || 'FC')} ${purchaseDoc.series}/${purchaseDoc.number}`,
             sourceDocument: purchaseDoc.id,
             sourceType: 'PURCHASE',
             lines: lines,
-            status: (purchaseDoc.status === 'APPROVED' || purchaseDoc.status === 'POSTED') ? 'POSTED' : 'DRAFT',
+            status: isFinalStatus ? 'POSTED' : 'DRAFT',
             createdBy: 'Sistema',
             createdAt: new Date()
         };
@@ -785,35 +820,32 @@ export class AccountingService {
             }
         });
 
-        if (cogsGroups.length === 0) return;
+        const totalCOGSAmt = cogsGroups.reduce((sum, g) => sum + g.amount, 0);
+        if (totalCOGSAmt < 0.01) return; // Não criar lançamento de custo se o valor for zero (artigos sem preço de custo)
 
         let lineIndex = 1;
         cogsGroups.forEach(group => {
-            // Robust account lookup
-            let cogsAccount = this.accounts.find(a => a.id === group.cogsAccountId || a.code === '6.1');
-            let invAccount = this.accounts.find(a => a.id === group.inventoryAccountId || a.code === '3.1' || a.id === '31');
-            if (!invAccount) invAccount = this.accounts.find(a => a.code === '2.2' || a.id === '22');
+            const costAcc = this.findLeafAccount(group.cogsAccountId || '6.1.1', '6.1.1');
+            const invAcc = this.findLeafAccount(group.inventoryAccountId || '2.1.1', '2.1.1');
 
-            // Débito no Custo (CMV)
             lines.push({
                 id: `${entryId}-${lineIndex++}`,
-                accountId: cogsAccount?.id || group.cogsAccountId,
-                accountCode: cogsAccount?.code || '6.1',
-                accountName: cogsAccount?.name || 'Custo das Mercadorias Vendidas',
+                accountId: costAcc.id,
+                accountCode: costAcc.code,
+                accountName: costAcc.name,
                 debit: isPayNature ? 0 : group.amount,
                 credit: isPayNature ? group.amount : 0,
-                description: `CMV - ${salesDoc.documentNumber}`
+                description: `Custo Mercadoria - ${salesDoc.documentNumber}`
             });
 
-            // Crédito no Inventário
             lines.push({
                 id: `${entryId}-${lineIndex++}`,
-                accountId: invAccount?.id || group.inventoryAccountId,
-                accountCode: invAccount?.code || '3.1',
-                accountName: invAccount?.name || 'Inventários',
+                accountId: invAcc.id,
+                accountCode: invAcc.code,
+                accountName: invAcc.name,
                 debit: isPayNature ? group.amount : 0,
                 credit: isPayNature ? 0 : group.amount,
-                description: `Regulação Stock - ${salesDoc.documentNumber}`
+                description: `Inv. Mercadoria - ${salesDoc.documentNumber}`
             });
         });
 
@@ -967,7 +999,43 @@ export class AccountingService {
         }
     }
 
+    private findLeafAccount(codeOrId: string, fallbackCode: string): Account {
+        // 1. Try exact match that allows posting
+        let account = this.accounts.find(a => (a.id === codeOrId || a.code === codeOrId) && a.allowPosting);
+        if (account) return account;
+
+        // 2. If not found or synthetic, try to find a descendant that allows posting
+        const baseAccount = this.accounts.find(a => a.id === codeOrId || a.code === codeOrId);
+        const searchCode = baseAccount?.code || codeOrId;
+
+        // Find the first descendant (sorting by code length ensures we pick the closest child)
+        account = this.accounts
+            .filter(a => a.code.startsWith(searchCode) && a.allowPosting)
+            .sort((a, b) => a.code.length - b.code.length)[0];
+
+        if (account) return account;
+
+        // 3. Fallback to a safe default
+        account = this.accounts.find(a => a.code === fallbackCode && a.allowPosting)
+            || this.accounts.find(a => a.code.startsWith(fallbackCode) && a.allowPosting)
+            || this.accounts.find(a => a.allowPosting); // Ultimate fallback
+
+        return account!;
+    }
+
     private saveEntryResiliently(entry: JournalEntry): void {
+        const syntheticLines = (entry.lines || []).filter(l => {
+            const acc = this.accounts.find(a => a.id === l.accountId || a.code === l.accountCode);
+            return acc && !acc.allowPosting;
+        });
+
+        if (syntheticLines.length > 0) {
+            const codes = syntheticLines.map(l => l.accountCode).join(', ');
+            this.toasterService.showError('Erro de Segurança Contabilística', `Bloqueado: A conta (${codes}) é uma conta de soma/índice e não permite lançamentos.`);
+            console.error(`[AccountingService] HALTED SAVE: Entry ${entry.id} uses synthetic accounts: ${codes}`);
+            return;
+        }
+
         const dto: any = {
             id: entry.id,
             companyId: entry.companyId || null,
@@ -1391,7 +1459,10 @@ export class AccountingService {
         // Inteligência: Garantir que o auditor olha para TUDO o que pertence à empresa atual.
         const activeCompany = this.activeCompanyId;
         const entriesToDiagnose = this.allJournalEntries.filter(e => e.companyId === activeCompany);
-        const postedEntries = entriesToDiagnose.filter(e => e.status === 'POSTED');
+        const postedEntries = entriesToDiagnose.filter(e => {
+            const status = (e.status || '').toString().toUpperCase();
+            return ['POSTED', 'APPROVED', 'FINALIZADO', 'SUBMITTED', 'EMITIDO', 'PAGO', 'CONCLUIDO'].includes(status);
+        });
 
         // AUDIT LOGS para Depuração em Tempo Real
         console.log(`[Diagnostic] START --- Company: ${activeCompany}`);
@@ -1463,7 +1534,7 @@ export class AccountingService {
 
         // 3. Document Integration Check (MISSING_POSTING)
         // Incluimos todos os estados finais prováveis (case-insensitive)
-        const activeDocStatuses = ['APPROVED', 'POSTED', 'FINALIZADO', 'SUBMITTED', 'EMITIDO', 'DRAFT'];
+        const activeDocStatuses = ['APPROVED', 'POSTED', 'FINALIZADO', 'SUBMITTED', 'EMITIDO', 'PAGO', 'CONCLUIDO', 'SUBMETIDO', 'FECHADO', 'DRAFT'];
 
         // Sales (Auditoria Profunda)
         const finalSales = salesDocs.filter(doc => {
@@ -1661,12 +1732,15 @@ export class AccountingService {
         }
 
         // 6. Check for Drafts that should be posted
-        const drafts = this.journalEntries.filter(e => e.status === 'DRAFT');
+        const drafts = this.journalEntries.filter(e => {
+            const status = (e.status || '').toString().toUpperCase();
+            return status === 'DRAFT';
+        });
         if (drafts.length > 0) {
             issues.push({
                 type: 'INVALID_TRANSACTION',
                 severity: 'INFO',
-                description: `Existem ${drafts.length} lançamentos em RASCUNHO que não estão refletidos nos saldos atuais.`,
+                description: `Existem ${drafts.length} lançamentos em RASCUNHO que não estão refletidos nos saldos atuais. Verifique se devem ser lançados (POSTED).`,
                 details: { count: drafts.length }
             });
         }
@@ -1735,8 +1809,8 @@ export class AccountingService {
                     // 2. Reset all account balances to 0
                     this.accounts.forEach(acc => acc.balance = 0);
 
-                    // 3. Identify all posted entries (use allJournalEntries, NOT filtered)
-                    const postedEntries = this.allJournalEntries.filter(e => e.status === 'POSTED');
+                    // 3. Identify all posted entries for THIS company
+                    const postedEntries = this.journalEntries.filter(e => e.status === 'POSTED');
 
                     // 4. Process each line of each entry
                     postedEntries.forEach(entry => {
@@ -1909,26 +1983,44 @@ export class AccountingService {
 
             // Fix Sales
             salesDocs.forEach(doc => {
-                if (doc.status === 'POSTED' || doc.status === 'APPROVED') {
-                    const isMissing = !postedEntries.some(e => e.sourceDocument === doc.id);
-                    if (isMissing || forceRecreate) {
+                const status = (doc.status || '').toString().trim().toUpperCase();
+                const isFinal = ['POSTED', 'APPROVED', 'FINALIZADO', 'SUBMITTED', 'EMITIDO', 'PAGO', 'CONCLUIDO', 'FECHADO'].includes(status);
+
+                if (isFinal) {
+                    const entriesForDoc = this.allJournalEntries.filter(e => e.sourceDocument === doc.id);
+                    const hasMainEntry = entriesForDoc.some(e => !e.description?.includes('CMV'));
+                    const hasCOGS = entriesForDoc.some(e => e.description?.includes('CMV'));
+
+                    if (!hasMainEntry || forceRecreate) {
                         try {
-                            // Note: createSalesJournalEntry has logic for forceRecreate internal
-                            this.createSalesJournalEntry(doc, null, [], 'PRONTO', undefined, false, forceRecreate);
-                            fixedCount++;
+                            const entry = this.createSalesJournalEntry(doc, null, [], 'PRONTO', undefined, false, forceRecreate);
+                            if (entry) fixedCount++;
                         } catch (e) { console.warn('[AutoFix] Sales entry failed:', e); }
+                    }
+
+                    // Also try to fix CMV if missing
+                    if (!hasCOGS || forceRecreate) {
+                        try {
+                            // We need articles for CMV.
+                            this.dataService.getArticles().subscribe(articles => {
+                                this.createCOGSEntry(doc, articles);
+                            });
+                        } catch (e) { }
                     }
                 }
             });
 
             // Fix Purchases
             purchaseDocs.forEach(doc => {
-                if (doc.status === 'POSTED' || doc.status === 'APPROVED') {
+                const status = (doc.status || '').toString().trim().toUpperCase();
+                const isFinal = ['POSTED', 'APPROVED', 'FINALIZADO', 'SUBMITTED', 'EMITIDO', 'PAGO', 'CONCLUIDO'].includes(status);
+
+                if (isFinal) {
                     const isMissing = !postedEntries.some(e => e.sourceDocument === doc.id);
                     if (isMissing || forceRecreate) {
                         try {
-                            this.createPurchaseJournalEntry(doc, null, false, forceRecreate);
-                            fixedCount++;
+                            const entry = this.createPurchaseJournalEntry(doc, null, false, forceRecreate);
+                            if (entry) fixedCount++;
                         } catch (e) { console.warn('[AutoFix] Purchase entry failed:', e); }
                     }
                 }
@@ -1936,15 +2028,15 @@ export class AccountingService {
 
             // Fix Treasury
             treasuryDocs.forEach(doc => {
-                if (doc.status === 'POSTED' || doc.status === 'APPROVED') {
+                const status = (doc.status || '').toString().trim().toUpperCase();
+                const isFinal = ['POSTED', 'APPROVED', 'FINALIZADO', 'SUBMITTED', 'EMITIDO', 'PAGO', 'CONCLUIDO'].includes(status);
+
+                if (isFinal) {
                     const isMissing = !postedEntries.some(e => e.sourceDocument === doc.id);
                     if (isMissing || forceRecreate) {
                         try {
-                            // If we had a specific auto-post for treasury, we would call it here.
-                            // For now, we at least increment fixedCount if we expect something to happen 
-                            // or just ensure the recalculation triggers correctly for them.
-                            // Note: If no automated method exists yet, we log it.
                             console.log(`[AutoFix] Treasury document ${doc.id} check: missing=${isMissing}`);
+                            // Logic for treasury auto-post could go here if implemented
                         } catch (e) { console.warn('[AutoFix] Treasury entry failed:', e); }
                     }
                 }
@@ -1993,5 +2085,13 @@ export class AccountingService {
             };
             await lastValueFrom(this.dataService.saveAccount(dtoFields));
         }
+    }
+
+    public getBalanceSheet(): Observable<any> {
+        return this.dataService.getBalanceSheet(this.activeCompanyId || undefined);
+    }
+
+    public getIncomeStatement(): Observable<any> {
+        return this.dataService.getIncomeStatement(this.activeCompanyId || undefined);
     }
 }

@@ -21,6 +21,8 @@ import { WorkflowStatus, WorkflowHistory, PurchaseDocument, PurchaseDocumentLine
 import { AppIconComponent } from '../../shared/components/app-icon.component';
 import { PrintSettingsModalComponent, PrintSettings } from '../../shared/components/print-settings-modal.component';
 import { PurchaseDocumentPrintComponent } from './purchase-document-print.component';
+import { AccountingConfirmationModalComponent } from '../accounting/accounting-confirmation-modal.component';
+import { JournalEntry } from '../../shared/models';
 
 
 interface CompanyInfo {
@@ -54,7 +56,8 @@ interface CompanyInfo {
     DocumentTypeConfigModalComponent,
     AppIconComponent,
     PrintSettingsModalComponent,
-    PurchaseDocumentPrintComponent
+    PurchaseDocumentPrintComponent,
+    AccountingConfirmationModalComponent
   ],
   template: `
     <ng-container *ngIf="currentDoc; else loading">
@@ -453,6 +456,14 @@ interface CompanyInfo {
         [document]="currentDoc"
         [settings]="printSettings">
       </app-purchase-document-print>
+
+      <app-accounting-confirmation-modal
+        [isOpen]="isAccountingModalOpen"
+        [entry]="suggestedJournalEntry"
+        [documentInfo]="confirmationDocInfo"
+        (confirmed)="onConfirmAccounting($event)"
+        (cancelled)="isAccountingModalOpen = false">
+      </app-accounting-confirmation-modal>
     </div>
     </ng-container>
 
@@ -528,6 +539,7 @@ export class PurchaseDocumentFormComponent implements OnDestroy {
   isTaxModalOpen = false;
   isSearchModalOpen = false;
   isConfigModalOpen = false;
+  isAccountingModalOpen = false;
 
   onConfigModalClose() {
     this.isConfigModalOpen = false;
@@ -545,6 +557,10 @@ export class PurchaseDocumentFormComponent implements OnDestroy {
   // Print State
   isPrintSettingsOpen = false;
   printSettings: PrintSettings | null = null;
+
+  suggestedJournalEntry: JournalEntry | null = null;
+  confirmedJournalEntry: JournalEntry | null = null;
+  confirmationDocInfo: any = null;
 
   get isInternal(): boolean {
     return this.viewMode === 'internal-docs';
@@ -1127,7 +1143,18 @@ export class PurchaseDocumentFormComponent implements OnDestroy {
       return;
     }
     if (confirm('Confirma o lançamento do documento? Ele ficará bloqueado para edições.')) {
-      this.saveDocument(true, false); // Post, no Print
+      // Forzar a pre-visualização antes de confirmar o lançamento
+      this.suggestedJournalEntry = this.accountingService.createPurchaseJournalEntry(this.currentDoc, null, true);
+      if (this.suggestedJournalEntry) {
+        this.confirmationDocInfo = {
+          type: this.getDocTypeDescription() || this.currentDoc.type,
+          number: `${this.currentDoc.series}/${this.currentDoc.number}`,
+          customerName: this.currentDoc.supplierName
+        };
+        this.isAccountingModalOpen = true;
+      } else {
+        this.saveDocument(true, false);
+      }
     }
   }
 
@@ -1179,10 +1206,33 @@ export class PurchaseDocumentFormComponent implements OnDestroy {
     alert('Ajuda do sistema em desenvolvimento.');
   }
 
+  onConfirmAccounting(entry: JournalEntry) {
+    this.confirmedJournalEntry = entry;
+    this.isAccountingModalOpen = false;
+    this.saveDocument(this.currentDoc.status === WorkflowStatus.POSTED || !!this.confirmedJournalEntry, false);
+  }
+
   saveDocument(post: boolean = false, print: boolean = false) {
     if (this.isLocked && !post) {
       alert('Este documento está bloqueado e não pode ser alterado.');
       return;
+    }
+
+    // Proactively trigger accounting confirmation modal for financial document types
+    const docConfig = this.accountingService.PurchaseDocumentTypes.find(t => t.code === this.currentDoc.type);
+    const shouldCreateAccounting = docConfig ? docConfig.currentAccounts !== false : ['FC', 'FR', 'NC', 'ND', 'VCA'].includes(this.currentDoc.type);
+
+    if (shouldCreateAccounting && !this.isLocked && !this.confirmedJournalEntry) {
+      this.suggestedJournalEntry = this.accountingService.createPurchaseJournalEntry(this.currentDoc, null, true);
+      if (this.suggestedJournalEntry) {
+        this.confirmationDocInfo = {
+          type: this.getDocTypeDescription() || this.currentDoc.type,
+          number: `${this.currentDoc.series}/${this.currentDoc.number}`,
+          customerName: this.currentDoc.supplierName
+        };
+        this.isAccountingModalOpen = true;
+        return; // Halt and wait for user confirmation
+      }
     }
 
     // Validate Period Closure
@@ -1276,7 +1326,7 @@ export class PurchaseDocumentFormComponent implements OnDestroy {
       documentType: this.currentDoc.type,
       series: this.currentDoc.series,
       seriesNumber: Number(this.currentDoc.number),
-      documentNumber: `${this.currentDoc.type}${this.currentDoc.series}/${this.currentDoc.number}`,
+      documentNumber: `${this.currentDoc.type} ${this.currentDoc.series}/${this.currentDoc.number}`,
       date: this.currentDoc.date,
       dueDate: this.currentDoc.dueDate || this.currentDoc.date,
       supplierCode: this.currentDoc.supplierCode,
@@ -1321,7 +1371,14 @@ export class PurchaseDocumentFormComponent implements OnDestroy {
           if (post) {
             // Create stock movements and accounting ONLY when posting
             this.createStockMovements();
-            this.createAccountingEntries();
+
+            if (this.confirmedJournalEntry) {
+              this.accountingService.saveConfirmedJournalEntry(this.confirmedJournalEntry);
+              this.confirmedJournalEntry = null;
+            } else {
+              this.createAccountingEntries();
+            }
+
             if (print) {
               alert('Documento processado e enviado para a impressora.');
               setTimeout(() => window.print(), 500);
@@ -1438,7 +1495,18 @@ export class PurchaseDocumentFormComponent implements OnDestroy {
           // If posted, trigger side effects
           if (action === 'POST') {
             this.createStockMovements();
-            this.createAccountingEntries();
+            // Trigger accounting confirmation
+            this.suggestedJournalEntry = this.accountingService.createPurchaseJournalEntry(this.currentDoc, null, true);
+            if (this.suggestedJournalEntry) {
+              this.confirmationDocInfo = {
+                type: this.getDocTypeDescription() || this.currentDoc.type,
+                number: `${this.currentDoc.series}/${this.currentDoc.number}`,
+                customerName: this.currentDoc.supplierName
+              };
+              this.isAccountingModalOpen = true;
+            } else {
+              this.createAccountingEntries();
+            }
           }
 
           alert(`Documento ${action === 'SUBMIT' ? 'submetido' : action === 'APPROVE' ? 'aprovado' : action === 'REJECT' ? 'rejeitado' : 'lançado'} com sucesso.`);

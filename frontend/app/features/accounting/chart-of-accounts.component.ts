@@ -85,7 +85,16 @@ import { Account } from '../../shared/models';
                 </div>
               </td>
               <td class="p-2 border">
-                <span [class.font-bold]="!account.allowPosting">{{ account.name }}</span>
+                <div class="flex items-center gap-2">
+                  <span [class.font-bold]="!account.allowPosting">{{ account.name }}</span>
+                  <span 
+                    *ngIf="account.description" 
+                    [title]="account.description"
+                    class="material-symbols-outlined text-[16px] text-blue-400 cursor-help"
+                  >
+                    info
+                  </span>
+                </div>
               </td>
               <td class="p-2 border">
                 <span [class]="getTypeClass(account.type)">
@@ -132,8 +141,8 @@ import { Account } from '../../shared/models';
 
       <!-- Add/Edit Account Modal -->
       <div *ngIf="showAddAccount" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" (click)="showAddAccount = false">
-        <div class="bg-white rounded-lg shadow-xl w-[500px] max-h-[80vh] overflow-auto" (click)="$event.stopPropagation()">
-          <div class="flex items-center justify-between px-4 py-3 border-b">
+        <div class="bg-white rounded-lg shadow-xl w-[500px] max-h-[90vh] overflow-auto" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between px-4 py-3 border-b sticky top-0 bg-white z-10">
             <h3 class="text-lg font-semibold">
               {{ isEditing ? 'Editar Conta' : (newAccount.parentId ? 'Nova Subconta' : 'Nova Conta') }}
             </h3>
@@ -152,12 +161,12 @@ import { Account } from '../../shared/models';
 
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium mb-1">Código</label>
+                <label class="block text-sm font-medium mb-1 text-gray-700">Código</label>
                 <div class="flex items-center">
                   <span *ngIf="parentAccount" class="text-gray-500 font-mono mr-1">{{ parentAccount.code }}.</span>
                   <input 
                     [(ngModel)]="newAccountCodeSuffix" 
-                    class="w-full border rounded px-3 py-2" 
+                    class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" 
                     placeholder="Ex: 1"
                     [disabled]="isEditing"
                     [class.bg-gray-100]="isEditing"
@@ -165,10 +174,10 @@ import { Account } from '../../shared/models';
                 </div>
               </div>
               <div>
-                <label class="block text-sm font-medium mb-1">Tipo</label>
+                <label class="block text-sm font-medium mb-1 text-gray-700">Tipo</label>
                 <select 
                   [(ngModel)]="newAccount.type" 
-                  class="w-full border rounded px-3 py-2" 
+                  class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" 
                   [disabled]="!!newAccount.parentId || isEditing"
                   [class.bg-gray-100]="!!newAccount.parentId || isEditing"
                 >
@@ -182,21 +191,32 @@ import { Account } from '../../shared/models';
             </div>
 
             <div>
-              <label class="block text-sm font-medium mb-1">Nome da Conta</label>
-              <input [(ngModel)]="newAccount.name" class="w-full border rounded px-3 py-2" />
+              <label class="block text-sm font-medium mb-1 text-gray-700">Nome da Conta</label>
+              <input [(ngModel)]="newAccount.name" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: CAIXA GERAL" />
             </div>
 
-            <div class="flex items-center gap-2">
-              <input type="checkbox" [(ngModel)]="newAccount.allowPosting" id="allowPosting" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-              <label for="allowPosting" class="text-sm text-gray-700">Permitir lançamentos (Conta de Movimento)</label>
+            <div>
+              <label class="block text-sm font-medium mb-1 text-gray-700">Explicação da Conta (PGC-NIR)</label>
+              <textarea 
+                [(ngModel)]="newAccount.description" 
+                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none" 
+                placeholder="Introduza a definição ou regras de movimentação desta conta..."
+              ></textarea>
             </div>
 
-            <div class="flex justify-end gap-2 pt-4">
-              <button (click)="showAddAccount = false" class="px-4 py-2 border rounded hover:bg-gray-50">
+            <div class="flex items-center gap-2 bg-gray-50 p-3 rounded border">
+              <input type="checkbox" [(ngModel)]="newAccount.allowPosting" id="allowPosting" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+              <label for="allowPosting" class="text-sm text-gray-700 cursor-pointer select-none font-medium">
+                Permitir lançamentos (Conta de Movimento)
+              </label>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4 border-t sticky bottom-0 bg-white">
+              <button (click)="showAddAccount = false" class="px-4 py-2 border rounded hover:bg-gray-50 transition-colors">
                 Cancelar
               </button>
-              <button (click)="saveAccount()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                {{ isEditing ? 'Atualizar' : 'Adicionar' }}
+              <button (click)="saveAccount()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 shadow-md transition-all active:scale-95">
+                {{ isEditing ? 'Atualizar Conta' : 'Adicionar Conta' }}
               </button>
             </div>
           </div>
@@ -392,6 +412,7 @@ export class ChartOfAccountsComponent implements OnInit {
         const account = this.accounts.find(a => a.id === this.editingAccountId);
         if (account) {
           account.name = this.newAccount.name;
+          account.description = this.newAccount.description;
           account.allowPosting = this.newAccount.allowPosting || false;
           this.accountingService.updateAccount(account);
           this.loadAccounts();
@@ -408,6 +429,7 @@ export class ChartOfAccountsComponent implements OnInit {
           id: `ACC${Date.now()}`,
           code: fullCode,
           name: this.newAccount.name,
+          description: this.newAccount.description,
           type: this.newAccount.type as any,
           level: this.newAccount.level || 1,
           parentId: this.newAccount.parentId,

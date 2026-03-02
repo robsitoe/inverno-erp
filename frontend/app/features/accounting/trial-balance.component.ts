@@ -35,8 +35,8 @@ import { forkJoin } from 'rxjs';
                   {{ isRepairing ? 'A processar...' : 'Reparar Dados' }}
               </button>
               <div [class]="'px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 shadow-sm ' + (isBalanced && issues.length === 0 && (totalDebit > 0 || totalCredit > 0) ? 'bg-emerald-100 text-emerald-700' : (issues.length > 0 ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'))">
-                  <span class="material-symbols-outlined text-lg">{{ isBalanced && issues.length === 0 && (totalDebit > 0 || totalCredit > 0) ? 'check_circle' : (issues.length > 0 ? 'health_and_safety' : 'warning') }}</span>
-                  {{ isBalanced && issues.length === 0 && (totalDebit > 0 || totalCredit > 0) ? 'CONSISTENTE' : (issues.length > 0 ? 'DETETADOS ERROS' : (totalDebit === 0 ? 'DADOS EM FALTA' : 'DESEQUILIBRADO')) }}
+                  <span class="material-symbols-outlined text-lg">{{ isBalanced && issues.length === 0 && (totalDebit > 0 || totalCredit > 0) ? 'check_circle' : (issues.length > 0 ? 'health_and_safety' : 'info') }}</span>
+                  {{ isBalanced && issues.length === 0 && (totalDebit > 0 || totalCredit > 0) ? 'CONSISTENTE' : (issues.length > 0 ? 'DETETADOS ERROS' : (totalDebit === 0 && issues.length === 0 ? 'SEM MOVIMENTOS' : (totalDebit === 0 ? 'DADOS EM FALTA' : 'DESEQUILIBRADO'))) }}
               </div>
           </div>
       </div>

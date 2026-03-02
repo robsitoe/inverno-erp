@@ -2,7 +2,12 @@ import { Account } from './account.entity';
 export declare enum JournalEntryStatus {
     DRAFT = "DRAFT",
     POSTED = "POSTED",
-    CANCELED = "CANCELED"
+    CANCELLED = "CANCELLED",
+    REVERSED = "REVERSED",
+    CORRECTED = "CORRECTED",
+    APPROVED = "APPROVED",
+    FINALIZADO = "FINALIZADO",
+    SUBMITTED = "SUBMITTED"
 }
 export declare class JournalEntry {
     id: string;

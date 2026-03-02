@@ -20,136 +20,188 @@ interface ReportSectionData {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="flex flex-col h-full bg-white">
+    <div class="flex flex-col h-full bg-[#f8fafc]">
       <!-- Header -->
-      <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+      <div class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0 no-print">
         <div>
-          <h2 class="text-lg font-semibold text-gray-800">Demonstrações Financeiras</h2>
-          <p class="text-xs text-gray-600 mt-0.5">Relatórios Configuráveis</p>
+          <h1 class="text-xl font-bold text-slate-800">Demonstrações Financeiras</h1>
+          <p class="text-xs text-slate-500 mt-0.5">Mapa oficial de acordo com o PGC-NIR Moçambique</p>
         </div>
         
         <div class="flex items-center gap-4">
-            <div class="flex bg-gray-200 rounded p-1">
+            <div class="flex bg-slate-100 rounded-lg p-1 border border-slate-200">
                 <button 
                     (click)="switchTab('BALANCE_SHEET')"
-                    [class]="'px-4 py-1.5 text-xs font-medium rounded transition-colors ' + (activeTab === 'BALANCE_SHEET' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800')"
+                    [class]="'px-4 py-1.5 text-xs font-bold rounded-md transition-all ' + (activeTab === 'BALANCE_SHEET' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-800')"
                 >
                     Balanço
                 </button>
                 <button 
                     (click)="switchTab('INCOME_STATEMENT')"
-                    [class]="'px-4 py-1.5 text-xs font-medium rounded transition-colors ' + (activeTab === 'INCOME_STATEMENT' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800')"
+                    [class]="'px-4 py-1.5 text-xs font-bold rounded-md transition-all ' + (activeTab === 'INCOME_STATEMENT' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-800')"
                 >
-                    Demonstração de Resultados
+                    Dem. de Resultados
                 </button>
             </div>
 
-            <button 
-                (click)="toggleConfiguration()"
-                [class]="'p-2 rounded transition-colors ' + (isConfiguring ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-200 text-gray-600')"
-                title="Configurar Relatório"
-            >
-                <span class="material-symbols-outlined">settings</span>
+            <div class="h-6 w-[1px] bg-slate-200 mx-1"></div>
+
+            <button (click)="printReport()" class="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-lg shadow-slate-200">
+                <span class="material-symbols-outlined text-sm">print</span>
+                Imprimir
+            </button>
+            
+            <button (click)="loadData()" class="p-2 hover:bg-slate-100 rounded-full transition-all text-slate-500">
+                <span class="material-symbols-outlined">refresh</span>
             </button>
         </div>
       </div>
 
-      <div class="flex-1 overflow-auto p-6">
+      <!-- Content Area -->
+      <div class="flex-1 overflow-auto p-4 md:p-8">
         
-        <!-- View Mode -->
-        <div *ngIf="!isConfiguring && currentConfig" class="max-w-4xl mx-auto bg-white border shadow-sm rounded-lg overflow-hidden">
-            <div class="bg-gray-50 px-6 py-4 border-b text-center">
-                <h3 class="text-xl font-bold text-gray-800">{{ currentConfig.name }}</h3>
-                <p class="text-sm text-gray-500">Em {{ currentDate | date:'dd/MM/yyyy' }}</p>
-            </div>
-          
-            <div class="p-6">
-                <!-- Sections -->
-                <div *ngFor="let sectionData of reportData" class="mb-8 last:mb-0">
-                    <h4 class="font-bold text-lg mb-4 text-gray-800 border-b pb-2">{{ sectionData.section.name }}</h4>
-                    
-                    <div class="space-y-2">
-                        <div *ngFor="let lineData of sectionData.lines" class="flex justify-between text-sm hover:bg-gray-50 p-1 rounded">
-                            <span class="text-gray-700">{{ lineData.line.name }}</span>
-                            <span class="font-mono font-medium">{{ lineData.balance | number:'1.2-2' }}</span>
-                        </div>
-                        <div *ngIf="sectionData.lines.length === 0" class="text-gray-400 italic text-sm">Sem registos</div>
-                    </div>
-
-                    <div class="mt-4 pt-2 border-t border-gray-300 flex justify-between font-bold text-gray-900 bg-gray-50 p-2 rounded">
-                        <span>{{ sectionData.section.totalLabel || 'Total' }}</span>
-                        <span>{{ sectionData.total | number:'1.2-2' }}</span>
-                    </div>
-                </div>
-
-                <!-- Net Income Calculation (Specific to Income Statement or Balance Sheet Equity) -->
-                <div *ngIf="activeTab === 'INCOME_STATEMENT'" class="mt-8 pt-4 border-t-2 border-gray-800 flex justify-between items-center bg-blue-50 p-4 rounded">
-                    <span class="text-lg font-bold text-gray-900">Resultado Líquido</span>
-                    <span [class]="'text-xl font-mono font-bold ' + (netIncome >= 0 ? 'text-green-600' : 'text-red-600')">
-                        {{ netIncome | number:'1.2-2' }}
-                    </span>
-                </div>
-            </div>
+        <!-- Loading State -->
+        <div *ngIf="isLoading" class="flex flex-col items-center justify-center h-64 text-slate-400">
+            <span class="material-symbols-outlined animate-spin text-4xl mb-2">sync</span>
+            <p class="text-sm font-medium">A processar dados...</p>
         </div>
 
-        <!-- Configuration Mode -->
-        <div *ngIf="isConfiguring && currentConfig" class="max-w-5xl mx-auto">
-            <div class="bg-white border shadow-sm rounded-lg overflow-hidden">
-                <div class="bg-blue-50 px-6 py-4 border-b flex justify-between items-center">
-                    <div>
-                        <h3 class="text-lg font-bold text-blue-900">Configurar: {{ currentConfig.name }}</h3>
-                        <p class="text-xs text-blue-700">Defina as linhas e as contas associadas a cada secção.</p>
+        <!-- View Mode (Official Standard) -->
+        <div *ngIf="!isLoading" class="max-w-4xl mx-auto mb-10">
+            
+            <!-- Report Card -->
+            <div class="bg-white rounded-2xl shadow-xl shadow-slate-200 overflow-hidden border border-slate-100 print:shadow-none print:border-none">
+                
+                <!-- Report Header -->
+                <div class="bg-slate-50 px-8 py-10 border-b border-slate-100 text-center relative overflow-hidden print:bg-white">
+                    <div class="absolute top-0 left-0 w-full h-[3px] bg-indigo-600"></div>
+                    <h3 class="text-2xl font-black text-slate-800 tracking-tight uppercase">{{ activeTab === 'BALANCE_SHEET' ? 'Balanço Geral' : 'Demonstração de Resultados' }}</h3>
+                    <p class="text-slate-500 font-medium text-sm mt-1 uppercase tracking-widest">PGC-NIR • Moçambique</p>
+                    <div class="mt-4 inline-flex items-center gap-6 px-4 py-2 bg-white/80 rounded-full border border-slate-200 shadow-sm text-[11px] font-bold text-slate-600 print:bg-white">
+                        <div class="flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm opacity-50">calendar_today</span>
+                            Período: 01/01/2025 - {{ currentDate | date:'dd/MM/yyyy' }}
+                        </div>
+                        <div class="flex items-center gap-1.5 font-mono">
+                            MT
+                        </div>
                     </div>
-                    <div class="flex gap-2">
-                        <button (click)="cancelConfiguration()" class="px-3 py-1.5 bg-white text-gray-700 border border-gray-300 rounded hover:bg-gray-50 text-sm">Cancelar</button>
-                        <button (click)="saveConfiguration()" class="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium">Gravar Alterações</button>
+                </div>
+          
+                <!-- Report Body -->
+                <div class="px-8 py-10">
+                    
+                    <!-- BALANÇO -->
+                    <div *ngIf="activeTab === 'BALANCE_SHEET' && balanceSheet" class="animate-fade-in">
+                        
+                        <!-- ATIVO -->
+                        <div class="mb-12">
+                            <div class="flex items-center gap-3 mb-6">
+                                <span class="h-8 w-1 bg-indigo-600 rounded-full"></span>
+                                <h4 class="text-lg font-black text-slate-800 uppercase tracking-tight">Ativo</h4>
+                            </div>
+                            <div class="space-y-4">
+                                <div *ngFor="let line of balanceSheet.assets?.lines" [class]="'group transition-all ' + (line.isTotal ? 'mt-4 border-t border-slate-200 pt-4' : '')">
+                                    <div class="flex justify-between items-baseline py-1">
+                                        <span [class]="'text-slate-700 transition-colors ' + (line.level === 1 ? 'font-black text-sm uppercase' : (line.level === 2 ? 'font-bold text-sm pl-4' : 'text-xs pl-8 text-slate-500'))">
+                                            {{ line.code }} {{ line.name }}
+                                        </span>
+                                        <div class="flex items-center gap-4">
+                                            <span [class]="'font-mono transition-all ' + (line.isTotal ? 'text-sm font-black text-slate-900' : 'text-xs text-slate-600')">
+                                                {{ line.balance | number:'1.2-2' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="!line.isTotal" class="h-[1px] w-full bg-slate-50 group-hover:bg-slate-100 transition-all"></div>
+                                </div>
+                                <div class="mt-8 p-6 bg-slate-900 text-white rounded-xl flex justify-between items-center shadow-lg shadow-slate-200 print:bg-slate-100 print:text-black print:shadow-none">
+                                    <span class="text-sm font-black uppercase tracking-widest text-slate-400 print:text-slate-600">Total do Ativo</span>
+                                    <span class="text-xl font-mono font-black">{{ balanceSheet.assets?.total | number:'1.2-2' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CAPITAIS PRÓPRIOS E PASSIVO -->
+                        <div>
+                            <div class="flex items-center gap-3 mb-6">
+                                <span class="h-8 w-1 bg-indigo-600 rounded-full"></span>
+                                <h4 class="text-lg font-black text-slate-800 uppercase tracking-tight">Capitais Próprios e Passivo</h4>
+                            </div>
+                            <div class="space-y-4">
+                                <div *ngFor="let line of balanceSheet.equityAndLiabilities?.lines" [class]="'group transition-all ' + (line.isTotal ? 'mt-4 border-t border-slate-200 pt-4' : '')">
+                                    <div class="flex justify-between items-baseline py-1">
+                                         <span [class]="'text-slate-700 transition-colors ' + (line.level === 1 ? 'font-black text-sm uppercase' : (line.level === 2 ? 'font-bold text-sm pl-4' : 'text-xs pl-8 text-slate-500'))">
+                                            {{ line.code }} {{ line.name }}
+                                        </span>
+                                        <div class="flex items-center gap-4">
+                                            <span [class]="'font-mono transition-all ' + (line.isTotal ? 'text-sm font-black text-slate-900' : 'text-xs text-slate-600')">
+                                                {{ line.balance | number:'1.2-2' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="!line.isTotal" class="h-[1px] w-full bg-slate-50 group-hover:bg-slate-100 transition-all"></div>
+                                </div>
+                                <div class="mt-8 p-6 bg-slate-900 text-white rounded-xl flex justify-between items-center shadow-lg shadow-slate-200 print:bg-slate-100 print:text-black print:shadow-none">
+                                    <span class="text-sm font-black uppercase tracking-widest text-slate-400 print:text-slate-600">Total Capital Próprio e Passivo</span>
+                                    <span class="text-xl font-mono font-black">{{ balanceSheet.equityAndLiabilities?.total | number:'1.2-2' }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Balanced Check -->
+                            <div class="mt-6 flex justify-center no-print">
+                                <div [class]="'px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 ' + (Math.abs(balanceSheet.assets?.total - balanceSheet.equityAndLiabilities?.total) < 0.01 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700')">
+                                    <span class="material-symbols-outlined text-[16px]">{{ Math.abs(balanceSheet.assets?.total - balanceSheet.equityAndLiabilities?.total) < 0.01 ? 'verified' : 'error' }}</span>
+                                    {{ Math.abs(balanceSheet.assets?.total - balanceSheet.equityAndLiabilities?.total) < 0.01 ? 'BALANCETE VERIFICADO E EQUILIBRADO' : 'DIFERENÇA DE EQUILÍBRIO DETETADA (' + (Math.abs(balanceSheet.assets?.total - balanceSheet.equityAndLiabilities?.total) | number:'1.2-2') + ')' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DEMONSTRAÇÃO DE RESULTADOS -->
+                    <div *ngIf="activeTab === 'INCOME_STATEMENT' && incomeStatement" class="animate-fade-in">
+                        <div class="space-y-4">
+                            <div *ngFor="let line of incomeStatement.lines" [class]="'group transition-all ' + (line.isMainTotal ? 'mt-8 border-t-2 border-slate-800 pt-6' : (line.isSubTotal ? 'mt-4 border-t border-slate-200 pt-4' : ''))">
+                                <div class="flex justify-between items-baseline py-1">
+                                     <span [class]="'text-slate-700 transition-colors uppercase ' + (line.isMainTotal ? 'font-black text-lg' : (line.isSubTotal ? 'font-black text-sm' : 'font-bold text-xs pl-4'))">
+                                        {{ line.name }}
+                                    </span>
+                                    <div class="flex items-center gap-4">
+                                        <span [class]="'font-mono transition-all ' + (line.isMainTotal ? 'text-xl font-black text-slate-900' : (line.isSubTotal ? 'text-sm font-black' : 'text-xs font-bold text-slate-600'))">
+                                            {{ (line.balance >= 0 ? line.balance : '(' + Math.abs(line.balance) + ')') | number:'1.2-2' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div *ngIf="!line.isSubTotal && !line.isMainTotal" class="h-[1px] w-full bg-slate-50 group-hover:bg-slate-100 transition-all"></div>
+                            </div>
+
+                            <div class="mt-12 p-10 bg-indigo-50 border border-indigo-100 rounded-3xl flex flex-col items-center justify-center relative overflow-hidden print:bg-white print:border-slate-800 print:rounded-none">
+                                <div class="absolute top-0 right-0 p-4 opacity-5">
+                                    <span class="material-symbols-outlined text-[120px]">account_balance</span>
+                                </div>
+                                <span class="text-[10px] uppercase font-black tracking-[0.3em] text-indigo-400 mb-2">Resultado Líquido do Exercício</span>
+                                <span [class]="'text-5xl font-mono font-black ' + (incomeStatement.netIncome >= 0 ? 'text-emerald-600' : 'text-rose-600')">
+                                    {{ incomeStatement.netIncome | number:'1.2-2' }}
+                                </span>
+                                <p class="text-xs font-bold mt-4 text-slate-500 uppercase">{{ incomeStatement.netIncome >= 0 ? 'Lucro Líquido' : 'Prejuízo Líquido' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div *ngIf="(!balanceSheet && activeTab === 'BALANCE_SHEET') || (!incomeStatement && activeTab === 'INCOME_STATEMENT')" class="text-center py-20">
+                        <span class="material-symbols-outlined text-slate-200 text-6xl mb-4 text-center">data_alert</span>
+                        <p class="text-slate-400 font-medium">Dados insuficientes para gerar o mapa.</p>
                     </div>
                 </div>
 
-                <div class="p-6 space-y-8">
-                    <div *ngFor="let section of currentConfig.sections" class="border rounded-lg p-4 bg-gray-50">
-                        <div class="flex justify-between items-center mb-4">
-                            <h4 class="font-bold text-gray-800">{{ section.name }}</h4>
-                            <button (click)="addLine(section)" class="text-blue-600 hover:text-blue-800 text-xs font-medium flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[16px]">add</span>
-                                Adicionar Linha
-                            </button>
-                        </div>
-
-                        <table class="w-full text-sm bg-white border rounded">
-                            <thead class="bg-gray-100 text-xs text-gray-500 uppercase">
-                                <tr>
-                                    <th class="px-3 py-2 text-left w-1/3">Nome da Linha</th>
-                                    <th class="px-3 py-2 text-left">Contas (Inicia com...)</th>
-                                    <th class="px-3 py-2 text-center w-20">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y">
-                                <tr *ngFor="let line of section.lines; let i = index">
-                                    <td class="p-2">
-                                        <input [(ngModel)]="line.name" class="w-full border-gray-300 rounded text-sm p-1 border focus:border-blue-500 outline-none">
-                                    </td>
-                                    <td class="p-2">
-                                        <input 
-                                            [ngModel]="line.accountRanges.join(', ')"
-                                            (ngModelChange)="updateAccountRanges(line, $event)"
-                                            placeholder="Ex: 43, 44 (Separado por vírgula)"
-                                            class="w-full border-gray-300 rounded text-sm p-1 border focus:border-blue-500 outline-none font-mono text-xs"
-                                        >
-                                    </td>
-                                    <td class="p-2 text-center">
-                                        <button (click)="removeLine(section, i)" class="text-red-500 hover:text-red-700 p-1">
-                                            <span class="material-symbols-outlined text-[18px]">delete</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr *ngIf="section.lines.length === 0">
-                                    <td colspan="3" class="p-4 text-center text-gray-400 italic text-xs">
-                                        Nenhuma linha configurada nesta secção.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <!-- Footer Signatures -->
+                <div class="px-8 py-12 bg-slate-50 border-t border-slate-100 grid grid-cols-2 gap-20 print:bg-white">
+                    <div class="text-center pt-8 border-t border-slate-300">
+                        <p class="text-xs font-black text-slate-800 uppercase tracking-widest">O Contabilista</p>
+                        <p class="text-[10px] text-slate-500 mt-1">Cédula Profissional nº _______</p>
+                    </div>
+                    <div class="text-center pt-8 border-t border-slate-300">
+                        <p class="text-xs font-black text-slate-800 uppercase tracking-widest">O Gerente</p>
+                        <p class="text-[10px] text-slate-500 mt-1">Assinatura Carimbada</p>
                     </div>
                 </div>
             </div>
@@ -162,125 +214,51 @@ interface ReportSectionData {
 export class FinancialStatementsComponent implements OnInit {
   activeTab: 'BALANCE_SHEET' | 'INCOME_STATEMENT' = 'BALANCE_SHEET';
   currentDate = new Date();
-  isConfiguring = false;
+  isLoading = false;
+  Math = Math;
 
-  currentConfig: FinancialReportConfig | undefined;
-  reportData: ReportSectionData[] = [];
-  netIncome = 0;
-
-  accounts: Account[] = [];
+  balanceSheet: any = null;
+  incomeStatement: any = null;
 
   constructor(private accountingService: AccountingService) { }
 
   ngOnInit() {
-    this.accounts = this.accountingService.getAccounts();
-    this.loadConfig();
+    this.loadData();
   }
 
   switchTab(tab: 'BALANCE_SHEET' | 'INCOME_STATEMENT') {
     this.activeTab = tab;
-    this.isConfiguring = false;
-    this.loadConfig();
+    this.loadData();
   }
 
-  loadConfig() {
-    const configCode = this.activeTab;
-    // Clone to avoid mutating service state directly until save
-    const config = this.accountingService.getReportConfig(configCode);
-    if (config) {
-      this.currentConfig = JSON.parse(JSON.stringify(config));
-      this.calculateReport();
+  loadData() {
+    this.isLoading = true;
+    if (this.activeTab === 'BALANCE_SHEET') {
+      this.accountingService.getBalanceSheet().subscribe({
+        next: (data) => {
+          this.balanceSheet = data;
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Error fetching balance sheet:', err);
+          this.isLoading = false;
+        }
+      });
+    } else {
+      this.accountingService.getIncomeStatement().subscribe({
+        next: (data) => {
+          this.incomeStatement = data;
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Error fetching income statement:', err);
+          this.isLoading = false;
+        }
+      });
     }
   }
 
-  calculateReport() {
-    if (!this.currentConfig) return;
-
-    this.reportData = this.currentConfig.sections.map(section => {
-      const linesData = section.lines
-        .filter(line => line.visible)
-        .map(line => {
-          const balance = this.calculateLineBalance(line, section.type);
-          return { line, balance };
-        });
-
-      const total = linesData.reduce((sum, item) => sum + item.balance, 0);
-
-      return {
-        section,
-        lines: linesData,
-        total
-      };
-    });
-
-    // Calculate Net Income (Revenue - Expenses)
-    // This logic might need to be more robust or configurable too, but for now:
-    const revenueSection = this.reportData.find(s => s.section.type === 'REVENUE');
-    const expenseSection = this.reportData.find(s => s.section.type === 'EXPENSE');
-
-    const totalRevenue = revenueSection ? revenueSection.total : 0;
-    const totalExpense = expenseSection ? expenseSection.total : 0;
-
-    this.netIncome = totalRevenue - totalExpense;
-  }
-
-  calculateLineBalance(line: FinancialReportLine, sectionType: string): number {
-    let balance = 0;
-
-    // Find accounts matching ranges
-    const matchingAccounts = this.accounts.filter(acc => {
-      if (acc.balance === 0) return false; // Optimization
-      return line.accountRanges.some(range => acc.code.startsWith(range.trim()));
-    });
-
-    const rawBalance = matchingAccounts.reduce((sum, acc) => sum + acc.balance, 0);
-
-    // Adjust sign based on section type
-    // Assets and Expenses are naturally Debit (+), so we keep positive
-    // Liabilities, Equity, Revenue are naturally Credit (-), so we negate to show positive
-    if (['LIABILITY', 'EQUITY', 'REVENUE'].includes(sectionType)) {
-      return -rawBalance;
-    }
-    return rawBalance;
-  }
-
-  // Configuration Methods
-  toggleConfiguration() {
-    this.isConfiguring = !this.isConfiguring;
-    if (!this.isConfiguring) {
-      // Reload to discard unsaved changes if cancelling via toggle
-      this.loadConfig();
-    }
-  }
-
-  cancelConfiguration() {
-    this.isConfiguring = false;
-    this.loadConfig();
-  }
-
-  saveConfiguration() {
-    if (this.currentConfig) {
-      this.accountingService.updateReportConfig(this.currentConfig);
-      this.isConfiguring = false;
-      this.calculateReport();
-    }
-  }
-
-  addLine(section: FinancialReportSection) {
-    section.lines.push({
-      id: `L${Date.now()}`,
-      name: 'Nova Linha',
-      order: section.lines.length + 1,
-      accountRanges: [],
-      visible: true
-    });
-  }
-
-  removeLine(section: FinancialReportSection, index: number) {
-    section.lines.splice(index, 1);
-  }
-
-  updateAccountRanges(line: FinancialReportLine, value: string) {
-    line.accountRanges = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+  printReport() {
+    window.print();
   }
 }

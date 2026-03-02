@@ -136,4 +136,16 @@ export class AccountingController {
   ): Promise<any> {
     return this.accountingService.getUtilitiesAuditLog(page, limit);
   }
+
+  @Get('reports/balance-sheet')
+  @ApiOperation({ summary: 'Get Balance Sheet (Mozambique standard)' })
+  getBalanceSheet(@Query('companyId') companyId?: string): Promise<any> {
+    return this.accountingService.getBalanceSheet(companyId);
+  }
+
+  @Get('reports/income-statement')
+  @ApiOperation({ summary: 'Get Income Statement (Mozambique standard)' })
+  getIncomeStatement(@Query('companyId') companyId?: string): Promise<any> {
+    return this.accountingService.getIncomeStatement(companyId);
+  }
 }

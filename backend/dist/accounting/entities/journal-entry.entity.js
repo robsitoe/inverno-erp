@@ -16,7 +16,12 @@ var JournalEntryStatus;
 (function (JournalEntryStatus) {
     JournalEntryStatus["DRAFT"] = "DRAFT";
     JournalEntryStatus["POSTED"] = "POSTED";
-    JournalEntryStatus["CANCELED"] = "CANCELED";
+    JournalEntryStatus["CANCELLED"] = "CANCELLED";
+    JournalEntryStatus["REVERSED"] = "REVERSED";
+    JournalEntryStatus["CORRECTED"] = "CORRECTED";
+    JournalEntryStatus["APPROVED"] = "APPROVED";
+    JournalEntryStatus["FINALIZADO"] = "FINALIZADO";
+    JournalEntryStatus["SUBMITTED"] = "SUBMITTED";
 })(JournalEntryStatus || (exports.JournalEntryStatus = JournalEntryStatus = {}));
 let JournalEntry = class JournalEntry {
     id;
@@ -80,7 +85,7 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({
         type: 'simple-enum',
-        enum: ['DRAFT', 'POSTED', 'CANCELLED', 'REVERSED', 'CORRECTED', 'VOIDED'],
+        enum: ['DRAFT', 'POSTED', 'CANCELLED', 'REVERSED', 'CORRECTED', 'VOIDED', 'APPROVED', 'FINALIZADO', 'SUBMITTED'],
         default: 'DRAFT',
     }),
     __metadata("design:type", String)

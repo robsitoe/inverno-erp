@@ -183,7 +183,7 @@ let AccountingService = class AccountingService {
                 continue;
             }
             const upperType = (account.type || '').toUpperCase();
-            const isAssetSide = ['ASSET', 'EXPENSE', 'ATIVO', 'GASTO'].includes(upperType);
+            const isAssetSide = ['ASSET', 'EXPENSE', 'ATIVO', 'GASTO', 'CUSTO'].includes(upperType);
             const amount = isAssetSide ? (delta.debit - delta.credit) : (delta.credit - delta.debit);
             account.balance = Number(account.balance) + amount;
             await accRepo.save(account);
@@ -407,6 +407,121 @@ let AccountingService = class AccountingService {
             limit: boundedLimit,
             total: this.periodClosures.length,
             records
+        };
+    }
+    async getBalanceSheet(companyId) {
+        const accounts = await this.findAll(companyId);
+        const getSum = (codes) => {
+            return accounts
+                .filter(acc => codes.some(code => acc.code === code || acc.code.startsWith(code + '.')))
+                .filter(acc => acc.level === 1 || !acc.parentId)
+                .reduce((sum, acc) => {
+                if (acc.level === 1)
+                    return sum + Number(acc.balance);
+                return sum;
+            }, 0);
+        };
+        const assets = {
+            nonCurrent: {
+                tangible: getSum(['3.2']),
+                intangible: getSum(['3.3']),
+                biological: getSum(['2.7']),
+                financial: getSum(['3.1']),
+                total: 0
+            },
+            current: {
+                inventory: getSum(['2.2', '2.3', '2.4', '2.5', '2.6']),
+                clients: getSum(['4.1']),
+                cashAndBanks: getSum(['1.1', '1.2']),
+                total: 0
+            },
+            total: 0
+        };
+        assets.nonCurrent.total = assets.nonCurrent.tangible + assets.nonCurrent.intangible + assets.nonCurrent.biological + assets.nonCurrent.financial;
+        assets.current.total = assets.current.inventory + assets.current.clients + assets.current.cashAndBanks;
+        assets.total = assets.nonCurrent.total + assets.current.total;
+        const equity = {
+            capital: getSum(['5.1']),
+            reservas: getSum(['5.5']),
+            retainedEarnings: getSum(['5.9']),
+            netIncome: getSum(['8.8']),
+            total: 0
+        };
+        equity.total = equity.capital + equity.reservas + equity.retainedEarnings + equity.netIncome;
+        const liabilities = {
+            nonCurrent: {
+                loans: 0,
+                provisions: getSum(['4.8']),
+                total: 0
+            },
+            current: {
+                suppliers: getSum(['4.2']),
+                loans: getSum(['4.3']),
+                taxes: getSum(['4.4']),
+                total: 0
+            },
+            total: 0
+        };
+        liabilities.nonCurrent.total = liabilities.nonCurrent.provisions;
+        liabilities.current.total = liabilities.current.suppliers + liabilities.current.loans + liabilities.current.taxes;
+        liabilities.total = liabilities.nonCurrent.total + liabilities.current.total;
+        return {
+            assets,
+            equityAndLiabilities: {
+                equity,
+                liabilities,
+                total: equity.total + liabilities.total
+            },
+            generatedAt: new Date().toISOString()
+        };
+    }
+    async getIncomeStatement(companyId) {
+        const accounts = await this.findAll(companyId);
+        const getSum = (codes) => {
+            return accounts
+                .filter(acc => codes.some(code => acc.code === code || acc.code.startsWith(code + '.')))
+                .reduce((sum, acc) => {
+                if (acc.level === 1)
+                    return sum + Number(acc.balance || 0);
+                return sum;
+            }, 0);
+        };
+        const revenue = getSum(['7.1', '7.2']);
+        const varProduction = getSum(['6.1.2']);
+        const costOfGoods = getSum(['6.1.1']);
+        const personnelExpenses = getSum(['6.2']);
+        const fse = getSum(['6.3']);
+        const depreciation = getSum(['6.5']);
+        const provisions = getSum(['6.6']);
+        const otherGains = getSum(['7.6']);
+        const otherLosses = getSum(['6.8']);
+        const operatingResult = revenue - costOfGoods - personnelExpenses - fse - depreciation - provisions + otherGains - otherLosses;
+        const financialRevenue = getSum(['7.8']);
+        const financialExpenses = getSum(['6.9']);
+        const financialResult = financialRevenue - financialExpenses;
+        const currentResult = operatingResult + financialResult;
+        const taxes = getSum(['8.5']);
+        const netProfit = currentResult - taxes;
+        return {
+            revenue,
+            varProduction,
+            costOfGoods,
+            personnelExpenses,
+            fse,
+            depreciation,
+            provisions,
+            otherGains,
+            otherLosses,
+            operatingResult,
+            financialResult: {
+                revenue: financialRevenue,
+                expenses: financialExpenses,
+                total: financialResult
+            },
+            currentResult,
+            taxes,
+            netProfit,
+            generatedAt: new Date().toISOString()
         };
     }
 };

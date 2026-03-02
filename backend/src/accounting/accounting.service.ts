@@ -247,7 +247,7 @@ export class AccountingService {
       }
 
       const upperType = (account.type || '').toUpperCase();
-      const isAssetSide = ['ASSET', 'EXPENSE', 'ATIVO', 'GASTO'].includes(upperType);
+      const isAssetSide = ['ASSET', 'EXPENSE', 'ATIVO', 'GASTO', 'CUSTO'].includes(upperType);
       const amount = isAssetSide ? (delta.debit - delta.credit) : (delta.credit - delta.debit);
 
       // Atualizar conta atual
@@ -283,7 +283,7 @@ export class AccountingService {
       .set({ balance: 0 })
       .execute();
 
-    // 2. Obter todos os lançamentos postados (ordenados por data para consistência, embora para balanço final não importe a ordem)
+    // 2. Obter todos os lançamentos que devem afetar o saldo (estritamente POSTED)
     const entries = await jeRepo.find({
       where: { status: 'POSTED' },
       relations: ['lines'],
@@ -538,6 +538,142 @@ export class AccountingService {
       limit: boundedLimit,
       total: this.periodClosures.length,
       records
+    };
+  }
+
+  /**
+   * Generates a Balance Sheet (Balanço) according to Mozambican PGC-NIR
+   */
+  async getBalanceSheet(companyId?: string) {
+    const accounts = await this.findAll(companyId);
+
+    const getSum = (codes: string[]) => {
+      return accounts
+        .filter(acc => codes.some(code => acc.code === code || acc.code.startsWith(code + '.')))
+        .filter(acc => acc.level === 1 || !acc.parentId) // We only want root level balances or direct sum
+        // Wait, balance in root accounts should already be the sum of children if recalculateAllBalances was run.
+        // If not, we should sum only the leaf accounts.
+        // Current implementation of updateAccountBalances updates parents, so root balance is sum.
+        .reduce((sum, acc) => {
+          if (acc.level === 1) return sum + Number(acc.balance);
+          return sum;
+        }, 0);
+    };
+
+    const assets = {
+      nonCurrent: {
+        tangible: getSum(['3.2']),
+        intangible: getSum(['3.3']),
+        biological: getSum(['2.7']), // Assuming biologico non-current
+        financial: getSum(['3.1']),
+        total: 0
+      },
+      current: {
+        inventory: getSum(['2.2', '2.3', '2.4', '2.5', '2.6']),
+        clients: getSum(['4.1']),
+        cashAndBanks: getSum(['1.1', '1.2']),
+        total: 0
+      },
+      total: 0
+    };
+
+    assets.nonCurrent.total = assets.nonCurrent.tangible + assets.nonCurrent.intangible + assets.nonCurrent.biological + assets.nonCurrent.financial;
+    assets.current.total = assets.current.inventory + assets.current.clients + assets.current.cashAndBanks;
+    assets.total = assets.nonCurrent.total + assets.current.total;
+
+    const equity = {
+      capital: getSum(['5.1']),
+      reservas: getSum(['5.5']),
+      retainedEarnings: getSum(['5.9']),
+      netIncome: getSum(['8.8']),
+      total: 0
+    };
+    equity.total = equity.capital + equity.reservas + equity.retainedEarnings + equity.netIncome;
+
+    const liabilities = {
+      nonCurrent: {
+        loans: 0, // Simplified
+        provisions: getSum(['4.8']),
+        total: 0
+      },
+      current: {
+        suppliers: getSum(['4.2']),
+        loans: getSum(['4.3']),
+        taxes: getSum(['4.4']),
+        total: 0
+      },
+      total: 0
+    };
+    liabilities.nonCurrent.total = liabilities.nonCurrent.provisions;
+    liabilities.current.total = liabilities.current.suppliers + liabilities.current.loans + liabilities.current.taxes;
+    liabilities.total = liabilities.nonCurrent.total + liabilities.current.total;
+
+    return {
+      assets,
+      equityAndLiabilities: {
+        equity,
+        liabilities,
+        total: equity.total + liabilities.total
+      },
+      generatedAt: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Generates an Income Statement (Demonstração de Resultados por Natureza)
+   */
+  async getIncomeStatement(companyId?: string) {
+    const accounts = await this.findAll(companyId);
+
+    const getSum = (codes: string[]) => {
+      return accounts
+        .filter(acc => codes.some(code => acc.code === code || acc.code.startsWith(code + '.')))
+        .reduce((sum, acc) => {
+          if (acc.level === 1) return sum + Number(acc.balance || 0);
+          return sum;
+        }, 0);
+    };
+
+    const revenue = getSum(['7.1', '7.2']);
+    const varProduction = getSum(['6.1.2']); // Variation - class 6 but can be negative
+    const costOfGoods = getSum(['6.1.1']);
+    const personnelExpenses = getSum(['6.2']);
+    const fse = getSum(['6.3']);
+    const depreciation = getSum(['6.5']);
+    const provisions = getSum(['6.6']);
+    const otherGains = getSum(['7.6']);
+    const otherLosses = getSum(['6.8']);
+
+    const operatingResult = revenue - costOfGoods - personnelExpenses - fse - depreciation - provisions + otherGains - otherLosses;
+
+    const financialRevenue = getSum(['7.8']);
+    const financialExpenses = getSum(['6.9']);
+    const financialResult = financialRevenue - financialExpenses;
+
+    const currentResult = operatingResult + financialResult;
+    const taxes = getSum(['8.5']);
+    const netProfit = currentResult - taxes;
+
+    return {
+      revenue,
+      varProduction,
+      costOfGoods,
+      personnelExpenses,
+      fse,
+      depreciation,
+      provisions,
+      otherGains,
+      otherLosses,
+      operatingResult,
+      financialResult: {
+        revenue: financialRevenue,
+        expenses: financialExpenses,
+        total: financialResult
+      },
+      currentResult,
+      taxes,
+      netProfit,
+      generatedAt: new Date().toISOString()
     };
   }
 }

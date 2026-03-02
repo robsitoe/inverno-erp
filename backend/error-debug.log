@@ -8562,3 +8562,1618 @@
   "query": {}
 }
 ---
+{
+  "timestamp": "2026-02-26T08:44:27.741Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "A conta '7.1 - VENDAS' é uma conta de soma/índice e não permite lançamentos diretos. Por favor, use uma de suas sub-contas (nível final).",
+    "stack": "BadRequestException: A conta '7.1 - VENDAS' é uma conta de soma/índice e não permite lançamentos diretos. Por favor, use uma de suas sub-contas (nível final).\n    at <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async Promise.all (index 1)\n    at async AccountingService.createJournalEntry (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:147:27)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771777464493",
+    "companyId": "007",
+    "journalId": "JNL-VENDAS-007",
+    "description": "Venda FA 2026/2 - Roberto",
+    "date": "2026-02-26",
+    "status": "POSTED",
+    "reference": "FA 2026/2",
+    "sourceDocument": "17f39f9f-ba1b-4491-b0fb-a7bd273b59ac",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771777464493-1",
+        "accountId": "1",
+        "accountCode": "1.1",
+        "accountName": "CAIXA",
+        "description": "Venda a Roberto (C001) - FA 2026/2",
+        "debit": 947,
+        "credit": 0
+      },
+      {
+        "id": "JE1771777464493-2",
+        "accountId": "71",
+        "accountCode": "7.1.1",
+        "accountName": "Vendas de Mercadorias",
+        "description": "Venda - FA 2026/2",
+        "debit": 0,
+        "credit": 947
+      }
+    ]
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T09:00:43.093Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "A conta '7.1 - VENDAS' é uma conta de soma/índice e não permite lançamentos diretos. Por favor, use uma de suas sub-contas (nível final).",
+    "stack": "BadRequestException: A conta '7.1 - VENDAS' é uma conta de soma/índice e não permite lançamentos diretos. Por favor, use uma de suas sub-contas (nível final).\n    at <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async Promise.all (index 1)\n    at async AccountingService.createJournalEntry (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:147:27)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771777464495",
+    "companyId": "007",
+    "journalId": "JNL-VENDAS-007",
+    "description": "Venda FA 2026/3 - Roberto",
+    "date": "2026-02-26",
+    "status": "POSTED",
+    "reference": "FA 2026/3",
+    "sourceDocument": "1de281d3-655c-4708-b032-bc0bfabc6600",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771777464495-1",
+        "accountId": "1",
+        "accountCode": "1.1",
+        "accountName": "CAIXA",
+        "description": "Venda a Roberto (C001) - FA 2026/3",
+        "debit": 947,
+        "credit": 0
+      },
+      {
+        "id": "JE1771777464495-2",
+        "accountId": "71",
+        "accountCode": "7.1.1",
+        "accountName": "Vendas de Mercadorias",
+        "description": "Venda - FA 2026/3",
+        "debit": 0,
+        "credit": 947
+      }
+    ]
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T09:18:49.299Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "A conta '7.1 - VENDAS' é uma conta de soma/índice e não permite lançamentos diretos. Por favor, use uma de suas sub-contas (nível final).",
+    "stack": "BadRequestException: A conta '7.1 - VENDAS' é uma conta de soma/índice e não permite lançamentos diretos. Por favor, use uma de suas sub-contas (nível final).\n    at <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async Promise.all (index 1)\n    at async AccountingService.createJournalEntry (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:147:27)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771777464497",
+    "companyId": "007",
+    "journalId": "JNL-VENDAS-007",
+    "description": "Venda FA 2026/4 - Roberto",
+    "date": "2026-02-26",
+    "status": "POSTED",
+    "reference": "FA 2026/4",
+    "sourceDocument": "78322f17-6709-4060-9b6b-eb4116ed7d41",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771777464497-1",
+        "accountId": "1",
+        "accountCode": "1.1",
+        "accountName": "CAIXA",
+        "description": "Venda a Roberto (C001) - FA 2026/4",
+        "debit": 947,
+        "credit": 0
+      },
+      {
+        "id": "JE1771777464497-2",
+        "accountId": "71",
+        "accountCode": "7.1.1",
+        "accountName": "Vendas de Mercadorias",
+        "description": "Venda - FA 2026/4",
+        "debit": 0,
+        "credit": 947
+      }
+    ]
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T10:23:57.264Z",
+  "path": "/purchases/documents?companyId=007",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "007"
+  }
+}
+---
+{
+  "timestamp": "2026-02-26T10:24:17.071Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "A conta '7.1 - VENDAS' é uma conta de soma/índice e não permite lançamentos diretos. Por favor, use uma de suas sub-contas (nível final).",
+    "stack": "BadRequestException: A conta '7.1 - VENDAS' é uma conta de soma/índice e não permite lançamentos diretos. Por favor, use uma de suas sub-contas (nível final).\n    at <anonymous> (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:178:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async Promise.all (index 1)\n    at async AccountingService.createJournalEntry (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:147:27)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771777464500",
+    "companyId": "007",
+    "journalId": "JNL-VENDAS-007",
+    "description": "Venda FA 2026/5 - Roberto",
+    "date": "2026-02-26",
+    "status": "POSTED",
+    "reference": "FA 2026/5",
+    "sourceDocument": "c1553e5d-a5cd-40a1-9b10-3100dd415ef7",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771777464500-1",
+        "accountId": "1",
+        "accountCode": "1.1",
+        "accountName": "CAIXA",
+        "description": "Venda a Roberto (C001) - FA 2026/5",
+        "debit": 947,
+        "credit": 0
+      },
+      {
+        "id": "JE1771777464500-2",
+        "accountId": "71",
+        "accountCode": "7.1.1",
+        "accountName": "Vendas de Mercadorias",
+        "description": "Venda - FA 2026/5",
+        "debit": 0,
+        "credit": 947
+      }
+    ]
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T11:39:40.271Z",
+  "path": "/sales/documents?companyId=007",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "007"
+  }
+}
+---
+{
+  "timestamp": "2026-02-26T11:42:46.359Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Journal entry is not balanced. Debit: 1377, Credit: 0",
+    "stack": "BadRequestException: Journal entry is not balanced. Debit: 1377, Credit: 0\n    at AccountingService.createJournalEntry (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:139:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771777464511",
+    "companyId": "007",
+    "journalId": "JNL-VENDAS-007",
+    "description": "Venda FA 2026/7 - Roberto",
+    "date": "2026-02-26",
+    "status": "POSTED",
+    "reference": "FA 2026/7",
+    "sourceDocument": "1b12c413-e6bf-4302-9d23-821443665e89",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771777464511-1",
+        "accountId": "18",
+        "accountCode": "4.1.1",
+        "accountName": "Clientes c/c",
+        "description": "Venda a Roberto () - FA 2026/7",
+        "debit": 1377,
+        "credit": 0
+      },
+      {
+        "id": "JE1771777464511-2",
+        "accountId": "58",
+        "accountCode": "7.1.1",
+        "accountName": "Vendas de mercadorias",
+        "description": "Venda - FA 2026/7",
+        "debit": 0,
+        "credit": 0
+      }
+    ]
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T11:42:50.616Z",
+  "path": "/accounting/journal-entries",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Journal entry is not balanced. Debit: 1377, Credit: 0",
+    "stack": "BadRequestException: Journal entry is not balanced. Debit: 1377, Credit: 0\n    at AccountingService.createJournalEntry (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:139:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "JE1771777464512",
+    "companyId": "007",
+    "journalId": "JNL-VENDAS-007",
+    "description": "Venda FA 2026/7 - Roberto",
+    "date": "2026-02-26",
+    "status": "POSTED",
+    "reference": "FA 2026/7",
+    "sourceDocument": "1b12c413-e6bf-4302-9d23-821443665e89",
+    "sourceType": "SALE",
+    "lines": [
+      {
+        "id": "JE1771777464512-1",
+        "accountId": "18",
+        "accountCode": "4.1.1",
+        "accountName": "Clientes c/c",
+        "description": "Venda a Roberto () - FA 2026/7",
+        "debit": 1377,
+        "credit": 0
+      },
+      {
+        "id": "JE1771777464512-2",
+        "accountId": "58",
+        "accountCode": "7.1.1",
+        "accountName": "Vendas de mercadorias",
+        "description": "Venda - FA 2026/7",
+        "debit": 0,
+        "credit": 0
+      }
+    ]
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.161Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"1\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"1\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "1",
+    "name": "Meios Financeiros",
+    "type": "1",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.209Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"1\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"1\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "2",
+    "name": "Inventarios e Activos Biologicos",
+    "type": "1",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.242Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "1.2.1",
+    "name": "Depositos a ordem",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.254Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "1.1",
+    "name": "Caixa",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.275Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "2.1",
+    "name": "Compras",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.281Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "1.2.2",
+    "name": "Depositos com pre-aviso",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.287Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "1.2",
+    "name": "Bancos",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.295Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "1.2.3",
+    "name": "Depositos a prazo",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.315Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "2.1.1",
+    "name": "Mercadorias",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.323Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "2.1.2",
+    "name": "Materias primas auxiliares e materiais",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.340Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "2.2",
+    "name": "Mercadorias",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.346Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "2.3",
+    "name": "Produtos acabados e intermedios",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.354Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "2.4",
+    "name": "Subprodutos desperdicios residuos e refugos",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.361Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "2.5",
+    "name": "Produtos ou servicos em curso",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.381Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "2.6",
+    "name": "Materias primas auxiliares e materiais",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.389Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "2.7",
+    "name": "Activos biologicos",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.410Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "2.8",
+    "name": "Regularizacao de inventarios",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.417Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "2.9",
+    "name": "Ajustamentos para valor realizavel liquido",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.422Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"1\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"1\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "3",
+    "name": "Investimentos de Capital",
+    "type": "1",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.428Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "3.1",
+    "name": "Investimentos financeiros",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.445Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "3.1.1",
+    "name": "Investimentos em subsidiarias",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.454Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "3.1.2",
+    "name": "Investimentos em associadas",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.468Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "3.2.1",
+    "name": "Construcoes",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.477Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "3.2",
+    "name": "Activos tangiveis",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.486Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "3.2.2",
+    "name": "Equipamento basico",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.491Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "3.2.3",
+    "name": "Equipamento de transporte",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.507Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "3.2.4",
+    "name": "Ferramentas e utensilios",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.512Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "3.3",
+    "name": "Activos intangiveis",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.525Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "3.8",
+    "name": "Amortizacoes acumuladas",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.530Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "3.4",
+    "name": "Investimentos em curso",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.544Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "3.9",
+    "name": "Ajustamento de investimentos financeiros",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.551Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"1\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"1\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4",
+    "name": "Contas a Receber Contas a Pagar Acrescimos e Diferimentos",
+    "type": "1",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.568Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.1",
+    "name": "Clientes",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.574Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.1.1",
+    "name": "Clientes c/c",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.591Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.1.2",
+    "name": "Clientes titulos a receber",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.595Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.2",
+    "name": "Fornecedores",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.614Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.2.1",
+    "name": "Fornecedores c/c",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.619Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.3",
+    "name": "Emprestimos obtidos",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.635Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.3.1",
+    "name": "Emprestimos bancarios",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.640Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.4",
+    "name": "Estado",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.653Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.4.1",
+    "name": "Imposto sobre rendimento",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.657Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"3\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"3\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.4.2",
+    "name": "Impostos retidos na fonte",
+    "type": "3",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.670Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.5",
+    "name": "Outros devedores e credores",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.676Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.6",
+    "name": "Outros credores",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.695Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.7",
+    "name": "Ajustamentos de contas a receber",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.705Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.8",
+    "name": "Provisoes",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.718Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "4.9",
+    "name": "Acrescimos e diferimentos",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.723Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"1\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"1\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "5",
+    "name": "Capital Proprio",
+    "type": "1",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.736Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "5.1",
+    "name": "Capital",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.742Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "5.2",
+    "name": "Accoes ou quotas proprias",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.758Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "5.3",
+    "name": "Prestacoes suplementares",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.764Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "5.4",
+    "name": "Premios de emissao",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.775Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "5.5",
+    "name": "Reservas",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.781Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "5.6",
+    "name": "Excedentes de revalorizacao",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.790Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "5.8",
+    "name": "Outras variacoes no capital proprio",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-26T12:43:50.795Z",
+  "path": "/accounting/accounts",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Failed to save account: invalid input value for enum accounts_type_enum: \"2\"",
+    "stack": "BadRequestException: Failed to save account: invalid input value for enum accounts_type_enum: \"2\"\n    at AccountingService.create (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:85:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "code": "5.9",
+    "name": "Resultados transitados",
+    "type": "2",
+    "allowPosting": false,
+    "isActive": true,
+    "companyId": "008"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-27T09:03:59.107Z",
+  "path": "/accounting/accounts?companyId=006",
+  "method": "DELETE",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Não é possível substituir o plano de contas porque já existem lançamentos contabilísticos registados.",
+    "stack": "BadRequestException: Não é possível substituir o plano de contas porque já existem lançamentos contabilísticos registados.\n    at AccountingService.clearAccounts (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:409:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "006"
+  }
+}
+---
+{
+  "timestamp": "2026-02-27T09:04:12.472Z",
+  "path": "/accounting/accounts?companyId=006",
+  "method": "DELETE",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Não é possível substituir o plano de contas porque já existem lançamentos contabilísticos registados.",
+    "stack": "BadRequestException: Não é possível substituir o plano de contas porque já existem lançamentos contabilísticos registados.\n    at AccountingService.clearAccounts (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:409:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "006"
+  }
+}
+---
+{
+  "timestamp": "2026-02-27T10:23:43.652Z",
+  "path": "/licenses/005/renewals",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-27T11:25:56.096Z",
+  "path": "/sales/documents?companyId=005",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-02-27T11:25:56.113Z",
+  "path": "/purchases/documents?companyId=005",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-02-27T11:25:56.119Z",
+  "path": "/treasury/documents",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-02-27T11:26:18.347Z",
+  "path": "/accounting/accounts/recalculate?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "invalid input value for enum journal_entries_status_enum: \"APPROVED\"",
+    "stack": "QueryFailedError: invalid input value for enum journal_entries_status_enum: \"APPROVED\"\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async SelectQueryBuilder.loadRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3868:25)\n    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:3614:26)\n    at async SelectQueryBuilder.getRawAndEntities (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1671:29)\n    at async SelectQueryBuilder.getMany (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\SelectQueryBuilder.ts:1761:25)\n    at async AccountingService.recalculateAllBalances (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\accounting\\accounting.service.ts:287:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {},
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-02-27T12:52:59.048Z",
+  "path": "/sales/documents?companyId=005",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-02-27T12:52:59.090Z",
+  "path": "/purchases/documents?companyId=005",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-02-27T12:52:59.098Z",
+  "path": "/treasury/documents",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {}
+}
+---

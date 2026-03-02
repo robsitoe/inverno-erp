@@ -468,7 +468,17 @@ export class AppController {
         order: { code: 'ASC' } as any
       });
 
-      return records.map((r: any) => {
+      // Remove duplicates by code (preventing SALE vs SALES overlaps)
+      const uniqueRecords: any[] = [];
+      const seenCodes = new Set();
+      for (const record of records) {
+        if (!seenCodes.has(record.code)) {
+          uniqueRecords.push(record);
+          seenCodes.add(record.code);
+        }
+      }
+
+      return uniqueRecords.map((r: any) => {
         const { settings, ...core } = r;
         return {
           ...core,

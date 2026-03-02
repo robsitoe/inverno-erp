@@ -486,6 +486,16 @@ export class DataService {
         }
     }
 
+    getBalanceSheet(companyId?: string): Observable<any> {
+        if (this.isLocalBrowser()) return of({ assets: {}, equityAndLiabilities: {} });
+        return this.http.get(`${this.baseUrl}/accounting/reports/balance-sheet?companyId=${companyId || ''}`);
+    }
+
+    getIncomeStatement(companyId?: string): Observable<any> {
+        if (this.isLocalBrowser()) return of({});
+        return this.http.get(`${this.baseUrl}/accounting/reports/income-statement?companyId=${companyId || ''}`);
+    }
+
     saveJournalEntry(entry: any): Observable<any> {
         if (this.isLocalBrowser()) {
             const stored = localStorage.getItem('erp_journal_entries');
@@ -955,7 +965,17 @@ export class DataService {
             }
 
             if (stored) {
-                return of(JSON.parse(stored));
+                const types = JSON.parse(stored);
+                // Ensure uniqueness by code
+                const unique = [];
+                const codes = new Set();
+                for (const t of types) {
+                    if (!codes.has(t.code)) {
+                        unique.push(t);
+                        codes.add(t.code);
+                    }
+                }
+                return of(unique);
             }
 
             // Migration/Fallback: check if there's a global one to clone for this specific company

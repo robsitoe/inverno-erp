@@ -402,7 +402,15 @@ let AppController = class AppController {
                 where: moduleQueries.map(m => ({ module: m })),
                 order: { code: 'ASC' }
             });
-            return records.map((r) => {
+            const uniqueRecords = [];
+            const seenCodes = new Set();
+            for (const record of records) {
+                if (!seenCodes.has(record.code)) {
+                    uniqueRecords.push(record);
+                    seenCodes.add(record.code);
+                }
+            }
+            return uniqueRecords.map((r) => {
                 const { settings, ...core } = r;
                 return {
                     ...core,

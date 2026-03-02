@@ -79,6 +79,12 @@ let AccountingController = class AccountingController {
     getUtilitiesAuditLog(page, limit) {
         return this.accountingService.getUtilitiesAuditLog(page, limit);
     }
+    getBalanceSheet(companyId) {
+        return this.accountingService.getBalanceSheet(companyId);
+    }
+    getIncomeStatement(companyId) {
+        return this.accountingService.getIncomeStatement(companyId);
+    }
 };
 exports.AccountingController = AccountingController;
 __decorate([
@@ -235,6 +241,22 @@ __decorate([
     __metadata("design:paramtypes", [Number, Number]),
     __metadata("design:returntype", Promise)
 ], AccountingController.prototype, "getUtilitiesAuditLog", null);
+__decorate([
+    (0, common_1.Get)('reports/balance-sheet'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get Balance Sheet (Mozambique standard)' }),
+    __param(0, (0, common_1.Query)('companyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AccountingController.prototype, "getBalanceSheet", null);
+__decorate([
+    (0, common_1.Get)('reports/income-statement'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get Income Statement (Mozambique standard)' }),
+    __param(0, (0, common_1.Query)('companyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AccountingController.prototype, "getIncomeStatement", null);
 exports.AccountingController = AccountingController = __decorate([
     (0, swagger_1.ApiTags)('accounting'),
     (0, common_1.Controller)('accounting'),

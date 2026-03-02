@@ -23,6 +23,7 @@ import { BatchSearchModalComponent } from '../inventory/batch-search-modal.compo
 import { PrintSettingsModalComponent, PrintSettings } from '../../shared/components/print-settings-modal.component';
 import { SalesDocumentPrintComponent } from './sales-document-print.component';
 import { AppIconComponent } from '../../shared/components/app-icon.component';
+import { AccountingConfirmationModalComponent } from '../accounting/accounting-confirmation-modal.component';
 
 interface GridRow {
   id?: string;
@@ -65,7 +66,8 @@ interface GridRow {
     BatchSearchModalComponent,
     PrintSettingsModalComponent,
     SalesDocumentPrintComponent,
-    AppIconComponent
+    AppIconComponent,
+    AccountingConfirmationModalComponent
   ],
   template: `
     <div class="flex flex-col h-full w-full bg-[#F0F0F0] text-xs overflow-hidden relative">
@@ -596,8 +598,16 @@ interface GridRow {
         </button>
       </div>
 
+      </div> <!-- End no-print -->
 
-      </div>
+      <!-- Accounting Confirmation Modal -->
+      <app-accounting-confirmation-modal
+        [isOpen]="showAccountingConfirmation"
+        [entry]="suggestedJournalEntry"
+        [documentInfo]="confirmationDocInfo"
+        (confirmed)="onConfirmAccounting($event)"
+        (cancelled)="showAccountingConfirmation = false"
+      ></app-accounting-confirmation-modal>
 
       <app-print-settings-modal
         [isOpen]="isPrintSettingsOpen"
@@ -609,7 +619,8 @@ interface GridRow {
         [document]="documentToPrint"
         [settings]="printSettings">
       </app-sales-document-print>
-    </div>
+
+    </div> <!-- End Root -->
   `
 })
 export class SalesDocumentFormComponent implements OnDestroy {
@@ -618,8 +629,17 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
   activeCompanyId: string | null = null;
 
+  showDraftsModal = false;
+
+  // Accounting Confirmation
+  showAccountingConfirmation = false;
+  suggestedJournalEntry: any = null;
+  confirmationDocInfo: any = null;
+  private pendingSaveParams: { isPrinting: boolean, isCancelling: boolean } | null = null;
+
   showDocTypeModal = false;
   salesDocTypes: any[] = [];
+  private availableDocTypes: any[] = [];
   selectedDocType = '';
   selectedDocDescription = '';
 
@@ -1626,13 +1646,12 @@ export class SalesDocumentFormComponent implements OnDestroy {
   }
 
   // Save document with accounting and inventory integration
-  saveDocument(isPrinting: boolean = false, isCancelling: boolean = false) {
+  saveDocument(isPrinting: boolean = false, isCancelling: boolean = false, confirmedJournalEntry?: any) {
     if (this.isLocked && !isPrinting && !isCancelling) {
       alert('Este documento está bloqueado e não pode ser alterado.');
       return;
     }
 
-    // Validate Series Date
     // Validate Period Closure
     if (!this.periodService.isPeriodOpen(this.documentDate)) {
       alert('O período para esta data está fechado. Não é possível gravar documentos nesta data.');
@@ -1654,7 +1673,6 @@ export class SalesDocumentFormComponent implements OnDestroy {
       const start = new Date(series.startDate);
       const end = new Date(series.endDate);
 
-      // Reset hours for pure date comparison
       docDate.setHours(0, 0, 0, 0);
       start.setHours(0, 0, 0, 0);
       end.setHours(0, 0, 0, 0);
@@ -1665,7 +1683,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
       }
     }
 
-    // Validate document
+    // Basic Validations
     if (!this.selectedDocType) {
       alert('Por favor selecione um tipo de documento');
       return;
@@ -1686,18 +1704,48 @@ export class SalesDocumentFormComponent implements OnDestroy {
       return;
     }
 
-    // Check if there are lines with articles
     const validLines = this.rows.filter(row => row.articleCode && row.quantity > 0);
     if (validLines.length === 0) {
       alert('Por favor adicione pelo menos um artigo');
       return;
     }
 
-    // Create sales document with sequential numbering
+    // ACCOUNTING CONFIRMATION STEP
+    const docConfig = this.accountingService.SalesDocumentTypes.find(t => t.code === this.selectedDocType);
+    const shouldCreateAccounting = docConfig ? docConfig.currentAccounts !== false : ['FA', 'VD', 'NC', 'ND'].includes(this.selectedDocType);
+
+    if (shouldCreateAccounting && !isCancelling && !confirmedJournalEntry) {
+      // Generate suggested entry
+      const previewDoc = this.getCurrentDocument();
+      const articles = this.inventoryService.getArticles();
+      const debitAccountId = this.paymentCondition === 'PRONTO' ? this.selectedTreasuryAccountId : undefined;
+      const customer = { code: this.selectedEntityCode, name: this.selectedEntityName, nif: this.selectedEntityNif };
+
+      this.suggestedJournalEntry = this.accountingService.createSalesJournalEntry(
+        previewDoc,
+        customer,
+        articles,
+        this.paymentCondition,
+        debitAccountId,
+        true // isPreview
+      );
+
+      if (this.suggestedJournalEntry) {
+        this.confirmationDocInfo = {
+          type: this.selectedDocDescription || this.selectedDocType,
+          number: `${this.currentSeries}/${this.currentSeriesNumber}`,
+          customerName: this.selectedEntityName
+        };
+        this.pendingSaveParams = { isPrinting, isCancelling };
+        this.showAccountingConfirmation = true;
+        return; // HALT AND WAIT FOR CONFIRMATION
+      }
+    }
+
+    // PROCEED WITH ACTUAL SAVE
     const documentNumber = `${this.selectedDocType} ${this.currentSeries}/${this.currentSeriesNumber}`;
 
     const salesLines: SalesDocumentLine[] = validLines.map((row) => {
-      // Parse IVA rate properly - handle "23%" format
       let ivaRate = 0;
       if (row.iva && typeof row.iva === 'string' && row.iva.trim() !== '') {
         ivaRate = parseFloat(row.iva.replace('%', '')) || 0;
@@ -1709,13 +1757,9 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
       const subtotal = quantity * unitPrice * (1 - discount / 100);
       const ivaAmount = subtotal * (ivaRate / 100);
-
-      // Backend requires articleName. Fallback to code if description is missing.
       const articleName = row.description && row.description.trim() !== '' ? row.description : row.articleCode;
 
       return {
-        // Only send ID if it's a valid UUID (36 chars). 
-        // Do NOT send temporary IDs like "LINE1" as backend entity expects UUID.
         id: (row.id && row.id.length === 36) ? row.id : undefined,
         articleId: row.articleId || row.articleCode,
         articleCode: row.articleCode,
@@ -1731,9 +1775,8 @@ export class SalesDocumentFormComponent implements OnDestroy {
       } as any;
     });
 
-    // Determine status
     let newStatus: WorkflowStatus = this.status;
-    if (isPrinting) newStatus = WorkflowStatus.APPROVED; // Using APPROVED for CONFIRMED/INVOICED
+    if (isPrinting) newStatus = WorkflowStatus.APPROVED;
     if (isCancelling) newStatus = WorkflowStatus.REJECTED;
 
     const salesDoc: any = {
@@ -1758,8 +1801,6 @@ export class SalesDocumentFormComponent implements OnDestroy {
       notes: ''
     };
 
-    // Save via DataService
-    // Check for sequential number gap
     this.dataService.getSalesDocuments(this.activeCompanyId || undefined).subscribe(docs => {
       this.ngZone.run(() => {
         const typeDocs = docs.filter((d: any) =>
@@ -1771,43 +1812,30 @@ export class SalesDocumentFormComponent implements OnDestroy {
         const maxNum = numbers.length > 0 ? Math.max(...numbers) : 0;
         const expectedNum = maxNum + 1;
 
-        // Only check schema if we are creating a new doc or changing number to something potentially new
         if (!salesDoc.id || !docs.find((d: any) => d.id === salesDoc.id)) {
           if (this.currentSeriesNumber > expectedNum) {
-            if (!confirm(`O número ${this.currentSeriesNumber} não é sequencial (Esperado: ${expectedNum}). Deseja continuar e criar um intervalo na numeração?`)) {
+            if (!confirm(`O número ${this.currentSeriesNumber} não é sequencial (Esperado: ${expectedNum}). Deseja continuar?`)) {
               return;
             }
           }
-        } else {
-          // If updating existing doc, check if we changed number to something way off?
-          // Maybe too complex for now, assume updates are fine or handled by uniqueness check elsewhere.
         }
 
-        // Save via DataService
         this.dataService.saveSalesDocument(salesDoc).subscribe({
           next: (savedDoc) => {
             this.ngZone.run(() => {
-              // Update local status
               this.status = newStatus;
               this.currentId = savedDoc?.id || this.currentId;
               this.loadWorkflowHistory();
 
-              // Refresh inventory data to reflect stock movements
               this.inventoryService.loadData().then(() => {
-                this.processPostSaveActions(savedDoc || salesDoc, this.currentId || '', documentNumber, isPrinting, isCancelling);
+                this.processPostSaveActions(savedDoc || salesDoc, this.currentId || '', documentNumber, isPrinting, isCancelling, confirmedJournalEntry);
                 this.cdr.detectChanges();
               });
             });
           },
           error: (err) => {
             console.error('Error saving document:', err);
-            // Log full validation error details from backend
-            if (err.error && err.error.message) {
-              console.error('Validation errors:', err.error.message);
-              alert('Erro de validação: ' + (Array.isArray(err.error.message) ? err.error.message.join(', ') : err.error.message));
-            } else {
-              alert('Erro ao gravar documento: ' + err.message);
-            }
+            alert('Erro ao gravar documento: ' + (err.error?.message || err.message));
           }
         });
       });
@@ -1819,7 +1847,8 @@ export class SalesDocumentFormComponent implements OnDestroy {
     id: string,
     documentNumber: string,
     isPrinting: boolean,
-    isCancelling: boolean
+    isCancelling: boolean,
+    confirmedJournalEntry?: any
   ) {
     if (isPrinting) {
       this.documentToPrint = salesDoc;
@@ -1844,14 +1873,19 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
         // ONLY create accounting entries for financial documents
         if (shouldCreateAccounting) {
-          const debitAccountId = this.paymentCondition === 'PRONTO' ? this.selectedTreasuryAccountId : undefined;
-          // Assuming selectedCustomer is available or configured
-          const customer = { code: this.selectedEntityCode, name: this.selectedEntityName, nif: this.selectedEntityNif };
+          if (confirmedJournalEntry) {
+            // Use the confirmed entry from the modal
+            this.accountingService.saveConfirmedJournalEntry(confirmedJournalEntry);
+          } else {
+            // Original automatic path (fallback)
+            const debitAccountId = this.paymentCondition === 'PRONTO' ? this.selectedTreasuryAccountId : undefined;
+            const customer = { code: this.selectedEntityCode, name: this.selectedEntityName, nif: this.selectedEntityNif };
 
-          this.accountingService.createSalesJournalEntry(salesDoc, customer, articles, this.paymentCondition, debitAccountId);
+            this.accountingService.createSalesJournalEntry(salesDoc, customer, articles, this.paymentCondition, debitAccountId);
+          }
+
           this.accountingService.createCOGSEntry(salesDoc, articles);
-
-          alert(`Documento ${documentNumber} gravado com sucesso!\n\nMovimentos de stock e lançamentos contabilísticos criados automaticamente.`);
+          alert(`Documento ${documentNumber} gravado com sucesso!\n\nMovimentos de stock e lançamentos contabilísticos criados.`);
         } else {
           alert(`Documento ${documentNumber} gravado com sucesso!\n\nMovimento de stock criado.`);
         }
@@ -1965,7 +1999,34 @@ export class SalesDocumentFormComponent implements OnDestroy {
           const doc = this.getCurrentDocument();
           // Ensure we use the latest status from resolution
           doc.status = res.status;
-          this.processPostSaveActions(doc, this.currentId!, doc.documentNumber, false, false);
+
+          // Trigger accounting confirmation before finalizing POS
+          const articles = this.inventoryService.getArticles();
+          const debitAccountId = this.paymentCondition === 'PRONTO' ? this.selectedTreasuryAccountId : undefined;
+          const customer = { code: this.selectedEntityCode, name: this.selectedEntityName, nif: this.selectedEntityNif };
+
+          this.suggestedJournalEntry = this.accountingService.createSalesJournalEntry(
+            doc,
+            customer,
+            articles,
+            this.paymentCondition,
+            debitAccountId,
+            true // isPreview
+          );
+
+          if (this.suggestedJournalEntry) {
+            this.confirmationDocInfo = {
+              documentNumber: doc.documentNumber,
+              documentDate: doc.date,
+              customerName: doc.customerName,
+              totalValue: doc.total
+            };
+            this.pendingSaveParams = { isPrinting: false, isCancelling: false };
+            this.showAccountingConfirmation = true;
+          } else {
+            // Fallback if no entry generated
+            this.processPostSaveActions(doc, this.currentId!, doc.documentNumber, false, false);
+          }
         }
 
         alert(`Documento ${action === 'SUBMIT' ? 'submetido' : action === 'APPROVE' ? 'aprovado' : action === 'REJECT' ? 'rejeitado' : 'lançado'} com sucesso.`);
@@ -1980,6 +2041,12 @@ export class SalesDocumentFormComponent implements OnDestroy {
   @HostListener('document:click')
   onDocumentClick() {
     this.contextMenuVisible = false;
+  }
+
+  onConfirmAccounting(entry: any) {
+    this.showAccountingConfirmation = false;
+    const params = this.pendingSaveParams || { isPrinting: false, isCancelling: false };
+    this.saveDocument(params.isPrinting, params.isCancelling, entry);
   }
 
   validateSeriesDate() {
