@@ -13,10 +13,16 @@ export declare class CreateEmployeeDto {
     position?: string;
     contractType?: ContractType;
     hireDate?: string;
+    endDate?: string;
+    trialPeriodEnd?: string;
+    weeklyHours?: number;
+    dependents?: number;
     salaryBase: number;
     subsidyTransport?: number;
     subsidyFood?: number;
     subsidyHousing?: number;
     isActive?: boolean;
+    terminationReason?: string;
+    vacationBalance?: number;
     companyId?: string;
 }

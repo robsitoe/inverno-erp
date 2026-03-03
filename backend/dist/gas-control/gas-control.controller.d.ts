@@ -1,0 +1,17 @@
+import { GasControlService } from './gas-control.service';
+export declare class GasControlController {
+    private readonly gasService;
+    constructor(gasService: GasControlService);
+    getCylinderTypes(companyId?: string): Promise<import("./gas-control.entity").GasCylinderType[]>;
+    saveCylinderType(data: any, companyId?: string): Promise<any>;
+    getDaily(date: string, companyId?: string): Promise<{
+        control: import("./gas-control.entity").GasDailyControl;
+        entries: import("./gas-control.entity").GasDailyEntry[];
+    }>;
+    saveEntry(data: any, companyId?: string): Promise<any>;
+    deleteEntry(id: string, companyId?: string): Promise<import("typeorm").DeleteResult>;
+    updateStocks(id: string, body: {
+        initialStock: any;
+        finalStock: any;
+    }, companyId?: string): Promise<import("./gas-control.entity").GasDailyControl>;
+}

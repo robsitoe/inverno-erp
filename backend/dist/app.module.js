@@ -50,7 +50,10 @@ const taxes_module_1 = require("./taxes/taxes.module");
 const employee_entity_1 = require("./hr/entities/employee.entity");
 const payroll_entity_1 = require("./hr/entities/payroll.entity");
 const absence_entity_1 = require("./hr/entities/absence.entity");
+const hr_settings_entity_1 = require("./hr/entities/hr-settings.entity");
 const hr_module_1 = require("./hr/hr.module");
+const gas_control_entity_1 = require("./gas-control/gas-control.entity");
+const gas_control_module_1 = require("./gas-control/gas-control.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer
@@ -78,7 +81,8 @@ exports.AppModule = AppModule = __decorate([
                                 sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, user_entity_1.User, purchase_entity_1.PurchaseDocument,
                                 purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
                                 company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity,
-                                document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog, license_entity_1.License, license_renewal_entity_1.LicenseRenewal, tax_rate_entity_1.TaxRate, employee_entity_1.Employee, payroll_entity_1.Payroll, absence_entity_1.Absence
+                                document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog, license_entity_1.License, license_renewal_entity_1.LicenseRenewal, tax_rate_entity_1.TaxRate, employee_entity_1.Employee, payroll_entity_1.Payroll, absence_entity_1.Absence, hr_settings_entity_1.TaxBracket, hr_settings_entity_1.HRSettings,
+                                gas_control_entity_1.GasCylinderType, gas_control_entity_1.GasDailyControl, gas_control_entity_1.GasDailyEntry
                             ],
                             synchronize: true,
                         };
@@ -95,7 +99,8 @@ exports.AppModule = AppModule = __decorate([
                             sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, user_entity_1.User, purchase_entity_1.PurchaseDocument,
                             purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
                             company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity,
-                            document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog, license_entity_1.License, license_renewal_entity_1.LicenseRenewal, tax_rate_entity_1.TaxRate, employee_entity_1.Employee, payroll_entity_1.Payroll, absence_entity_1.Absence
+                            document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog, license_entity_1.License, license_renewal_entity_1.LicenseRenewal, tax_rate_entity_1.TaxRate, employee_entity_1.Employee, payroll_entity_1.Payroll, absence_entity_1.Absence, hr_settings_entity_1.TaxBracket, hr_settings_entity_1.HRSettings,
+                            gas_control_entity_1.GasCylinderType, gas_control_entity_1.GasDailyControl, gas_control_entity_1.GasDailyEntry
                         ],
                         synchronize: true,
                     };
@@ -115,6 +120,7 @@ exports.AppModule = AppModule = __decorate([
             licenses_module_1.LicensesModule,
             taxes_module_1.TaxesModule,
             hr_module_1.HRModule,
+            gas_control_module_1.GasControlModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

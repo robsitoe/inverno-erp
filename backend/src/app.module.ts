@@ -41,7 +41,10 @@ import { TaxesModule } from './taxes/taxes.module';
 import { Employee } from './hr/entities/employee.entity';
 import { Payroll } from './hr/entities/payroll.entity';
 import { Absence } from './hr/entities/absence.entity';
+import { TaxBracket, HRSettings } from './hr/entities/hr-settings.entity';
 import { HRModule } from './hr/hr.module';
+import { GasCylinderType, GasDailyControl, GasDailyEntry } from './gas-control/gas-control.entity';
+import { GasControlModule } from './gas-control/gas-control.module';
 
 @Module({
   imports: [
@@ -62,7 +65,8 @@ import { HRModule } from './hr/hr.module';
               SalesDocument, SalesDocumentLine, User, PurchaseDocument,
               PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
               Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-              DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate, Employee, Payroll, Absence
+              DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate, Employee, Payroll, Absence, TaxBracket, HRSettings,
+              GasCylinderType, GasDailyControl, GasDailyEntry
             ],
             synchronize: true,
           };
@@ -75,13 +79,14 @@ import { HRModule } from './hr/hr.module';
           username: configService.get<string>('DB_USERNAME', 'postgres'),
           password: configService.get<string>('DB_PASSWORD', 'postgres'),
           database: configService.get<string>('DB_DATABASE', 'inverno_erp'),
-            entities: [
-              Account, JournalEntry, JournalLine, Article, StockMovement,
-              SalesDocument, SalesDocumentLine, User, PurchaseDocument,
-              PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-              DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate, Employee, Payroll, Absence
-            ],
+          entities: [
+            Account, JournalEntry, JournalLine, Article, StockMovement,
+            SalesDocument, SalesDocumentLine, User, PurchaseDocument,
+            PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
+            Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
+            DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate, Employee, Payroll, Absence, TaxBracket, HRSettings,
+            GasCylinderType, GasDailyControl, GasDailyEntry
+          ],
           synchronize: true,
         };
       },
@@ -100,6 +105,7 @@ import { HRModule } from './hr/hr.module';
     LicensesModule,
     TaxesModule,
     HRModule,
+    GasControlModule,
   ],
   controllers: [AppController],
   providers: [AppService],

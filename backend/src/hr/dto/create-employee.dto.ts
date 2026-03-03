@@ -68,6 +68,26 @@ export class CreateEmployeeDto {
   @IsOptional()
   hireDate?: string;
 
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  endDate?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  trialPeriodEnd?: string;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  weeklyHours?: number;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  dependents?: number;
+
   @ApiProperty()
   @IsNumber()
   salaryBase: number;
@@ -91,6 +111,16 @@ export class CreateEmployeeDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  terminationReason?: string;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  vacationBalance?: number;
 
   @IsOptional()
   @IsString()

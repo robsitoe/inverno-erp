@@ -7,6 +7,7 @@ export enum AbsenceType {
     JUSTIFIED = 'JUSTIFIED',
     UNJUSTIFIED = 'UNJUSTIFIED',
     MATERNITY = 'MATERNITY',
+    PATERNITY = 'PATERNITY',
     OTHER = 'OTHER'
 }
 

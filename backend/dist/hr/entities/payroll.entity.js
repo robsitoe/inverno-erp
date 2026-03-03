@@ -29,12 +29,12 @@ let Payroll = class Payroll {
     grossSalary;
     inssEmployee;
     inssEmployer;
-    irm;
+    irps;
     transportSubsidy;
     foodSubsidy;
     overtimeAmount;
     bonusAmount;
-    absencesDeduction;
+    daysWorked;
     netSalary;
     status;
     journalEntryId;
@@ -86,7 +86,7 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2, default: 0 }),
     __metadata("design:type", Number)
-], Payroll.prototype, "irm", void 0);
+], Payroll.prototype, "irps", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2, default: 0 }),
     __metadata("design:type", Number)
@@ -104,9 +104,9 @@ __decorate([
     __metadata("design:type", Number)
 ], Payroll.prototype, "bonusAmount", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2, default: 0 }),
+    (0, typeorm_1.Column)({ type: 'integer', default: 30 }),
     __metadata("design:type", Number)
-], Payroll.prototype, "absencesDeduction", void 0);
+], Payroll.prototype, "daysWorked", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2, default: 0 }),
     __metadata("design:type", Number)

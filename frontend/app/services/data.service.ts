@@ -12,6 +12,10 @@ export class DataService {
     private activeCompanySubject = new BehaviorSubject<any>(this.getStoredCompany());
     public activeCompany$ = this.activeCompanySubject.asObservable();
 
+    public getCurrentCompany() {
+        return this.activeCompanySubject.value;
+    }
+
 
     constructor(private http: HttpClient) {
         this.loadConfig();
@@ -114,6 +118,11 @@ export class DataService {
             localStorage.removeItem('erp_company_info');
         }
         this.activeCompanySubject.next(company);
+    }
+
+    public getCompanyId(): string | null {
+        const company = this.activeCompanySubject.value;
+        return company ? company.id : null;
     }
 
 

@@ -18,16 +18,21 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const employee_entity_1 = require("../entities/employee.entity");
 const absence_entity_1 = require("../entities/absence.entity");
+const hr_settings_entity_1 = require("../entities/hr-settings.entity");
 const tenancy_service_1 = require("../../tenancy/tenancy.service");
 const tenancy_context_1 = require("../../tenancy/tenancy.context");
 let HRService = class HRService {
     tenancyService;
     defaultEmployeeRepo;
     defaultAbsenceRepo;
-    constructor(tenancyService, defaultEmployeeRepo, defaultAbsenceRepo) {
+    defaultTaxBracketRepo;
+    defaultHRSettingsRepo;
+    constructor(tenancyService, defaultEmployeeRepo, defaultAbsenceRepo, defaultTaxBracketRepo, defaultHRSettingsRepo) {
         this.tenancyService = tenancyService;
         this.defaultEmployeeRepo = defaultEmployeeRepo;
         this.defaultAbsenceRepo = defaultAbsenceRepo;
+        this.defaultTaxBracketRepo = defaultTaxBracketRepo;
+        this.defaultHRSettingsRepo = defaultHRSettingsRepo;
     }
     async getRepo(entity, defaultRepo, companyId) {
         const targetId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
@@ -42,11 +47,57 @@ let HRService = class HRService {
     async getAbsenceRepo(companyId) {
         return this.getRepo(absence_entity_1.Absence, this.defaultAbsenceRepo, companyId);
     }
+    async getTaxBracketRepo(companyId) {
+        return this.getRepo(hr_settings_entity_1.TaxBracket, this.defaultTaxBracketRepo, companyId);
+    }
+    async getHRSettingsRepo(companyId) {
+        return this.getRepo(hr_settings_entity_1.HRSettings, this.defaultHRSettingsRepo, companyId);
+    }
+    async getNextCode(companyId) {
+        const repo = await this.getEmployeeRepo(companyId);
+        const all = await repo.find({ where: { companyId }, order: { code: 'DESC' }, take: 1 });
+        if (all.length === 0)
+            return { code: '001' };
+        const last = parseInt(all[0].code, 10);
+        const next = isNaN(last) ? 1 : last + 1;
+        return { code: String(next).padStart(3, '0') };
+    }
+    async checkCodeAvailability(code, companyId, excludeId) {
+        const repo = await this.getEmployeeRepo(companyId);
+        const where = { companyId, code };
+        if (excludeId)
+            where.id = (0, typeorm_2.Not)(excludeId);
+        const existing = await repo.findOne({ where });
+        return { available: !existing };
+    }
+    async checkNibAvailability(nib, companyId, excludeId) {
+        if (!nib || nib.trim() === '')
+            return { available: true };
+        const repo = await this.getEmployeeRepo(companyId);
+        const where = { companyId, nib: nib.trim() };
+        if (excludeId)
+            where.id = (0, typeorm_2.Not)(excludeId);
+        const existing = await repo.findOne({ where });
+        if (!existing)
+            return { available: true };
+        return { available: false, usedBy: existing.name };
+    }
     async create(createEmployeeDto) {
-        const repo = await this.getEmployeeRepo(createEmployeeDto.companyId);
+        const companyId = createEmployeeDto.companyId || tenancy_context_1.TenancyContext.getCompanyId() || '0';
+        const repo = await this.getEmployeeRepo(companyId);
+        const codeCheck = await this.checkCodeAvailability(createEmployeeDto.code, companyId);
+        if (!codeCheck.available) {
+            throw new common_1.ConflictException(`Já existe um funcionário com o código "${createEmployeeDto.code}".`);
+        }
+        if (createEmployeeDto.nib) {
+            const nibCheck = await this.checkNibAvailability(createEmployeeDto.nib, companyId);
+            if (!nibCheck.available) {
+                throw new common_1.ConflictException(`O NIB "${createEmployeeDto.nib}" já está registado em nome de "${nibCheck.usedBy}".`);
+            }
+        }
         const employee = repo.create({
             ...createEmployeeDto,
-            id: `EMP-${createEmployeeDto.code}-${tenancy_context_1.TenancyContext.getCompanyId() || '0'}`
+            id: `EMP-${createEmployeeDto.code}-${companyId}`
         });
         return await repo.save(employee);
     }
@@ -55,22 +106,29 @@ let HRService = class HRService {
         const repo = await this.getEmployeeRepo(targetId);
         return await repo.find({ where: { companyId: targetId }, order: { code: 'ASC' } });
     }
-    async findOne(id) {
-        const repo = await this.getEmployeeRepo();
+    async findOne(id, companyId) {
+        const repo = await this.getEmployeeRepo(companyId);
         const employee = await repo.findOne({ where: { id } });
         if (!employee)
-            throw new common_1.NotFoundException(`Employee with ID ${id} not found`);
+            throw new common_1.NotFoundException(`Funcionário com ID ${id} não encontrado.`);
         return employee;
     }
     async update(id, updateEmployeeDto) {
-        const repo = await this.getEmployeeRepo();
-        const employee = await this.findOne(id);
+        const companyId = updateEmployeeDto.companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getEmployeeRepo(companyId);
+        const employee = await this.findOne(id, companyId);
+        if (updateEmployeeDto.nib && updateEmployeeDto.nib !== employee.nib) {
+            const nibCheck = await this.checkNibAvailability(updateEmployeeDto.nib, companyId || employee.companyId, id);
+            if (!nibCheck.available) {
+                throw new common_1.ConflictException(`O NIB "${updateEmployeeDto.nib}" já está registado em nome de "${nibCheck.usedBy}".`);
+            }
+        }
         repo.merge(employee, updateEmployeeDto);
         return await repo.save(employee);
     }
-    async remove(id) {
-        const repo = await this.getEmployeeRepo();
-        const employee = await this.findOne(id);
+    async remove(id, companyId) {
+        const repo = await this.getEmployeeRepo(companyId);
+        const employee = await this.findOne(id, companyId);
         return await repo.remove(employee);
     }
     async createAbsence(data) {
@@ -91,9 +149,93 @@ let HRService = class HRService {
         const repo = await this.getAbsenceRepo();
         const absence = await repo.findOne({ where: { id } });
         if (!absence)
-            throw new common_1.NotFoundException('Absence record not found');
+            throw new common_1.NotFoundException('Registo de ausência não encontrado.');
         absence.status = status;
         return await repo.save(absence);
+    }
+    async updatePhoto(id, photoUrl, companyId) {
+        const repo = await this.getEmployeeRepo(companyId);
+        const employee = await this.findOne(id, companyId);
+        employee.photoUrl = photoUrl;
+        return await repo.save(employee);
+    }
+    async addDocument(id, doc, companyId) {
+        const repo = await this.getEmployeeRepo(companyId);
+        const employee = await this.findOne(id, companyId);
+        if (!employee.documents)
+            employee.documents = [];
+        const newDoc = {
+            ...doc,
+            id: `DOC-${Date.now()}-${Math.round(Math.random() * 1000)}`,
+            uploadedAt: new Date().toISOString()
+        };
+        employee.documents.push(newDoc);
+        return await repo.save(employee);
+    }
+    async removeDocument(id, docId, companyId) {
+        const repo = await this.getEmployeeRepo(companyId);
+        const employee = await this.findOne(id, companyId);
+        if (!employee.documents)
+            return employee;
+        employee.documents = employee.documents.filter(d => d.id !== docId);
+        return await repo.save(employee);
+    }
+    async findAllTaxBrackets(companyId) {
+        const repo = await this.getTaxBracketRepo(companyId);
+        return await repo.find({ where: { companyId: companyId || tenancy_context_1.TenancyContext.getCompanyId() }, order: { minAmount: 'ASC' } });
+    }
+    async saveTaxBracket(data, companyId) {
+        const cid = companyId || data.companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getTaxBracketRepo(cid);
+        return await repo.save({ ...data, companyId: cid });
+    }
+    async deleteTaxBracket(id, companyId) {
+        const cid = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getTaxBracketRepo(cid);
+        return await repo.delete({ id, companyId: cid });
+    }
+    async getSettings(companyId) {
+        const cid = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getHRSettingsRepo(cid);
+        let settings = await repo.findOne({ where: { companyId: cid } });
+        if (!settings) {
+            settings = repo.create({ companyId: cid, inssEmployeeRate: 3, inssEmployerRate: 4, currency: 'MT' });
+            await repo.save(settings);
+        }
+        return settings;
+    }
+    async updateSettings(data, companyId) {
+        const cid = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getHRSettingsRepo(cid);
+        return await repo.save({ ...data, companyId: cid });
+    }
+    async getNominalRelation(companyId) {
+        const cid = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getEmployeeRepo(cid);
+        return await repo.find({
+            where: { isActive: true },
+            order: { code: 'ASC' }
+        });
+    }
+    async getSeniorityMap(companyId) {
+        const cid = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getEmployeeRepo(cid);
+        return await repo.find({
+            where: { isActive: true },
+            order: { hireDate: 'ASC' }
+        });
+    }
+    async getVacationPlan(year, companyId) {
+        const cid = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getAbsenceRepo(cid);
+        return await repo.find({
+            where: {
+                type: 'VACATION',
+                status: 'APPROVED'
+            },
+            relations: ['employee'],
+            order: { startDate: 'ASC' }
+        });
     }
 };
 exports.HRService = HRService;
@@ -101,7 +243,11 @@ exports.HRService = HRService = __decorate([
     (0, common_1.Injectable)(),
     __param(1, (0, typeorm_1.InjectRepository)(employee_entity_1.Employee)),
     __param(2, (0, typeorm_1.InjectRepository)(absence_entity_1.Absence)),
+    __param(3, (0, typeorm_1.InjectRepository)(hr_settings_entity_1.TaxBracket)),
+    __param(4, (0, typeorm_1.InjectRepository)(hr_settings_entity_1.HRSettings)),
     __metadata("design:paramtypes", [tenancy_service_1.TenancyService,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])
 ], HRService);

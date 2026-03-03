@@ -32,6 +32,11 @@ const document_type_entity_1 = require("../common-entities/entities/document-typ
 const period_audit_log_entity_1 = require("../companies/entities/period-audit-log.entity");
 const tax_rate_entity_1 = require("../taxes/entities/tax-rate.entity");
 const workflow_history_entity_1 = require("../common/entities/workflow-history.entity");
+const employee_entity_1 = require("../hr/entities/employee.entity");
+const payroll_entity_1 = require("../hr/entities/payroll.entity");
+const absence_entity_1 = require("../hr/entities/absence.entity");
+const hr_settings_entity_1 = require("../hr/entities/hr-settings.entity");
+const gas_control_entity_1 = require("../gas-control/gas-control.entity");
 const initial_data_1 = require("../common-entities/initial-data");
 let TenancyService = class TenancyService {
     mainDataSource;
@@ -85,7 +90,9 @@ let TenancyService = class TenancyService {
                     sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, purchase_entity_1.PurchaseDocument,
                     purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
                     fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity,
-                    document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, period_audit_log_entity_1.PeriodAuditLog, tax_rate_entity_1.TaxRate, workflow_history_entity_1.WorkflowHistory
+                    document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, period_audit_log_entity_1.PeriodAuditLog, tax_rate_entity_1.TaxRate, workflow_history_entity_1.WorkflowHistory,
+                    employee_entity_1.Employee, payroll_entity_1.Payroll, absence_entity_1.Absence, hr_settings_entity_1.TaxBracket, hr_settings_entity_1.HRSettings,
+                    gas_control_entity_1.GasCylinderType, gas_control_entity_1.GasDailyControl, gas_control_entity_1.GasDailyEntry
                 ],
                 synchronize: true,
                 logging: ['error', 'warn'],
@@ -299,6 +306,46 @@ let TenancyService = class TenancyService {
                 ];
                 await taxRepo.save(taxRepo.create(taxDefaults));
                 console.log(`[Tenancy] ✅ Created ${taxDefaults.length} tax rates.`);
+            }
+            console.log(`[Tenancy] Checking HR Tax Brackets...`);
+            const hrBracketRepo = ds.getRepository(hr_settings_entity_1.TaxBracket);
+            const bracketCount = await hrBracketRepo.count();
+            if (bracketCount === 0) {
+                console.log(`[Tenancy] Seeding IRPS brackets...`);
+                const brackets = [
+                    { id: `IRPS-${companyId}-1`, companyId, minAmount: 0, maxAmount: 20250, rate: 0, deduction0: 0, deduction1: 0, deduction2: 0, deduction3: 0, deduction4Plus: 0 },
+                    {
+                        id: `IRPS-${companyId}-2`, companyId, minAmount: 20250.01, maxAmount: 33750, rate: 10,
+                        deduction0: 2025, deduction1: 2125, deduction2: 2225, deduction3: 2325, deduction4Plus: 2425
+                    },
+                    {
+                        id: `IRPS-${companyId}-3`, companyId, minAmount: 33750.01, maxAmount: 60750, rate: 15,
+                        deduction0: 3712.50, deduction1: 3812.50, deduction2: 3912.50, deduction3: 4012.50, deduction4Plus: 4112.50
+                    },
+                    {
+                        id: `IRPS-${companyId}-4`, companyId, minAmount: 60750.01, maxAmount: 148500, rate: 20,
+                        deduction0: 6750.00, deduction1: 6850.00, deduction2: 6950.00, deduction3: 7050.00, deduction4Plus: 7150.00
+                    },
+                    {
+                        id: `IRPS-${companyId}-5`, companyId, minAmount: 148500.01, maxAmount: 432000, rate: 25,
+                        deduction0: 14175.00, deduction1: 14275.00, deduction2: 14375.00, deduction3: 14475.00, deduction4Plus: 14575.00
+                    },
+                    {
+                        id: `IRPS-${companyId}-6`, companyId, minAmount: 432000.01, maxAmount: null, rate: 32,
+                        deduction0: 44415.00, deduction1: 44515.00, deduction2: 44615.00, deduction3: 44715.00, deduction4Plus: 44815.00
+                    },
+                ];
+                await hrBracketRepo.save(hrBracketRepo.create(brackets));
+            }
+            const hrSettingsRepo = ds.getRepository(hr_settings_entity_1.HRSettings);
+            const settingsCount = await hrSettingsRepo.count();
+            if (settingsCount === 0) {
+                await hrSettingsRepo.save({
+                    companyId,
+                    inssEmployeeRate: 3,
+                    inssEmployerRate: 4,
+                    currency: 'MT'
+                });
             }
             console.log(`[Tenancy] Seeding completed for ${companyId}`);
         }

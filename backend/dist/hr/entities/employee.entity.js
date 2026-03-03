@@ -13,10 +13,15 @@ exports.Employee = exports.ContractType = void 0;
 const typeorm_1 = require("typeorm");
 var ContractType;
 (function (ContractType) {
-    ContractType["FULL_TIME"] = "FULL_TIME";
-    ContractType["PART_TIME"] = "PART_TIME";
-    ContractType["CONTRACTOR"] = "CONTRACTOR";
-    ContractType["INTERN"] = "INTERN";
+    ContractType["INDETERMINADO"] = "INDETERMINADO";
+    ContractType["DETERMINADO_CERTO"] = "DETERMINADO_CERTO";
+    ContractType["DETERMINADO_INCERTO"] = "DETERMINADO_INCERTO";
+    ContractType["EVENTUAL"] = "EVENTUAL";
+    ContractType["SAZONAL"] = "SAZONAL";
+    ContractType["INTERMITENTE"] = "INTERMITENTE";
+    ContractType["TELETRABALHO"] = "TELETRABALHO";
+    ContractType["DOMICILIO"] = "DOMICILIO";
+    ContractType["ESTAGIO"] = "ESTAGIO";
 })(ContractType || (exports.ContractType = ContractType = {}));
 let Employee = class Employee {
     id;
@@ -33,11 +38,19 @@ let Employee = class Employee {
     department;
     position;
     contractType;
+    trialPeriodEnd;
+    weeklyHours;
     hireDate;
+    endDate;
+    terminationReason;
+    vacationBalance;
+    dependents;
     salaryBase;
     subsidyTransport;
     subsidyFood;
     subsidyHousing;
+    photoUrl;
+    documents;
     isActive;
     createdAt;
     updatedAt;
@@ -98,15 +111,39 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({
         type: 'simple-enum',
-        enum: ['FULL_TIME', 'PART_TIME', 'CONTRACTOR', 'INTERN'],
-        default: 'FULL_TIME',
+        enum: ['INDETERMINADO', 'DETERMINADO_CERTO', 'DETERMINADO_INCERTO', 'EVENTUAL', 'SAZONAL', 'INTERMITENTE', 'TELETRABALHO', 'DOMICILIO', 'ESTAGIO'],
+        default: 'INDETERMINADO',
     }),
     __metadata("design:type", String)
 ], Employee.prototype, "contractType", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'date', nullable: true }),
     __metadata("design:type", String)
+], Employee.prototype, "trialPeriodEnd", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'int', default: 44 }),
+    __metadata("design:type", Number)
+], Employee.prototype, "weeklyHours", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'date', nullable: true }),
+    __metadata("design:type", String)
 ], Employee.prototype, "hireDate", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'date', nullable: true }),
+    __metadata("design:type", String)
+], Employee.prototype, "endDate", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Employee.prototype, "terminationReason", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'int', default: 0 }),
+    __metadata("design:type", Number)
+], Employee.prototype, "vacationBalance", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'int', default: 0 }),
+    __metadata("design:type", Number)
+], Employee.prototype, "dependents", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2, default: 0 }),
     __metadata("design:type", Number)
@@ -123,6 +160,14 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2, default: 0 }),
     __metadata("design:type", Number)
 ], Employee.prototype, "subsidyHousing", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Employee.prototype, "photoUrl", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'simple-json', nullable: true }),
+    __metadata("design:type", Array)
+], Employee.prototype, "documents", void 0);
 __decorate([
     (0, typeorm_1.Column)({ default: true }),
     __metadata("design:type", Boolean)

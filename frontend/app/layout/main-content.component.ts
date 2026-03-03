@@ -41,6 +41,10 @@ import { LicenseManagerComponent } from '../features/admin/license-manager.compo
 import { EmployeeListComponent } from '../features/hr/employee-list.component';
 import { PayrollProcessingComponent } from '../features/hr/payroll-processing.component';
 import { AbsencesManagementComponent } from '../features/hr/absences-management.component';
+import { TaxTablesComponent } from '../features/hr/tax-tables.component';
+import { HRReportsComponent } from '../features/hr/hr-reports.component';
+import { HRUtilitiesComponent } from '../features/hr/hr-utilities.component';
+import { GasControlComponent } from '../features/inventory/gas-control.component';
 
 @Component({
   selector: 'app-main-content',
@@ -84,7 +88,11 @@ import { AbsencesManagementComponent } from '../features/hr/absences-management.
     ToasterComponent,
     EmployeeListComponent,
     PayrollProcessingComponent,
-    AbsencesManagementComponent
+    AbsencesManagementComponent,
+    TaxTablesComponent,
+    HRReportsComponent,
+    HRUtilitiesComponent,
+    GasControlComponent
   ],
   template: `
     <!-- Sales Forms -->
@@ -261,6 +269,26 @@ import { AbsencesManagementComponent } from '../features/hr/absences-management.
       <app-absences-management class="w-full h-full block"></app-absences-management>
     </ng-container>
 
+    <!-- HR: Tax Tables -->
+    <ng-container *ngIf="activeView === 'tax-tables'">
+      <app-tax-tables class="w-full h-full block"></app-tax-tables>
+    </ng-container>
+
+    <!-- HR: Reports -->
+    <ng-container *ngIf="activeView === 'hr-reports'">
+      <app-hr-reports class="w-full h-full block"></app-hr-reports>
+    </ng-container>
+
+    <!-- HR: Utilities -->
+    <ng-container *ngIf="activeView === 'hr-utilities'">
+      <app-hr-utilities class="w-full h-full block"></app-hr-utilities>
+    </ng-container>
+
+    <!-- GESt-GAS Control -->
+    <ng-container *ngIf="activeView === 'gas-control'">
+      <app-gas-control class="w-full h-full block"></app-gas-control>
+    </ng-container>
+
     <!-- Document Types (Sales/Purchases) -->
     <ng-container *ngIf="activeView === 'document-types'">
       <app-document-types class="w-full h-full block"></app-document-types>
@@ -392,7 +420,11 @@ export class MainContentComponent {
       'license-manager',
       'employee-list',
       'payroll-processing',
-      'absences-management'
+      'absences-management',
+      'tax-tables',
+      'hr-reports',
+      'hr-utilities',
+      'gas-control'
     ];
     return knownViews.includes(this.activeView);
   }

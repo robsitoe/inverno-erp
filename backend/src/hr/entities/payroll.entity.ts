@@ -41,7 +41,7 @@ export class Payroll {
     inssEmployer: number; // 3%
 
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
-    irm: number; // Mozambican Income Tax
+    irps: number; // Mozambican Income Tax (IRPS)
 
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     transportSubsidy: number;
@@ -55,8 +55,8 @@ export class Payroll {
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     bonusAmount: number;
 
-    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
-    absencesDeduction: number;
+    @Column({ type: 'integer', default: 30 })
+    daysWorked: number;
 
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     netSalary: number;

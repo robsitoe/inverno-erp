@@ -15,12 +15,12 @@ export declare class Payroll {
     grossSalary: number;
     inssEmployee: number;
     inssEmployer: number;
-    irm: number;
+    irps: number;
     transportSubsidy: number;
     foodSubsidy: number;
     overtimeAmount: number;
     bonusAmount: number;
-    absencesDeduction: number;
+    daysWorked: number;
     netSalary: number;
     status: string;
     journalEntryId: string;

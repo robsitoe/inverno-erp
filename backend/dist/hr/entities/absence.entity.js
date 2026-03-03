@@ -19,6 +19,7 @@ var AbsenceType;
     AbsenceType["JUSTIFIED"] = "JUSTIFIED";
     AbsenceType["UNJUSTIFIED"] = "UNJUSTIFIED";
     AbsenceType["MATERNITY"] = "MATERNITY";
+    AbsenceType["PATERNITY"] = "PATERNITY";
     AbsenceType["OTHER"] = "OTHER";
 })(AbsenceType || (exports.AbsenceType = AbsenceType = {}));
 var AbsenceStatus;

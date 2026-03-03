@@ -10402,3 +10402,1426 @@
   }
 }
 ---
+{
+  "timestamp": "2026-03-02T11:56:34.845Z",
+  "path": "/hr/employees",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "",
+    "companyId": "005",
+    "code": "021",
+    "name": "Joaquim Alfredo",
+    "contractType": "FULL_TIME",
+    "salaryBase": 10000,
+    "subsidyTransport": 2000,
+    "subsidyFood": 1500,
+    "subsidyHousing": 5000,
+    "isActive": true,
+    "address": "Bairro Ferroviario Q.66 C.59",
+    "phone": "823578514",
+    "email": "roberto.manue@gmail.com",
+    "position": "Fiel de Armazem",
+    "department": "Logistica",
+    "inss": "51212122212",
+    "nif": "1212121212",
+    "bankName": "BIM",
+    "nib": "121212121212121212"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-03-02T13:05:25.846Z",
+  "path": "/hr/employees",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "",
+    "companyId": "005",
+    "code": "001",
+    "name": "Nova Entidade 1",
+    "contractType": "FULL_TIME",
+    "salaryBase": 14500,
+    "subsidyTransport": 2000,
+    "subsidyFood": 2000,
+    "subsidyHousing": 5000,
+    "isActive": true,
+    "address": "Bairro Ferroviario Q.66 C.59",
+    "phone": "823578514",
+    "email": "roberto.manue@gmail.com",
+    "position": "Fiel de Armazem",
+    "department": "Logistica",
+    "nif": "1212121212",
+    "inss": "12121212112121212",
+    "bankName": "BIM - Millennium BIM",
+    "nib": "516516511655165161"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-03-02T13:05:52.409Z",
+  "path": "/hr/employees",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "",
+    "companyId": "005",
+    "code": "001",
+    "name": "Nova Entidade 1",
+    "contractType": "FULL_TIME",
+    "salaryBase": 14500,
+    "subsidyTransport": 2000,
+    "subsidyFood": 2000,
+    "subsidyHousing": 5000,
+    "isActive": true,
+    "address": "Bairro Ferroviario Q.66 C.59",
+    "phone": "823578514",
+    "email": "roberto.manue@gmail.com",
+    "position": "Fiel de Armazem",
+    "department": "Logistica",
+    "nif": "1212121212",
+    "inss": "12121212112121212",
+    "bankName": "BIM - Millennium BIM",
+    "nib": "51651651651651"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-03-02T13:05:56.779Z",
+  "path": "/hr/employees",
+  "method": "POST",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "",
+    "companyId": "005",
+    "code": "001",
+    "name": "Nova Entidade 1",
+    "contractType": "FULL_TIME",
+    "salaryBase": 14500,
+    "subsidyTransport": 2000,
+    "subsidyFood": 2000,
+    "subsidyHousing": 5000,
+    "isActive": true,
+    "address": "Bairro Ferroviario Q.66 C.59",
+    "phone": "823578514",
+    "email": "roberto.manue@gmail.com",
+    "position": "Fiel de Armazem",
+    "department": "Logistica",
+    "nif": "1212121212",
+    "inss": "12121212112121212",
+    "bankName": "BIM - Millennium BIM",
+    "nib": "51651651651651"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-03-02T13:28:13.998Z",
+  "path": "/hr/employees/EMP-001-005",
+  "method": "PATCH",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "EMP-001-005",
+    "companyId": "005",
+    "code": "001",
+    "name": "Roberto",
+    "nif": "2112121212",
+    "inss": "1212121212",
+    "nib": "555.55656565165165165",
+    "bankName": "BIM - Millennium BIM",
+    "email": "roberto.manue@gmail.com",
+    "phone": "823578514",
+    "address": "Bairro Ferroviario Q.66 C.59",
+    "department": "Logistica",
+    "position": "Fiel de Armazem",
+    "contractType": "FULL_TIME",
+    "hireDate": null,
+    "salaryBase": "14500.00",
+    "subsidyTransport": "4000.00",
+    "subsidyFood": "2000.00",
+    "subsidyHousing": "2000.00",
+    "photoUrl": "/hr/files/photos/1772458070215-554046.jpg",
+    "documents": null,
+    "isActive": true,
+    "createdAt": "2026-03-02T11:11:08.456Z",
+    "updatedAt": "2026-03-02T11:11:08.456Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-03-02T13:28:22.138Z",
+  "path": "/hr/employees/EMP-001-005",
+  "method": "PATCH",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "EMP-001-005",
+    "companyId": "005",
+    "code": "001",
+    "name": "Roberto",
+    "nif": "2112121212",
+    "inss": "1212121212",
+    "nib": "555.55656565165165165",
+    "bankName": "BIM - Millennium BIM",
+    "email": "roberto.manue@gmail.com",
+    "phone": "823578514",
+    "address": "Bairro Ferroviario Q.66 C.59",
+    "department": "Logistica",
+    "position": "Fiel de Armazem",
+    "contractType": "FULL_TIME",
+    "hireDate": null,
+    "salaryBase": "14500.00",
+    "subsidyTransport": "4000.00",
+    "subsidyFood": "2000.00",
+    "subsidyHousing": "2000.00",
+    "photoUrl": "/hr/files/photos/1772458070215-554046.jpg",
+    "documents": null,
+    "isActive": true,
+    "createdAt": "2026-03-02T11:11:08.456Z",
+    "updatedAt": "2026-03-02T11:11:08.456Z"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-03-02T14:43:19.160Z",
+  "path": "/sales/documents?companyId=005",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T14:43:19.186Z",
+  "path": "/purchases/documents?companyId=005",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T14:43:19.193Z",
+  "path": "/treasury/documents",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {}
+}
+---
+{
+  "timestamp": "2026-03-02T14:46:19.878Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "name": "9KG",
+    "currentPrice": 739,
+    "id": "9KG-005"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T14:46:20.091Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "name": "19KG",
+    "currentPrice": 1560,
+    "id": "19KG-005"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T14:46:20.115Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "name": "48KG",
+    "currentPrice": 3800,
+    "id": "48KG-005"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T14:46:20.128Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "name": "6KG",
+    "currentPrice": 480,
+    "id": "6KG-005"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T14:46:20.138Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "name": "14KG",
+    "currentPrice": 1149,
+    "id": "14KG-005"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T14:46:20.152Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "name": "11KG",
+    "currentPrice": 900,
+    "id": "11KG-005"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T14:50:58.170Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "name": "9KG",
+    "currentPrice": 739,
+    "id": "9KG-005"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T14:50:58.212Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "name": "19KG",
+    "currentPrice": 1560,
+    "id": "19KG-005"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T14:50:58.426Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "name": "48KG",
+    "currentPrice": 3800,
+    "id": "48KG-005"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T14:50:58.468Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "name": "6KG",
+    "currentPrice": 480,
+    "id": "6KG-005"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T14:50:58.502Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "name": "14KG",
+    "currentPrice": 1149,
+    "id": "14KG-005"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T14:50:58.525Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"companyId\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "name": "11KG",
+    "currentPrice": 900,
+    "id": "11KG-005"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T17:34:37.029Z",
+  "path": "/gas-control/entries?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"s_gpl\" of relation \"gas_daily_entries\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"s_gpl\" of relation \"gas_daily_entries\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async UpdateQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\UpdateQueryBuilder.ts:145:33)\n    at async updateSubject (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:618:38)\n    at async Promise.all (index 0)\n    at async SubjectExecutor.executeUpdateOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:664:9)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:148:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "controlId": "GAS-2026-03-02-005",
+    "cylinderTypeId": "48KG-005",
+    "customerName": "asdasdad",
+    "entryType": "SUPPLIER",
+    "priceType": "REVENDEDOR",
+    "s_gpl": null,
+    "s_vaz": 1,
+    "s_av": 0,
+    "vz_vend": 0,
+    "adc_caucao": "0.00",
+    "e_gpl": 0,
+    "e_vaz": 0,
+    "e_av": 0,
+    "p_divida": "0.00",
+    "totalAmount": 0,
+    "id": "GDE-1772472835697-489",
+    "companyId": "005"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:01:00.206Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:59:24)\n    at async GasControlService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\gas-control\\gas-control.service.ts:27:20)\n    at async GasControlService.getCylinderTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\gas-control\\gas-control.service.ts:32:22)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:01:22.123Z",
+  "path": "/suppliers?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:59:24)\n    at async AppController.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:43:16)\n    at async AppController.getSuppliers (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:313:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:01:22.559Z",
+  "path": "/suppliers?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:59:24)\n    at async AppController.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:43:16)\n    at async AppController.getSuppliers (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:313:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:01:27.739Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:59:24)\n    at async GasControlService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\gas-control\\gas-control.service.ts:27:20)\n    at async GasControlService.getCylinderTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\gas-control\\gas-control.service.ts:32:22)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:03:28.157Z",
+  "path": "/document-types?module=SALES&companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:490:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "SALES",
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:03:28.182Z",
+  "path": "/customers?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:03:28.193Z",
+  "path": "/suppliers?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:03:28.198Z",
+  "path": "/accounting/accounts?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:03:29.000Z",
+  "path": "/document-types?module=PURCHASES&companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:490:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "PURCHASES",
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:03:29.605Z",
+  "path": "/document-types?module=STOCK&companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:490:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "STOCK",
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:03:30.204Z",
+  "path": "/inventory/articles?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:59:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:31:16)\n    at async InventoryService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:72:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:03:30.826Z",
+  "path": "/inventory/stock-movements?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:59:24)\n    at async InventoryService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:31:16)\n    at async InventoryService.findAllStockMovements (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\inventory\\inventory.service.ts:215:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:06:12.494Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:59:24)\n    at async HRService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:29:16)\n    at async HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:106:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:10:07.895Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:59:24)\n    at async HRService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:30:16)\n    at async HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:107:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:10:32.147Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input value for enum employees_contracttype_enum: \"FULL_TIME\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:59:24)\n    at async HRService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:30:16)\n    at async HRService.findAll (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:107:18)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:25:34.735Z",
+  "path": "/hr/employees/EMP-001-005?companyId=005",
+  "method": "PATCH",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "companyId": "005",
+    "code": "001",
+    "name": "Roberto",
+    "nif": "2112121212",
+    "inss": "1212121212",
+    "nib": "555.55656565165165165",
+    "bankName": "FNB",
+    "email": "roberto.manue@gmail.com",
+    "phone": "823578514",
+    "address": "Bairro Ferroviario Q.66 C.59",
+    "department": "Logistica",
+    "position": "Fiel de Armazem",
+    "contractType": "INDETERMINADO",
+    "trialPeriodEnd": null,
+    "hireDate": null,
+    "endDate": null,
+    "terminationReason": null,
+    "vacationBalance": 0,
+    "isActive": true,
+    "salaryBase": 21000,
+    "subsidyTransport": 4000,
+    "subsidyFood": 2000,
+    "subsidyHousing": 2000,
+    "weeklyHours": 44,
+    "dependents": 4
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T19:25:56.277Z",
+  "path": "/hr/employees/EMP-001-005?companyId=005",
+  "method": "PATCH",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Bad Request Exception",
+    "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:107:20)\n    at ValidationPipe.transform (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async resolveParamValue (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "companyId": "005",
+    "code": "001",
+    "name": "Roberto",
+    "nif": "2112121212",
+    "inss": "1212121212",
+    "nib": "555.55656565165165165",
+    "bankName": "FNB",
+    "email": "roberto.manue@gmail.com",
+    "phone": "823578514",
+    "address": "Bairro Ferroviario Q.66 C.59",
+    "department": "Logistica",
+    "position": "Fiel de Armazem",
+    "contractType": "INDETERMINADO",
+    "trialPeriodEnd": null,
+    "hireDate": null,
+    "endDate": null,
+    "terminationReason": null,
+    "vacationBalance": 0,
+    "isActive": true,
+    "salaryBase": 21000,
+    "subsidyTransport": 4000,
+    "subsidyFood": 2000,
+    "subsidyHousing": 2000,
+    "weeklyHours": 44,
+    "dependents": 4
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T20:18:21.953Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 60750.01,
+    "maxAmount": 145800,
+    "rate": 20,
+    "deduction0": 6682.5,
+    "deduction1": 6762.5,
+    "deduction2": 6842.5,
+    "deduction3": 6922.5,
+    "deduction4Plus": 7002.5
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T20:18:22.022Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 20250.01,
+    "maxAmount": 32400,
+    "rate": 10,
+    "deduction0": 2025,
+    "deduction1": 2045,
+    "deduction2": 2065,
+    "deduction3": 2085,
+    "deduction4Plus": 2105
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T20:18:22.027Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 0,
+    "maxAmount": 20250,
+    "rate": 0,
+    "deduction0": 0,
+    "deduction1": 0,
+    "deduction2": 0,
+    "deduction3": 0,
+    "deduction4Plus": 0
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T20:18:22.031Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 145800.01,
+    "maxAmount": 437400,
+    "rate": 25,
+    "deduction0": 13972.5,
+    "deduction1": 14132.5,
+    "deduction2": 14292.5,
+    "deduction3": 14452.5,
+    "deduction4Plus": 14612.5
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T20:18:22.036Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 32400.01,
+    "maxAmount": 60750,
+    "rate": 15,
+    "deduction0": 3645,
+    "deduction1": 3685,
+    "deduction2": 3725,
+    "deduction3": 3765,
+    "deduction4Plus": 3805
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T20:18:22.042Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 437400.01,
+    "maxAmount": null,
+    "rate": 32,
+    "deduction0": 44590.5,
+    "deduction1": 45030.5,
+    "deduction2": 45470.5,
+    "deduction3": 45910.5,
+    "deduction4Plus": 46350.5
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T20:18:45.605Z",
+  "path": "/hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005",
+    "stack": "NotFoundException: Cannot GET /hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at TenancyContext.run (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.context.ts:7:29)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:11:28)"
+  },
+  "query": {
+    "year": "2026",
+    "month": "3",
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T20:18:50.579Z",
+  "path": "/hr/hr/reports/nominal-relation?companyId=005",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /hr/hr/reports/nominal-relation?companyId=005",
+    "stack": "NotFoundException: Cannot GET /hr/hr/reports/nominal-relation?companyId=005\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at TenancyContext.run (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.context.ts:7:29)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:11:28)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:01:08.238Z",
+  "path": "/hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005",
+    "stack": "NotFoundException: Cannot GET /hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at TenancyContext.run (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.context.ts:7:29)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:11:28)"
+  },
+  "query": {
+    "year": "2026",
+    "month": "3",
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:01:31.267Z",
+  "path": "/hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005",
+    "stack": "NotFoundException: Cannot GET /hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at TenancyContext.run (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.context.ts:7:29)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:11:28)"
+  },
+  "query": {
+    "year": "2026",
+    "month": "3",
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:01:40.539Z",
+  "path": "/hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005",
+    "stack": "NotFoundException: Cannot GET /hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at TenancyContext.run (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.context.ts:7:29)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:11:28)"
+  },
+  "query": {
+    "year": "2026",
+    "month": "3",
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:02:23.688Z",
+  "path": "/hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005",
+  "method": "GET",
+  "status": 404,
+  "exception": {
+    "name": "NotFoundException",
+    "message": "Cannot GET /hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005",
+    "stack": "NotFoundException: Cannot GET /hr/hr/reports/payroll-sheet?year=2026&month=3&companyId=005\n    at callback (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\lib\\layer.js:152:17)\n    at trimPrefix (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:342:13)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:297:9\n    at processParams (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:582:12)\n    at next (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\router\\index.js:291:5)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at TenancyContext.run (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.context.ts:7:29)\n    at TenancyMiddleware.use (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.middleware.ts:11:28)"
+  },
+  "query": {
+    "year": "2026",
+    "month": "3",
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:20:22.357Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 20250.01,
+    "maxAmount": 32400,
+    "rate": 10,
+    "deduction0": 2025,
+    "deduction1": 2045,
+    "deduction2": 2065,
+    "deduction3": 2085,
+    "deduction4Plus": 2105
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:20:22.431Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 0,
+    "maxAmount": 20250,
+    "rate": 0,
+    "deduction0": 0,
+    "deduction1": 0,
+    "deduction2": 0,
+    "deduction3": 0,
+    "deduction4Plus": 0
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:20:22.524Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 145800.01,
+    "maxAmount": 437400,
+    "rate": 25,
+    "deduction0": 13972.5,
+    "deduction1": 14132.5,
+    "deduction2": 14292.5,
+    "deduction3": 14452.5,
+    "deduction4Plus": 14612.5
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:20:22.543Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 437400.01,
+    "maxAmount": null,
+    "rate": 32,
+    "deduction0": 44590.5,
+    "deduction1": 45030.5,
+    "deduction2": 45470.5,
+    "deduction3": 45910.5,
+    "deduction4Plus": 46350.5
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:20:22.554Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 32400.01,
+    "maxAmount": 60750,
+    "rate": 15,
+    "deduction0": 3645,
+    "deduction1": 3685,
+    "deduction2": 3725,
+    "deduction3": 3765,
+    "deduction4Plus": 3805
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:20:22.609Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 60750.01,
+    "maxAmount": 145800,
+    "rate": 20,
+    "deduction0": 6682.5,
+    "deduction1": 6762.5,
+    "deduction2": 6842.5,
+    "deduction3": 6922.5,
+    "deduction4Plus": 7002.5
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:20:34.260Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 0,
+    "maxAmount": 20250,
+    "rate": 0,
+    "deduction0": 0,
+    "deduction1": 0,
+    "deduction2": 0,
+    "deduction3": 0,
+    "deduction4Plus": 0
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:20:34.284Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 32400.01,
+    "maxAmount": 60750,
+    "rate": 15,
+    "deduction0": 3645,
+    "deduction1": 3685,
+    "deduction2": 3725,
+    "deduction3": 3765,
+    "deduction4Plus": 3805
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:20:34.306Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 20250.01,
+    "maxAmount": 32400,
+    "rate": 10,
+    "deduction0": 2025,
+    "deduction1": 2045,
+    "deduction2": 2065,
+    "deduction3": 2085,
+    "deduction4Plus": 2105
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:20:34.345Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 60750.01,
+    "maxAmount": 145800,
+    "rate": 20,
+    "deduction0": 6682.5,
+    "deduction1": 6762.5,
+    "deduction2": 6842.5,
+    "deduction3": 6922.5,
+    "deduction4Plus": 7002.5
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:20:34.352Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 145800.01,
+    "maxAmount": 437400,
+    "rate": 25,
+    "deduction0": 13972.5,
+    "deduction1": 14132.5,
+    "deduction2": 14292.5,
+    "deduction3": 14452.5,
+    "deduction4Plus": 14612.5
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:20:34.361Z",
+  "path": "/hr/tax-brackets?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"id\" of relation \"hr_tax_brackets\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async InsertQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\InsertQueryBuilder.ts:164:33)\n    at async SubjectExecutor.executeInsertOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:435:42)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:137:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async HRService.saveTaxBracket (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\hr\\services\\hr.service.ts:210:12)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "minAmount": 437400.01,
+    "maxAmount": null,
+    "rate": 32,
+    "deduction0": 44590.5,
+    "deduction1": 45030.5,
+    "deduction2": 45470.5,
+    "deduction3": 45910.5,
+    "deduction4Plus": 46350.5
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:23:23.910Z",
+  "path": "/hr/employees?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-02T21:23:23.922Z",
+  "path": "/hr/absences?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---

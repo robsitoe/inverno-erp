@@ -75,22 +75,23 @@ import { Subscription } from 'rxjs';
           <div class="space-y-0.5 text-xs pb-2">
             <div *ngFor="let item of displayedMenuItems" class="group">
               <button
-                (click)="!collapsed && toggleModule(item.label)"
-                [class]="'w-full flex items-center gap-2 px-2 py-1.5 hover:bg-gray-100 transition-colors cursor-pointer select-none ' + (collapsed ? 'justify-center' : '') + ' ' + (isModuleOpen(item.label) ? 'bg-gray-50 text-primary' : 'text-gray-700')"
+                (click)="!collapsed && handleTopLevelClick($event, item)"
+                [class]="'w-full flex items-center gap-2 px-2 py-1.5 hover:bg-gray-100 transition-colors cursor-pointer select-none ' + (collapsed ? 'justify-center' : '') + ' ' + (isModuleOpen(item.label) || (item.view === currentView) ? 'bg-gray-50 text-blue-600' : 'text-gray-700')"
                 [title]="collapsed ? item.label : ''"
               >
                 <app-icon 
-                  *ngIf="!collapsed" 
+                  *ngIf="!collapsed && item.children && item.children.length > 0" 
                   name="chevron_right" 
                   [size]="20" 
                   color="#172554" 
                   [class.rotate-90]="isModuleOpen(item.label)"
                   class="transition-transform duration-200"
                 ></app-icon>
+                <div *ngIf="!collapsed && (!item.children || item.children.length === 0)" class="w-5"></div>
                 <app-icon 
                   [name]="item.icon" 
                   [size]="22" 
-                  [color]="isModuleOpen(item.label) ? '#2563eb' : getIconColor(item.label)"
+                  [color]="(isModuleOpen(item.label) || (item.view === currentView)) ? '#2563eb' : getIconColor(item.label)"
                 ></app-icon>
                 <span *ngIf="!collapsed" class="font-medium truncate">{{ item.label }}</span>
               </button>
@@ -308,6 +309,21 @@ export class SidebarComponent implements OnInit, OnDestroy {
   toggleModule(label: string) {
     if (this.searchQuery) return;
     this.activeModule = this.activeModule === label ? null : label;
+  }
+
+  handleTopLevelClick(e: Event, item: MenuItem) {
+    if (item.view) {
+      if (item.children && item.children.length > 0) {
+        // If it has both, we toggle but ALSO navigate? 
+        // Usually, better to just toggle if it's a module.
+        this.toggleModule(item.label);
+      } else {
+        this.handleMenuItemClick(e, item);
+        this.activeModule = null; // Close others
+      }
+    } else {
+      this.toggleModule(item.label);
+    }
   }
 
   toggleSubModule(label: string) {

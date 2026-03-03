@@ -170,8 +170,14 @@ export const MENU_ITEMS: MenuItem[] = [
       { label: "Férias e Ausências", icon: "event_busy", view: "absences-management" },
       { label: "Tabelas de IRPS/INSS", icon: "table_rows", view: "tax-tables" },
       { label: "Relatórios de RH", icon: "assessment", view: "hr-reports" },
-      { label: "Utilitários", icon: "build" }
+      { label: "Utilitários", icon: "build", view: "hr-utilities" }
     ]
+  },
+  {
+    label: "GESt-GAS",
+    icon: "gas_meter",
+    feature: "INVENTORY", // Reusing INVENTORY license or could be GAZT
+    view: "gas-control"
   },
   {
     label: "Projetos e Serviços",

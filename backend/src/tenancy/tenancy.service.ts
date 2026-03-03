@@ -20,6 +20,11 @@ import { DocumentType } from '../common-entities/entities/document-type.entity';
 import { PeriodAuditLog } from '../companies/entities/period-audit-log.entity';
 import { TaxRate } from '../taxes/entities/tax-rate.entity';
 import { WorkflowHistory } from '../common/entities/workflow-history.entity';
+import { Employee } from '../hr/entities/employee.entity';
+import { Payroll } from '../hr/entities/payroll.entity';
+import { Absence } from '../hr/entities/absence.entity';
+import { TaxBracket, HRSettings } from '../hr/entities/hr-settings.entity';
+import { GasCylinderType, GasDailyControl, GasDailyEntry } from '../gas-control/gas-control.entity';
 import {
     SALES_DOCUMENT_TYPES,
     PURCHASE_DOCUMENT_TYPES,
@@ -92,7 +97,9 @@ export class TenancyService implements OnModuleDestroy {
                     SalesDocument, SalesDocumentLine, PurchaseDocument,
                     PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
                     FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-                    DocumentType, PaymentMethod, PeriodAuditLog, TaxRate, WorkflowHistory
+                    DocumentType, PaymentMethod, PeriodAuditLog, TaxRate, WorkflowHistory,
+                    Employee, Payroll, Absence, TaxBracket, HRSettings,
+                    GasCylinderType, GasDailyControl, GasDailyEntry
                 ],
                 synchronize: true,
                 logging: ['error', 'warn'],
@@ -342,6 +349,50 @@ export class TenancyService implements OnModuleDestroy {
                 ];
                 await taxRepo.save(taxRepo.create(taxDefaults));
                 console.log(`[Tenancy] ✅ Created ${taxDefaults.length} tax rates.`);
+            }
+
+            // 5. HR Tax Brackets (IRPS Mozambique)
+            console.log(`[Tenancy] Checking HR Tax Brackets...`);
+            const hrBracketRepo = ds.getRepository(TaxBracket);
+            const bracketCount = await hrBracketRepo.count();
+            if (bracketCount === 0) {
+                console.log(`[Tenancy] Seeding IRPS brackets...`);
+                const brackets = [
+                    { id: `IRPS-${companyId}-1`, companyId, minAmount: 0, maxAmount: 20250, rate: 0, deduction0: 0, deduction1: 0, deduction2: 0, deduction3: 0, deduction4Plus: 0 },
+                    {
+                        id: `IRPS-${companyId}-2`, companyId, minAmount: 20250.01, maxAmount: 33750, rate: 10,
+                        deduction0: 2025, deduction1: 2125, deduction2: 2225, deduction3: 2325, deduction4Plus: 2425
+                    },
+                    {
+                        id: `IRPS-${companyId}-3`, companyId, minAmount: 33750.01, maxAmount: 60750, rate: 15,
+                        deduction0: 3712.50, deduction1: 3812.50, deduction2: 3912.50, deduction3: 4012.50, deduction4Plus: 4112.50
+                    },
+                    {
+                        id: `IRPS-${companyId}-4`, companyId, minAmount: 60750.01, maxAmount: 148500, rate: 20,
+                        deduction0: 6750.00, deduction1: 6850.00, deduction2: 6950.00, deduction3: 7050.00, deduction4Plus: 7150.00
+                    },
+                    {
+                        id: `IRPS-${companyId}-5`, companyId, minAmount: 148500.01, maxAmount: 432000, rate: 25,
+                        deduction0: 14175.00, deduction1: 14275.00, deduction2: 14375.00, deduction3: 14475.00, deduction4Plus: 14575.00
+                    },
+                    {
+                        id: `IRPS-${companyId}-6`, companyId, minAmount: 432000.01, maxAmount: null, rate: 32,
+                        deduction0: 44415.00, deduction1: 44515.00, deduction2: 44615.00, deduction3: 44715.00, deduction4Plus: 44815.00
+                    },
+                ];
+                await hrBracketRepo.save(hrBracketRepo.create(brackets));
+            }
+
+            // 6. HR Settings
+            const hrSettingsRepo = ds.getRepository(HRSettings);
+            const settingsCount = await hrSettingsRepo.count();
+            if (settingsCount === 0) {
+                await hrSettingsRepo.save({
+                    companyId,
+                    inssEmployeeRate: 3,
+                    inssEmployerRate: 4,
+                    currency: 'MT'
+                });
             }
 
             console.log(`[Tenancy] Seeding completed for ${companyId}`);
