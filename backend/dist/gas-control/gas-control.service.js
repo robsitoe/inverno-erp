@@ -87,7 +87,17 @@ let GasControlService = class GasControlService {
             throw new common_1.NotFoundException('Control not found');
         control.initialStock = initialStock;
         control.finalStock = finalStock;
-        return repo.save(control);
+        const saved = await repo.save(control);
+        const cid = companyId || control.companyId;
+        const nextDate = new Date(control.date);
+        nextDate.setDate(nextDate.getDate() + 1);
+        const nextDateStr = nextDate.toISOString().split('T')[0];
+        const nextControl = await repo.findOne({ where: { date: nextDateStr, companyId: cid } });
+        if (nextControl) {
+            nextControl.initialStock = finalStock;
+            await repo.save(nextControl);
+        }
+        return saved;
     }
     async saveCylinderType(data, companyId) {
         const cid = companyId || tenancy_context_1.TenancyContext.getCompanyId();

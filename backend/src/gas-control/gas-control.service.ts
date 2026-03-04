@@ -88,7 +88,21 @@ export class GasControlService {
 
         control.initialStock = initialStock;
         control.finalStock = finalStock;
-        return repo.save(control);
+        const saved = await repo.save(control);
+
+        // PROPAGATE TO NEXT DAY AUTOMATICALLY
+        const cid = companyId || control.companyId;
+        const nextDate = new Date(control.date);
+        nextDate.setDate(nextDate.getDate() + 1);
+        const nextDateStr = nextDate.toISOString().split('T')[0];
+
+        const nextControl = await repo.findOne({ where: { date: nextDateStr, companyId: cid } });
+        if (nextControl) {
+            nextControl.initialStock = finalStock;
+            await repo.save(nextControl);
+        }
+
+        return saved;
     }
 
     async saveCylinderType(data: any, companyId?: string) {

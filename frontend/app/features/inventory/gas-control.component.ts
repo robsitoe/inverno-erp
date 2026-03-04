@@ -190,10 +190,18 @@ import { Subscription } from 'rxjs';
                        <span class="text-[9px] font-bold text-blue-400 uppercase tracking-widest mt-1">Conferência Real do Numerário</span>
                     </div>
                  </div>
-                 <div class="flex flex-col items-end">
-                    <span class="text-[10px] font-black text-blue-800 uppercase tracking-tighter italic leading-none">TOTAL FÍSICO CONTADO</span>
-                    <div class="px-6 py-2 bg-blue-600 text-white rounded-xl font-black text-3xl font-mono shadow-lg border-2 border-blue-400 mt-1">
-                      {{ getPhysicalTotal() | number:'1.2-2' }} <small class="text-xs">MT</small>
+                 <div class="flex gap-4">
+                    <div class="flex flex-col items-end">
+                       <span class="text-[10px] font-black text-blue-800 uppercase tracking-tighter italic leading-none">Total Físico</span>
+                       <div class="px-4 py-1 text-blue-600 bg-blue-50 rounded-lg font-black text-xl font-mono border border-blue-100">
+                         {{ getPhysicalTotal() | number:'1.2-2' }}
+                       </div>
+                    </div>
+                    <div class="flex flex-col items-end">
+                       <span class="text-[10px] font-black text-emerald-700 uppercase tracking-tighter italic leading-none">Saldo p/ Amanhã</span>
+                       <div class="px-6 py-2 bg-emerald-600 text-white rounded-xl font-black text-3xl font-mono shadow-lg border-2 border-emerald-400 mt-1">
+                         {{ (getPhysicalTotal() - (cashHandover || 0)) | number:'1.2-2' }} <small class="text-xs">MT</small>
+                       </div>
                     </div>
                  </div>
               </div>
@@ -344,14 +352,22 @@ import { Subscription } from 'rxjs';
       </div>
 
       <!-- GLOBAL FOOTER -->
-      <div class="bg-white border-t-4 border-emerald-500 p-4 px-12 flex justify-end gap-20 shadow-[0_-30px_60px_-15px_rgba(0,0,0,0.3)] shrink-0 z-[120] relative backdrop-blur-sm bg-white/95">
-         <div class="flex flex-col items-end border-l border-gray-100 pl-10">
-            <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1 italic font-mono">LIQUIDAÇÕES TOTAIS (DIA)</span>
-            <span class="text-3xl font-black text-blue-600 font-mono italic tracking-tighter">{{ (getGlobalTotal() + getCollectionsTotal()) | number:'1.2-2' }} <small class="text-[10px] opacity-40 font-sans NOT-italic font-black">MT</small></span>
+      <div class="bg-white border-t-4 border-emerald-500 p-4 px-12 flex justify-end items-center gap-12 shadow-[0_-30px_60px_-15px_rgba(0,0,0,0.3)] shrink-0 z-[120] relative backdrop-blur-sm bg-white/95">
+         <div class="flex flex-col items-end border-l border-gray-100 pl-8">
+            <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1 italic font-mono">LIQUIDAÇÕES (DIA)</span>
+            <span class="text-2xl font-black text-blue-600 font-mono italic tracking-tighter">{{ (getGlobalTotal() + getCollectionsTotal()) | number:'1.2-2' }} <small class="text-[10px] opacity-40 font-sans NOT-italic">MT</small></span>
          </div>
-         <div class="flex flex-col items-end border-l-[6px] border-emerald-600 pl-12 font-sans">
-            <span class="text-[11px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1 font-mono italic">RESUMO GERAL DE VENDAS</span>
-            <span class="text-5xl font-black text-emerald-700 font-mono drop-shadow-lg tracking-tighter">{{ getGlobalTotal() | number:'1.2-2' }} <small class="text-sm font-sans font-black opacity-30 NOT-italic">MT</small></span>
+         <div class="flex flex-col items-end border-l-4 border-emerald-600 pl-8 font-sans">
+            <span class="text-[11px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1 font-mono italic">VENDAS TOTAIS</span>
+            <span class="text-3xl font-black text-emerald-700 font-mono drop-shadow-lg tracking-tighter">{{ getGlobalTotal() | number:'1.2-2' }} <small class="text-sm font-sans font-black opacity-30 NOT-italic">MT</small></span>
+         </div>
+         <!-- SALDO FINAL DE CAIXA -->
+         <div class="flex flex-col items-end border-l-8 border-blue-800 pl-10 font-sans">
+            <span class="text-[11px] font-black text-blue-800 uppercase tracking-widest leading-none mb-1 font-mono italic">FECHO DE CAIXA (LÍQUIDO)</span>
+            <div class="bg-gradient-to-br from-blue-700 to-blue-900 text-white px-8 py-2 rounded-xl shadow-2xl flex flex-col items-end border-2 border-blue-400/30">
+                <span class="text-5xl font-black font-mono tracking-tighter drop-shadow-md">{{ (getPhysicalTotal() - (cashHandover || 0)) | number:'1.2-2' }} <small class="text-xs font-sans font-black opacity-60">MT</small></span>
+                <span class="text-[9px] font-bold uppercase tracking-widest text-blue-200 mt-1">Disponível para abertura de amanhã</span>
+            </div>
          </div>
       </div>
     </div>
