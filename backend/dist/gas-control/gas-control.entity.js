@@ -61,8 +61,14 @@ let GasDailyControl = class GasDailyControl {
     id;
     companyId;
     date;
+    status;
+    openedBy;
+    openedAt;
+    closedBy;
+    closedAt;
     initialStock;
     finalStock;
+    auditLog;
     createdAt;
     updatedAt;
 };
@@ -80,6 +86,26 @@ __decorate([
     __metadata("design:type", String)
 ], GasDailyControl.prototype, "date", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ default: 'NOT_STARTED' }),
+    __metadata("design:type", String)
+], GasDailyControl.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], GasDailyControl.prototype, "openedBy", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Date)
+], GasDailyControl.prototype, "openedAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], GasDailyControl.prototype, "closedBy", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Date)
+], GasDailyControl.prototype, "closedAt", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'simple-json', nullable: true }),
     __metadata("design:type", Object)
 ], GasDailyControl.prototype, "initialStock", void 0);
@@ -87,6 +113,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'simple-json', nullable: true }),
     __metadata("design:type", Object)
 ], GasDailyControl.prototype, "finalStock", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'simple-json', nullable: true }),
+    __metadata("design:type", Array)
+], GasDailyControl.prototype, "auditLog", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

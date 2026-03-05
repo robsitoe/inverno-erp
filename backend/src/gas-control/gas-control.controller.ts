@@ -37,13 +37,25 @@ export class GasControlController {
         return this.gasService.deleteEntry(id, companyId);
     }
 
+    @Post('daily/open')
+    @ApiOperation({ summary: 'Open daily control' })
+    openDaily(@Body() body: { date: string, user: string }, @Query('companyId') companyId?: string) {
+        return this.gasService.openDaily(body.date, body.user, companyId);
+    }
+
+    @Post('daily/:id/close')
+    @ApiOperation({ summary: 'Close daily control' })
+    closeDaily(@Param('id') id: string, @Body() body: { user: string }, @Query('companyId') companyId?: string) {
+        return this.gasService.closeDaily(id, body.user, companyId);
+    }
+
     @Patch('daily/:id/stocks')
     @ApiOperation({ summary: 'Update initial and final stocks' })
     updateStocks(
         @Param('id') id: string,
-        @Body() body: { initialStock: any; finalStock: any },
+        @Body() body: { initialStock: any; finalStock: any; user: string },
         @Query('companyId') companyId?: string,
     ) {
-        return this.gasService.updateStocks(id, body.initialStock, body.finalStock, companyId);
+        return this.gasService.updateStocks(id, body.initialStock, body.finalStock, body.user, companyId);
     }
 }

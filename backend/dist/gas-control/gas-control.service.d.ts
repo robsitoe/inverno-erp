@@ -10,11 +10,16 @@ export declare class GasControlService {
     private getRepo;
     getCylinderTypes(companyId?: string): Promise<GasCylinderType[]>;
     getDailyControl(date: string, companyId?: string): Promise<{
+        control: any;
+        entries: never[];
+    } | {
         control: GasDailyControl;
         entries: GasDailyEntry[];
     }>;
     saveEntry(data: any, companyId?: string): Promise<any>;
     deleteEntry(id: string, companyId?: string): Promise<import("typeorm").DeleteResult>;
-    updateStocks(controlId: string, initialStock: any, finalStock: any, companyId?: string): Promise<GasDailyControl>;
+    openDaily(date: string, user: string, companyId?: string): Promise<GasDailyControl>;
+    closeDaily(id: string, user: string, companyId?: string): Promise<GasDailyControl>;
+    updateStocks(controlId: string, initialStock: any, finalStock: any, user: string, companyId?: string): Promise<GasDailyControl>;
     saveCylinderType(data: any, companyId?: string): Promise<any>;
 }

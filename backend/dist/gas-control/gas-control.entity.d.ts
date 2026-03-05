@@ -12,8 +12,14 @@ export declare class GasDailyControl {
     id: string;
     companyId: string;
     date: string;
+    status: string;
+    openedBy: string;
+    openedAt: Date;
+    closedBy: string;
+    closedAt: Date;
     initialStock: any;
     finalStock: any;
+    auditLog: any[];
     createdAt: Date;
     updatedAt: Date;
 }

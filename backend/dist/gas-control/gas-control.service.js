@@ -47,22 +47,15 @@ let GasControlService = class GasControlService {
         const entryRepo = await this.getRepo(gas_control_entity_1.GasDailyEntry, this.defaultEntryRepo, cid);
         let control = await controlRepo.findOne({ where: { date, companyId: cid } });
         if (!control) {
-            const lastControl = await controlRepo.createQueryBuilder('c')
-                .where('c.date < :date AND c.companyId = :cid', { date, cid })
-                .orderBy('c.date', 'DESC')
-                .getOne();
-            let initialStock = {};
-            if (lastControl && lastControl.finalStock) {
-                initialStock = lastControl.finalStock;
-            }
-            control = controlRepo.create({
-                id: `GAS-${date}-${cid}`,
-                date,
-                companyId: cid,
-                initialStock,
-                finalStock: {}
-            });
-            await controlRepo.save(control);
+            return {
+                control: {
+                    date,
+                    companyId: cid,
+                    status: 'NOT_STARTED',
+                    initialStock: {}
+                },
+                entries: []
+            };
         }
         const entries = await entryRepo.find({ where: { controlId: control.id, companyId: cid } });
         return { control, entries };
@@ -80,13 +73,84 @@ let GasControlService = class GasControlService {
         const repo = await this.getRepo(gas_control_entity_1.GasDailyEntry, this.defaultEntryRepo, companyId);
         return repo.delete(id);
     }
-    async updateStocks(controlId, initialStock, finalStock, companyId) {
+    async openDaily(date, user, companyId) {
+        const cid = companyId || tenancy_context_1.TenancyContext.getCompanyId();
+        const repo = await this.getRepo(gas_control_entity_1.GasDailyControl, this.defaultControlRepo, cid);
+        let control = await repo.findOne({ where: { date, companyId: cid } });
+        if (control) {
+            if (control.status === 'NOT_STARTED' || !control.status) {
+                control.status = 'OPENED';
+                control.openedBy = user;
+                control.openedAt = new Date();
+                return repo.save(control);
+            }
+            return control;
+        }
+        const lastControl = await repo.createQueryBuilder('c')
+            .where('c.date < :date AND c.companyId = :cid', { date, cid })
+            .orderBy('c.date', 'DESC')
+            .getOne();
+        let initialStock = {};
+        if (lastControl && lastControl.finalStock) {
+            initialStock = lastControl.finalStock;
+        }
+        control = repo.create({
+            id: `GAS-${date}-${cid}`,
+            date,
+            companyId: cid,
+            status: 'OPENED',
+            openedBy: user,
+            openedAt: new Date(),
+            initialStock,
+            finalStock: {},
+            auditLog: []
+        });
+        return repo.save(control);
+    }
+    async closeDaily(id, user, companyId) {
+        const repo = await this.getRepo(gas_control_entity_1.GasDailyControl, this.defaultControlRepo, companyId);
+        const control = await repo.findOne({ where: { id } });
+        if (!control)
+            throw new common_1.NotFoundException('Control not found');
+        control.status = 'CLOSED';
+        control.closedBy = user;
+        control.closedAt = new Date();
+        return repo.save(control);
+    }
+    async updateStocks(controlId, initialStock, finalStock, user, companyId) {
         const repo = await this.getRepo(gas_control_entity_1.GasDailyControl, this.defaultControlRepo, companyId);
         const control = await repo.findOne({ where: { id: controlId } });
         if (!control)
             throw new common_1.NotFoundException('Control not found');
+        const isReopeningLog = control.status === 'CLOSED';
         control.initialStock = initialStock;
         control.finalStock = finalStock;
+        if (isReopeningLog) {
+            if (!control.auditLog)
+                control.auditLog = [];
+            let diffDetails = 'Alteração de: ';
+            const changes = [];
+            for (const key of Object.keys(finalStock || {})) {
+                if (key === 'footers')
+                    continue;
+                const oldGpl = control.finalStock?.[key]?.gpl || 0;
+                const newGpl = finalStock[key]?.gpl || 0;
+                if (oldGpl !== newGpl) {
+                    changes.push(`${key} (GPL: ${oldGpl}->${newGpl})`);
+                }
+            }
+            const oldCash = control.finalStock?.footers?.closingBalance || 0;
+            const newCash = finalStock?.footers?.closingBalance || 0;
+            if (oldCash !== newCash) {
+                changes.push(`Numerário (${oldCash}->${newCash})`);
+            }
+            control.auditLog.push({
+                type: 'EDIT_AFTER_CLOSURE',
+                user,
+                timestamp: new Date(),
+                summary: changes.length > 0 ? `Alterações: ${changes.join(', ')}` : 'Sincronização de dados (sem alteração de valores críticos)'
+            });
+        }
         const saved = await repo.save(control);
         const cid = companyId || control.companyId;
         const nextDate = new Date(control.date);

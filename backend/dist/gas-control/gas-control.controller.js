@@ -36,8 +36,14 @@ let GasControlController = class GasControlController {
     deleteEntry(id, companyId) {
         return this.gasService.deleteEntry(id, companyId);
     }
+    openDaily(body, companyId) {
+        return this.gasService.openDaily(body.date, body.user, companyId);
+    }
+    closeDaily(id, body, companyId) {
+        return this.gasService.closeDaily(id, body.user, companyId);
+    }
     updateStocks(id, body, companyId) {
-        return this.gasService.updateStocks(id, body.initialStock, body.finalStock, companyId);
+        return this.gasService.updateStocks(id, body.initialStock, body.finalStock, body.user, companyId);
     }
 };
 exports.GasControlController = GasControlController;
@@ -85,6 +91,25 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], GasControlController.prototype, "deleteEntry", null);
+__decorate([
+    (0, common_1.Post)('daily/open'),
+    (0, swagger_1.ApiOperation)({ summary: 'Open daily control' }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Query)('companyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], GasControlController.prototype, "openDaily", null);
+__decorate([
+    (0, common_1.Post)('daily/:id/close'),
+    (0, swagger_1.ApiOperation)({ summary: 'Close daily control' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Query)('companyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, String]),
+    __metadata("design:returntype", void 0)
+], GasControlController.prototype, "closeDaily", null);
 __decorate([
     (0, common_1.Patch)('daily/:id/stocks'),
     (0, swagger_1.ApiOperation)({ summary: 'Update initial and final stocks' }),

@@ -38,11 +38,29 @@ export class GasDailyControl {
     @Column({ type: 'date' })
     date: string;
 
+    @Column({ default: 'NOT_STARTED' })
+    status: string; // 'NOT_STARTED', 'OPENED', 'CLOSED'
+
+    @Column({ nullable: true })
+    openedBy: string;
+
+    @Column({ nullable: true })
+    openedAt: Date;
+
+    @Column({ nullable: true })
+    closedBy: string;
+
+    @Column({ nullable: true })
+    closedAt: Date;
+
     @Column({ type: 'simple-json', nullable: true })
     initialStock: any; // { "9KG": { kit: 0, damaged: 20, empty: 387, gpl: 285 }, ... }
 
     @Column({ type: 'simple-json', nullable: true })
     finalStock: any; // { "9KG": { kit: 0, damaged: 20, empty: 468, gpl: 83 }, ... }
+
+    @Column({ type: 'simple-json', nullable: true })
+    auditLog: any[]; // [ { type: 'EDIT', user: '...', timestamp: '...', changes: '...' } ]
 
     @CreateDateColumn()
     createdAt: Date;

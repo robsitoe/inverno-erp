@@ -60,7 +60,15 @@ export class GasService {
         return this.http.delete(`${this.apiUrl}/entries/${id}?companyId=${companyId}`);
     }
 
-    updateStocks(controlId: string, initialStock: any, finalStock: any, companyId: string): Observable<any> {
-        return this.http.patch(`${this.apiUrl}/daily/${controlId}/stocks?companyId=${companyId}`, { initialStock, finalStock });
+    openDaily(date: string, user: string, companyId: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/daily/open?companyId=${companyId}`, { date, user });
+    }
+
+    closeDaily(id: string, user: string, companyId: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/daily/${id}/close?companyId=${companyId}`, { user });
+    }
+
+    updateStocks(controlId: string, initialStock: any, finalStock: any, user: string, companyId: string): Observable<any> {
+        return this.http.patch(`${this.apiUrl}/daily/${controlId}/stocks?companyId=${companyId}`, { initialStock, finalStock, user });
     }
 }

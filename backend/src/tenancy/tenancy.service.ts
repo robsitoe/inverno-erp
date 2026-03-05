@@ -110,17 +110,31 @@ export class TenancyService implements OnModuleDestroy {
             try {
                 await tenantDS.initialize();
 
-                // Manual Patch: Ensure ivaCode column exists in articles table
                 try {
                     const queryRunner = tenantDS.createQueryRunner();
-                    const table = await queryRunner.getTable('articles');
-                    if (table && !table.findColumnByName('ivaCode')) {
+
+                    // Patch 1: articles.ivaCode
+                    const articlesTable = await queryRunner.getTable('articles');
+                    if (articlesTable && !articlesTable.findColumnByName('ivaCode')) {
                         console.log(`[Tenancy] Patching 'articles' table in ${targetDbName}: Adding 'ivaCode' column`);
                         await queryRunner.query('ALTER TABLE "articles" ADD COLUMN "ivaCode" character varying');
                     }
+
+                    // Patch 2: hr_tax_brackets.id
+                    // Check if it's a UUID by attempting a query or checking metadata
+                    const taxTable = await queryRunner.getTable('hr_tax_brackets');
+                    if (taxTable) {
+                        const idCol = taxTable.findColumnByName('id');
+                        // In some drivers it might be 'uuid', in others 'character varying' but with uuid constraint
+                        if (idCol && (idCol.type.toLowerCase().includes('uuid') || idCol.type === 'uuid')) {
+                            console.log(`[Tenancy] Patching 'hr_tax_brackets' table in ${targetDbName}: Dropping due to UUID type conflict`);
+                            await queryRunner.query('DROP TABLE "hr_tax_brackets" CASCADE');
+                        }
+                    }
+
                     await queryRunner.release();
-                } catch (patchErr) {
-                    console.warn(`[Tenancy] Failed to patch articles table in ${targetDbName}`, patchErr);
+                } catch (patchErr: any) {
+                    console.warn(`[Tenancy] Failed to patch tables in ${targetDbName}: ${patchErr.message}`);
                 }
 
                 console.log(`[Tenancy] Connection established for ${targetDbName}`);

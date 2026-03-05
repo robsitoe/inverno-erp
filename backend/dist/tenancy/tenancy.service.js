@@ -102,15 +102,23 @@ let TenancyService = class TenancyService {
                 await tenantDS.initialize();
                 try {
                     const queryRunner = tenantDS.createQueryRunner();
-                    const table = await queryRunner.getTable('articles');
-                    if (table && !table.findColumnByName('ivaCode')) {
+                    const articlesTable = await queryRunner.getTable('articles');
+                    if (articlesTable && !articlesTable.findColumnByName('ivaCode')) {
                         console.log(`[Tenancy] Patching 'articles' table in ${targetDbName}: Adding 'ivaCode' column`);
                         await queryRunner.query('ALTER TABLE "articles" ADD COLUMN "ivaCode" character varying');
+                    }
+                    const taxTable = await queryRunner.getTable('hr_tax_brackets');
+                    if (taxTable) {
+                        const idCol = taxTable.findColumnByName('id');
+                        if (idCol && (idCol.type.toLowerCase().includes('uuid') || idCol.type === 'uuid')) {
+                            console.log(`[Tenancy] Patching 'hr_tax_brackets' table in ${targetDbName}: Dropping due to UUID type conflict`);
+                            await queryRunner.query('DROP TABLE "hr_tax_brackets" CASCADE');
+                        }
                     }
                     await queryRunner.release();
                 }
                 catch (patchErr) {
-                    console.warn(`[Tenancy] Failed to patch articles table in ${targetDbName}`, patchErr);
+                    console.warn(`[Tenancy] Failed to patch tables in ${targetDbName}: ${patchErr.message}`);
                 }
                 console.log(`[Tenancy] Connection established for ${targetDbName}`);
             }

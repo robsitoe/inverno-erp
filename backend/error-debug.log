@@ -11825,3 +11825,216 @@
   }
 }
 ---
+{
+  "timestamp": "2026-03-03T13:13:44.183Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async TenancyService.getTenantDataSource (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:59:24)\n    at async GasControlService.getRepo (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\gas-control\\gas-control.service.ts:27:20)\n    at async GasControlService.getCylinderTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\gas-control\\gas-control.service.ts:32:22)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-03T13:14:06.369Z",
+  "path": "/sales/documents?companyId=005",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-04T07:42:38.619Z",
+  "path": "/document-types?module=SALES&companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:490:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "SALES",
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-04T07:42:38.649Z",
+  "path": "/customers?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-04T07:42:38.659Z",
+  "path": "/suppliers?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-04T07:42:38.673Z",
+  "path": "/accounting/accounts?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-04T08:44:26.605Z",
+  "path": "/document-types?module=SALES&companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:490:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "SALES",
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-04T08:44:26.622Z",
+  "path": "/suppliers?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-04T08:44:26.631Z",
+  "path": "/customers?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-04T08:44:26.639Z",
+  "path": "/accounting/accounts?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-04T08:58:38.723Z",
+  "path": "/document-types?module=SALES&companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at AppController.getDocumentTypes (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\app.controller.ts:490:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "query": {
+    "module": "SALES",
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-04T08:58:38.730Z",
+  "path": "/customers?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-04T08:58:38.743Z",
+  "path": "/suppliers?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-04T08:58:38.749Z",
+  "path": "/accounting/accounts?companyId=005",
+  "method": "GET",
+  "status": 400,
+  "exception": {
+    "name": "BadRequestException",
+    "message": "Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"",
+    "stack": "BadRequestException: Erro de Infraestrutura (22P02): invalid input syntax for type uuid: \"IRPS-005-1\"\n    at TenancyService.initializeTenantConnection (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\src\\tenancy\\tenancy.service.ts:149:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---

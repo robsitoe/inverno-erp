@@ -2,7 +2,7 @@ import { Entity, Column, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('hr_tax_brackets')
 export class TaxBracket {
-    @PrimaryGeneratedColumn('uuid')
+    @PrimaryColumn()
     id: string; // e.g., "IRPS-2024-1"
 
     @Column()

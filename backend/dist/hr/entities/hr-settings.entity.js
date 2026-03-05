@@ -26,7 +26,7 @@ let TaxBracket = class TaxBracket {
 };
 exports.TaxBracket = TaxBracket;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    (0, typeorm_1.PrimaryColumn)(),
     __metadata("design:type", String)
 ], TaxBracket.prototype, "id", void 0);
 __decorate([
