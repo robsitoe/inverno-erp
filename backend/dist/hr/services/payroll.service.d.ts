@@ -1,6 +1,8 @@
 import { Repository } from 'typeorm';
 import { Employee } from '../entities/employee.entity';
 import { Payroll } from '../entities/payroll.entity';
+import { Absence } from '../entities/absence.entity';
+import { PettyCashVoucher } from '../../treasury/entities/petty-cash-voucher.entity';
 import { TaxBracket, HRSettings } from '../entities/hr-settings.entity';
 import { AccountingService } from '../../accounting/accounting.service';
 import { TenancyService } from '../../tenancy/tenancy.service';
@@ -9,15 +11,19 @@ export declare class PayrollService {
     private readonly defaultPayrollRepo;
     private readonly defaultTaxBracketRepo;
     private readonly defaultHRSettingsRepo;
+    private readonly defaultAbsenceRepo;
+    private readonly defaultPettyCashVoucherRepo;
     private readonly accountingService;
     private readonly tenancyService;
-    constructor(defaultEmployeeRepo: Repository<Employee>, defaultPayrollRepo: Repository<Payroll>, defaultTaxBracketRepo: Repository<TaxBracket>, defaultHRSettingsRepo: Repository<HRSettings>, accountingService: AccountingService, tenancyService: TenancyService);
+    constructor(defaultEmployeeRepo: Repository<Employee>, defaultPayrollRepo: Repository<Payroll>, defaultTaxBracketRepo: Repository<TaxBracket>, defaultHRSettingsRepo: Repository<HRSettings>, defaultAbsenceRepo: Repository<Absence>, defaultPettyCashVoucherRepo: Repository<PettyCashVoucher>, accountingService: AccountingService, tenancyService: TenancyService);
     private getRepo;
     private getEmployeeRepo;
     private getPayrollRepo;
     private getTaxBracketRepo;
     private getHRSettingsRepo;
-    calculateIRPS(taxableAmount: number, brackets: TaxBracket[], dependents?: number): number;
+    private getAbsenceRepo;
+    private getPettyCashVoucherRepo;
+    calculateIRPS(taxableAmount: number, brackets: TaxBracket[], dependents?: any): number;
     calculateINSS(grossSalary: number, settings: HRSettings): {
         employee: number;
         employer: number;

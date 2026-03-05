@@ -550,6 +550,62 @@ interface PendingDocRow {
         (select)="onEntitySelect($event)"
       ></app-generic-entity-list-modal>
 
+      <!-- Employee Picker Modal (for FUNCIONARIO entity type) -->
+      <div *ngIf="showEmployeeModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[110]" (click)="showEmployeeModal = false">
+        <div class="bg-white rounded-sm shadow-lg w-[750px] max-h-[80vh] flex flex-col" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-gray-50">
+            <h3 class="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px]">badge</span>
+              Selecionar Funcionário
+            </h3>
+            <button (click)="showEmployeeModal = false" class="text-gray-400 hover:text-gray-600">
+              <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+          </div>
+
+          <div class="px-3 py-2 border-b border-gray-200 bg-white">
+            <input type="text" [(ngModel)]="employeePickerSearch" (input)="filterEmployeePicker($event)"
+              placeholder="Pesquisar funcionário..."
+              class="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 rounded-sm focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          </div>
+
+          <div class="overflow-y-auto flex-1">
+            <table class="w-full text-xs border-collapse">
+              <thead class="bg-gray-50 text-gray-600 font-medium sticky top-0 border-b border-gray-200">
+                <tr>
+                  <th class="px-2 py-1 text-left w-20">Cód.</th>
+                  <th class="px-2 py-1 text-left">Nome</th>
+                  <th class="px-2 py-1 text-left w-32">Função</th>
+                  <th class="px-2 py-1 text-left w-28">Departamento</th>
+                  <th class="px-2 py-1 text-right w-28">Salário Base</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let emp of filteredEmployeeList" (click)="onEmployeePickerSelect(emp)"
+                  class="hover:bg-blue-50 cursor-pointer border-b border-gray-100 group">
+                  <td class="px-2 py-1.5 font-medium text-blue-600">{{ emp.code }}</td>
+                  <td class="px-2 py-1.5 font-medium text-gray-800">{{ emp.name }}</td>
+                  <td class="px-2 py-1.5 text-gray-600">{{ emp.position || '-' }}</td>
+                  <td class="px-2 py-1.5 text-gray-600">{{ emp.department || '-' }}</td>
+                  <td class="px-2 py-1.5 text-right font-mono text-gray-700">{{ emp.baseSalary | number:'1.2-2' }}</td>
+                </tr>
+                <tr *ngIf="filteredEmployeeList.length === 0">
+                  <td colspan="5" class="px-2 py-8 text-center text-gray-400 italic">
+                    <span *ngIf="isLoadingEmployees">A carregar funcionários...</span>
+                    <span *ngIf="!isLoadingEmployees">Nenhum funcionário encontrado.</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="px-3 py-2 border-t border-gray-200 bg-gray-50 flex justify-between text-[10px] text-gray-500">
+            <span>{{ filteredEmployeeList.length }} funcionário(s) encontrado(s)</span>
+            <button (click)="showEmployeeModal = false" class="px-4 py-1 bg-white border border-gray-300 rounded-sm text-xs hover:bg-gray-50">Fechar</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Print Components -->
       <app-print-settings-modal
         [isOpen]="isPrintSettingsOpen"
@@ -628,10 +684,64 @@ export class TreasuryManagementComponent implements OnInit {
 
   showCustomerModal = false;
   showSupplierModal = false;
-  showOtherEntityModal = false; // Add generic entity support if needed
+  showOtherEntityModal = false;
+  showEmployeeModal = false;  // dedicated employee picker from HR backend
+  employeePickerSearch = '';
+  employeeList: any[] = [];
+  filteredEmployeeList: any[] = [];
+  isLoadingEmployees = false;
   activeCompanyId: string | null = null;
   isConfigModalOpen = false;
   isEntityTypeConfigOpen = false;
+
+  openEmployeePickerModal() {
+    this.showEmployeeModal = true;
+    this.employeePickerSearch = '';
+    if (this.employeeList.length === 0) {
+      this.loadEmployeeList();
+    } else {
+      this.filteredEmployeeList = [...this.employeeList];
+    }
+  }
+
+  loadEmployeeList() {
+    const cid = this.activeCompanyId || '';
+    this.isLoadingEmployees = true;
+    fetch(`http://localhost:3000/hr/employees?companyId=${cid}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        this.employeeList = (data || []).filter((e: any) => e.status !== 'INACTIVE');
+        this.filteredEmployeeList = [...this.employeeList];
+        this.isLoadingEmployees = false;
+        this.cdr.detectChanges();
+      })
+      .catch(err => {
+        console.error('Error loading employees', err);
+        this.isLoadingEmployees = false;
+        this.cdr.detectChanges();
+      });
+  }
+
+  filterEmployeePicker(event: Event) {
+    const q = (event.target as HTMLInputElement).value.toLowerCase();
+    this.filteredEmployeeList = q
+      ? this.employeeList.filter(e =>
+        e.name?.toLowerCase().includes(q) ||
+        e.code?.toLowerCase().includes(q) ||
+        e.nif?.toLowerCase().includes(q))
+      : [...this.employeeList];
+  }
+
+  onEmployeePickerSelect(emp: any) {
+    this.entityCode = emp.code || emp.id;
+    this.entityName = emp.name;
+    this.entityNif = emp.nif || '';
+    this.entityAddress = emp.address || '';
+    this.showEmployeeModal = false;
+    this.loadPendingDocuments();
+  }
 
   saveDocument(selectedRows: PendingDocRow[], isReceipt: boolean) {
     const storageKey = isReceipt ? 'erp_receipts' : 'erp_payments';
@@ -1224,7 +1334,11 @@ export class TreasuryManagementComponent implements OnInit {
         if (!t.nature) t.nature = t.code.startsWith('RE') || t.code.startsWith('DEP') ? 'RECEIVE' : 'PAY';
 
         if (specificType === 'FUNCIONARIO') {
-          return t.allowedEntities?.employee === true;
+          // For employees: show salary payments and employee advances
+          return t.allowedEntities?.employee === true
+            || t.code === 'PAGVEN'  // Pagamento de Vencimentos
+            || t.code === 'ADE'     // Adiantamento a Funcionário
+            || t.code === 'ADF';    // Generic Advance (fallback)
         }
 
         if (this.entityType === 'CUSTOMER') {
@@ -1232,30 +1346,38 @@ export class TreasuryManagementComponent implements OnInit {
         }
 
         if (this.entityType === 'SUPPLIER') {
-          return t.allowedEntities?.supplier === true || t.nature === 'PAY';
+          // Explicitly exclude employee-only docs for suppliers
+          if (t.code === 'PAGVEN') return false;
+          return t.allowedEntities?.supplier === true || (t.nature === 'PAY' && t.code !== 'PAGVEN');
         }
 
-        // Default 'OTHER' selection
-        return t.allowedEntities?.other === true || (t.nature === 'PAY' && !t.allowedEntities?.customer);
+        // Default 'OTHER' (Sócio, Estado, Credor, etc.)
+        return t.allowedEntities?.other === true || t.nature === 'INTERNAL' || (t.nature === 'PAY' && t.code !== 'PAGVEN');
       });
 
       // Default selection logic
       if (this.documentTypes.length > 0) {
         if (this.selectedDocType && this.documentTypes.some(t => t.code === this.selectedDocType)) {
-          // Keep current selection
+          // Keep current selection if valid for new entity type
         } else {
           let defaultCode = '';
           if (specificType === 'FUNCIONARIO') defaultCode = 'PAGVEN';
           else if (this.entityType === 'CUSTOMER') defaultCode = 'RE';
           else if (this.entityType === 'SUPPLIER') defaultCode = 'PAG';
+          else defaultCode = 'PAG'; // OTHER default
 
-          const def = this.documentTypes.find(t => t.code === defaultCode);
+          const def = this.documentTypes.find(t => t.code === defaultCode)
+            || this.documentTypes.find(t => t.nature === 'PAY')
+            || this.documentTypes[0];
           this.selectedDocType = def ? def.code : this.documentTypes[0].code;
         }
         this.onDocumentTypeChange();
       } else {
-        this.selectedDocType = '';
-        this.availableSeries = [];
+        // Fallback: if no types after filter, load ALL and pick appropriate nature
+        this.documentTypes = allTypes.filter((t: any) =>
+          (this.entityType === 'CUSTOMER' ? t.nature === 'RECEIVE' : t.nature === 'PAY') || !t.nature
+        );
+        this.selectedDocType = this.documentTypes[0]?.code || '';
         this.onDocumentTypeChange();
       }
     });
@@ -1449,6 +1571,8 @@ export class TreasuryManagementComponent implements OnInit {
       this.showCustomerModal = true;
     } else if (type.category === 'SUPPLIER') {
       this.showSupplierModal = true;
+    } else if (this.entityTypeCode === 'FUNCIONARIO') {
+      this.openEmployeePickerModal();
     } else {
       this.showOtherEntityModal = true;
     }
@@ -1481,7 +1605,7 @@ export class TreasuryManagementComponent implements OnInit {
         const entityDocs = sales.filter((d: any) =>
           (d.customerName === this.entityName || d.customerId === this.entityCode) &&
           (d.status === 'APPROVED' || d.status === 'POSTED' || d.status === 'SUBMITTED' || d.status === 'DRAFT') &&
-          d.documentType !== 'VD' // Exclude Cash Sales (Venda a Dinheiro) from pending receipts
+          d.documentType !== 'VD'
         );
         this.ngZone.run(() => {
           this.processPendingDocuments(entityDocs, receipts);
@@ -1490,10 +1614,7 @@ export class TreasuryManagementComponent implements OnInit {
         });
       }, (err) => {
         console.error('Error fetching customer docs', err);
-        this.ngZone.run(() => {
-          this.isSaving = false;
-          this.cdr.detectChanges();
-        });
+        this.ngZone.run(() => { this.isSaving = false; this.cdr.detectChanges(); });
       });
     } else if (this.entityType === 'SUPPLIER') {
       forkJoin({
@@ -1511,11 +1632,74 @@ export class TreasuryManagementComponent implements OnInit {
         });
       }, (err) => {
         console.error('Error fetching supplier docs', err);
-        this.ngZone.run(() => {
-          this.isSaving = false;
-          this.cdr.detectChanges();
-        });
+        this.ngZone.run(() => { this.isSaving = false; this.cdr.detectChanges(); });
       });
+    } else {
+      // OTHER entities (Funcionário, Sócio, Estado, Credor, etc.)
+      if (this.entityTypeCode === 'FUNCIONARIO') {
+        // Load payroll records (processed salaries not yet paid)
+        const cid = this.activeCompanyId || '';
+        fetch(`http://localhost:3000/hr/payroll?companyId=${cid}&employeeId=${this.entityCode}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+        })
+          .then(r => r.json())
+          .then((payrolls: any[]) => {
+            this.dataService.getPayments(cid || undefined).subscribe(payments => {
+              // Show only DRAFT or APPROVED payrolls (not yet paid via treasury)
+              const pending = (payrolls || []).filter((p: any) =>
+                p.status === 'DRAFT' || p.status === 'APPROVED' || p.status === 'POSTED'
+              );
+              const rows = pending.map((p: any) => {
+                const ref = `PAGVEN ${p.year}/${String(p.month).padStart(2, '0')}`;
+                const alreadyPaid = (payments || []).filter((pay: any) =>
+                  pay.relatedDocument === ref || pay.entityCode === this.entityCode
+                ).reduce((s: number, pay: any) => s + Number(pay.amount || 0), 0);
+                const net = Number(p.netSalary || 0);
+                const pending = Math.max(0, net - alreadyPaid);
+                if (pending < 0.01) return null;
+                return {
+                  selected: false,
+                  id: p.id,
+                  date: `${p.year}-${String(p.month).padStart(2, '0')}-01`,
+                  dueDate: `${p.year}-${String(p.month).padStart(2, '0')}-28`,
+                  currency: 'MT',
+                  docType: 'PAGVEN',
+                  docNumber: ref,
+                  total: net,
+                  pending: pending,
+                  toPay: 0,
+                  discount: 0,
+                  paymentMode: 'NUM',
+                  paymentCode: '1',
+                  commercialEntity: this.entityCode,
+                  originalDoc: p
+                };
+              }).filter((r: any) => r !== null);
+              this.ngZone.run(() => {
+                this.pendingRows = rows;
+                this.calculateTotals();
+                this.isSaving = false;
+                this.cdr.detectChanges();
+              });
+            });
+          })
+          .catch(err => {
+            console.error('Error fetching payroll for employee', err);
+            this.ngZone.run(() => { this.isSaving = false; this.cdr.detectChanges(); });
+          });
+      } else {
+        // Generic OTHER: no specific pending docs — use advance/payment mode
+        this.pendingRows = [];
+        this.totalSelected = 0;
+        this.totalExcess = 0;
+        // Auto-suggest advance mode for generic others
+        if (!this.isAdvanceMode) {
+          this.isAdvanceMode = true;
+          this.onAdvanceModeChange();
+        }
+        this.isSaving = false;
+        this.cdr.detectChanges();
+      }
     }
   }
 

@@ -98,7 +98,14 @@ export class HRController {
   @Patch('employees/:id')
   @ApiOperation({ summary: 'Update an employee' })
   updateEmployee(@Param('id') id: string, @Body() updateEmployeeDto: UpdateEmployeeDto) {
+    // Note: in a production app, we would get the user from the request (e.g. req.user)
     return this.hrService.update(id, updateEmployeeDto);
+  }
+
+  @Get('employees/:id/salary-history')
+  @ApiOperation({ summary: 'Get salary history for an employee' })
+  getSalaryHistory(@Param('id') id: string, @Query('companyId') companyId?: string) {
+    return this.hrService.getSalaryHistory(id, companyId);
   }
 
   @Delete('employees/:id')

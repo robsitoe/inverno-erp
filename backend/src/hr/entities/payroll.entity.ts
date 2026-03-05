@@ -55,8 +55,23 @@ export class Payroll {
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     bonusAmount: number;
 
+    @Column({ type: 'integer', default: 0 })
+    dependents: number;
+
     @Column({ type: 'integer', default: 30 })
     daysWorked: number;
+
+    @Column({ type: 'integer', default: 0 })
+    absenceDays: number;
+
+    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
+    absenceDeduction: number;
+
+    @Column({ type: 'integer', default: 0 })
+    vacationDays: number;
+
+    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
+    cashVoucherDeduction: number;
 
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     netSalary: number;

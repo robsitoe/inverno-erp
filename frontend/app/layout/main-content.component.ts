@@ -45,6 +45,7 @@ import { TaxTablesComponent } from '../features/hr/tax-tables.component';
 import { HRReportsComponent } from '../features/hr/hr-reports.component';
 import { HRUtilitiesComponent } from '../features/hr/hr-utilities.component';
 import { GasControlComponent } from '../features/inventory/gas-control.component';
+import { PettyCashVouchersComponent } from '../features/treasury/petty-cash-vouchers.component';
 
 @Component({
   selector: 'app-main-content',
@@ -92,7 +93,8 @@ import { GasControlComponent } from '../features/inventory/gas-control.component
     TaxTablesComponent,
     HRReportsComponent,
     HRUtilitiesComponent,
-    GasControlComponent
+    GasControlComponent,
+    PettyCashVouchersComponent
   ],
   template: `
     <!-- Sales Forms -->
@@ -254,6 +256,11 @@ import { GasControlComponent } from '../features/inventory/gas-control.component
       <app-account-statement class="w-full h-full block"></app-account-statement>
     </ng-container>
 
+    <!-- Treasury: Petty Cash Vouchers -->
+    <ng-container *ngIf="activeView === 'petty-cash-vouchers'">
+      <app-petty-cash-vouchers class="w-full h-full block"></app-petty-cash-vouchers>
+    </ng-container>
+
     <!-- HR: Employee List -->
     <ng-container *ngIf="activeView === 'employee-list'">
       <app-employee-list class="w-full h-full block"></app-employee-list>
@@ -396,6 +403,7 @@ export class MainContentComponent {
       'treasury-management',
       'bank-reconciliation',
       'account-statement',
+      'petty-cash-vouchers',
       'warehouse-management',
       'unit-management',
       'inventory-count',

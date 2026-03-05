@@ -107,6 +107,9 @@ let HRController = class HRController {
     updateEmployee(id, updateEmployeeDto) {
         return this.hrService.update(id, updateEmployeeDto);
     }
+    getSalaryHistory(id, companyId) {
+        return this.hrService.getSalaryHistory(id, companyId);
+    }
     removeEmployee(id, companyId) {
         return this.hrService.remove(id, companyId);
     }
@@ -254,6 +257,15 @@ __decorate([
     __metadata("design:paramtypes", [String, update_employee_dto_1.UpdateEmployeeDto]),
     __metadata("design:returntype", void 0)
 ], HRController.prototype, "updateEmployee", null);
+__decorate([
+    (0, common_1.Get)('employees/:id/salary-history'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get salary history for an employee' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Query)('companyId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], HRController.prototype, "getSalaryHistory", null);
 __decorate([
     (0, common_1.Delete)('employees/:id'),
     (0, swagger_1.ApiOperation)({ summary: 'Delete an employee' }),

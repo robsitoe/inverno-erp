@@ -22,4 +22,12 @@ export declare class TreasuryController {
     createReceipt(data: any): Promise<import("./entities/treasury.entity").TreasuryDocument[]>;
     findAllPayments(companyId?: string): Promise<import("./entities/treasury.entity").TreasuryDocument[]>;
     createPayment(data: any): Promise<import("./entities/treasury.entity").TreasuryDocument[]>;
+    createVoucher(data: any, req: any): Promise<import("./entities/petty-cash-voucher.entity").PettyCashVoucher[]>;
+    getNextNumber(companyId: string): Promise<{
+        number: string;
+    }>;
+    findAllVouchers(companyId?: string): Promise<import("./entities/petty-cash-voucher.entity").PettyCashVoucher[]>;
+    findOneVoucher(id: string): Promise<import("./entities/petty-cash-voucher.entity").PettyCashVoucher | null>;
+    updateVoucher(id: string, data: any): Promise<import("./entities/petty-cash-voucher.entity").PettyCashVoucher>;
+    removeVoucher(id: string): Promise<import("typeorm").DeleteResult>;
 }

@@ -72,6 +72,7 @@ export const MENU_ITEMS: MenuItem[] = [
       { label: "Reconciliação Bancária", icon: "sync", view: "bank-reconciliation" },
       { label: "Cheques", icon: "receipt" },
       { label: "Letras", icon: "description" },
+      { label: "Vales de Caixa", icon: "receipt_long", view: "petty-cash-vouchers" },
       { label: "Tesouraria Previsional", icon: "calendar_today" },
       { label: "Calculadoras Financeiras", icon: "calculate" },
       {
@@ -393,10 +394,54 @@ export const PURCHASE_DOCUMENT_TYPES = [
 ];
 
 export const TREASURY_DOCUMENT_TYPES = [
-  { code: "RE", description: "Recibo de Cliente", isStandard: true, nature: "RECEIVE", type: "Liquidacoes" },
-  { code: "PAG", description: "Pagamento a Fornecedor", isStandard: true, nature: "PAY", type: "Liquidacoes" },
-  { code: "ADC", description: "Adiantamento de Cliente", isStandard: true, nature: "RECEIVE", type: "Liquidacoes" },
-  { code: "ADF", description: "Adiantamento a Fornecedor", isStandard: true, nature: "PAY", type: "Liquidacoes" },
+  {
+    code: "RE",
+    description: "Recibo de Cliente",
+    isStandard: true,
+    nature: "RECEIVE",
+    type: "Liquidacoes",
+    allowedEntities: { customer: true }
+  },
+  {
+    code: "PAG",
+    description: "Pagamento a Fornecedor",
+    isStandard: true,
+    nature: "PAY",
+    type: "Liquidacoes",
+    allowedEntities: { supplier: true }
+  },
+  {
+    code: "PAGVEN",
+    description: "Pagamento de Vencimentos",
+    isStandard: true,
+    nature: "PAY",
+    type: "Liquidacoes",
+    allowedEntities: { employee: true }
+  },
+  {
+    code: "ADC",
+    description: "Adiantamento de Cliente",
+    isStandard: true,
+    nature: "RECEIVE",
+    type: "Liquidacoes",
+    allowedEntities: { customer: true }
+  },
+  {
+    code: "ADF",
+    description: "Adiantamento a Fornecedor",
+    isStandard: true,
+    nature: "PAY",
+    type: "Liquidacoes",
+    allowedEntities: { supplier: true }
+  },
+  {
+    code: "ADE",
+    description: "Adiantamento a Funcionário",
+    isStandard: true,
+    nature: "PAY",
+    type: "Liquidacoes",
+    allowedEntities: { employee: true }
+  },
   { code: "DEP", description: "Depósito Bancário", isStandard: true, nature: "INTERNAL", type: "Liquidacoes" },
   { code: "LEV", description: "Levantamento Bancário", isStandard: true, nature: "INTERNAL", type: "Liquidacoes" },
   { code: "TRF", description: "Transferência entre Contas", isStandard: true, nature: "INTERNAL", type: "Liquidacoes" },

@@ -18,6 +18,8 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const employee_entity_1 = require("../entities/employee.entity");
 const payroll_entity_1 = require("../entities/payroll.entity");
+const absence_entity_1 = require("../entities/absence.entity");
+const petty_cash_voucher_entity_1 = require("../../treasury/entities/petty-cash-voucher.entity");
 const hr_settings_entity_1 = require("../entities/hr-settings.entity");
 const accounting_service_1 = require("../../accounting/accounting.service");
 const tenancy_service_1 = require("../../tenancy/tenancy.service");
@@ -28,13 +30,17 @@ let PayrollService = class PayrollService {
     defaultPayrollRepo;
     defaultTaxBracketRepo;
     defaultHRSettingsRepo;
+    defaultAbsenceRepo;
+    defaultPettyCashVoucherRepo;
     accountingService;
     tenancyService;
-    constructor(defaultEmployeeRepo, defaultPayrollRepo, defaultTaxBracketRepo, defaultHRSettingsRepo, accountingService, tenancyService) {
+    constructor(defaultEmployeeRepo, defaultPayrollRepo, defaultTaxBracketRepo, defaultHRSettingsRepo, defaultAbsenceRepo, defaultPettyCashVoucherRepo, accountingService, tenancyService) {
         this.defaultEmployeeRepo = defaultEmployeeRepo;
         this.defaultPayrollRepo = defaultPayrollRepo;
         this.defaultTaxBracketRepo = defaultTaxBracketRepo;
         this.defaultHRSettingsRepo = defaultHRSettingsRepo;
+        this.defaultAbsenceRepo = defaultAbsenceRepo;
+        this.defaultPettyCashVoucherRepo = defaultPettyCashVoucherRepo;
         this.accountingService = accountingService;
         this.tenancyService = tenancyService;
     }
@@ -57,22 +63,32 @@ let PayrollService = class PayrollService {
     getHRSettingsRepo(companyId) {
         return this.getRepo(hr_settings_entity_1.HRSettings, this.defaultHRSettingsRepo, companyId);
     }
+    getAbsenceRepo(companyId) {
+        return this.getRepo(absence_entity_1.Absence, this.defaultAbsenceRepo, companyId);
+    }
+    getPettyCashVoucherRepo(companyId) {
+        return this.getRepo(petty_cash_voucher_entity_1.PettyCashVoucher, this.defaultPettyCashVoucherRepo, companyId);
+    }
     calculateIRPS(taxableAmount, brackets, dependents = 0) {
         if (taxableAmount <= 0 || !brackets || !brackets.length)
             return 0;
-        for (const b of brackets) {
-            if (taxableAmount >= Number(b.minAmount) && (!b.maxAmount || taxableAmount <= Number(b.maxAmount))) {
+        const deps = Number(dependents || 0);
+        const amount = Number(taxableAmount);
+        for (let i = brackets.length - 1; i >= 0; i--) {
+            const b = brackets[i];
+            const min = Number(b.minAmount);
+            if (amount >= min) {
                 let deduction = Number(b.deduction0 || 0);
-                if (dependents === 1)
+                if (deps === 1)
                     deduction = Number(b.deduction1 || 0);
-                else if (dependents === 2)
+                else if (deps === 2)
                     deduction = Number(b.deduction2 || 0);
-                else if (dependents === 3)
+                else if (deps === 3)
                     deduction = Number(b.deduction3 || 0);
-                else if (dependents >= 4)
+                else if (deps >= 4)
                     deduction = Number(b.deduction4Plus || 0);
                 const rate = Number(b.rate || 0);
-                const tax = (taxableAmount * (rate / 100)) - deduction;
+                const tax = (amount * (rate / 100)) - deduction;
                 const result = Math.max(0, tax);
                 return isNaN(result) ? 0 : result;
             }
@@ -111,11 +127,57 @@ let PayrollService = class PayrollService {
             const transport = Number(emp.subsidyTransport) || 0;
             const food = Number(emp.subsidyFood) || 0;
             const housing = Number(emp.subsidyHousing) || 0;
-            const taxableGross = grossSalary + housing;
-            const inss = this.calculateINSS(taxableGross, settings);
-            const irpsBase = taxableGross - inss.employee;
-            const irps = this.calculateIRPS(irpsBase, brackets, emp.dependents || 0);
-            const net = (grossSalary + transport + food + housing) - inss.employee - irps;
+            const absRepo = await this.getAbsenceRepo(targetCompanyId);
+            const absRecords = await absRepo.find({
+                where: {
+                    employeeId: emp.id,
+                    status: absence_entity_1.AbsenceStatus.APPROVED
+                }
+            });
+            let absenceDays = 0;
+            let vacationDays = 0;
+            const firstDayOfMonth = new Date(year, month - 1, 1);
+            const lastDayOfMonth = new Date(year, month, 0);
+            for (const abs of absRecords) {
+                const start = new Date(abs.startDate);
+                const end = new Date(abs.endDate);
+                const intersectStart = start < firstDayOfMonth ? firstDayOfMonth : start;
+                const intersectEnd = end > lastDayOfMonth ? lastDayOfMonth : end;
+                if (intersectStart <= intersectEnd) {
+                    const diffTime = Math.abs(intersectEnd.getTime() - intersectStart.getTime());
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    if (abs.type === 'VACATION') {
+                        vacationDays += diffDays;
+                    }
+                    else if (abs.type === 'UNJUSTIFIED') {
+                        absenceDays += diffDays;
+                    }
+                }
+            }
+            const dailyRate = grossSalary / 30;
+            const absenceDeduction = Math.round((absenceDays * dailyRate) * 100) / 100;
+            const daysWorked = 30 - absenceDays;
+            const taxableGross = (grossSalary - absenceDeduction) + housing;
+            const inss = this.calculateINSS(Math.max(0, taxableGross), settings);
+            const irpsBase = Math.max(0, taxableGross - inss.employee);
+            const irps = this.calculateIRPS(irpsBase, brackets, Number(emp.dependents || 0));
+            const pcvRepo = await this.getPettyCashVoucherRepo(targetCompanyId);
+            const vouchers = await pcvRepo.find({
+                where: {
+                    employeeId: emp.id,
+                    isPersonalAdvance: true,
+                    isDeducted: false,
+                    status: 'PAID'
+                }
+            });
+            const cashVoucherDeduction = vouchers.reduce((acc, v) => {
+                const vDate = new Date(v.date);
+                if (vDate <= lastDayOfMonth) {
+                    return acc + Number(v.amount);
+                }
+                return acc;
+            }, 0);
+            const net = (grossSalary - absenceDeduction + transport + food + housing) - inss.employee - irps - cashVoucherDeduction;
             const recordId = `PAY-${emp.code}-${year}-${String(month).padStart(2, '0')}`;
             const existing = await payRepo.findOne({ where: { id: recordId } });
             if (existing && existing.status === payroll_entity_1.PayrollStatus.POSTED) {
@@ -136,11 +198,17 @@ let PayrollService = class PayrollService {
                 irps,
                 transportSubsidy: transport,
                 foodSubsidy: food,
-                daysWorked: 30,
-                netSalary: net,
+                dependents: emp.dependents || 0,
+                daysWorked,
+                absenceDays,
+                absenceDeduction,
+                vacationDays,
+                cashVoucherDeduction,
+                netSalary: Math.max(0, net),
                 status: payroll_entity_1.PayrollStatus.DRAFT,
             });
-            results.push(await payRepo.save(record));
+            const savedRecord = await payRepo.save(record);
+            results.push(savedRecord);
         }
         return results;
     }
@@ -159,8 +227,9 @@ let PayrollService = class PayrollService {
         const totalIRPS = records.reduce((s, r) => s + Number(r.irps), 0);
         const totalNet = records.reduce((s, r) => s + Number(r.netSalary), 0);
         const totalSubsidies = records.reduce((s, r) => s + Number(r.transportSubsidy) + Number(r.foodSubsidy) + Number(r.overtimeAmount) + Number(r.bonusAmount), 0);
+        const totalAbsenceDeduction = records.reduce((s, r) => s + Number(r.absenceDeduction || 0), 0);
         const lines = [
-            { accountId: '6.2.2', debit: totalGross, credit: 0, description: `Salários Base - ${month}/${year}` },
+            { accountId: '6.2.2', debit: totalGross - totalAbsenceDeduction, credit: 0, description: `Salários Base (Líquido de Faltas) - ${month}/${year}` },
             { accountId: '6.2.3', debit: totalINSS_ER, credit: 0, description: `Encargos INSS Patronal (4%) - ${month}/${year}` },
             { accountId: '4.4.2.1', debit: 0, credit: totalIRPS, description: `Retenção IRPS - ${month}/${year}` },
             { accountId: '4.4.9', debit: 0, credit: totalINSS_EE + totalINSS_ER, description: `INSS Total (7%) - ${month}/${year}` },
@@ -232,7 +301,11 @@ exports.PayrollService = PayrollService = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(payroll_entity_1.Payroll)),
     __param(2, (0, typeorm_1.InjectRepository)(hr_settings_entity_1.TaxBracket)),
     __param(3, (0, typeorm_1.InjectRepository)(hr_settings_entity_1.HRSettings)),
+    __param(4, (0, typeorm_1.InjectRepository)(absence_entity_1.Absence)),
+    __param(5, (0, typeorm_1.InjectRepository)(petty_cash_voucher_entity_1.PettyCashVoucher)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

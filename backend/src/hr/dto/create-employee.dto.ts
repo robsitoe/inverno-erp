@@ -125,4 +125,8 @@ export class CreateEmployeeDto {
   @IsOptional()
   @IsString()
   companyId?: string;
+
+  @IsOptional()
+  @IsString()
+  changeReason?: string;
 }

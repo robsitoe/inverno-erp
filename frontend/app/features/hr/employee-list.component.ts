@@ -124,185 +124,187 @@ const MOZAMBIQUE_BANKS = [
               </div>
 
               <!-- Main Form Content -->
-              <div class="flex-1 grid grid-cols-2 gap-x-8 gap-y-4">
-                <!-- Identificação -->
-                <div class="col-span-2">
-                    <h3 class="font-medium text-blue-900 border-b border-blue-50 pb-1 flex items-center gap-2 text-sm uppercase tracking-wide mb-4">
-                        <app-icon name="person" [size]="18" color="#1e3a8a"></app-icon>
-                        Dados de Identificação
-                    </h3>
+              <div class="flex-1 flex flex-col min-h-0 min-w-0">
+                <!-- Tabs Navigation -->
+                <div class="flex border-b border-gray-200 mb-4 overflow-x-auto no-scrollbar">
+                  <button (click)="setTab('basic')" [class.border-blue-600]="activeTab === 'basic'" [class.text-blue-600]="activeTab === 'basic'"
+                    class="px-4 py-2 border-b-2 border-transparent text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-blue-600 whitespace-nowrap transition-all">
+                    Identificação
+                  </button>
+                  <button (click)="setTab('contract')" [class.border-blue-600]="activeTab === 'contract'" [class.text-blue-600]="activeTab === 'contract'"
+                    class="px-4 py-2 border-b-2 border-transparent text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-blue-600 whitespace-nowrap transition-all">
+                    Contrato
+                  </button>
+                  <button (click)="setTab('salary')" [class.border-blue-600]="activeTab === 'salary'" [class.text-blue-600]="activeTab === 'salary'"
+                    class="px-4 py-2 border-b-2 border-transparent text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-blue-600 whitespace-nowrap transition-all">
+                    Financeiro
+                  </button>
+                  <button *ngIf="selectedEmployee.id" (click)="setTab('history')" [class.border-blue-600]="activeTab === 'history'" [class.text-blue-600]="activeTab === 'history'"
+                    class="px-4 py-2 border-b-2 border-transparent text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-blue-600 whitespace-nowrap transition-all">
+                    Histórico Salarial
+                  </button>
                 </div>
 
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Código do Funcionário *</label>
-                  <div class="relative">
-                    <input 
-                      type="text" 
-                      [(ngModel)]="selectedEmployee.code"
-                      (ngModelChange)="onCodeChange($event)"
-                      [class.border-red-400]="codeStatus === 'taken'"
-                      [class.border-green-400]="codeStatus === 'available'"
-                      class="w-full px-3 py-2 border rounded text-xs pr-8 bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-500 transition-all font-bold"
-                    >
-                    <span *ngIf="codeStatus === 'checking'" class="absolute right-2 top-1/2 -translate-y-1/2">
-                      <svg class="animate-spin h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 22 6.477 22 12h-4z"></path>
-                      </svg>
-                    </span>
-                    <app-icon *ngIf="codeStatus === 'available'" name="check" [size]="18" color="#10b981" class="absolute right-2 top-1/2 -translate-y-1/2"></app-icon>
-                    <app-icon *ngIf="codeStatus === 'taken'" name="error" [size]="18" color="#ef4444" class="absolute right-2 top-1/2 -translate-y-1/2"></app-icon>
-                  </div>
-                </div>
+                <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+                  <!-- Panel: Basic Info -->
+                  <ng-container *ngIf="activeTab === 'basic'">
+                    <div class="col-span-1">
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Código do Funcionário *</label>
+                      <div class="relative">
+                        <input type="text" [(ngModel)]="selectedEmployee.code" (ngModelChange)="onCodeChange($event)"
+                          [class.border-red-400]="codeStatus === 'taken'" [class.border-green-400]="codeStatus === 'available'"
+                          class="w-full px-3 py-2 border rounded text-xs pr-8 bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-500 transition-all font-bold">
+                        <app-icon *ngIf="codeStatus === 'available'" name="check" [size]="18" color="#10b981" class="absolute right-2 top-1/2 -translate-y-1/2"></app-icon>
+                        <app-icon *ngIf="codeStatus === 'taken'" name="error" [size]="18" color="#ef4444" class="absolute right-2 top-1/2 -translate-y-1/2"></app-icon>
+                      </div>
+                    </div>
 
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nome Completo *</label>
-                  <input type="text" [(ngModel)]="selectedEmployee.name" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-500 transition-all">
-                </div>
-                
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">NUIT (Número Único Identificação Tributária) *</label>
-                  <input type="text" [(ngModel)]="selectedEmployee.nif" placeholder="9 algarismos" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-500">
-                </div>
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">INSS</label>
-                  <input type="text" [(ngModel)]="selectedEmployee.inss" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
-                </div>
+                    <div class="col-span-1">
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nome Completo *</label>
+                      <input type="text" [(ngModel)]="selectedEmployee.name" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white focus:ring-1 focus:ring-blue-500">
+                    </div>
 
-                <!-- Contactos -->
-                <div class="col-span-2 mt-4">
-                    <h3 class="font-medium text-gray-800 border-b border-gray-100 pb-1 flex items-center gap-2 text-sm uppercase tracking-wide mb-4">
-                        <app-icon name="contacts" [size]="18" color="#4b5563"></app-icon>
+                    <div class="col-span-1">
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">NUIT *</label>
+                      <input type="text" [(ngModel)]="selectedEmployee.nif" placeholder="9 algarismos" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
+                    </div>
+                    <div class="col-span-1">
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">INSS</label>
+                      <input type="text" [(ngModel)]="selectedEmployee.inss" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
+                    </div>
+
+                    <div class="col-span-2 mt-2">
+                      <h3 class="font-medium text-gray-800 border-b border-gray-100 pb-1 flex items-center gap-2 text-[11px] uppercase tracking-wide mb-2">
                         Morada & Contactos
-                    </h3>
-                </div>
-                <div class="col-span-2">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Endereço de Residência</label>
-                    <input type="text" [(ngModel)]="selectedEmployee.address" placeholder="Av... Rua... Casa nº..." class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
-                </div>
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Telefone / Telemóvel</label>
-                  <input type="text" [(ngModel)]="selectedEmployee.phone" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
-                </div>
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Email</label>
-                  <input type="email" [(ngModel)]="selectedEmployee.email" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
-                </div>
+                      </h3>
+                    </div>
+                    <div class="col-span-2">
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Endereço</label>
+                      <input type="text" [(ngModel)]="selectedEmployee.address" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
+                    </div>
+                    <div class="col-span-1">
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Telefone</label>
+                      <input type="text" [(ngModel)]="selectedEmployee.phone" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
+                    </div>
+                    <div class="col-span-1">
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Email</label>
+                      <input type="email" [(ngModel)]="selectedEmployee.email" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
+                    </div>
+                  </ng-container>
 
-                <!-- Profissional -->
-                <div class="col-span-2 mt-4">
-                    <h3 class="font-medium text-green-900 border-b border-green-50 pb-1 flex items-center gap-2 text-sm uppercase tracking-wide mb-4">
-                        <app-icon name="work" [size]="18" color="#166534"></app-icon>
-                        Dados Profissionais & Salário
-                    </h3>
-                </div>
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cargo / Função</label>
-                  <input type="text" [(ngModel)]="selectedEmployee.position" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
-                </div>
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Departamento</label>
-                  <input type="text" [(ngModel)]="selectedEmployee.department" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
-                </div>
-                
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo de Contrato (Lei 13/2023)</label>
-                  <select [(ngModel)]="selectedEmployee.contractType" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
-                    <option value="INDETERMINADO">Tempo Indeterminado</option>
-                    <option value="DETERMINADO_CERTO">Tempo Determinado Certo</option>
-                    <option value="DETERMINADO_INCERTO">Tempo Determinado Incerto</option>
-                    <option value="TELETRABALHO">Teletrabalho</option>
-                    <option value="INTERMITENTE">Trabalho Intermitente</option>
-                    <option value="SAZONAL">Trabalho Sazonal</option>
-                    <option value="EVENTUAL">Trabalho Eventual</option>
-                    <option value="DOMICILIO">Trabalho no Domicílio</option>
-                    <option value="ESTAGIO">Estágio Profissional</option>
-                  </select>
-                </div>
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Data de Admissão *</label>
-                  <input type="date" [(ngModel)]="selectedEmployee.hireDate" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
-                </div>
+                  <!-- Panel: Contract Info -->
+                  <ng-container *ngIf="activeTab === 'contract'">
+                    <div class="col-span-1">
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cargo / Função</label>
+                      <input type="text" [(ngModel)]="selectedEmployee.position" class="w-full px-3 py-2 border rounded text-xs bg-gray-50">
+                    </div>
+                    <div class="col-span-1">
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Departamento</label>
+                      <input type="text" [(ngModel)]="selectedEmployee.department" class="w-full px-3 py-2 border rounded text-xs bg-gray-50">
+                    </div>
+                    <div class="col-span-1">
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo de Contrato</label>
+                      <select [(ngModel)]="selectedEmployee.contractType" class="w-full px-3 py-2 border rounded text-xs bg-gray-50">
+                        <option value="INDETERMINADO">Tempo Indeterminado</option>
+                        <option value="DETERMINADO_CERTO">Tempo Determinado Certo</option>
+                        <option value="DETERMINADO_INCERTO">Tempo Determinado Incerto</option>
+                        <option value="ESTAGIO">Estágio Profissional</option>
+                        <option value="OUTRO">Outro</option>
+                      </select>
+                    </div>
+                    <div class="col-span-1">
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Data de Admissão *</label>
+                      <input type="date" [(ngModel)]="selectedEmployee.hireDate" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
+                    </div>
+                    <div class="col-span-1">
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Horas Semanais</label>
+                      <input type="number" [(ngModel)]="selectedEmployee.weeklyHours" class="w-full px-3 py-2 border rounded text-xs bg-gray-50">
+                    </div>
+                    <div class="col-span-1">
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Fim de Experiência</label>
+                      <input type="date" [(ngModel)]="selectedEmployee.trialPeriodEnd" class="w-full px-3 py-2 border rounded text-xs bg-gray-50">
+                    </div>
+                  </ng-container>
 
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Fim do Período de Experiência</label>
-                  <input type="date" [(ngModel)]="selectedEmployee.trialPeriodEnd" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
-                </div>
+                  <!-- Panel: Salary Info -->
+                  <ng-container *ngIf="activeTab === 'salary'">
+                    <div class="col-span-1 bg-blue-50 p-4 rounded border border-blue-100">
+                      <label class="block text-[11px] font-black text-blue-900 uppercase mb-1">Salário Base (MT)</label>
+                      <input type="number" [(ngModel)]="selectedEmployee.salaryBase" class="w-full px-3 py-2 border-2 border-blue-200 rounded text-lg text-right font-black text-blue-700 bg-white shadow-sm">
+                    </div>
+                    <div class="col-span-1 bg-orange-50 p-4 rounded border border-orange-100">
+                      <label class="block text-[11px] font-black text-orange-900 uppercase mb-1">Dependentes (IRPS)</label>
+                      <select [(ngModel)]="selectedEmployee.dependents" class="w-full px-3 py-2 border-2 border-orange-200 rounded text-lg bg-white shadow-sm">
+                        <option [ngValue]="0">0 Dependentes</option>
+                        <option [ngValue]="1">1 Dependente</option>
+                        <option [ngValue]="2">2 Dependentes</option>
+                        <option [ngValue]="3">3 Dependentes</option>
+                        <option [ngValue]="4">4 ou mais</option>
+                      </select>
+                    </div>
 
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Horas Semanais (Normal: 44h)</label>
-                  <input type="number" [(ngModel)]="selectedEmployee.weeklyHours" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
-                </div>
+                    <div class="col-span-1 grid grid-cols-1 gap-2">
+                      <div class="flex items-center justify-between">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Subs. Transporte</label>
+                        <input type="number" [(ngModel)]="selectedEmployee.subsidyTransport" class="w-24 px-2 py-1.5 border rounded text-xs text-right bg-gray-50">
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Subs. Alimentação</label>
+                        <input type="number" [(ngModel)]="selectedEmployee.subsidyFood" class="w-24 px-2 py-1.5 border rounded text-xs text-right bg-gray-50">
+                      </div>
+                    </div>
 
-                <div *ngIf="selectedEmployee.contractType !== 'INDETERMINADO'" class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Data de Terminação (Contrato Termo)</label>
-                  <input type="date" [(ngModel)]="selectedEmployee.endDate" class="w-full px-3 py-2 border rounded text-xs bg-blue-50 focus:bg-white">
-                </div>
+                    <div class="col-span-1 flex flex-col gap-2">
+                       <label class="block text-[10px] font-bold text-amber-900 uppercase">Dados Bancários / NIB</label>
+                       <select [(ngModel)]="selectedEmployee.bankName" class="w-full px-2 py-1.5 border rounded text-[10px] bg-gray-50">
+                          <option value="">-- Seleccionar Banco --</option>
+                          <option *ngFor="let bank of banks" [value]="bank">{{ bank }}</option>
+                       </select>
+                       <input type="text" [(ngModel)]="selectedEmployee.nib" (ngModelChange)="onNibChange($event)"
+                         class="w-full px-2 py-1.5 border rounded text-xs font-mono bg-gray-50" placeholder="NIB">
+                    </div>
 
-                <div class="col-span-1 bg-blue-50 p-4 rounded-lg border border-blue-100 flex flex-col justify-center shadow-sm">
-                  <label class="block text-[11px] font-black text-blue-900 uppercase mb-1 tracking-tighter">Salário Base (MT)</label>
-                  <input type="number" [(ngModel)]="selectedEmployee.salaryBase" class="w-full px-3 py-2 border-2 border-blue-200 rounded text-lg text-right font-black text-blue-700 bg-white ring-blue-500 ring-offset-2 focus:ring-2 outline-none">
-                </div>
+                    <!-- Justificação -->
+                    <div *ngIf="selectedEmployee.id" class="col-span-2 mt-4 bg-gray-100 p-3 rounded">
+                       <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1 italic">Motivo da Alteração Salarial (Justificação)</label>
+                       <input type="text" [(ngModel)]="changeReason" 
+                         placeholder="Ex: Promoção, Ajuste Anual, Acordo Colectivo..."
+                         class="w-full px-3 py-2 border border-gray-300 rounded text-xs bg-white focus:ring-2 focus:ring-blue-500">
+                       <p class="text-[9px] text-gray-400 mt-1 uppercase tracking-tighter">* Esta informação ficará gravada no histórico do funcionário.</p>
+                    </div>
+                  </ng-container>
 
-                <div class="col-span-1 bg-orange-50 p-4 rounded-lg border border-orange-100 flex flex-col justify-center shadow-sm">
-                  <label class="block text-[11px] font-black text-orange-900 uppercase mb-1 tracking-tighter">Dependentes (IRPS)</label>
-                  <select [(ngModel)]="selectedEmployee.dependents" class="w-full px-3 py-2 border-2 border-orange-200 rounded text-lg text-right font-black text-orange-700 bg-white focus:ring-2 focus:ring-orange-500 outline-none">
-                    <option [ngValue]="0">0 Dependentes</option>
-                    <option [ngValue]="1">1 Dependente</option>
-                    <option [ngValue]="2">2 Dependentes</option>
-                    <option [ngValue]="3">3 Dependentes</option>
-                    <option [ngValue]="4">4 ou mais</option>
-                  </select>
+                  <!-- Panel: History -->
+                  <ng-container *ngIf="activeTab === 'history'">
+                    <div class="col-span-2">
+                      <div class="overflow-hidden border rounded shadow-sm">
+                        <table class="min-w-full text-[11px]">
+                          <thead class="bg-gray-50 text-gray-500 font-bold uppercase tracking-widest border-b">
+                            <tr>
+                              <th class="px-4 py-2 text-left">Data</th>
+                              <th class="px-4 py-2 text-right">Novo Salário</th>
+                              <th class="px-4 py-2 text-left">Motivo</th>
+                              <th class="px-4 py-2 text-left">Alterado Por</th>
+                            </tr>
+                          </thead>
+                          <tbody class="divide-y">
+                            <tr *ngFor="let h of salaryHistory" class="hover:bg-gray-50">
+                              <td class="px-4 py-2">{{ h.changeDate | date:'dd/MM/yyyy' }}</td>
+                              <td class="px-4 py-2 text-right font-black text-blue-700">{{ h.newSalary | number:'1.2-2' }} MT</td>
+                              <td class="px-4 py-2 text-gray-600 italic">"{{ h.reason }}"</td>
+                              <td class="px-4 py-2 text-gray-400 font-mono">{{ h.updatedBy }}</td>
+                            </tr>
+                            <tr *ngIf="salaryHistory.length === 0">
+                              <td colspan="4" class="px-4 py-4 text-center text-gray-400 italic">Sem histórico disponível.</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </ng-container>
                 </div>
-
-                <div class="col-span-1 grid grid-cols-1 gap-2">
-                  <div class="flex items-center justify-between gap-2">
-                    <label class="text-[10px] font-bold text-gray-500 uppercase whitespace-nowrap">Subs. Transporte</label>
-                    <input type="number" [(ngModel)]="selectedEmployee.subsidyTransport" class="w-24 px-2 py-1.5 border rounded text-xs text-right bg-gray-50">
-                  </div>
-                  <div class="flex items-center justify-between gap-2">
-                    <label class="text-[10px] font-bold text-gray-500 uppercase whitespace-nowrap">Subs. Alimentação</label>
-                    <input type="number" [(ngModel)]="selectedEmployee.subsidyFood" class="w-24 px-2 py-1.5 border rounded text-xs text-right bg-gray-50">
-                  </div>
-                  <div class="flex items-center justify-between gap-2">
-                    <label class="text-[10px] font-bold text-gray-500 uppercase whitespace-nowrap">Subs. Habitação</label>
-                    <input type="number" [(ngModel)]="selectedEmployee.subsidyHousing" class="w-24 px-2 py-1.5 border rounded text-xs text-right bg-gray-50">
-                  </div>
-                </div>
-
-                <!-- Pagamento -->
-                <div class="col-span-2 mt-4">
-                    <h3 class="font-medium text-amber-900 border-b border-amber-50 pb-1 flex items-center gap-2 text-sm uppercase tracking-wide mb-4">
-                        <app-icon name="account_balance" [size]="18" color="#78350f"></app-icon>
-                        Dados Bancários
-                    </h3>
-                </div>
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Banco</label>
-                  <select [(ngModel)]="selectedEmployee.bankName" class="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:bg-white">
-                    <option value="">-- Seleccionar Banco --</option>
-                    <option *ngFor="let bank of banks" [value]="bank">{{ bank }}</option>
-                  </select>
-                </div>
-                <div class="col-span-1">
-                  <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">NIB / IBAN</label>
-                  <div class="relative">
-                    <input 
-                      type="text" 
-                      [(ngModel)]="selectedEmployee.nib"
-                      (ngModelChange)="onNibChange($event)"
-                      [class.border-red-400]="nibStatus === 'taken'"
-                      [class.border-green-400]="nibStatus === 'available' && selectedEmployee.nib"
-                      class="w-full px-3 py-2 border rounded text-xs pr-8 font-mono tracking-widest bg-gray-50 focus:bg-white"
-                      placeholder="000.0000.0000000000.00"
-                    >
-                    <app-icon *ngIf="nibStatus === 'available' && selectedEmployee.nib" name="verified" [size]="18" color="#10b981" class="absolute right-2 top-1/2 -translate-y-1/2"></app-icon>
-                    <app-icon *ngIf="nibStatus === 'taken'" name="warning" [size]="18" color="#ef4444" class="absolute right-2 top-1/2 -translate-y-1/2"></app-icon>
-                  </div>
-                  <div *ngIf="nibStatus === 'taken' && nibConflictName" class="mt-1 text-[10px] text-red-600 bg-red-50 p-1 border border-red-100 rounded">
-                    NIB já em uso por: <strong>{{ nibConflictName }}</strong>
-                  </div>
-                </div>
+              </div>
+              </div>
 
                 <!-- Documentação Oficiais -->
                 <div class="col-span-2 mt-4">
@@ -398,8 +400,6 @@ const MOZAMBIQUE_BANKS = [
                         </div>
                     </div>
                 </div>
-              </div>
-            </div>
             <input #docInputHidden id="docInputHidden" type="file" (change)="onDocUpload($event)" class="hidden">
           </div>
         </div>
@@ -429,6 +429,10 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
   codeStatus: 'idle' | 'checking' | 'available' | 'taken' = 'idle';
   nibStatus: 'idle' | 'checking' | 'available' | 'taken' = 'idle';
   nibConflictName = '';
+
+  activeTab: 'basic' | 'contract' | 'salary' | 'history' = 'basic';
+  salaryHistory: any[] = [];
+  changeReason: string = '';
 
   banks = MOZAMBIQUE_BANKS;
 
@@ -539,9 +543,32 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
   selectEmployee(emp: Employee) {
     // Clone to avoid direct mutation
     this.selectedEmployee = { ...emp };
+    this.activeTab = 'basic';
+    this.salaryHistory = [];
+    this.changeReason = '';
     this.codeStatus = 'idle';
     this.nibStatus = 'idle';
     this.nibConflictName = '';
+    this.cdr.detectChanges();
+  }
+
+  setTab(tab: any) {
+    this.activeTab = tab;
+    if (tab === 'history') {
+      this.loadSalaryHistory();
+    }
+  }
+
+  loadSalaryHistory() {
+    if (!this.selectedEmployee?.id) return;
+    const cid = this.getCompanyId();
+    if (!cid) return;
+
+    this.hrService.getSalaryHistory(this.selectedEmployee.id, cid)
+      .subscribe(h => {
+        this.salaryHistory = h;
+        this.cdr.detectChanges();
+      });
   }
 
   newEmployee() {
@@ -579,11 +606,18 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
     this.isSaving = true;
     const cid = this.getCompanyId();
 
+    // Attach changeReason if available
+    const payload = {
+      ...this.selectedEmployee,
+      changeReason: this.changeReason
+    };
+
     this.sub.add(
-      this.hrService.saveEmployee(this.selectedEmployee, cid).subscribe({
+      this.hrService.saveEmployee(payload as any, cid).subscribe({
         next: (saved) => {
           this.toaster.showSuccess('Sucesso', 'Funcionário gravado com sucesso.');
           this.isSaving = false;
+          this.changeReason = '';
           this.refresh();
           this.selectEmployee(saved);
         },

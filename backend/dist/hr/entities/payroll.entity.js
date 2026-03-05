@@ -34,7 +34,12 @@ let Payroll = class Payroll {
     foodSubsidy;
     overtimeAmount;
     bonusAmount;
+    dependents;
     daysWorked;
+    absenceDays;
+    absenceDeduction;
+    vacationDays;
+    cashVoucherDeduction;
     netSalary;
     status;
     journalEntryId;
@@ -104,9 +109,29 @@ __decorate([
     __metadata("design:type", Number)
 ], Payroll.prototype, "bonusAmount", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'integer', default: 0 }),
+    __metadata("design:type", Number)
+], Payroll.prototype, "dependents", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'integer', default: 30 }),
     __metadata("design:type", Number)
 ], Payroll.prototype, "daysWorked", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'integer', default: 0 }),
+    __metadata("design:type", Number)
+], Payroll.prototype, "absenceDays", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2, default: 0 }),
+    __metadata("design:type", Number)
+], Payroll.prototype, "absenceDeduction", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'integer', default: 0 }),
+    __metadata("design:type", Number)
+], Payroll.prototype, "vacationDays", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2, default: 0 }),
+    __metadata("design:type", Number)
+], Payroll.prototype, "cashVoucherDeduction", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2, default: 0 }),
     __metadata("design:type", Number)

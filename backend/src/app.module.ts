@@ -27,6 +27,7 @@ import { Series } from './companies/entities/series.entity';
 import { GenericEntity } from './common-entities/generic-entity.entity';
 import { DocumentType } from './common-entities/entities/document-type.entity';
 import { PaymentMethod } from './treasury/entities/payment-method.entity';
+import { PettyCashVoucher } from './treasury/entities/petty-cash-voucher.entity';
 import { TenancyModule } from './tenancy/tenancy.module';
 import { PeriodAuditLog } from './companies/entities/period-audit-log.entity';
 import { PeriodsModule } from './periods/periods.module';
@@ -65,7 +66,7 @@ import { GasControlModule } from './gas-control/gas-control.module';
               SalesDocument, SalesDocumentLine, User, PurchaseDocument,
               PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
               Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-              DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate, Employee, Payroll, Absence, TaxBracket, HRSettings,
+              DocumentType, PaymentMethod, PettyCashVoucher, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate, Employee, Payroll, Absence, TaxBracket, HRSettings,
               GasCylinderType, GasDailyControl, GasDailyEntry
             ],
             synchronize: true,
@@ -84,7 +85,7 @@ import { GasControlModule } from './gas-control/gas-control.module';
             SalesDocument, SalesDocumentLine, User, PurchaseDocument,
             PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
             Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-            DocumentType, PaymentMethod, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate, Employee, Payroll, Absence, TaxBracket, HRSettings,
+            DocumentType, PaymentMethod, PettyCashVoucher, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate, Employee, Payroll, Absence, TaxBracket, HRSettings,
             GasCylinderType, GasDailyControl, GasDailyEntry
           ],
           synchronize: true,

@@ -100,6 +100,9 @@ import { Subscription, firstValueFrom } from 'rxjs';
                     <th class="p-3 text-right">Bruto</th>
                     <th class="p-3 text-right">INSS (4%)</th>
                     <th class="p-3 text-right">IRPS</th>
+                    <th class="p-3 text-center">Dep.</th>
+                    <th class="p-3 text-center">Faltas/Férias</th>
+                    <th class="p-3 text-right">Vales/Adiantamentos</th>
                     <th class="p-3 text-right">Líquido</th>
                     <th class="p-3 text-center">Estado</th>
                     <th class="p-3 text-center">Ações</th>
@@ -112,6 +115,16 @@ import { Subscription, firstValueFrom } from 'rxjs';
                     <td class="p-3 text-right font-mono">{{ r.grossSalary | number:'1.2-2' }}</td>
                     <td class="p-3 text-right text-orange-600 font-mono">-{{ r.inssEmployee | number:'1.2-2' }}</td>
                     <td class="p-3 text-right text-red-600 font-mono">-{{ (r.irps || r['irm'] || 0) | number:'1.2-2' }}</td>
+                    <td class="p-3 text-center text-gray-400 font-bold">{{ r.dependents || 0 }}</td>
+                    <td class="p-3 text-center">
+                       <span *ngIf="r.absenceDays" class="text-red-500 font-bold" title="Dias de Falta">F: {{ r.absenceDays }}</span>
+                       <span *ngIf="r.vacationDays" class="text-blue-500 font-bold ml-2" title="Dias de Férias">V: {{ r.vacationDays }}</span>
+                       <span *ngIf="!r.absenceDays && !r.vacationDays" class="text-gray-300">-</span>
+                    </td>
+                    <td class="p-3 text-right text-orange-600 font-mono">
+                       <span *ngIf="r.cashVoucherDeduction">-{{ r.cashVoucherDeduction | number:'1.2-2' }}</span>
+                       <span *ngIf="!r.cashVoucherDeduction" class="text-gray-300">-</span>
+                    </td>
                     <td class="p-3 text-right font-black text-gray-800 font-mono">{{ r.netSalary | number:'1.2-2' }}</td>
                     <td class="p-3 text-center">
                       <span [class]="r.status === 'POSTED' ? 'bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full text-[10px]' : 'bg-yellow-100 text-yellow-700 font-bold px-2 py-0.5 rounded-full text-[10px]'">
@@ -240,11 +253,14 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
 
   exportToExcel() {
     if (this.payrollData.length === 0) return;
-    const headers = ['Codigo', 'Nome', 'Bruto', 'INSS_EE', 'IRPS', 'Sub_Transporte', 'Sub_Alimentacao', 'Liquido'];
+    const headers = ['Codigo', 'Nome', 'Bruto', 'Faltas_Dias', 'Deducao_Faltas', 'Ferias_Dias', 'INSS_EE', 'IRPS', 'Sub_Transporte', 'Sub_Alimentacao', 'Liquido'];
     const rows = this.payrollData.map(r => [
       r.employeeCode,
       r.employeeName,
       r.grossSalary,
+      r.absenceDays || 0,
+      r.absenceDeduction || 0,
+      r.vacationDays || 0,
       r.inssEmployee,
       r.irps || r['irm'] || 0,
       r.transportSubsidy || 0,
@@ -261,6 +277,10 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  }
+
+  public getFileUrl(path: string) {
+    return this.hrService.getFileUrl(path);
   }
 
   async viewRecibo(record: PayrollRecord) {
@@ -325,9 +345,13 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
           <td>${r.employeeCode}</td>
           <td>${r.employeeName}</td>
           <td class="text-right">${Number(r.grossSalary).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
+          <td class="text-center">${r.absenceDays || 0}</td>
+          <td class="text-right text-red-600">${Number(r.absenceDeduction || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
+          <td class="text-center">${r.vacationDays || 0}</td>
+          <td class="text-right text-red-600">${Number(r.cashVoucherDeduction || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
           <td class="text-right">${Number(r.inssEmployee).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
           <td class="text-right">${Number(r.irps || r['irm'] || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
-          <td class="text-right">${Number(r.transportSubsidy + r.foodSubsidy).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
+          <td class="text-right">${Number((r.transportSubsidy || 0) + (r.foodSubsidy || 0)).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
           <td class="text-right font-bold">${Number(r.netSalary).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
         </tr>
       `;
@@ -370,11 +394,15 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
               <tr>
                 <th>Cód</th>
                 <th>Nome do Colaborador</th>
-                <th class="text-right">Salário Base</th>
+                <th class="text-right">S. Base</th>
+                <th class="text-center">Faltas</th>
+                <th class="text-right">Desc. Faltas</th>
+                <th class="text-center">Férias</th>
+                <th class="text-right">Vales/Adiantamentos</th>
                 <th class="text-right">INSS (4%)</th>
                 <th class="text-right">IRPS</th>
                 <th class="text-right">Subsídios</th>
-                <th class="text-right">Líquido a Receber</th>
+                <th class="text-right">Líquido</th>
               </tr>
             </thead>
             <tbody>
@@ -383,9 +411,13 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
             <tr class="totals">
               <td colspan="2">TOTAIS GERAIS</td>
               <td class="text-right">${this.totals.gross.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
+              <td class="text-center">${this.payrollData.reduce((p, c) => p + (c.absenceDays || 0), 0)}</td>
+              <td class="text-right">${this.payrollData.reduce((p, c) => p + Number(c.absenceDeduction || 0), 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
+              <td class="text-center">${this.payrollData.reduce((p, c) => p + (c.vacationDays || 0), 0)}</td>
+              <td class="text-right">${this.payrollData.reduce((p, c) => p + Number(c.cashVoucherDeduction || 0), 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
               <td class="text-right">${(this.payrollData.reduce((p, c) => p + Number(c.inssEmployee), 0)).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
               <td class="text-right">${this.totals.irps.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
-              <td class="text-right">${(this.payrollData.reduce((p, c) => p + Number(c.transportSubsidy + c.foodSubsidy), 0)).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
+              <td class="text-right">${(this.payrollData.reduce((p, c) => p + Number((c.transportSubsidy || 0) + (c.foodSubsidy || 0)), 0)).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
               <td class="text-right">${this.totals.net.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
             </tr>
           </table>
@@ -407,9 +439,12 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
       const emp = employees[i];
       bodyContent += `
         <div class="a4-page">
-          ${this.renderSingleRecibo(r, emp, company, monthName, 'Via Original')}
-          <div class="divider"></div>
-          ${this.renderSingleRecibo(r, emp, company, monthName, 'Via Duplicado')}
+          <div class="receipt-col">
+            ${this.renderSingleRecibo(r, emp, company, monthName, 'Original')}
+          </div>
+          <div class="receipt-col">
+            ${this.renderSingleRecibo(r, emp, company, monthName, 'Duplicado')}
+          </div>
         </div>
       `;
     }
@@ -417,27 +452,73 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
     return `
       <html>
         <head>
-          <title>Recibos</title>
+          <title>Recibos de Vencimento</title>
           <style>
-            @page { size: A4 portrait; margin: 0; }
-            body { font-family: 'Segoe UI', Arial; margin: 0; padding: 0; background: #eee; }
-            .a4-page { width: 210mm; height: 297mm; background: white; margin: 0 auto; padding: 10mm; box-sizing: border-box; page-break-after: always; display: flex; flex-direction: column; }
-            .recibo-unit { height: 133mm; border: 1px solid #e2e8f0; padding: 6mm; border-radius: 4px; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-            .watermark { position: absolute; right: 5mm; top: 5mm; font-size: 8px; color: #cbd5e1; border: 1px solid #cbd5e1; padding: 1px 4px; border-radius: 2px; text-transform: uppercase; }
-            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #1e40af; padding-bottom: 3mm; margin-bottom: 4mm; }
-            .company-info h2 { margin: 0; font-size: 14px; color: #1e3a8a; }
-            .company-info p { margin: 1px 0; font-size: 9px; color: #64748b; }
-            .recibo-title { text-align: right; }
-            .recibo-title h1 { margin: 0; font-size: 16px; font-weight: bold; color: #1e293b; }
-            .info-grid { display: grid; grid-template-columns: 2fr 1fr; background: #f8fafc; padding: 3mm; border-radius: 4px; margin-bottom: 4mm; font-size: 10px; }
-            table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 30px; }
-            th { text-align: left; padding: 6px; background: #f1f5f9; border-bottom: 1px solid #cbd5e1; }
-            td { padding: 6px; border-bottom: 1px solid #f1f5f9; }
+            @page { size: A4 landscape; margin: 0; }
+            body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background: #f0f0f0; }
+            .a4-page { 
+              width: 297mm; 
+              height: 210mm; 
+              background: white; 
+              margin: 0 auto; 
+              display: flex; 
+              padding: 6mm; 
+              box-sizing: border-box; 
+              gap: 8mm;
+              page-break-after: always;
+            }
+            .receipt-col { 
+              flex: 1; 
+              border: 1px solid #eee; 
+              padding: 4mm;
+              display: flex;
+              flex-direction: column;
+              overflow: hidden;
+            }
+            
+            .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4mm; }
+            .logo-section { display: flex; flex-direction: column; gap: 2px; }
+            .logo-img { height: 60px; object-fit: contain; margin-bottom: 2px; }
+            .company-name { font-size: 10px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; }
+            .company-details { font-size: 8px; color: #444; line-height: 1.2; }
+            
+            .header-right { text-align: right; }
+            .copy-label { font-size: 8px; font-style: italic; color: #999; margin-bottom: 8mm; display: block; }
+            .doc-title { font-size: 14px; font-weight: 900; color: #000; margin-bottom: 4mm; text-align: center; width: 100%; border-bottom: 1px solid #eee; padding-bottom: 2mm; }
+            
+            .meta-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 9px; margin-bottom: 5mm; }
+            .meta-item { display: flex; justify-content: space-between; border-bottom: 1px dotted #eee; padding: 2px 0; }
+            .meta-label { font-weight: bold; color: #666; width: 140px; }
+            .meta-value { font-weight: bold; text-align: right; flex: 1; }
+            
+            .section-title { background: #f8fafc; padding: 3px 6px; font-size: 10px; font-weight: 900; border-left: 3px solid #1e40af; margin: 8px 0 4px 0; display: flex; justify-content: space-between; }
+            
+            table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 2px; }
+            th { text-align: left; padding: 4px; color: #666; border-bottom: 1px solid #eee; font-weight: normal; }
+            td { padding: 4px; border-bottom: 1px solid #f9f9f9; }
             .text-right { text-align: right; }
-            .total-bar { margin-top: auto; background: #1e3a8a; color: white; padding: 3mm; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
-            .divider { border-top: 1px dashed #cbd5e1; height: 11mm; position: relative; width: 100%; }
-            .divider::after { content: '\u2702'; position: absolute; left: 50%; top: -10px; background: white; padding: 0 10px; font-size: 12px; color: #cbd5e1; }
-            @media print { body { background: white; } .a4-page { margin: 0; } }
+            .font-bold { font-weight: bold; }
+            
+            .total-line { border-top: 2px solid #000; margin-top: 2px; padding: 4px 0; font-weight: 900; display: flex; justify-content: space-between; font-size: 10px; }
+            
+            .summary-box { margin-top: 4mm; display: flex; flex-direction: column; gap: 2px; }
+            .summary-row { display: flex; justify-content: space-between; padding: 4px 8px; font-size: 10px; font-weight: bold; border-bottom: 1px solid #eee; }
+            .summary-row.highlight { background: #ffedd5; border: 1px solid #fb923c; border-radius: 4px; margin: 4px 0; color: #9a3412; }
+            
+            .status-bar { height: 28px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; margin-top: 4mm; font-size: 10px; font-weight: 900; border-radius: 2px; }
+            .bar-green { background: #bef264; color: #365314; border: 1px solid #a3e635; }
+            .bar-yellow { background: #fef08a; color: #713f12; border: 1px solid #fde047; }
+            
+            .footer-sigs { display: flex; justify-content: space-between; margin-top: auto; padding-top: 10mm; font-size: 9px; }
+            .sig-box { width: 45%; border-top: 1px solid #000; text-align: center; padding-top: 4px; }
+            .footer-date { font-size: 8px; color: #999; margin-top: 4mm; }
+
+            @media print { 
+              body { background: white; } 
+              .a4-page { border: none; padding: 8mm; margin: 0; }
+              .receipt-col { border: none; border-right: 1px dashed #ccc; }
+              .receipt-col:last-child { border-right: none; }
+            }
           </style>
         </head>
         <body>
@@ -448,61 +529,109 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   }
 
   private renderSingleRecibo(r: PayrollRecord, emp: any, company: any, month: string, watermark: string) {
-    const earnings = (Number(r.grossSalary) + Number(r.transportSubsidy + r.foodSubsidy) + Number(r.bonusAmount || 0));
-    const deductions = (Number(r.inssEmployee) + Number(r.irps || r['irm'] || 0));
+    const bonus = Number(r.bonusAmount || 0);
+    const absenceDeduction = Number(r.absenceDeduction || 0);
+    const cashVoucherDeduction = Number(r.cashVoucherDeduction || 0);
+    const totalAbonos = Number(r.grossSalary) + bonus;
+    const totalDescontos = Number(r.inssEmployee) + Number(r.irps || 0) + absenceDeduction + cashVoucherDeduction;
+    const liquido = totalAbonos - totalDescontos;
+    const foodSubsidy = Number(r.foodSubsidy || 0);
+    const transportSubsidy = Number(r.transportSubsidy || 0);
+
+    // In the screenshot logic: 
+    // Bonus is often separated to be accumulated or paid differently.
+    const salaryNetToReceive = (Number(r.netSalary) - bonus);
+    const totalFinal = salaryNetToReceive + bonus;
 
     return `
-      <div class="recibo-unit">
-        <div class="watermark">${watermark}</div>
-        <div class="header">
-          <div class="company-info">
-            <h2>${company.name}</h2>
-            <p>NUIT: ${company.nif || '---'} | ${company.address || ''}</p>
-          </div>
-          <div class="recibo-title">
-            <h1>RECIBO DE VENCIMENTO</h1>
-            <div style="font-size: 11px; font-weight: bold;">${month.toUpperCase()} ${r.year}</div>
-          </div>
-        </div>
-
-        <div class="info-grid">
-          <div>
-            <strong>Colaborador:</strong> ${r.employeeName}<br>
-            <span style="color: #64748b;">Cargo: ${emp.position || '---'} | Cód: ${r.employeeCode}</span>
-          </div>
-          <div class="text-right">
-            <strong>NUIT:</strong> ${emp.nif || '---'}<br>
-            <span style="color: #64748b;">Emissão: ${new Date().toLocaleDateString()}</span>
+      <div class="header-top">
+        <div class="logo-section">
+          ${company.logoUrl ? `<img src="${this.getFileUrl(company.logoUrl)}" class="logo-img">` : `
+            <div style="width: 120px; height: 60px; background: #eee; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #999; font-size: 8px;">LOGO</div>
+          `}
+          <div class="company-name">${company.name}</div>
+          <div class="company-details">
+            ${company.address || ''}<br>
+            Cell: ${company.phone || '---'}<br>
+            Maputo
           </div>
         </div>
-
-        <table>
-          <thead>
-            <tr><th>Descrição</th><th class="text-right">Ganhos</th><th class="text-right">Descontos</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Vencimento Base</td><td class="text-right">${Number(r.grossSalary).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td><td class="text-right">---</td></tr>
-            ${(r.transportSubsidy + r.foodSubsidy) > 0 ? `<tr><td>Subsídios (Transporte/Alimentação)</td><td class="text-right">${Number(r.transportSubsidy + r.foodSubsidy).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td><td class="text-right">---</td></tr>` : ''}
-            ${(r.bonusAmount || 0) > 0 ? `<tr><td>Bónus / Prêmios</td><td class="text-right">${Number(r.bonusAmount).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td><td class="text-right">---</td></tr>` : ''}
-            <tr><td style="color: #64748b;">Segurança Social (INSS 3%)</td><td class="text-right">---</td><td class="text-right" style="color: #dc2626;">${Number(r.inssEmployee).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td></tr>
-            <tr><td style="color: #64748b;">Retenção na Fonte (IRPS)</td><td class="text-right">---</td><td class="text-right" style="color: #dc2626;">${Number(r.irps || r['irm'] || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td></tr>
-            <tr style="font-weight: bold; border-top: 1px solid #1e3a8a;">
-              <td>TOTAIS</td>
-              <td class="text-right">${earnings.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
-              <td class="text-right">${deductions.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="total-bar">
-          <div style="font-size: 10px; font-weight: bold;">LÍQUIDO A RECEBER</div>
-          <div style="font-size: 18px; font-weight: 900;">${Number(r.netSalary).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT</div>
+        <div class="header-right">
+          <span class="copy-label">${watermark}</span>
+          <div style="font-size: 9px; font-weight: bold;">Mês de: <span style="font-size: 11px;">${month}-${r.year}</span></div>
         </div>
+      </div>
 
-        <div style="display: flex; justify-content: space-between; margin-top: 6mm; border-top: 1px solid #eee; padding-top: 3mm;">
-          <div style="width: 45%; border-top: 1px solid #000; text-align: center; font-size: 8px;">A Entidade Patronal</div>
-          <div style="width: 45%; border-top: 1px solid #000; text-align: center; font-size: 8px;">O Colaborador</div>
+      <div class="doc-title">RECIBO DE VENCIMENTO</div>
+
+      <div class="meta-section">
+        <div class="meta-item"><span class="meta-label">NUIT:</span><span class="meta-value">${emp.nif || '---'}</span></div>
+        <div class="meta-item"><span class="meta-label">Nº DO TRABALHADOR:</span><span class="meta-value">${r.employeeCode}</span></div>
+        <div class="meta-item"><span class="meta-label">Nº DE CONTRIBUINTE NO INSS:</span><span class="meta-value">${emp.inss || '---'}</span></div>
+        <div class="meta-item"><span class="meta-label">NOME:</span><span class="meta-value">${r.employeeName}</span></div>
+        <div class="meta-item"><span class="meta-label">FÉRIAS GOZADAS (DIAS):</span><span class="meta-value">${r.vacationDays || 0}</span></div>
+        <div class="meta-item"><span class="meta-label">FALTAS (DIAS):</span><span class="meta-value">${r.absenceDays || 0}</span></div>
+        <div class="meta-item" style="grid-column: span 2;"><span class="meta-label">FUNÇÃO:</span><span class="meta-value" style="text-align: left; padding-left: 20px;">${emp.position || '---'}</span></div>
+      </div>
+
+      <div class="section-title"><span>Abonos</span></div>
+      <table>
+        <tr><td>Salário base</td><td class="text-right">${Number(r.grossSalary).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td></tr>
+        ${Number(r.bonusAmount) > 0 ? `<tr><td>Bónus do mês</td><td class="text-right">${Number(r.bonusAmount).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td></tr>` : ''}
+      </table>
+      <div class="total-line"><span>Total de abonos</span><span>${totalAbonos.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>
+
+      <div class="section-title"><span>Descontos</span></div>
+      <table>
+        <tr><td>Faltas (${r.absenceDays || 0} dias)</td><td class="text-right">${absenceDeduction > 0 ? Number(absenceDeduction).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) : '-'}</td></tr>
+        <tr><td>IRPS</td><td class="text-right">${Number(r.irps).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td></tr>
+        <tr><td>INSS (3.00%)</td><td class="text-right">${Number(r.inssEmployee).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td></tr>
+        <tr><td>Vales de Caixa / Adiantamentos</td><td class="text-right">${cashVoucherDeduction > 0 ? Number(cashVoucherDeduction).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) : '-'}</td></tr>
+        <tr><td>Empréstimos Recebidos</td><td class="text-right">-</td></tr>
+      </table>
+      <div class="total-line"><span>Total de descontos</span><span>${totalDescontos.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>
+
+      <div class="summary-box">
+        <div class="summary-row"><span>Salário Líquido</span><span>${liquido.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>
+        ${foodSubsidy > 0 ? `<div class="summary-row"><span>Subsídio de Alimentação</span><span>${foodSubsidy.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>` : ''}
+        ${transportSubsidy > 0 ? `<div class="summary-row"><span>Subsídio de Transporte</span><span>${transportSubsidy.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>` : ''}
+        <div class="summary-row highlight"><span>Salário Líquido a Receber</span><span>${salaryNetToReceive.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>
+      </div>
+
+      <div class="section-title"><span>Bónus por Receber</span></div>
+      <table>
+        <tr><td>Bónus do mês</td><td class="text-right">${bonus.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td></tr>
+        <tr><td>Bónus de Meses anteriores</td><td class="text-right">-</td></tr>
+      </table>
+      <div class="total-line"><span>Bónus Acumulado por receber</span><span>${bonus.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>
+
+      <div class="summary-row" style="background: #f1f5f9; border-radius: 4px; margin-top: 2px;">
+        <span>Total a Receber (Salário + Bónus acumulado)</span>
+        <span>${totalFinal.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span>
+      </div>
+
+      <div class="status-bar bar-green">
+        <span>Salário Líquido Retido Por Consenso</span>
+        <span>-</span>
+      </div>
+      <div class="status-bar bar-yellow">
+        <span>100% do Salário Líquido a Receber na Conta</span>
+        <span>${totalFinal.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span>
+      </div>
+
+      <div class="footer-sigs">
+        <div class="sig-box">
+          <div style="font-size: 7px; color: #999; margin-bottom: 10px;">Pago por:</div>
+          Recursos Humanos
         </div>
+        <div class="sig-box">
+          <div style="font-size: 7px; color: #999; margin-bottom: 10px;">Recebi:</div>
+          ${r.employeeName}
+        </div>
+      </div>
+
+      <div class="footer-date">
+        Maputo, ${new Date().toLocaleDateString('pt-MZ', { day: '2-digit', month: 'long', year: 'numeric' })}
       </div>
     `;
   }

@@ -14,12 +14,13 @@ const treasury_controller_1 = require("./treasury.controller");
 const payment_methods_controller_1 = require("./payment-methods.controller");
 const treasury_entity_1 = require("./entities/treasury.entity");
 const payment_method_entity_1 = require("./entities/payment-method.entity");
+const petty_cash_voucher_entity_1 = require("./entities/petty-cash-voucher.entity");
 let TreasuryModule = class TreasuryModule {
 };
 exports.TreasuryModule = TreasuryModule;
 exports.TreasuryModule = TreasuryModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine, payment_method_entity_1.PaymentMethod])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine, payment_method_entity_1.PaymentMethod, petty_cash_voucher_entity_1.PettyCashVoucher])],
         controllers: [treasury_controller_1.TreasuryController, payment_methods_controller_1.PaymentMethodsController],
         providers: [treasury_service_1.TreasuryService],
     })

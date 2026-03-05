@@ -1275,6 +1275,44 @@ export class DocumentTypeConfigModalComponent implements OnInit {
         this.config.stockMovementPositiveType = 'Entrada';
         this.config.stockMovementNegativeType = 'Saída';
       }
+    } else if (this.module === 'TREASURY') {
+      if (code === 'RE') {
+        this.config.type = 'Recebimentos';
+        this.config.nature = 'RECEIVE';
+        this.config.allowedEntities.customer = true;
+        this.config.description = 'Recibo de Cliente';
+      } else if (code === 'PAG') {
+        this.config.type = 'Pagamentos';
+        this.config.nature = 'PAY';
+        this.config.allowedEntities.supplier = true;
+        this.config.description = 'Pagamento a Fornecedor';
+      } else if (code === 'PAGVEN') {
+        this.config.type = 'Pagamentos';
+        this.config.nature = 'PAY';
+        this.config.allowedEntities.employee = true;
+        this.config.description = 'Pagamento de Vencimentos';
+      } else if (code === 'VCX') {
+        this.config.type = 'Pagamentos';
+        this.config.nature = 'PAY';
+        this.config.allowedEntities.other = true;
+        this.config.allowedEntities.employee = true;
+        this.config.description = 'Vale de Caixa';
+      } else if (code === 'ADC') {
+        this.config.type = 'Recebimentos';
+        this.config.nature = 'RECEIVE';
+        this.config.allowedEntities.customer = true;
+        this.config.description = 'Adiantamento de Cliente';
+      } else if (code === 'ADF') {
+        this.config.type = 'Pagamentos';
+        this.config.nature = 'PAY';
+        this.config.allowedEntities.supplier = true;
+        this.config.description = 'Adiantamento a Fornecedor';
+      } else if (code === 'ADE') {
+        this.config.type = 'Pagamentos';
+        this.config.nature = 'PAY';
+        this.config.allowedEntities.employee = true;
+        this.config.description = 'Adiantamento a Funcionário';
+      }
     }
   }
 }

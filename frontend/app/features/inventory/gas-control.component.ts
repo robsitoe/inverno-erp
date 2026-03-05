@@ -634,6 +634,7 @@ import { AuthService } from '../../services/auth.service';
                         <td *ngFor="let t of cylinderTypes" class="p-1">{{ getInitialTotal(t.name) }}</td>
                      </tr>
                   </tfoot>
+               </table>
             </div>
 
             <!-- Stock Final -->
@@ -771,13 +772,13 @@ import { AuthService } from '../../services/auth.service';
                      <div class="flex justify-between font-black border-t border-black mt-1">
                         <span class="uppercase">Diferença Final:</span> <span>{{ getDiscrepancy() | number:'1.2-2' }} MT</span>
                      </div>
-                  </div>
-               </div>
-            </div>
-         </div>
-      </div>
-
+                   </div>
+                </div>
+             </div>
+          </div>
+       </div>
     </div>
+
     <!-- REUSABLE TABLE TEMPLATE -->
     <ng-template #movementTable let-entries="entries" let-t="type" let-isSupplier="isSupplier">
        <div class="overflow-x-auto">

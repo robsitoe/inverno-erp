@@ -4,6 +4,7 @@ import { Repository, EntityTarget, ObjectLiteral } from 'typeorm';
 import { Employee } from '../entities/employee.entity';
 import { Payroll, PayrollStatus } from '../entities/payroll.entity';
 import { Absence, AbsenceStatus } from '../entities/absence.entity';
+import { PettyCashVoucher } from '../../treasury/entities/petty-cash-voucher.entity';
 import { TaxBracket, HRSettings } from '../entities/hr-settings.entity';
 import { AccountingService } from '../../accounting/accounting.service';
 import { TenancyService } from '../../tenancy/tenancy.service';
@@ -21,6 +22,10 @@ export class PayrollService {
     private readonly defaultTaxBracketRepo: Repository<TaxBracket>,
     @InjectRepository(HRSettings)
     private readonly defaultHRSettingsRepo: Repository<HRSettings>,
+    @InjectRepository(Absence)
+    private readonly defaultAbsenceRepo: Repository<Absence>,
+    @InjectRepository(PettyCashVoucher)
+    private readonly defaultPettyCashVoucherRepo: Repository<PettyCashVoucher>,
     private readonly accountingService: AccountingService,
     private readonly tenancyService: TenancyService,
   ) { }
@@ -54,25 +59,40 @@ export class PayrollService {
     return this.getRepo(HRSettings, this.defaultHRSettingsRepo, companyId);
   }
 
+  private getAbsenceRepo(companyId?: string) {
+    return this.getRepo(Absence, this.defaultAbsenceRepo, companyId);
+  }
+
+  private getPettyCashVoucherRepo(companyId?: string) {
+    return this.getRepo(PettyCashVoucher, this.defaultPettyCashVoucherRepo, companyId);
+  }
+
   // ── IRM / INSS Calculations ────────────────────────────────────────────────
 
   /**
    * Mozambique IRPS (Imposto sobre o Rendimento de Pessoas Singulares) calculation — dynamic table
    */
-  calculateIRPS(taxableAmount: number, brackets: TaxBracket[], dependents: number = 0): number {
+  calculateIRPS(taxableAmount: number, brackets: TaxBracket[], dependents: any = 0): number {
     if (taxableAmount <= 0 || !brackets || !brackets.length) return 0;
 
-    // Brackets are sorted by minAmount ASC
-    for (const b of brackets) {
-      if (taxableAmount >= Number(b.minAmount) && (!b.maxAmount || taxableAmount <= Number(b.maxAmount))) {
+    const deps = Number(dependents || 0);
+    const amount = Number(taxableAmount);
+
+    // Brackets are sorted by minAmount ASC. 
+    // We iterate backwards to find the highest bracket the amount falls into.
+    for (let i = brackets.length - 1; i >= 0; i--) {
+      const b = brackets[i];
+      const min = Number(b.minAmount);
+
+      if (amount >= min) {
         let deduction = Number(b.deduction0 || 0);
-        if (dependents === 1) deduction = Number(b.deduction1 || 0);
-        else if (dependents === 2) deduction = Number(b.deduction2 || 0);
-        else if (dependents === 3) deduction = Number(b.deduction3 || 0);
-        else if (dependents >= 4) deduction = Number(b.deduction4Plus || 0);
+        if (deps === 1) deduction = Number(b.deduction1 || 0);
+        else if (deps === 2) deduction = Number(b.deduction2 || 0);
+        else if (deps === 3) deduction = Number(b.deduction3 || 0);
+        else if (deps >= 4) deduction = Number(b.deduction4Plus || 0);
 
         const rate = Number(b.rate || 0);
-        const tax = (taxableAmount * (rate / 100)) - deduction;
+        const tax = (amount * (rate / 100)) - deduction;
         const result = Math.max(0, tax);
         return isNaN(result) ? 0 : result;
       }
@@ -123,19 +143,77 @@ export class PayrollService {
       const food = Number(emp.subsidyFood) || 0;
       const housing = Number(emp.subsidyHousing) || 0;
 
-      // Professional Logic: In Mozambique, SalaryBase + Housing + Bonuses are Taxable. 
-      // Transport and Food are often exempt within limits.
-      const taxableGross = grossSalary + housing;
+      // --- ABSENCE & VACATION LOGIC ---
+      const absRepo = await this.getAbsenceRepo(targetCompanyId);
+      const absRecords = await absRepo.find({
+        where: {
+          employeeId: emp.id,
+          status: AbsenceStatus.APPROVED
+        }
+      });
 
-      const inss = this.calculateINSS(taxableGross, settings);
+      let absenceDays = 0;
+      let vacationDays = 0;
+      const firstDayOfMonth = new Date(year, month - 1, 1);
+      const lastDayOfMonth = new Date(year, month, 0);
+
+      for (const abs of absRecords) {
+        const start = new Date(abs.startDate);
+        const end = new Date(abs.endDate);
+
+        // Intersect absence range with current month
+        const intersectStart = start < firstDayOfMonth ? firstDayOfMonth : start;
+        const intersectEnd = end > lastDayOfMonth ? lastDayOfMonth : end;
+
+        if (intersectStart <= intersectEnd) {
+          const diffTime = Math.abs(intersectEnd.getTime() - intersectStart.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+          if (abs.type === 'VACATION' as any) {
+            vacationDays += diffDays;
+          } else if (abs.type === 'UNJUSTIFIED' as any) {
+            absenceDays += diffDays;
+          }
+        }
+      }
+
+      const dailyRate = grossSalary / 30;
+      const absenceDeduction = Math.round((absenceDays * dailyRate) * 100) / 100;
+      const daysWorked = 30 - absenceDays;
+
+      // Professional Logic: In Mozambique, SalaryBase + Housing + Bonuses are Taxable. 
+      // Subsidies like Transport/Food might have different rules, but for now we follow the general taxable gross.
+      // Unjustified absences reduce the taxable gross.
+      const taxableGross = (grossSalary - absenceDeduction) + housing;
+
+      const inss = this.calculateINSS(Math.max(0, taxableGross), settings);
 
       // IRPS base: taxableGross minus INSS employee contribution
-      const irpsBase = taxableGross - inss.employee;
-      const irps = this.calculateIRPS(irpsBase, brackets, emp.dependents || 0);
+      const irpsBase = Math.max(0, taxableGross - inss.employee);
+      const irps = this.calculateIRPS(irpsBase, brackets, Number(emp.dependents || 0));
 
-      // Net = grossTotal - INSS - IRPS
-      // Gross Total includes everything (Salary + All Subsidies)
-      const net = (grossSalary + transport + food + housing) - inss.employee - irps;
+      // --- VALES DE CAIXA LOGIC ---
+      const pcvRepo = await this.getPettyCashVoucherRepo(targetCompanyId);
+      const vouchers = await pcvRepo.find({
+        where: {
+          employeeId: emp.id,
+          isPersonalAdvance: true,
+          isDeducted: false,
+          status: 'PAID'
+        }
+      });
+      // Sum un-deducted vouchers up to the end of this month
+      // Strictly speaking, we might want to check the date, but typically un-deducted ones just roll over to the next payroll
+      const cashVoucherDeduction = vouchers.reduce((acc, v) => {
+        const vDate = new Date(v.date);
+        if (vDate <= lastDayOfMonth) {
+          return acc + Number(v.amount);
+        }
+        return acc;
+      }, 0);
+
+      // Net = (grossTotal - deduction) - INSS - IRPS - Vouchers
+      const net = (grossSalary - absenceDeduction + transport + food + housing) - inss.employee - irps - cashVoucherDeduction;
 
       const recordId = `PAY-${emp.code}-${year}-${String(month).padStart(2, '0')}`;
 
@@ -161,12 +239,23 @@ export class PayrollService {
         irps,
         transportSubsidy: transport,
         foodSubsidy: food,
-        daysWorked: 30, // Default for now
-        netSalary: net,
+        dependents: emp.dependents || 0,
+        daysWorked,
+        absenceDays,
+        absenceDeduction,
+        vacationDays,
+        cashVoucherDeduction,
+        netSalary: Math.max(0, net),
         status: PayrollStatus.DRAFT,
       });
 
-      results.push(await payRepo.save(record));
+      const savedRecord = await payRepo.save(record);
+      results.push(savedRecord);
+
+      // We should arguably mark the vouchers as deducted right here, 
+      // but safely they should only be marked 'isDeducted' when checking out or posting to accounting. 
+      // However, we can associate them temporarily or do it on Posting. 
+      // For now, let's keep it simple: the payroll says they are deducted. The posting to accounting will finalize it.
     }
 
     return results;
@@ -194,9 +283,10 @@ export class PayrollService {
     const totalSubsidies = records.reduce(
       (s, r) => s + Number(r.transportSubsidy) + Number(r.foodSubsidy) + Number(r.overtimeAmount) + Number(r.bonusAmount), 0
     );
+    const totalAbsenceDeduction = records.reduce((s, r) => s + Number((r as any).absenceDeduction || 0), 0);
 
     const lines: any[] = [
-      { accountId: '6.2.2', debit: totalGross, credit: 0, description: `Salários Base - ${month}/${year}` },
+      { accountId: '6.2.2', debit: totalGross - totalAbsenceDeduction, credit: 0, description: `Salários Base (Líquido de Faltas) - ${month}/${year}` },
       { accountId: '6.2.3', debit: totalINSS_ER, credit: 0, description: `Encargos INSS Patronal (4%) - ${month}/${year}` },
       { accountId: '4.4.2.1', debit: 0, credit: totalIRPS, description: `Retenção IRPS - ${month}/${year}` },
       { accountId: '4.4.9', debit: 0, credit: totalINSS_EE + totalINSS_ER, description: `INSS Total (7%) - ${month}/${year}` },

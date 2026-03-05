@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityTarget, ObjectLiteral, Not } from 'typeorm';
 import { Employee, ContractType } from '../entities/employee.entity';
 import { Absence, AbsenceStatus } from '../entities/absence.entity';
+import { EmployeeSalaryHistory } from '../entities/salary-history.entity';
 import { TaxBracket, HRSettings } from '../entities/hr-settings.entity';
 import { Company } from '../../companies/entities/company.entity';
 import { CreateEmployeeDto } from '../dto/create-employee.dto';
@@ -22,6 +23,8 @@ export class HRService {
     private readonly defaultTaxBracketRepo: Repository<TaxBracket>,
     @InjectRepository(HRSettings)
     private readonly defaultHRSettingsRepo: Repository<HRSettings>,
+    @InjectRepository(EmployeeSalaryHistory)
+    private readonly defaultSalaryHistoryRepo: Repository<EmployeeSalaryHistory>,
   ) { }
 
   private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>, companyId?: string): Promise<Repository<T>> {
@@ -45,6 +48,10 @@ export class HRService {
 
   private async getHRSettingsRepo(companyId?: string) {
     return this.getRepo(HRSettings, this.defaultHRSettingsRepo, companyId);
+  }
+
+  private async getSalaryHistoryRepo(companyId?: string) {
+    return this.getRepo(EmployeeSalaryHistory, this.defaultSalaryHistoryRepo, companyId);
   }
 
   /** Generates the next sequential employee code for a company (e.g. "001", "002") */
@@ -115,10 +122,38 @@ export class HRService {
     return employee;
   }
 
-  async update(id: string, updateEmployeeDto: UpdateEmployeeDto) {
+  async update(id: string, updateEmployeeDto: UpdateEmployeeDto, user?: any) {
     const companyId = updateEmployeeDto.companyId || TenancyContext.getCompanyId();
     const repo = await this.getEmployeeRepo(companyId);
     const employee = await this.findOne(id, companyId);
+
+    // Detect Salary/Financial changes for history
+    const hasFinancialChanges =
+      (updateEmployeeDto.salaryBase !== undefined && Number(updateEmployeeDto.salaryBase) !== Number(employee.salaryBase)) ||
+      (updateEmployeeDto.subsidyTransport !== undefined && Number(updateEmployeeDto.subsidyTransport) !== Number(employee.subsidyTransport)) ||
+      (updateEmployeeDto.subsidyFood !== undefined && Number(updateEmployeeDto.subsidyFood) !== Number(employee.subsidyFood)) ||
+      (updateEmployeeDto.dependents !== undefined && Number(updateEmployeeDto.dependents) !== Number(employee.dependents));
+
+    if (hasFinancialChanges) {
+      const historyRepo = await this.getSalaryHistoryRepo(companyId);
+      const historyId = `SH-${Date.now()}-${id}`;
+      await historyRepo.save({
+        id: historyId,
+        employeeId: id,
+        companyId,
+        changeDate: new Date().toISOString().split('T')[0],
+        oldSalary: employee.salaryBase,
+        newSalary: updateEmployeeDto.salaryBase ?? employee.salaryBase,
+        oldTransport: employee.subsidyTransport,
+        newTransport: updateEmployeeDto.subsidyTransport ?? employee.subsidyTransport,
+        oldFood: employee.subsidyFood,
+        newFood: updateEmployeeDto.subsidyFood ?? employee.subsidyFood,
+        oldDependents: employee.dependents,
+        newDependents: updateEmployeeDto.dependents ?? employee.dependents,
+        reason: (updateEmployeeDto as any).changeReason || 'Alteração administrativa',
+        updatedBy: user?.name || user?.username || 'Sistema'
+      });
+    }
 
     // Validate NIB uniqueness on update
     if (updateEmployeeDto.nib && updateEmployeeDto.nib !== employee.nib) {
@@ -130,6 +165,14 @@ export class HRService {
 
     repo.merge(employee, updateEmployeeDto);
     return await repo.save(employee);
+  }
+
+  async getSalaryHistory(employeeId: string, companyId?: string) {
+    const repo = await this.getSalaryHistoryRepo(companyId);
+    return await repo.find({
+      where: { employeeId, companyId: companyId || TenancyContext.getCompanyId() },
+      order: { changeDate: 'DESC', createdAt: 'DESC' }
+    });
   }
 
   async remove(id: string, companyId?: string) {

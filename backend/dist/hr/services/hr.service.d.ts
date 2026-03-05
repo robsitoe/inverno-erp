@@ -1,6 +1,7 @@
 import { Repository } from 'typeorm';
 import { Employee } from '../entities/employee.entity';
 import { Absence, AbsenceStatus } from '../entities/absence.entity';
+import { EmployeeSalaryHistory } from '../entities/salary-history.entity';
 import { TaxBracket, HRSettings } from '../entities/hr-settings.entity';
 import { CreateEmployeeDto } from '../dto/create-employee.dto';
 import { UpdateEmployeeDto } from '../dto/update-employee.dto';
@@ -11,12 +12,14 @@ export declare class HRService {
     private readonly defaultAbsenceRepo;
     private readonly defaultTaxBracketRepo;
     private readonly defaultHRSettingsRepo;
-    constructor(tenancyService: TenancyService, defaultEmployeeRepo: Repository<Employee>, defaultAbsenceRepo: Repository<Absence>, defaultTaxBracketRepo: Repository<TaxBracket>, defaultHRSettingsRepo: Repository<HRSettings>);
+    private readonly defaultSalaryHistoryRepo;
+    constructor(tenancyService: TenancyService, defaultEmployeeRepo: Repository<Employee>, defaultAbsenceRepo: Repository<Absence>, defaultTaxBracketRepo: Repository<TaxBracket>, defaultHRSettingsRepo: Repository<HRSettings>, defaultSalaryHistoryRepo: Repository<EmployeeSalaryHistory>);
     private getRepo;
     private getEmployeeRepo;
     private getAbsenceRepo;
     private getTaxBracketRepo;
     private getHRSettingsRepo;
+    private getSalaryHistoryRepo;
     getNextCode(companyId: string): Promise<{
         code: string;
     }>;
@@ -30,7 +33,8 @@ export declare class HRService {
     create(createEmployeeDto: CreateEmployeeDto): Promise<Employee>;
     findAll(companyId?: string): Promise<Employee[]>;
     findOne(id: string, companyId?: string): Promise<Employee>;
-    update(id: string, updateEmployeeDto: UpdateEmployeeDto): Promise<Employee>;
+    update(id: string, updateEmployeeDto: UpdateEmployeeDto, user?: any): Promise<Employee>;
+    getSalaryHistory(employeeId: string, companyId?: string): Promise<EmployeeSalaryHistory[]>;
     remove(id: string, companyId?: string): Promise<Employee>;
     createAbsence(data: any): Promise<Absence[]>;
     findAllAbsences(companyId?: string, employeeId?: string): Promise<Absence[]>;

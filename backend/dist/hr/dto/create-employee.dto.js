@@ -39,6 +39,7 @@ class CreateEmployeeDto {
     terminationReason;
     vacationBalance;
     companyId;
+    changeReason;
 }
 exports.CreateEmployeeDto = CreateEmployeeDto;
 __decorate([
@@ -189,4 +190,9 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateEmployeeDto.prototype, "companyId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateEmployeeDto.prototype, "changeReason", void 0);
 //# sourceMappingURL=create-employee.dto.js.map

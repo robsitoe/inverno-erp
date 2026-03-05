@@ -16,6 +16,7 @@ import { Supplier } from '../suppliers/entities/supplier.entity';
 import { Series } from '../companies/entities/series.entity';
 import { GenericEntity } from '../common-entities/generic-entity.entity';
 import { PaymentMethod } from '../treasury/entities/payment-method.entity';
+import { PettyCashVoucher } from '../treasury/entities/petty-cash-voucher.entity';
 import { DocumentType } from '../common-entities/entities/document-type.entity';
 import { PeriodAuditLog } from '../companies/entities/period-audit-log.entity';
 import { TaxRate } from '../taxes/entities/tax-rate.entity';
@@ -23,6 +24,7 @@ import { WorkflowHistory } from '../common/entities/workflow-history.entity';
 import { Employee } from '../hr/entities/employee.entity';
 import { Payroll } from '../hr/entities/payroll.entity';
 import { Absence } from '../hr/entities/absence.entity';
+import { EmployeeSalaryHistory } from '../hr/entities/salary-history.entity';
 import { TaxBracket, HRSettings } from '../hr/entities/hr-settings.entity';
 import { GasCylinderType, GasDailyControl, GasDailyEntry } from '../gas-control/gas-control.entity';
 import {
@@ -97,8 +99,8 @@ export class TenancyService implements OnModuleDestroy {
                     SalesDocument, SalesDocumentLine, PurchaseDocument,
                     PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
                     FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-                    DocumentType, PaymentMethod, PeriodAuditLog, TaxRate, WorkflowHistory,
-                    Employee, Payroll, Absence, TaxBracket, HRSettings,
+                    DocumentType, PaymentMethod, PettyCashVoucher, PeriodAuditLog, TaxRate, WorkflowHistory,
+                    Employee, Payroll, Absence, EmployeeSalaryHistory, TaxBracket, HRSettings,
                     GasCylinderType, GasDailyControl, GasDailyEntry
                 ],
                 synchronize: true,

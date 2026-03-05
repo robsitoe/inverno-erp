@@ -25,4 +25,5 @@ export declare class CreateEmployeeDto {
     terminationReason?: string;
     vacationBalance?: number;
     companyId?: string;
+    changeReason?: string;
 }

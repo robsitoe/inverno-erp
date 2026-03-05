@@ -68,5 +68,36 @@ export class TreasuryController {
   createPayment(@Body() data: any) {
     return this.treasuryService.createPayment(data);
   }
+
+  // Petty Cash Vouchers
+  @Post('vouchers')
+  createVoucher(@Body() data: any, @Req() req: any) {
+    return this.treasuryService.createVoucher(data, req.user);
+  }
+
+  @Get('vouchers/next-number')
+  getNextNumber(@Query('companyId') companyId: string) {
+    return this.treasuryService.getNextVoucherNumber(companyId);
+  }
+
+  @Get('vouchers')
+  findAllVouchers(@Query('companyId') companyId?: string) {
+    return this.treasuryService.findAllVouchers(companyId);
+  }
+
+  @Get('vouchers/:id')
+  findOneVoucher(@Param('id') id: string) {
+    return this.treasuryService.findOneVoucher(id);
+  }
+
+  @Patch('vouchers/:id')
+  updateVoucher(@Param('id') id: string, @Body() data: any) {
+    return this.treasuryService.updateVoucher(id, data);
+  }
+
+  @Delete('vouchers/:id')
+  removeVoucher(@Param('id') id: string) {
+    return this.treasuryService.removeVoucher(id);
+  }
 }
 

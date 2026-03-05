@@ -18,6 +18,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const employee_entity_1 = require("../entities/employee.entity");
 const absence_entity_1 = require("../entities/absence.entity");
+const salary_history_entity_1 = require("../entities/salary-history.entity");
 const hr_settings_entity_1 = require("../entities/hr-settings.entity");
 const tenancy_service_1 = require("../../tenancy/tenancy.service");
 const tenancy_context_1 = require("../../tenancy/tenancy.context");
@@ -27,12 +28,14 @@ let HRService = class HRService {
     defaultAbsenceRepo;
     defaultTaxBracketRepo;
     defaultHRSettingsRepo;
-    constructor(tenancyService, defaultEmployeeRepo, defaultAbsenceRepo, defaultTaxBracketRepo, defaultHRSettingsRepo) {
+    defaultSalaryHistoryRepo;
+    constructor(tenancyService, defaultEmployeeRepo, defaultAbsenceRepo, defaultTaxBracketRepo, defaultHRSettingsRepo, defaultSalaryHistoryRepo) {
         this.tenancyService = tenancyService;
         this.defaultEmployeeRepo = defaultEmployeeRepo;
         this.defaultAbsenceRepo = defaultAbsenceRepo;
         this.defaultTaxBracketRepo = defaultTaxBracketRepo;
         this.defaultHRSettingsRepo = defaultHRSettingsRepo;
+        this.defaultSalaryHistoryRepo = defaultSalaryHistoryRepo;
     }
     async getRepo(entity, defaultRepo, companyId) {
         const targetId = companyId || tenancy_context_1.TenancyContext.getCompanyId();
@@ -52,6 +55,9 @@ let HRService = class HRService {
     }
     async getHRSettingsRepo(companyId) {
         return this.getRepo(hr_settings_entity_1.HRSettings, this.defaultHRSettingsRepo, companyId);
+    }
+    async getSalaryHistoryRepo(companyId) {
+        return this.getRepo(salary_history_entity_1.EmployeeSalaryHistory, this.defaultSalaryHistoryRepo, companyId);
     }
     async getNextCode(companyId) {
         const repo = await this.getEmployeeRepo(companyId);
@@ -113,10 +119,34 @@ let HRService = class HRService {
             throw new common_1.NotFoundException(`Funcionário com ID ${id} não encontrado.`);
         return employee;
     }
-    async update(id, updateEmployeeDto) {
+    async update(id, updateEmployeeDto, user) {
         const companyId = updateEmployeeDto.companyId || tenancy_context_1.TenancyContext.getCompanyId();
         const repo = await this.getEmployeeRepo(companyId);
         const employee = await this.findOne(id, companyId);
+        const hasFinancialChanges = (updateEmployeeDto.salaryBase !== undefined && Number(updateEmployeeDto.salaryBase) !== Number(employee.salaryBase)) ||
+            (updateEmployeeDto.subsidyTransport !== undefined && Number(updateEmployeeDto.subsidyTransport) !== Number(employee.subsidyTransport)) ||
+            (updateEmployeeDto.subsidyFood !== undefined && Number(updateEmployeeDto.subsidyFood) !== Number(employee.subsidyFood)) ||
+            (updateEmployeeDto.dependents !== undefined && Number(updateEmployeeDto.dependents) !== Number(employee.dependents));
+        if (hasFinancialChanges) {
+            const historyRepo = await this.getSalaryHistoryRepo(companyId);
+            const historyId = `SH-${Date.now()}-${id}`;
+            await historyRepo.save({
+                id: historyId,
+                employeeId: id,
+                companyId,
+                changeDate: new Date().toISOString().split('T')[0],
+                oldSalary: employee.salaryBase,
+                newSalary: updateEmployeeDto.salaryBase ?? employee.salaryBase,
+                oldTransport: employee.subsidyTransport,
+                newTransport: updateEmployeeDto.subsidyTransport ?? employee.subsidyTransport,
+                oldFood: employee.subsidyFood,
+                newFood: updateEmployeeDto.subsidyFood ?? employee.subsidyFood,
+                oldDependents: employee.dependents,
+                newDependents: updateEmployeeDto.dependents ?? employee.dependents,
+                reason: updateEmployeeDto.changeReason || 'Alteração administrativa',
+                updatedBy: user?.name || user?.username || 'Sistema'
+            });
+        }
         if (updateEmployeeDto.nib && updateEmployeeDto.nib !== employee.nib) {
             const nibCheck = await this.checkNibAvailability(updateEmployeeDto.nib, companyId || employee.companyId, id);
             if (!nibCheck.available) {
@@ -125,6 +155,13 @@ let HRService = class HRService {
         }
         repo.merge(employee, updateEmployeeDto);
         return await repo.save(employee);
+    }
+    async getSalaryHistory(employeeId, companyId) {
+        const repo = await this.getSalaryHistoryRepo(companyId);
+        return await repo.find({
+            where: { employeeId, companyId: companyId || tenancy_context_1.TenancyContext.getCompanyId() },
+            order: { changeDate: 'DESC', createdAt: 'DESC' }
+        });
     }
     async remove(id, companyId) {
         const repo = await this.getEmployeeRepo(companyId);
@@ -245,7 +282,9 @@ exports.HRService = HRService = __decorate([
     __param(2, (0, typeorm_1.InjectRepository)(absence_entity_1.Absence)),
     __param(3, (0, typeorm_1.InjectRepository)(hr_settings_entity_1.TaxBracket)),
     __param(4, (0, typeorm_1.InjectRepository)(hr_settings_entity_1.HRSettings)),
+    __param(5, (0, typeorm_1.InjectRepository)(salary_history_entity_1.EmployeeSalaryHistory)),
     __metadata("design:paramtypes", [tenancy_service_1.TenancyService,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

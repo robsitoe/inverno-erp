@@ -22,6 +22,7 @@ export declare class HRController {
     }>;
     findOneEmployee(id: string, companyId?: string): Promise<import("../entities/employee.entity").Employee>;
     updateEmployee(id: string, updateEmployeeDto: UpdateEmployeeDto): Promise<import("../entities/employee.entity").Employee>;
+    getSalaryHistory(id: string, companyId?: string): Promise<import("../entities/salary-history.entity").EmployeeSalaryHistory[]>;
     removeEmployee(id: string, companyId?: string): Promise<import("../entities/employee.entity").Employee>;
     uploadPhoto(id: string, companyId: string, file: any): Promise<import("../entities/employee.entity").Employee>;
     uploadDocument(id: string, companyId: string, docType: 'BI' | 'CONTRATO' | 'NUIT' | 'INSS' | 'OUTRO', label: string, file: any): Promise<import("../entities/employee.entity").Employee>;

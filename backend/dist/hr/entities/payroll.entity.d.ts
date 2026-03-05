@@ -20,7 +20,12 @@ export declare class Payroll {
     foodSubsidy: number;
     overtimeAmount: number;
     bonusAmount: number;
+    dependents: number;
     daysWorked: number;
+    absenceDays: number;
+    absenceDeduction: number;
+    vacationDays: number;
+    cashVoucherDeduction: number;
     netSalary: number;
     status: string;
     journalEntryId: string;

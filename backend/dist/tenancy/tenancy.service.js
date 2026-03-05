@@ -28,6 +28,7 @@ const supplier_entity_1 = require("../suppliers/entities/supplier.entity");
 const series_entity_1 = require("../companies/entities/series.entity");
 const generic_entity_entity_1 = require("../common-entities/generic-entity.entity");
 const payment_method_entity_1 = require("../treasury/entities/payment-method.entity");
+const petty_cash_voucher_entity_1 = require("../treasury/entities/petty-cash-voucher.entity");
 const document_type_entity_1 = require("../common-entities/entities/document-type.entity");
 const period_audit_log_entity_1 = require("../companies/entities/period-audit-log.entity");
 const tax_rate_entity_1 = require("../taxes/entities/tax-rate.entity");
@@ -35,6 +36,7 @@ const workflow_history_entity_1 = require("../common/entities/workflow-history.e
 const employee_entity_1 = require("../hr/entities/employee.entity");
 const payroll_entity_1 = require("../hr/entities/payroll.entity");
 const absence_entity_1 = require("../hr/entities/absence.entity");
+const salary_history_entity_1 = require("../hr/entities/salary-history.entity");
 const hr_settings_entity_1 = require("../hr/entities/hr-settings.entity");
 const gas_control_entity_1 = require("../gas-control/gas-control.entity");
 const initial_data_1 = require("../common-entities/initial-data");
@@ -90,8 +92,8 @@ let TenancyService = class TenancyService {
                     sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, purchase_entity_1.PurchaseDocument,
                     purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
                     fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity,
-                    document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, period_audit_log_entity_1.PeriodAuditLog, tax_rate_entity_1.TaxRate, workflow_history_entity_1.WorkflowHistory,
-                    employee_entity_1.Employee, payroll_entity_1.Payroll, absence_entity_1.Absence, hr_settings_entity_1.TaxBracket, hr_settings_entity_1.HRSettings,
+                    document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, petty_cash_voucher_entity_1.PettyCashVoucher, period_audit_log_entity_1.PeriodAuditLog, tax_rate_entity_1.TaxRate, workflow_history_entity_1.WorkflowHistory,
+                    employee_entity_1.Employee, payroll_entity_1.Payroll, absence_entity_1.Absence, salary_history_entity_1.EmployeeSalaryHistory, hr_settings_entity_1.TaxBracket, hr_settings_entity_1.HRSettings,
                     gas_control_entity_1.GasCylinderType, gas_control_entity_1.GasDailyControl, gas_control_entity_1.GasDailyEntry
                 ],
                 synchronize: true,

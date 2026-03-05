@@ -61,6 +61,12 @@ export interface PayrollRecord {
   foodSubsidy: number;
   overtimeAmount?: number;
   bonusAmount?: number;
+  dependents: number;
+  absenceDays?: number;
+  absenceDeduction?: number;
+  vacationDays?: number;
+  cashVoucherDeduction?: number;
+  daysWorked?: number;
   netSalary: number;
   status: string;
 }
@@ -123,6 +129,10 @@ export class HRService {
 
   findOne(id: string): Observable<Employee> {
     return this.http.get<Employee>(`${this.apiUrl}/employees/${id}`);
+  }
+
+  getSalaryHistory(employeeId: string, companyId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/employees/${employeeId}/salary-history?companyId=${companyId}`);
   }
 
   getNextCode(companyId: string): Observable<{ code: string }> {

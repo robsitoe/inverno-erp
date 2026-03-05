@@ -36,6 +36,7 @@ const series_entity_1 = require("./companies/entities/series.entity");
 const generic_entity_entity_1 = require("./common-entities/generic-entity.entity");
 const document_type_entity_1 = require("./common-entities/entities/document-type.entity");
 const payment_method_entity_1 = require("./treasury/entities/payment-method.entity");
+const petty_cash_voucher_entity_1 = require("./treasury/entities/petty-cash-voucher.entity");
 const tenancy_module_1 = require("./tenancy/tenancy.module");
 const period_audit_log_entity_1 = require("./companies/entities/period-audit-log.entity");
 const periods_module_1 = require("./periods/periods.module");
@@ -81,7 +82,7 @@ exports.AppModule = AppModule = __decorate([
                                 sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, user_entity_1.User, purchase_entity_1.PurchaseDocument,
                                 purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
                                 company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity,
-                                document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog, license_entity_1.License, license_renewal_entity_1.LicenseRenewal, tax_rate_entity_1.TaxRate, employee_entity_1.Employee, payroll_entity_1.Payroll, absence_entity_1.Absence, hr_settings_entity_1.TaxBracket, hr_settings_entity_1.HRSettings,
+                                document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, petty_cash_voucher_entity_1.PettyCashVoucher, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog, license_entity_1.License, license_renewal_entity_1.LicenseRenewal, tax_rate_entity_1.TaxRate, employee_entity_1.Employee, payroll_entity_1.Payroll, absence_entity_1.Absence, hr_settings_entity_1.TaxBracket, hr_settings_entity_1.HRSettings,
                                 gas_control_entity_1.GasCylinderType, gas_control_entity_1.GasDailyControl, gas_control_entity_1.GasDailyEntry
                             ],
                             synchronize: true,
@@ -99,7 +100,7 @@ exports.AppModule = AppModule = __decorate([
                             sales_document_entity_1.SalesDocument, sales_document_entity_1.SalesDocumentLine, user_entity_1.User, purchase_entity_1.PurchaseDocument,
                             purchase_entity_1.PurchaseDocumentLine, treasury_entity_1.TreasuryDocument, treasury_entity_1.TreasuryDocumentLine,
                             company_entity_1.Company, fiscal_year_entity_1.FiscalYear, journal_entity_1.Journal, customer_entity_1.Customer, supplier_entity_1.Supplier, series_entity_1.Series, generic_entity_entity_1.GenericEntity,
-                            document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog, license_entity_1.License, license_renewal_entity_1.LicenseRenewal, tax_rate_entity_1.TaxRate, employee_entity_1.Employee, payroll_entity_1.Payroll, absence_entity_1.Absence, hr_settings_entity_1.TaxBracket, hr_settings_entity_1.HRSettings,
+                            document_type_entity_1.DocumentType, payment_method_entity_1.PaymentMethod, petty_cash_voucher_entity_1.PettyCashVoucher, workflow_history_entity_1.WorkflowHistory, period_audit_log_entity_1.PeriodAuditLog, license_entity_1.License, license_renewal_entity_1.LicenseRenewal, tax_rate_entity_1.TaxRate, employee_entity_1.Employee, payroll_entity_1.Payroll, absence_entity_1.Absence, hr_settings_entity_1.TaxBracket, hr_settings_entity_1.HRSettings,
                             gas_control_entity_1.GasCylinderType, gas_control_entity_1.GasDailyControl, gas_control_entity_1.GasDailyEntry
                         ],
                         synchronize: true,

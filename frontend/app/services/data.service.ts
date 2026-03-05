@@ -974,7 +974,24 @@ export class DataService {
             }
 
             if (stored) {
-                const types = JSON.parse(stored);
+                let types = JSON.parse(stored);
+
+                // Self-healing: Merge missing standard types for Treasury
+                if (normalizedModule === 'TREASURY') {
+                    const missingStandard = TREASURY_DOCUMENT_TYPES.filter(std => !types.some((t: any) => t.code === std.code));
+                    if (missingStandard.length > 0) {
+                        const extraTypes = missingStandard.map(t => ({
+                            ...t,
+                            name: t.description,
+                            module: 'TREASURY',
+                            series: [],
+                            isActive: true,
+                            companyId
+                        }));
+                        types = [...types, ...extraTypes];
+                    }
+                }
+
                 // Ensure uniqueness by code
                 const unique = [];
                 const codes = new Set();
@@ -1021,7 +1038,25 @@ export class DataService {
 
             return this.http.get<any[]>(`${this.baseUrl}/document-types?module=${normalizedModule}&companyId=${companyId || ''}`).pipe(
                 map(types => {
-                    if (Array.isArray(types) && types.length > 0) return types;
+                    if (Array.isArray(types) && types.length > 0) {
+                        // Self-healing: Merge missing standard types for Treasury
+                        if (normalizedModule === 'TREASURY') {
+                            const missingStandard = TREASURY_DOCUMENT_TYPES.filter(std => !types.some((t: any) => t.code === std.code));
+                            if (missingStandard.length > 0) {
+                                const companyId = this.activeCompanySubject.value?.id;
+                                const extraTypes = missingStandard.map(t => ({
+                                    ...t,
+                                    name: t.description,
+                                    module: 'TREASURY',
+                                    series: [],
+                                    isActive: true,
+                                    companyId
+                                }));
+                                return [...types, ...extraTypes];
+                            }
+                        }
+                        return types;
+                    }
 
                     // If it's an error object or empty, types might not be an array
                     if (!Array.isArray(types)) {

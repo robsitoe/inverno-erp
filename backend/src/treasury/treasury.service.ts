@@ -5,6 +5,7 @@ import { CreateTreasuryDto } from './dto/create-treasury.dto';
 import { UpdateTreasuryDto } from './dto/update-treasury.dto';
 import { TreasuryDocument, TreasuryDocumentType } from './entities/treasury.entity';
 import { PaymentMethod } from './entities/payment-method.entity';
+import { PettyCashVoucher } from './entities/petty-cash-voucher.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
 import { WorkflowService, WorkflowTarget } from '../common/workflow.service';
@@ -19,6 +20,8 @@ export class TreasuryService {
     private readonly defaultTreasuryRepo: Repository<TreasuryDocument>,
     @InjectRepository(PaymentMethod)
     private readonly defaultPaymentMethodRepo: Repository<PaymentMethod>,
+    @InjectRepository(PettyCashVoucher)
+    private readonly defaultPettyCashVoucherRepo: Repository<PettyCashVoucher>,
     private readonly workflowService: WorkflowService,
   ) { }
 
@@ -32,6 +35,9 @@ export class TreasuryService {
 
   private async getTreasuryRepo(companyId?: string) { return this.getRepo(TreasuryDocument, this.defaultTreasuryRepo, companyId); }
   private async getPaymentMethodRepo(companyId?: string) { return this.getRepo(PaymentMethod, this.defaultPaymentMethodRepo, companyId); }
+  private async getPettyCashVoucherRepo(companyId?: string) { return this.getRepo(PettyCashVoucher, this.defaultPettyCashVoucherRepo, companyId); }
+
+  // ── Treasury Documents ─────────────────────────────────────────────────────
 
   async create(createTreasuryDto: CreateTreasuryDto) {
     await this.periodControlService.ensureDateInOpenPeriod(createTreasuryDto.date, createTreasuryDto.companyId);
@@ -151,6 +157,90 @@ export class TreasuryService {
 
   async removePaymentMethod(id: string) {
     const repo = await this.getPaymentMethodRepo();
+    return repo.delete(id);
+  }
+
+  // ── Petty Cash Vouchers ────────────────────────────────────────────────────
+  async getNextVoucherNumber(companyId: string) {
+    const repo = await this.getPettyCashVoucherRepo(companyId);
+    const year = new Date().getFullYear();
+
+    // Find last vouchers for this year
+    const all = await repo.find({
+      where: { companyId },
+      order: { createdAt: 'DESC' },
+      take: 20
+    });
+
+    let nextSeq = 1;
+    const lastWithYear = all.find(v => v.number && typeof v.number === 'string' && v.number.startsWith(`${year}/`));
+    if (lastWithYear) {
+      const parts = lastWithYear.number.split('/');
+      const lastSeq = parseInt(parts[1]);
+      if (!isNaN(lastSeq)) {
+        nextSeq = lastSeq + 1;
+      }
+    }
+
+    return { number: `${year}/${nextSeq.toString().padStart(3, '0')}` };
+  }
+
+  async createVoucher(data: any, user?: any) {
+    try {
+      const cid = data.companyId || TenancyContext.getCompanyId();
+      await this.periodControlService.ensureDateInOpenPeriod(data.date, cid);
+
+      const res = await this.getNextVoucherNumber(cid);
+      const repo = await this.getPettyCashVoucherRepo(cid);
+
+      const vId = `PCV-${Date.now()}-${cid}`;
+      const voucher = repo.create({
+        ...data,
+        id: vId,
+        number: res.number,
+        companyId: cid,
+        issuedBy: user?.name || user?.username || 'Sistema'
+      });
+      return await repo.save(voucher);
+    } catch (error) {
+      console.error('[TreasuryService] Error creating voucher:', error);
+      throw error;
+    }
+  }
+
+  async findAllVouchers(companyId?: string) {
+    try {
+      const cid = companyId || TenancyContext.getCompanyId();
+      if (!cid) return []; // No company context, return empty
+
+      const repo = await this.getPettyCashVoucherRepo(cid);
+      return await repo.find({ where: { companyId: cid }, order: { number: 'DESC' } });
+    } catch (error) {
+      console.error('[TreasuryService] Error listing vouchers:', error);
+      throw error;
+    }
+  }
+
+  async findOneVoucher(id: string) {
+    const cid = id.split('-')[2] || TenancyContext.getCompanyId();
+    const repo = await this.getPettyCashVoucherRepo(cid);
+    return repo.findOne({ where: { id } });
+  }
+
+  async updateVoucher(id: string, data: any) {
+    const cid = data.companyId || id.split('-')[2] || TenancyContext.getCompanyId();
+    if (data.date) {
+      await this.periodControlService.ensureDateInOpenPeriod(data.date, cid);
+    }
+    const repo = await this.getPettyCashVoucherRepo(cid);
+    const doc = await repo.findOne({ where: { id } });
+    if (!doc) throw new NotFoundException('Vale não encontrado');
+    repo.merge(doc, data);
+    return repo.save(doc);
+  }
+
+  async removeVoucher(id: string) {
+    const repo = await this.getPettyCashVoucherRepo();
     return repo.delete(id);
   }
 }
