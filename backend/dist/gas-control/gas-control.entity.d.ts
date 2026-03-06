@@ -41,4 +41,6 @@ export declare class GasDailyEntry {
     e_av: number;
     p_divida: number;
     totalAmount: number;
+    gr: boolean;
+    invoice: boolean;
 }

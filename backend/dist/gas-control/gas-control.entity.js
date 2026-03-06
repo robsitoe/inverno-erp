@@ -146,6 +146,8 @@ let GasDailyEntry = class GasDailyEntry {
     e_av;
     p_divida;
     totalAmount;
+    gr;
+    invoice;
 };
 exports.GasDailyEntry = GasDailyEntry;
 __decorate([
@@ -216,6 +218,14 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 14, scale: 2, default: 0 }),
     __metadata("design:type", Number)
 ], GasDailyEntry.prototype, "totalAmount", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], GasDailyEntry.prototype, "gr", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], GasDailyEntry.prototype, "invoice", void 0);
 exports.GasDailyEntry = GasDailyEntry = __decorate([
     (0, typeorm_1.Entity)('gas_daily_entries')
 ], GasDailyEntry);

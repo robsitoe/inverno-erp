@@ -125,4 +125,10 @@ export class GasDailyEntry {
 
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     totalAmount: number; // VD,s in spreadsheet
+
+    @Column({ default: false })
+    gr: boolean;
+
+    @Column({ default: false })
+    invoice: boolean;
 }

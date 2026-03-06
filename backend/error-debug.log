@@ -12252,3 +12252,68 @@
   }
 }
 ---
+{
+  "timestamp": "2026-03-05T08:10:59.526Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"priceBomba\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"priceBomba\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async UpdateQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\UpdateQueryBuilder.ts:145:33)\n    at async updateSubject (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:618:38)\n    at async Promise.all (index 0)\n    at async SubjectExecutor.executeUpdateOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:664:9)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:148:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "6KG-005",
+    "companyId": "005",
+    "name": "6KG",
+    "brand": "PETROGAS",
+    "priceRevendedor": 468,
+    "priceBomba": null,
+    "priceConsumidor": "775.00",
+    "isActive": true
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-05T08:11:03.736Z",
+  "path": "/gas-control/cylinder-types?companyId=005",
+  "method": "POST",
+  "status": 500,
+  "exception": {
+    "name": "QueryFailedError",
+    "message": "null value in column \"priceBomba\" of relation \"gas_cylinder_types\" violates not-null constraint",
+    "stack": "QueryFailedError: null value in column \"priceBomba\" of relation \"gas_cylinder_types\" violates not-null constraint\n    at PostgresQueryRunner.query (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\driver\\src\\driver\\postgres\\PostgresQueryRunner.ts:325:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async UpdateQueryBuilder.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\query-builder\\src\\query-builder\\UpdateQueryBuilder.ts:145:33)\n    at async updateSubject (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:618:38)\n    at async Promise.all (index 0)\n    at async SubjectExecutor.executeUpdateOperations (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:664:9)\n    at async SubjectExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\SubjectExecutor.ts:148:9)\n    at async EntityPersistExecutor.execute (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\typeorm\\persistence\\src\\persistence\\EntityPersistExecutor.ts:182:21)\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+  },
+  "body": {
+    "id": "6KG-005",
+    "companyId": "005",
+    "name": "6KG",
+    "brand": "PETROGAS",
+    "priceRevendedor": 468,
+    "priceBomba": null,
+    "priceConsumidor": 520,
+    "isActive": true
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
+{
+  "timestamp": "2026-03-05T16:24:27.716Z",
+  "path": "/purchases/documents?companyId=005",
+  "method": "GET",
+  "status": 401,
+  "exception": {
+    "name": "UnauthorizedException",
+    "message": "Unauthorized",
+    "stack": "UnauthorizedException: Unauthorized\n    at JwtAuthGuard.handleRequest (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:106:33\n    at C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:190:16\n    at getSecret (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\yoriy\\OneDrive\\Documentos\\Projectos\\old\\inverno-erp\\backend\\node_modules\\jsonwebtoken\\verify.js:101:10)"
+  },
+  "query": {
+    "companyId": "005"
+  }
+}
+---
