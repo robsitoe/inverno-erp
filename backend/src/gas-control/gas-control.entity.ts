@@ -25,6 +25,9 @@ export class GasCylinderType {
 
     @Column({ default: true })
     isActive: boolean;
+
+    @Column({ type: 'int', default: 0 })
+    inventoryTarget: number; // Quantidade de botijas que a empresa tem
 }
 
 @Entity('gas_daily_controls')

@@ -56,9 +56,13 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
 
 
     <style>
+
+
       .print-only { display: none; }
 
-      @media print {
+
+                 {{ control.status === 'OPENED' ? '● Aberto' : (control.status === 'CLOSED' ? '● Fechado' : '○ Não Iniciado') }}
+
 
         .no-print { display: none !important; }
 
@@ -105,7 +109,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
       <!-- Interaction Blanket for NOT_STARTED -->
 
 
-      <div *ngIf="!control || control?.status === 'NOT_STARTED'" class="fixed inset-0 z-[150] bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center animate-in fade-in duration-500 no-print">
+      <div *ngIf="control?.status === 'NOT_STARTED'" class="fixed inset-0 z-[150] bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center animate-in fade-in duration-500 no-print">
 
 
          <div class="bg-white p-10 rounded-3xl shadow-2xl border border-blue-200 text-center max-w-md space-y-6 transform animate-in zoom-in-95 duration-300">
@@ -168,7 +172,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
              <div class="flex flex-col">
 
 
-                <h1 class="text-xs font-black text-gray-600 uppercase tracking-widest leading-none">{{ activeTab === 'MOVEMENT' ? 'Movimento Geral Diário' : 'Mapa de Inventário Global' }}</h1>
+                <h1 class="text-xs font-black text-gray-600 uppercase tracking-widest leading-none">Movimento Geral Diário</h1>
 
 
                 <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">Gestão de Armazém e Caixa</span>
@@ -180,10 +184,10 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
              <div *ngIf="control" class="ml-4 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-sm"
 
 
-                  [class]="control?.status === 'OPENED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : (control?.status === 'CLOSED' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-gray-50 text-gray-400 border-gray-200')">
+                  [class]="control.status === 'OPENED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : (control.status === 'CLOSED' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-gray-50 text-gray-400 border-gray-200')">
 
 
-                 {{ control?.status === 'OPENED' ? 'â— Aberto' : (control?.status === 'CLOSED' ? 'â— Fechado' : '○ Não Iniciado') }}
+                 {{ control.status === 'OPENED' ? 'â— Aberto' : (control.status === 'CLOSED' ? 'â— Fechado' : '○ Não Iniciado') }}
 
 
              </div>
@@ -675,7 +679,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
            <div class="flex flex-col gap-12 no-print">
 
 
-              <div *ngFor="let brand of activeBrands" class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden p-8 space-y-8">
+              <div *ngFor="let brand of ['PETROGAS', 'GALP']" class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden p-8 space-y-8">
 
 
                  <div class="flex items-center gap-4 border-b-2 border-gray-100 pb-6">
@@ -1512,7 +1516,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
                            <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-200 shadow-sm group">
 
 
-                              <span class="text-[10px] font-black text-orange-600 uppercase italic">Remessa (Sede/Sucursal):</span>
+                              <span class="text-[10px] font-black text-orange-600 uppercase italic">Remessa (Sede/Circusal):</span>
 
 
                               <div class="flex items-center gap-2">
@@ -1716,7 +1720,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
              <div class="flex items-center gap-4">
 
 
-                 <button *ngIf="!control || control?.status === 'NOT_STARTED'" (click)="openDay()" class="px-10 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase hover:bg-blue-700 shadow-2xl shadow-blue-200 active:scale-95 transition-all flex items-center gap-3 group">
+                 <button *ngIf="control?.status === 'NOT_STARTED'" (click)="openDay()" class="px-10 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase hover:bg-blue-700 shadow-2xl shadow-blue-200 active:scale-95 transition-all flex items-center gap-3 group">
 
 
                      <app-icon name="play_arrow" [size]="24" class="group-hover:translate-x-1 transition-transform"></app-icon> Iniciar Ciclo de Operações
@@ -2373,62 +2377,10 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
 
 
 
-         
-          <ng-container *ngIf="activeTab === 'INVENTORY'">
+         <!-- TAB: INVENTORY -->
 
-             <!-- INVENTORY DASHBOARD -->
-             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 no-print mb-8">
-                
-                <!-- PATRIMONIO -->
-                <div class="bg-white rounded-2xl border border-gray-200 p-6 flex items-center gap-4 shadow-sm">
-                   <div class="p-3 bg-blue-100 text-blue-600 rounded-xl">
-                      <app-icon name="apartment" [size]="24"></app-icon>
-                   </div>
-                   <div>
-                      <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Património Total</span>
-                      <span class="text-2xl font-black text-gray-800 font-mono tracking-tighter">{{ sumGlobalStock('target') }} <small class="text-[10px] opacity-30 italic">UN</small></span>
-                   </div>
-                </div>
 
-                <!-- STOCK REAL (ARMAZEM + RUA) -->
-                <div class="bg-white rounded-2xl border border-gray-200 p-6 flex items-center gap-4 shadow-sm">
-                   <div class="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
-                      <app-icon name="warehouse" [size]="24"></app-icon>
-                   </div>
-                   <div>
-                      <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Stock Real (Físico + Rua)</span>
-                      <span class="text-2xl font-black text-emerald-700 font-mono tracking-tighter">{{ sumGlobalStock('total') + sumGlobalStock('toRecover') - sumGlobalStock('toReturn') }} <small class="text-[10px] opacity-30 italic">UN</small></span>
-                   </div>
-                </div>
-
-                <!-- DIFERENCA -->
-                <div class="bg-white rounded-2xl border-2 p-6 flex items-center gap-4 shadow-xl overflow-hidden relative"
-                     [class]="(sumGlobalStock('target') - (sumGlobalStock('total') + sumGlobalStock('toRecover') - sumGlobalStock('toReturn'))) === 0 ? 'border-emerald-200 bg-emerald-50/20' : 'border-rose-200 bg-rose-50/20'">
-                   <div class="p-3 rounded-xl" [class]="(sumGlobalStock('target') - (sumGlobalStock('total') + sumGlobalStock('toRecover') - sumGlobalStock('toReturn'))) === 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'">
-                      <app-icon [name]="(sumGlobalStock('target') - (sumGlobalStock('total') + sumGlobalStock('toRecover') - sumGlobalStock('toReturn'))) === 0 ? 'check_circle' : 'warning'" [size]="24"></app-icon>
-                   </div>
-                   <div>
-                      <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Diferença / Injustificado</span>
-                      <span class="text-2xl font-black font-mono tracking-tighter" [class]="(sumGlobalStock('target') - (sumGlobalStock('total') + sumGlobalStock('toRecover') - sumGlobalStock('toReturn'))) === 0 ? 'text-emerald-700' : 'text-rose-700'">
-                         {{ sumGlobalStock('target') - (sumGlobalStock('total') + sumGlobalStock('toRecover') - sumGlobalStock('toReturn')) }}
-                         <small class="text-[10px] opacity-30 italic">UN</small>
-                      </span>
-                   </div>
-                </div>
-
-                <!-- EXTERNO NET -->
-                <div class="bg-white rounded-2xl border border-gray-200 p-6 flex items-center gap-4 shadow-sm">
-                   <div class="p-3 bg-amber-100 text-amber-600 rounded-xl">
-                      <app-icon name="outgoing_mail" [size]="24"></app-icon>
-                   </div>
-                   <div>
-                      <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Saldo Externo (Net)</span>
-                      <span class="text-2xl font-black text-amber-700 font-mono tracking-tighter">{{ sumGlobalStock('toRecover') - sumGlobalStock('toReturn') }} <small class="text-[10px] opacity-30 italic">UN</small></span>
-                   </div>
-                </div>
-
-             </div>
-
+        <ng-container *ngIf="activeTab === 'INVENTORY'">
 
 
            <div class="bg-white rounded-2xl border border-gray-300 shadow-2xl overflow-hidden">
@@ -2480,7 +2432,6 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
 
 
                           <th class="p-5 text-left text-gray-800">TIPO DE GARRAFA</th>
-                           <th class="p-3 bg-blue-50 text-blue-800 border-x border-blue-100 uppercase">Património</th>
 
 
                           <th colspan="4" class="p-3 bg-emerald-50 text-emerald-700 border-x border-emerald-100 uppercase">Armazém (Stock Físico)</th>
@@ -2555,11 +2506,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
                           </td>
 
 
-                          
-                           <td class="p-5 text-center bg-blue-50/30 border-x border-blue-50">
-                              <input type="number" min="0" [(ngModel)]="t.inventoryTarget" (change)="saveTypePrice(t)" class="w-20 bg-white border border-blue-100 rounded px-2 py-1 text-center font-black text-blue-700 shadow-inner focus:ring-1 focus:ring-blue-300">
-                           </td>
-                           <td class="p-5 text-center font-bold text-gray-600 font-mono">{{ getFinalStock(t.name, 'gpl') }}</td>
+                          <td class="p-5 text-center font-bold text-gray-600 font-mono">{{ getFinalStock(t.name, 'gpl') }}</td>
 
 
                           <td class="p-5 text-center font-bold text-gray-600 font-mono">{{ getFinalStock(t.name, 'empty') }}</td>
@@ -2748,7 +2695,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
                 <th class="p-2 w-16" [class]="isSupplier ? 'bg-blue-600' : 'bg-blue-100/50 text-blue-800 font-mono italic'">VZ-VEND</th>
 
 
-                <th class="p-2 w-20" [class]="isSupplier ? 'bg-blue-600' : 'bg-blue-100/50 text-blue-800 font-mono italic'">CAUÇÃO</th>
+                <th class="p-2 w-20" [class]="isSupplier ? 'bg-blue-600' : 'bg-blue-100/50 text-blue-800 font-mono italic'">CAUÇÃƒO</th>
 
 
                 <th class="p-2 w-16" [class]="isSupplier ? 'bg-emerald-600' : 'bg-emerald-50'">E./GPL</th>
@@ -3833,8 +3780,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
             this.control = res;
 
-             this.loadData(); // Reload to show rollover stock
-
 
             this.entries = []; // New day starts empty
 
@@ -3995,7 +3940,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
       if (confirm('Deseja reabrir o mapa para rectificação? Todas as alterações serão auditadas.')) {
 
 
-         if (this.control) { this.control.status = 'OPENED'; }
+         this.control.status = 'OPENED';
 
 
          this.toaster.showInfo('Modo de Edição', 'Mapa reaberto temporariamente.');
@@ -4349,20 +4294,13 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
 
-
-   get activeBrands(): string[] {
-      const brands = new Set(this.cylinderTypes.map(t => (t.brand || 'PETROGAS').toUpperCase()));
-      if (brands.size === 0) return ['PETROGAS', 'GALP'];
-      return Array.from(brands);
-   }
-
    getTypesByBrand(brand: string) {
 
 
       return this.cylinderTypes
 
 
-         .filter(t => (t.brand || 'PETROGAS').toUpperCase() === brand.toUpperCase())
+         .filter(t => t.brand === brand)
 
 
          .sort((a, b) => {
@@ -4506,14 +4444,13 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
 
-   sumGlobalStock(f: 'gpl' | 'empty' | 'damaged' | 'total' | 'toRecover' | 'toReturn' | 'target'): number {
+   sumGlobalStock(f: 'gpl' | 'empty' | 'damaged' | 'total' | 'toRecover' | 'toReturn'): number {
 
 
       return this.cylinderTypes.reduce((acc, t) => {
 
 
-         if (f === 'target') return acc + (Number(t.inventoryTarget) || 0);
-          if (f === 'total') return acc + this.getFinalTotal(t.name);
+         if (f === 'total') return acc + this.getFinalTotal(t.name);
 
 
          return acc + this.getFinalStock(t.name, f);
