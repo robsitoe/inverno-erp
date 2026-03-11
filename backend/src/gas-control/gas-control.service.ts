@@ -126,6 +126,23 @@ export class GasControlService {
         return repo.save(control);
     }
 
+    async reopenDaily(id: string, user: string, companyId?: string) {
+        const repo = await this.getRepo(GasDailyControl, this.defaultControlRepo, companyId);
+        const control = await repo.findOne({ where: { id } });
+        if (!control) throw new NotFoundException('Control not found');
+
+        control.status = 'OPENED';
+        if (!control.auditLog) control.auditLog = [];
+        control.auditLog.push({
+            type: 'REOPEN',
+            user,
+            timestamp: new Date(),
+            summary: 'O documento foi reaberto para edição.'
+        });
+
+        return repo.save(control);
+    }
+
     async updateStocks(controlId: string, initialStock: any, finalStock: any, user: string, companyId?: string) {
         const repo = await this.getRepo(GasDailyControl, this.defaultControlRepo, companyId);
         const control = await repo.findOne({ where: { id: controlId } });
@@ -172,9 +189,10 @@ export class GasControlService {
 
         // PROPAGATE TO NEXT DAY if it exists
         const cid = companyId || control.companyId;
-        const nextDate = new Date(control.date);
-        nextDate.setDate(nextDate.getDate() + 1);
-        const nextDateStr = nextDate.toISOString().split('T')[0];
+        const d = new Date(control.date);
+        d.setUTCHours(12, 0, 0, 0); 
+        d.setUTCDate(d.getUTCDate() + 1);
+        const nextDateStr = d.toISOString().split('T')[0];
 
         const nextControl = await repo.findOne({ where: { date: nextDateStr, companyId: cid } });
         if (nextControl) {

@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, ChangeDetectorRef, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy, Input } from '@angular/core';
 
 
 import { CommonModule } from '@angular/common';
@@ -37,9 +37,6 @@ import { Customer, Supplier } from '../../shared/models';
 import { QuickEntityModalComponent } from '../../shared/components/quick-entity-modal.component';
 
 
-
-
-
 @Component({
 
 
@@ -56,9 +53,13 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
 
 
     <style>
+
+
       .print-only { display: none; }
 
+
       @media print {
+
 
         .no-print { display: none !important; }
 
@@ -90,7 +91,25 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
         .grid-cols-2 > div { flex: 1 !important; }
 
 
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      }
+
+
+      .highlight-entity {
+
+
+        animation: highlight-fade 3s ease-out forwards;
+
+
+      }
+
+
+      @keyframes highlight-fade {
+
+
+        0% { background-color: #fef08a; }
+
+
+        100% { background-color: transparent; }
 
 
       }
@@ -102,10 +121,10 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
     <div class="h-full flex flex-col bg-[#E5E7EB] font-sans text-gray-800 overflow-hidden main-container">
 
 
-      <!-- Interaction Blanket for NOT_STARTED -->
+      <!-- Interaction Blanket for NOT_STRTED -->
 
 
-      <div *ngIf="!control || control?.status === 'NOT_STARTED'" class="fixed inset-0 z-[150] bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center animate-in fade-in duration-500 no-print">
+      <div *ngIf="!control || control?.status === 'NOT_STRTED'" class="fixed inset-0 z-[150] bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center animate-in fade-in duration-500 no-print">
 
 
          <div class="bg-white p-10 rounded-3xl shadow-2xl border border-blue-200 text-center max-w-md space-y-6 transform animate-in zoom-in-95 duration-300">
@@ -123,13 +142,13 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
             <h2 class="text-2xl font-black text-gray-800 uppercase tracking-tight">Dia Bloqueado</h2>
 
 
-            <p class="text-sm font-medium text-gray-500 leading-relaxed">Este dia ainda não foi iniciado. Para começar a registar movimentos de stock e vendas, é necessário realizar a abertura formal.</p>
+            <p class="text-sm font-medium text-gray-500 leading-relaxed">Este dia ainda não foi iniciado. Para começar a registar movimentos de stock e vendas, é necessário realizar a Abertura formal.</p>
 
 
             <button (click)="openDay()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-200 active:scale-95 transition-all flex items-center justify-center gap-3">
 
 
-               <app-icon name="play_arrow" [size]="24"></app-icon> Realizar Abertura Agora
+               <app-icon name="play_arrow" [size]="24"></app-icon> Realizar Abertura agora
 
 
             </button>
@@ -162,7 +181,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
            <div class="flex items-center gap-2">
 
 
-             <div class="p-1.5 bg-blue-600 rounded text-white italic font-black text-sm tracking-tighter shadow-inner">GESt-GAS</div>
+             <div class="p-1.5 bg-blue-600 rounded text-white italic font-black text-sm tracking-tighter shadow-inner">GESt-GS</div>
 
 
              <div class="flex flex-col">
@@ -171,7 +190,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
                 <h1 class="text-xs font-black text-gray-600 uppercase tracking-widest leading-none">{{ activeTab === 'MOVEMENT' ? 'Movimento Geral Diário' : 'Mapa de Inventário Global' }}</h1>
 
 
-                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">Gestão de Armazém e Caixa</span>
+                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">Gestão de rmazém e Caixa</span>
 
 
              </div>
@@ -183,7 +202,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
                   [class]="control?.status === 'OPENED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : (control?.status === 'CLOSED' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-gray-50 text-gray-400 border-gray-200')">
 
 
-                 {{ control?.status === 'OPENED' ? 'â— Aberto' : (control?.status === 'CLOSED' ? 'â— Fechado' : '○ Não Iniciado') }}
+                 {{ control?.status === 'OPENED' ? 'Ã¢â€”Â berto' : (control?.status === 'CLOSED' ? 'Ã¢â€”Â Fechado' : '○ Não Iniciado') }}
 
 
              </div>
@@ -219,9 +238,6 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
         </div>
 
 
-
-
-
         <div class="flex items-center gap-3">
 
 
@@ -231,13 +247,10 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
              <div class="animate-spin rounded-full h-3 w-3 border-2 border-amber-500 border-t-transparent"></div>
 
 
-             <span class="text-[10px] font-bold text-amber-700 animate-pulse">A PROCESSAR...</span>
+             <span class="text-[10px] font-bold text-amber-700 animate-pulse"> PROCESSR...</span>
 
 
            </div>
-
-
-
 
 
            <button (click)="printReport('pdf')" class="flex items-center gap-2 px-5 py-1.5 bg-gray-800 text-white rounded font-black text-xs hover:bg-black transition-all shadow-md active:scale-95 uppercase tracking-wider">
@@ -249,34 +262,26 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
            </button>
 
 
-
-
-
            <div class="h-6 w-px bg-gray-300"></div>
 
-
-
-
-
            <button (click)="saveStocks()" class="flex items-center gap-2 px-5 py-1.5 bg-emerald-600 text-white rounded font-black text-xs hover:bg-emerald-700 transition-all shadow-md active:scale-95 uppercase tracking-wider">
-
-
              <app-icon name="save" [size]="16"></app-icon> Gravar Tudo
-
-
            </button>
 
+           <button *ngIf="control?.status === 'OPENED'" (click)="closeDay()" class="flex items-center gap-2 px-5 py-1.5 bg-rose-600 text-white rounded font-black text-xs hover:bg-rose-700 transition-all shadow-md active:scale-95 uppercase tracking-wider">
+             <app-icon name="lock" [size]="16"></app-icon> Fechar Dia
+           </button>
 
+           <button *ngIf="control?.status === 'CLOSED'" (click)="reopenDay()" class="flex items-center gap-2 px-5 py-1.5 bg-amber-500 text-white rounded font-black text-xs hover:bg-amber-600 transition-all shadow-md active:scale-95 uppercase tracking-wider">
+             <app-icon name="edit" [size]="16"></app-icon> Editar Documento
+           </button>
         </div>
 
 
       </div>
 
 
-
-
-
-      <!-- Main Spreadsheet Area -->
+      <!-- Main Spreadsheet rea -->
 
 
       <div class="flex-1 overflow-auto p-4 space-y-6 pb-24 no-print">
@@ -285,2779 +290,850 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
         
 
 
+        <!-- TB: MOVEMENT -->
 
 
 
-
-
-
-        <!-- TAB: MOVEMENT -->
-
-
-        <ng-container *ngIf="activeTab === 'MOVEMENT'">
-
-
-           <!-- TOP DASHBOARD BOARD -->
-
-
-           <div class="bg-white rounded-2xl border border-gray-300 shadow-xl overflow-hidden no-print">
-
-
-              <div class="bg-gray-50 border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-
-
-                 <div class="flex items-center gap-3">
-
-
-                    <div class="p-2 bg-blue-600 text-white rounded-lg shadow-sm"><app-icon name="analytics" [size]="20"></app-icon></div>
-
-
-                    <h3 class="font-black text-sm uppercase tracking-widest text-gray-700">Resumo de Balanço do Dia</h3>
-
-
-                 </div>
-
-
-                 <div class="flex items-center gap-4">
-
-
-                    <div class="flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-200 rounded-full">
-
-
-                       <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
-
-
-                       <span class="text-[9px] font-black text-gray-400 uppercase">Stock Inicial</span>
-
-
-                    </div>
-
-
-                    <div class="flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-200 rounded-full">
-
-
-                       <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-
-
-                       <span class="text-[9px] font-black text-gray-400 uppercase">Stock Final</span>
-
-
-                    </div>
-
-
-                 </div>
-
-
+        <div *ngIf="activeTab === 'MOVEMENT'" class="p-2 space-y-4 print-a4 bg-white rounded-xl shadow-lg border border-gray-200">
+           
+           <div class="text-center font-bold uppercase tracking-widest text-[12px] border-b-2 border-black pb-1 mb-4 flex justify-between items-center">
+              <span>Movimento Geral Diário do Armazém - {{ selectedDate | date:'dd.MM.yyyy' }}</span>
+              <div class="flex gap-2 no-print">
+                 <button (click)="openQuickRegistration()" class="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase hover:bg-blue-700 shadow-lg">Novo Lançamento</button>
               </div>
-
-
-
-
-
-           <div class="grid grid-cols-1 lg:grid-cols-2 divide-x divide-gray-200">
-
-
-              <!-- Stock Inicial -->
-
-
-              <div class="p-0">
-
-
-                 <div class="bg-orange-50/50 px-4 py-1.5 border-b border-gray-100 flex items-center justify-between">
-
-
-                    <span class="text-[10px] font-black text-orange-700 uppercase italic">Stock Abertura (Contagem Física)</span>
-
-
-                    <span class="text-[9px] font-bold text-orange-400 uppercase">{{ selectedDate | date:'dd MMM yyyy' }}</span>
-
-
-                 </div>
-
-
-                 <div class="overflow-x-auto">
-
-
-                    <table class="w-full text-[10px]">
-
-
-                       <thead class="bg-gray-50/50 border-b border-gray-100 font-bold">
-
-
-                          <tr class="divide-x divide-gray-100">
-
-
-                             <th class="p-2 w-20 text-left font-black text-gray-400 uppercase tracking-tighter">Tipo</th>
-
-
-                             <th *ngFor="let t of cylinderTypes" class="p-2 w-14 text-center">{{ t.name }}</th>
-
-
-                          </tr>
-
-
-                       </thead>
-
-
-                       <tbody class="divide-y divide-gray-50 text-center">
-
-
-                          <tr class="divide-x divide-gray-50">
-
-
-                             <td class="p-1 px-3 text-left font-bold text-gray-400 uppercase">Avarias</td>
-
-
-                             <td *ngFor="let t of cylinderTypes" class="p-0">
-
-
-                                <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="initialStock[t.name].damaged" class="w-full text-center p-2 bg-transparent border-none font-bold focus:bg-orange-50/30 disabled:opacity-50">
-
-
-                             </td>
-
-
-                          </tr>
-
-
-                          <tr class="divide-x divide-gray-50">
-
-
-                             <td class="p-1 px-3 text-left font-bold text-gray-400 uppercase">Vazias</td>
-
-
-                             <td *ngFor="let t of cylinderTypes" class="p-0">
-
-
-                                <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="initialStock[t.name].empty" class="w-full text-center p-2 bg-transparent border-none font-bold focus:bg-orange-50/30 disabled:opacity-50">
-
-
-                             </td>
-
-
-                          </tr>
-
-
-                          <tr class="divide-x divide-gray-50">
-
-
-                             <td class="p-1 px-3 text-left font-black text-blue-800 uppercase bg-blue-50/10">Cheias (GPL)</td>
-
-
-                             <td *ngFor="let t of cylinderTypes" class="p-0 bg-blue-50/10">
-
-
-                                <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="initialStock[t.name].gpl" class="w-full text-center p-2 bg-transparent border-none font-black text-blue-900 focus:bg-blue-100/30 disabled:opacity-50">
-
-
-                             </td>
-
-
-                          </tr>
-
-
-                          <tr class="bg-gray-50 bg-opacity-50 divide-x divide-gray-100 font-black">
-
-
-                             <td class="p-2 px-3 text-left text-[9px] uppercase tracking-widest text-gray-400">Total Inicial</td>
-
-
-                             <td *ngFor="let t of cylinderTypes" class="p-2 text-center text-gray-700 font-mono">
-
-
-                                {{ getInitialTotal(t.name) }}
-
-
-                             </td>
-
-
-                          </tr>
-
-
-                       </tbody>
-
-
-                    </table>
-
-
-                 </div>
-
-
-              </div>
-
-
-
-
-
-              <!-- Stock Final -->
-
-
-              <div class="p-0">
-
-
-                 <div class="bg-emerald-50/50 px-4 py-1.5 border-b border-gray-100 flex items-center justify-between">
-
-
-                    <span class="text-[10px] font-black text-emerald-700 uppercase italic">Stock Fecho (Calculado via Sistema)</span>
-
-
-                    <app-icon name="info" [size]="14" class="text-emerald-400 cursor-help" title="Baseado no Stock Inicial + Cargas - Vendas"></app-icon>
-
-
-                 </div>
-
-
-                 <div class="overflow-x-auto">
-
-
-                    <table class="w-full text-[10px]">
-
-
-                       <thead class="bg-gray-50/50 border-b border-gray-100 font-bold">
-
-
-                          <tr class="divide-x divide-gray-100">
-
-
-                             <th class="p-2 w-20 text-left font-black text-gray-400 uppercase tracking-tighter">Tipo</th>
-
-
-                             <th *ngFor="let t of cylinderTypes" class="p-2 w-14 text-center">{{ t.name }}</th>
-
-
-                          </tr>
-
-
-                       </thead>
-
-
-                       <tbody class="divide-y divide-gray-50 text-center">
-
-
-                          <tr class="divide-x divide-gray-50">
-
-
-                             <td class="p-1 px-3 text-left font-bold text-gray-300 uppercase italic">Avarias</td>
-
-
-                             <td *ngFor="let t of cylinderTypes" class="p-2 text-center text-gray-400 font-bold">
-
-
-                                {{ getFinalStock(t.name, 'damaged') }}
-
-
-                             </td>
-
-
-                          </tr>
-
-
-                          <tr class="divide-x divide-gray-50">
-
-
-                             <td class="p-1 px-3 text-left font-bold text-gray-300 uppercase italic">Vazias</td>
-
-
-                             <td *ngFor="let t of cylinderTypes" class="p-2 text-center text-gray-400 font-bold">
-
-
-                                {{ getFinalStock(t.name, 'empty') }}
-
-
-                             </td>
-
-
-                          </tr>
-
-
-                          <tr class="divide-x divide-gray-50">
-
-
-                             <td class="p-1 px-3 text-left font-black text-emerald-700 uppercase bg-emerald-50/10">Cheias (GPL)</td>
-
-
-                             <td *ngFor="let t of cylinderTypes" class="p-2 text-center text-emerald-800 font-black bg-emerald-50/10">
-
-
-                                {{ getFinalStock(t.name, 'gpl') }}
-
-
-                             </td>
-
-
-                          </tr>
-
-
-                          <tr class="bg-gray-50 bg-opacity-50 divide-x divide-gray-100 font-black">
-
-
-                             <td class="p-2 px-3 text-left text-[9px] uppercase tracking-widest text-gray-400">Total Final</td>
-
-
-                             <td *ngFor="let t of cylinderTypes" class="p-2 text-center text-emerald-900 font-mono">
-
-
-                                {{ getFinalTotal(t.name) }}
-
-
-                             </td>
-
-
-                          </tr>
-
-
-                       </tbody>
-
-
-                    </table>
-
-
-                 </div>
-
-
-              </div>
-
-
            </div>
 
-
-        </div>
-
-
-
-
-
-        <!-- MAPAS DE OPERAÇÕES SECTION -->
-
-
-        <div class="space-y-6">
-
-
-           <div class="bg-gray-800 p-6 rounded-2xl shadow-xl flex items-center justify-between border-b-4 border-amber-500 no-print">
-
-
-              <div class="flex items-center gap-4 text-white">
-
-
-                 <div class="p-3 bg-white/10 rounded-xl shadow-inner border border-white/10">
-
-
-                    <app-icon name="map" [size]="28" class="text-amber-400"></app-icon>
-
-
-                 </div>
-
-
-                 <div class="flex flex-col">
-
-
-                    <h2 class="font-black text-xl uppercase tracking-[0.2em] leading-none">Mapas de Operações</h2>
-
-
-                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Lançamento de Vendas e Movimentação por Marca</span>
-
-
-                 </div>
-
-
+           <div class="flex justify-between gap-4 items-start">
+              <div class="flex-1">
+                 <table class="w-full text-[9px] border-collapse border border-black uppercase text-center">
+                    <thead>
+                       <tr class="bg-gray-200 border-b border-black">
+                          <th class="p-1 border-r border-black text-left w-24">Stock Inicial</th>
+                          <th *ngFor="let t of cylinderTypes" class="p-1 border-r border-black font-bold">{{ t.name }}</th>
+                       </tr>
+                    </thead>
+                    <tbody class="font-bold">
+                       <tr class="border-b border-black">
+                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Kit/Redut</td>
+                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black">0</td>
+                       </tr>
+                       <tr class="border-b border-black">
+                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Avariadas</td>
+                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black text-rose-500">{{ initialStock[t.name]?.damaged || 0 }}</td>
+                       </tr>
+                       <tr class="border-b border-black">
+                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Vazias</td>
+                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black">{{ initialStock[t.name]?.empty || 0 }}</td>
+                       </tr>
+                       <tr class="border-b border-black">
+                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">GPL</td>
+                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black text-blue-700">{{ initialStock[t.name]?.gpl || 0 }}</td>
+                       </tr>
+                    </tbody>
+                    <tfoot class="bg-[#C6E0B4] font-black">
+                       <tr>
+                          <td class="p-1 border-r border-black text-left uppercase">TOTAL</td>
+                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black">{{ getInitialTotal(t.name) }}</td>
+                       </tr>
+                    </tfoot>
+                 </table>
               </div>
 
-
-           </div>
-
-
-
-
-
-           <!-- Vertical Brand Layout -->
-
-
-           <div class="flex flex-col gap-12 no-print">
-
-
-              <div *ngFor="let brand of activeBrands" class="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden p-8 space-y-8">
-
-
-                 <div class="flex items-center gap-4 border-b-2 border-gray-100 pb-6">
-
-
-                    <div class="w-2.5 h-10 rounded-full" [class]="brand === 'PETROGAS' ? 'bg-amber-500' : 'bg-orange-600'"></div>
-
-
-                    <div class="flex flex-col">
-
-
-                       <h3 class="font-black text-3xl uppercase italic tracking-tighter text-gray-800">{{ brand }}</h3>
-
-
-                       <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Gestão de Fluxo e Movimentação</span>
-
-
-                    </div>
-
-
-                    <div class="ml-auto px-6 py-2 bg-gray-50 rounded-2xl border border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest shadow-inner">Painel de Controlo {{ brand }}</div>
-
-
-                 </div>
-
-
-
-
-
-                 <div *ngFor="let t of getTypesByBrand(brand)" class="space-y-4">
-
-
-                    <!-- Type Header & Actions -->
-
-
-                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-100">
-
-
-                       <div class="px-5 py-2 rounded-xl font-black text-white text-xs shadow-md shadow-current/20" [style.background-color]="getTypeColor(t.name)">{{ t.name }}</div>
-
-
-                       
-
-
-                       <div class="flex items-center gap-4 ml-6">
-
-
-                          <div class="flex flex-col">
-
-
-                             <span class="text-[7px] font-black uppercase text-gray-400 mb-0.5 ml-1 leading-none">Revendedor</span>
-
-
-                             <div class="flex items-center bg-white border border-gray-200 rounded-lg px-2 shadow-inner">
-
-
-                                <span class="text-[9px] font-black text-gray-300 mr-1.5">MT</span>
-
-
-                                <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="t.priceRevendedor" (change)="saveTypePrice(t)" class="w-16 border-none px-0 py-1.5 text-[11px] font-black focus:ring-0 disabled:opacity-50">
-
-
-                             </div>
-
-
-                          </div>
-
-
-                          <div class="flex flex-col border-l border-gray-200 pl-4">
-
-
-                             <span class="text-[7px] font-black uppercase text-gray-400 mb-0.5 ml-1 leading-none">Bomba</span>
-
-
-                             <div class="flex items-center bg-white border border-gray-200 rounded-lg px-2 shadow-inner">
-
-
-                                <span class="text-[9px] font-black text-gray-300 mr-1.5">MT</span>
-
-
-                                <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="t.priceBomba" (change)="saveTypePrice(t)" class="w-16 border-none px-0 py-1.5 text-[11px] font-black focus:ring-0 disabled:opacity-50">
-
-
-                             </div>
-
-
-                          </div>
-
-
-                          <div class="flex flex-col border-l border-gray-200 pl-4">
-
-
-                             <span class="text-[7px] font-black uppercase text-gray-400 mb-0.5 ml-1 leading-none">Consumidor Final</span>
-
-
-                             <div class="flex items-center bg-blue-50 border border-blue-100 rounded-lg px-2 shadow-sm">
-
-
-                                <span class="text-[9px] font-black text-blue-300 mr-1.5">MT</span>
-
-
-                                <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="t.priceConsumidor" (change)="saveTypePrice(t)" class="w-18 border-none px-0 py-1.5 text-[11px] font-black text-blue-700 focus:ring-0 bg-transparent disabled:opacity-50">
-
-
-                             </div>
-
-
-                          </div>
-
-
-                       </div>
-
-
-                       
-
-
-                       <div class="ml-auto flex gap-2">
-
-
-                          <button (click)="addEntry(t, 'SUPPLIER')" [disabled]="control?.status !== 'OPENED'" class="px-4 py-2 bg-white text-orange-600 border border-orange-100 rounded-xl font-black text-[9px] uppercase hover:bg-orange-600 hover:text-white shadow-sm active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2">
-
-
-                             <app-icon name="add_circle" [size]="14"></app-icon> Carga
-
-
-                          </button>
-
-
-                          <button (click)="addEntry(t, 'CUSTOMER')" [disabled]="control?.status !== 'OPENED'" class="px-4 py-2 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase hover:bg-blue-700 shadow-md shadow-blue-200 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2">
-
-
-                             <app-icon name="shopping_cart" [size]="14"></app-icon> Venda
-
-
-                          </button>
-
-
-                       </div>
-
-
-                    </div>
-
-
-
-
-
-                    <!-- Entry Tables -->
-
-
-                    <div class="space-y-2">
-
-
-                       <!-- Fornecedor Table -->
-
-
-                       <div *ngIf="getEntriesForType(t.id!, 'SUPPLIER').length > 0" class="overflow-hidden rounded-2xl border border-orange-100 shadow-sm">
-
-
-                          <ng-container *ngTemplateOutlet="movementTable; context: { entries: getEntriesForType(t.id!, 'SUPPLIER'), type: t, isSupplier: true }"></ng-container>
-
-
-                       </div>
-
-
-
-
-
-                       <!-- Cliente Table -->
-
-
-                       <div class="overflow-hidden rounded-2xl border border-gray-100 shadow-sm bg-white">
-
-
-                          <ng-container *ngTemplateOutlet="movementTable; context: { entries: getEntriesForType(t.id!, 'CUSTOMER'), type: t, isSupplier: false }"></ng-container>
-
-
-                       </div>
-
-
-                    </div>
-
-
-                 </div>
-
-
+              <div class="flex-1">
+                 <table class="w-full text-[9px] border-collapse border border-black uppercase text-center">
+                    <thead>
+                       <tr class="bg-gray-200 border-b border-black">
+                          <th class="p-1 border-r border-black text-left w-24">Stock Final</th>
+                          <th *ngFor="let t of cylinderTypes" class="p-1 border-r border-black font-bold">{{ t.name }}</th>
+                       </tr>
+                    </thead>
+                    <tbody class="font-bold">
+                       <tr class="border-b border-black">
+                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Kit/Redut</td>
+                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black">0</td>
+                       </tr>
+                       <tr class="border-b border-black">
+                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Avariadas</td>
+                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black text-rose-500">{{ getFinalStock(t.name, 'damaged') }}</td>
+                       </tr>
+                       <tr class="border-b border-black">
+                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Vazias</td>
+                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black">{{ getFinalStock(t.name, 'empty') }}</td>
+                       </tr>
+                       <tr class="border-b border-black">
+                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Gpl</td>
+                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black text-blue-700">{{ getFinalStock(t.name, 'gpl') }}</td>
+                       </tr>
+                    </tbody>
+                    <tfoot class="bg-[#C6E0B4] font-black">
+                       <tr>
+                          <td class="p-1 border-r border-black text-left uppercase">TOTAL</td>
+                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black">{{ getFinalTotal(t.name) }}</td>
+                       </tr>
+                    </tfoot>
+                 </table>
               </div>
-
-
            </div>
 
+           <div class="space-y-10">
+              <div *ngFor="let t of cylinderTypes" class="space-y-4">
+                <div class="flex items-center gap-4 bg-gray-50/50 p-1 px-3 rounded-xl border border-gray-200 no-print">
+                   <span class="px-3 py-1 font-black text-white text-xs rounded-lg shadow-sm" [style.background-color]="getTypeColor(t.name)">{{ t.name }}</span>
+                   <div class="flex items-center gap-4 ml-2">
+                      <div class="flex flex-col">
+                         <span class="text-[7px] font-black uppercase text-gray-500 mb-0.5 ml-1 leading-none">Revendedor</span>
+                         <div class="flex items-center bg-white border border-gray-300 rounded px-2 shadow-inner h-7">
+                            <span class="text-[8px] font-bold text-gray-400 mr-1">MT</span>
+                            <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="t.priceRevendedor" (change)="saveTypePrice(t)" class="w-16 border-none p-0 py-1 text-[11px] font-black focus:ring-0 disabled:opacity-50 bg-transparent">
+                         </div>
+                      </div>
+                      <div class="flex flex-col border-l border-gray-200 pl-4">
+                         <span class="text-[7px] font-black uppercase text-gray-500 mb-0.5 ml-1 leading-none">Bomba</span>
+                         <div class="flex items-center bg-white border border-gray-300 rounded px-2 shadow-inner h-7">
+                            <span class="text-[8px] font-bold text-gray-400 mr-1">MT</span>
+                            <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="t.priceBomba" (change)="saveTypePrice(t)" class="w-16 border-none p-0 py-1 text-[11px] font-black focus:ring-0 disabled:opacity-50 bg-transparent">
+                         </div>
+                      </div>
+                      <div class="flex flex-col border-l border-gray-200 pl-4">
+                         <span class="text-[7px] font-black uppercase text-gray-500 mb-0.5 ml-1 leading-none">Consumidor</span>
+                         <div class="flex items-center bg-white border border-gray-300 rounded px-2 shadow-inner h-7">
+                            <span class="text-[8px] font-bold text-gray-400 mr-1">MT</span>
+                            <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="t.priceConsumidor" (change)="saveTypePrice(t)" class="w-16 border-none p-0 py-1 text-[11px] font-black focus:ring-0 disabled:opacity-50 bg-transparent">
+                         </div>
+                      </div>
+                   </div>
+                   <div class="only-print flex items-center gap-3 text-[9px] font-bold">
+                      <span>REV: {{ (t.priceRevendedor || 0) | currency:'MZN':'symbol':'1.0-0' }}</span>
+                      <span>BOM: {{ (t.priceBomba || 0) | currency:'MZN':'symbol':'1.0-0' }}</span>
+                      <span>CON: {{ (t.priceConsumidor || 0) | currency:'MZN':'symbol':'1.0-0' }}</span>
+                   </div>
+                </div>
+                 <ng-container *ngTemplateOutlet="movementTable; context: { entries: getEntriesForType(t.id!), type: t }"></ng-container>
+              </div>
+           </div>
 
-        </div>
+           <div class="grid grid-cols-4 gap-4 mt-10 no-print">
+              <div class="border border-black">
+                 <div class="bg-gray-200 p-1 font-bold text-[9px] border-b border-black uppercase flex justify-between items-center group">
+                     <span>Registo de Saídas para o Banco</span>
+                     <button (click)="addBankDeposit()" class="bg-blue-600 text-white px-1 rounded text-[8px] opacity-0 group-hover:opacity-100 transition-all">+ ADD</button>
+                  </div>
+                 <table class="w-full text-[8px] text-center border-collapse">
+                    <thead>
+                       <tr class="bg-gray-50 border-b border-black">
+                          <th class="p-1 border-r border-black w-20 uppercase">DEPOSITADO</th>
+                          <th class="p-1 border-r border-black uppercase">DATA / RECIBO</th>
+                          <th class="p-1 w-20 uppercase">VALOR (MT)</th>
+                       </tr>
+                    </thead>
+                    <tbody>
+                       <tr *ngFor="let b of bankDeposits; let i = index" class="border-b border-gray-100 group">
+                           <td class="p-0 border-r border-black">
+                              <input type="text" [(ngModel)]="b.bankName" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-center uppercase font-bold focus:bg-white focus:outline-none">
+                           </td>
+                           <td class="p-0 border-r border-black">
+                              <input type="text" [(ngModel)]="b.depositor" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-center italic focus:bg-white text-[7px]" placeholder="...">
+                           </td>
+                           <td class="p-0 border-r border-black">
+                              <input type="number" [(ngModel)]="b.value" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-center font-bold font-mono focus:bg-white focus:outline-none text-[8px]">
+                           </td>
+                           <td class="p-0 text-rose-500">
+                              <button (click)="removeBankDeposit(i); saveStocks()" class="opacity-0 group-hover:opacity-100 transition-all"><app-icon name="close" [size]="10"></app-icon></button>
+                           </td>
+                        </tr>
+                       <tr class="bg-blue-100 font-black">
+                          <td colspan="2" class="p-1 border-r border-black text-left uppercase italic">Total Banco</td>
+                          <td class="p-1 font-mono tabular-nums">{{ getBankTotal() | number:'1.2-2' }}</td>
+                       </tr>
+                    </tbody>
+                 </table>
+              </div>
+              <div class="border border-black">
+                  <div class="bg-gray-200 p-1 font-bold text-[9px] border-b border-black uppercase text-center">Despesas e Saldos do dia</div>
+                  <div class="p-1 space-y-1">
+                     <div class="flex justify-between items-center text-[8px] border-b border-gray-100 pb-1">
+                        <span class="uppercase font-bold">Saldo de Abertura</span>
+                        <input type="number" [(ngModel)]="openingCash" (change)="saveStocks()" class="w-20 text-right font-mono border border-gray-200 rounded p-0.5 bg-gray-50">
+                     </div>
+
+                     <div class="group">
+                        <div class="flex justify-between items-center text-[7px] uppercase font-black text-gray-400 mb-1">
+                           <span>Despesas Detalhadas</span>
+                           <button (click)="addExpense()" class="text-blue-600 font-bold hover:underline transition-all text-[8px]">+ REGISTRAR DESPESA</button>
+                        </div>
+                        <div *ngFor="let ex of dailyExpenses; let i = index" class="flex gap-1 mb-1 items-center bg-white border border-gray-100 p-0.5 rounded shadow-sm">
+                           <input type="text" [(ngModel)]="ex.description" (change)="saveStocks()" class="flex-1 border-none bg-transparent text-[7px] p-0.5 focus:ring-0" placeholder="Descrição...">
+                           <input type="number" [(ngModel)]="ex.value" (change)="saveStocks()" class="w-12 border-none bg-transparent text-[7px] p-0.5 text-right font-black font-mono focus:ring-0" placeholder="0.00">
+                           <button (click)="removeExpense(i); saveStocks()" class="text-rose-500 hover:bg-rose-50 rounded p-0.5"><app-icon name="delete" [size]="10"></app-icon></button>
+                        </div>
+                     </div>
+
+                     <table class="w-full text-[8px] border-collapse mt-2">
+                        <tbody class="font-bold">
+                           <tr class="border-b border-gray-300">
+                              <td class="p-1 uppercase text-gray-500">(-) Total Despesas</td>
+                              <td class="p-1 text-right text-rose-600 font-mono">{{ getExpensesTotal() | number:'1.2-2' }}</td>
+                           </tr>
+                           <tr class="border-b border-gray-300">
+                              <td class="p-1 uppercase text-gray-500">(+) Arrecadação (VD)</td>
+                              <td class="p-1 text-right text-emerald-600 font-mono italic">{{ getGlobalTotal() | number:'1.2-2' }}</td>
+                           </tr>
+                           <tr class="border-b border-gray-300 bg-emerald-50">
+                              <td class="p-1 uppercase text-emerald-700 font-bold tracking-tighter">(+) Ajuste / Outras Entradas</td>
+                              <td class="p-1">
+                                 <input type="number" [(ngModel)]="extraIncome" (change)="saveStocks()" class="w-full text-right font-black font-mono border-none p-0 focus:ring-0 bg-transparent text-emerald-700 placeholder:text-emerald-200" placeholder="0.00">
+                              </td>
+                           </tr>
+                           <tr class="border-b border-black">
+                              <td class="p-1 uppercase font-black">Saldo Esperado (A+R-D-B)</td>
+                              <td class="p-1 text-right font-black text-blue-800 font-mono italic">{{ getExpectedBalance() | number:'1.2-2' }}</td>
+                           </tr>
+                           <tr class="border-b border-black bg-yellow-50">
+                              <td class="p-1 uppercase font-black">DINHEIRO EM GAVETA</td>
+                              <td class="p-1 text-right bg-yellow-400 font-black text-[10px] font-mono tabular-nums">{{ getPhysicalTotal() | number:'1.2-2' }}</td>
+                           </tr>
+                           <tr [class.bg-rose-50]="getDiscrepancy() !== 0" [class.bg-emerald-50]="getDiscrepancy() === 0">
+                              <td class="p-1 uppercase font-black">DIFERENCIAL</td>
+                              <td class="p-1 text-right font-black font-mono text-[9px]" [class.text-rose-600]="getDiscrepancy() < 0" [class.text-emerald-600]="getDiscrepancy() >= 0">
+                                 {{ getDiscrepancy() | number:'1.2-2' }}
+                              </td>
+                           </tr>
+                        </tbody>
+                     </table>
+                  </div>
+               </div>
+
+               <div class="border border-black">
+                  <div class="bg-gray-200 p-1 font-bold text-[9px] border-b border-black uppercase text-center">Contagem Física (Notas/Moedas)</div>
+                  <div class="p-1 space-y-1">
+                     <div class="grid grid-cols-2 gap-x-2 gap-y-0.5">
+                        <div *ngFor="let den of denominations" class="flex items-center justify-between border-b border-gray-100">
+                           <span class="text-[7px] font-black text-gray-400">{{ den }} MT:</span>
+                           <input type="number" [(ngModel)]="cashNotes[den]" (change)="saveStocks()" class="w-10 text-right font-mono text-[8px] border-none p-0 focus:ring-0 bg-transparent" placeholder="0">
+                        </div>
+                     </div>
+                     <div class="flex justify-between items-center border-t border-gray-200 pt-1">
+                        <span class="text-[7px] font-black uppercase">Moedas:</span>
+                        <input type="number" [(ngModel)]="cashCoins" (change)="saveStocks()" class="w-16 text-right font-mono text-[8px] border-none p-0 focus:ring-0 bg-transparent" placeholder="0.00">
+                     </div>
+                     <div class="bg-yellow-50 p-1 rounded flex justify-between items-center border border-yellow-200 mt-1">
+                        <span class="text-[7px] font-black uppercase tracking-tighter">TOTAL FÍSICO (N+M):</span>
+                        <span class="text-[9px] font-mono font-black text-yellow-800">{{ getCashOnlyTotal() | number:'1.2-2' }}</span>
+                     </div>
+
+                     <div class="bg-gray-50 p-1 mt-2 border-t border-black space-y-1">
+                        <div class="flex justify-between items-center">
+                           <span class="text-[7px] font-black uppercase text-rose-600">Entrega à Circusal:</span>
+                           <input type="number" [(ngModel)]="cashHandover" (change)="saveStocks()" class="w-20 text-right font-black font-mono text-[9px] border border-rose-100 rounded bg-rose-50 p-0.5 focus:bg-white text-rose-700">
+                        </div>
+                        <div class="flex justify-between items-center">
+                           <span class="text-[7px] font-black uppercase text-blue-600">Pagamentos POS (Cartão):</span>
+                           <input type="number" [(ngModel)]="cashPOS" (change)="saveStocks()" class="w-20 text-right font-mono text-[9px] border border-blue-100 rounded bg-blue-50 p-0.5 focus:bg-white text-blue-700">
+                        </div>
+                     </div>
+                  </div>
+               </div>
+
+               <div class="border border-black">
+                  <div class="bg-gray-200 p-1 font-bold text-[9px] border-b border-black uppercase flex justify-between items-center group">
+                     <span>Movimento de KIT,S DE REDUTORES</span>
+                     <button (click)="addKit()" class="bg-blue-600 text-white px-1 rounded text-[8px] opacity-0 group-hover:opacity-100 transition-all">+ ADD</button>
+                  </div>
+                  <table class="w-full text-[8px] text-center border-collapse">
+                     <thead>
+                        <tr class="bg-gray-50 border-b border-black uppercase italic">
+                           <th class="p-1 border-r border-black text-left">Item</th>
+                           <th class="p-1 border-r border-black w-8">Sai.</th>
+                           <th class="p-1 border-r border-black w-8">Ent.</th>
+                           <th class="p-1 w-8">Vend.</th>
+                           <th class="w-4 no-print"></th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        <tr *ngFor="let k of kitMovements; let i = index" class="border-b border-gray-200 group">
+                           <td class="p-0 border-r border-black">
+                              <input type="text" [(ngModel)]="k.name" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-left uppercase focus:bg-white focus:outline-none">
+                           </td>
+                           <td class="p-0 border-r border-black">
+                              <input type="number" [(ngModel)]="k.out" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-center focus:bg-white focus:outline-none focus:bg-white">
+                           </td>
+                           <td class="p-0 border-r border-black">
+                              <input type="number" [(ngModel)]="k.ing" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-center focus:bg-white text-blue-600 font-bold focus:outline-none focus:bg-white">
+                           </td>
+                           <td class="p-0 border-r border-black">
+                              <input type="number" [(ngModel)]="k.sale" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-center focus:bg-white text-emerald-600 font-bold focus:outline-none focus:bg-white">
+                           </td>
+                           <td class="p-0 text-rose-500 no-print">
+                              <button (click)="removeKit(i); saveStocks()" class="opacity-0 group-hover:opacity-100"><app-icon name="close" [size]="8"></app-icon></button>
+                           </td>
+                        </tr>
+                        <tr class="bg-[#C6E0B4] font-black italic uppercase">
+                           <td class="p-1 border-r border-black text-left">TOTAIS</td>
+                           <td class="p-1 border-r border-black">{{ getKitSum('out') }}</td>
+                           <td class="p-1 border-r border-black">{{ getKitSum('ing') }}</td>
+                           <td class="p-1">{{ getKitSum('sale') }}</td>
+                           <td></td>
+                        </tr>
+                     </tbody>
+                  </table>
+               </div>
+            </div>
+         </div>
+
+          <ng-container *ngIf="activeTab === 'INVENTORY'">
 
 
-         
-
-
-          <!-- STICKY ACTION BAR (OBSOLETE HERE - REMOVING FROM INSIDE) -->
-
-
-
-
-
-         <!-- PROFESSIONAL OPERATION GRID -->
-
-
-         <div class="grid grid-cols-1 xl:grid-cols-12 gap-8 mt-12 mb-24 items-start">
-
-
-            
-
-
-            <!-- LEFT PANEL: STOCK STATUS (Vasilhame & Avarias) -->
-
-
-            <div class="xl:col-span-5 space-y-8 h-full">
+            <div class="print-a4 bg-white p-4 font-sans text-[10px] text-black overflow-auto">
 
 
                
 
 
-               <!-- Vasilhame Exterior Section -->
+               <!-- HEADER: INVENTÁRIO -->
 
 
-               <div class="bg-white rounded-2xl border border-gray-300 shadow-xl overflow-hidden">
+               <div class="flex justify-between items-start mb-6">
 
 
-                  <div class="p-6 bg-emerald-600 text-white flex items-center justify-between">
+                  <div class="space-y-0.5 text-left">
 
 
-                     <div class="flex items-center gap-3">
+                     <div class="flex gap-2"><span class="font-bold uppercase tracking-widest text-[#2E3137]">Supervisão:</span> <span class="bg-blue-50 px-2 uppercase font-black">{{ control?.user || '---' }}</span></div>
 
 
-                        <app-icon name="inventory_2" [size]="24"></app-icon>
+                     <div class="flex gap-2"><span class="font-bold uppercase tracking-widest text-[#2E3137]">rmazém:</span> <span class="bg-blue-50 px-2 uppercase font-black">SEDE / {{ authService.currentUserValue?.username }}</span></div>
 
 
-                        <div class="flex flex-col">
-
-
-                           <h3 class="font-black text-xs uppercase tracking-widest leading-none">Vasilhame Exterior</h3>
-
-
-                           <span class="text-[8px] font-bold text-white/60 uppercase tracking-widest mt-1">Garrafas e Vasilhames em Dívida</span>
-
-
-                        </div>
-
-
-                     </div>
-
-
-                     <span class="text-[10px] font-black bg-white/20 px-3 py-1 rounded-lg uppercase">Créditos de Vasilhame</span>
+                     <div class="text-xs font-black mt-1 text-blue-900">{{ selectedDate | date:'dd.MM.yyyy' }}</div>
 
 
                   </div>
-
-
-                  <div class="p-0">
-
-
-                     <table class="w-full text-[11px]">
-
-
-                        <thead>
-
-
-                           <tr class="bg-gray-50 text-[9px] font-black text-gray-400 uppercase tracking-widest divide-x divide-gray-100 border-b border-gray-100">
-
-
-                              <th class="p-3 text-left">Marca / Tamanho</th>
-
-
-                              <th class="p-3 text-center w-28">Quantidade</th>
-
-
-                           </tr>
-
-
-                        </thead>
-
-
-                        <tbody class="divide-y divide-gray-100">
-
-
-                           <tr *ngFor="let t of cylinderTypes" class="hover:bg-emerald-50 transition-colors group">
-
-
-                              <td class="p-3 uppercase tracking-tighter flex items-center gap-3">
-
-
-                                 <div class="w-1.5 h-6 rounded-full" [style.background-color]="getTypeColor(t.name)"></div>
-
-
-                                 <div class="flex flex-col">
-
-
-                                    <span class="font-black text-gray-700">{{ t.name }}</span>
-
-
-                                    <span class="text-[8px] font-bold text-gray-400 uppercase">{{ t.brand }}</span>
-
-
-                                 </div>
-
-
-                              </td>
-
-
-                              <td class="p-0">
-
-
-                                 <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="externalEmpties[t.name]" class="w-full text-center border-none font-black text-emerald-700 bg-transparent py-4 focus:bg-white shadow-inner disabled:opacity-50">
-
-
-                              </td>
-
-
-                           </tr>
-
-
-                        </tbody>
-
-
-                     </table>
-
-
-                  </div>
-
-
-               </div>
-
-
-
-
-
-               <!-- Avarias Técnicas Section -->
-
-
-               <div class="bg-white rounded-2xl border border-gray-300 shadow-xl overflow-hidden">
-
-
-                  <div class="p-6 bg-amber-500 text-white flex items-center justify-between">
-
-
-                     <div class="flex items-center gap-3">
-
-
-                        <app-icon name="report_problem" [size]="24"></app-icon>
-
-
-                        <div class="flex flex-col">
-
-
-                           <h3 class="font-black text-xs uppercase tracking-widest leading-none">Avarias Técnicas</h3>
-
-
-                           <span class="text-[8px] font-bold text-white/60 uppercase tracking-widest mt-1">Registo de Perdas e Danos</span>
-
-
-                        </div>
-
-
-                     </div>
-
-
-                     <button (click)="addDamagedLog()" [disabled]="control?.status !== 'OPENED'" class="w-8 h-8 flex items-center justify-center bg-white text-amber-600 rounded-lg shadow-lg hover:scale-110 active:scale-95 transition-all text-xl font-black disabled:opacity-50">+</button>
-
-
-                  </div>
-
-
-                  <div class="p-6 space-y-4">
-
-
-                     <div *ngFor="let log of damagedLog; let i = index" class="flex items-start gap-3 bg-gray-50/50 p-3 rounded-xl border border-gray-200 group hover:border-amber-200 transition-all">
-
-
-                        <div class="flex flex-col gap-1 w-28 shrink-0">
-
-
-                           <span class="text-[8px] font-black uppercase text-gray-400 pl-1">Tipo</span>
-
-
-                           <select [(ngModel)]="log.typeName" [disabled]="control?.status !== 'OPENED'" class="bg-white border-none shadow-sm rounded-lg text-[10px] uppercase px-2 py-2 font-black disabled:opacity-50">
-
-
-                              <option *ngFor="let t of cylinderTypes" [value]="t.name">{{ t.name }}</option>
-
-
-                           </select>
-
-
-                        </div>
-
-
-                        <div class="flex flex-col gap-1 flex-1">
-
-
-                           <span class="text-[8px] font-black uppercase text-gray-400 pl-1">Motivo / Descrição</span>
-
-
-                           <input type="text" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="log.fault" placeholder="Fuga, Amassada..." class="w-full bg-white border-none shadow-sm rounded-lg text-[11px] font-bold px-3 py-2 disabled:opacity-50 placeholder:italic">
-
-
-                        </div>
-
-
-                        <div class="flex flex-col gap-1 w-16 shrink-0">
-
-
-                           <span class="text-[8px] font-black uppercase text-gray-400 pl-1 text-center">Quant.</span>
-
-
-                           <input type="number" min="0" [(ngModel)]="log.qty" [disabled]="control?.status !== 'OPENED'" class="w-full bg-white border-none shadow-sm rounded-lg text-xs font-black text-amber-700 text-center py-2 disabled:opacity-50">
-
-
-                        </div>
-
-
-                        <button (click)="removeDamagedLog(i)" *ngIf="control?.status === 'OPENED'" class="mt-6 text-gray-300 hover:text-rose-500 transition-colors p-1"><app-icon name="close" [size]="18"></app-icon></button>
-
-
-                     </div>
-
-
-                     <div *ngIf="damagedLog.length === 0" class="py-12 flex flex-col items-center justify-center text-gray-300 gap-3 border-2 border-dashed border-gray-100 rounded-2xl">
-
-
-                        <app-icon name="check_circle_outline" [size]="40" class="opacity-30"></app-icon>
-
-
-                        <span class="italic uppercase text-[9px] font-black tracking-[3px]">Sem Registos de Avaria</span>
-
-
-                     </div>
-
-
-                  </div>
-
-
-               </div>
-
-
-            </div>
-
-
-
-
-
-            <!-- RIGHT PANEL: FINANCIAL CLOSURE (FECHO DE CAIXA) -->
-
-
-            <div class="xl:col-span-7 bg-white rounded-3xl border border-gray-300 shadow-2xl overflow-hidden relative">
-
-
-               <div class="p-8 bg-blue-600 text-white flex items-center justify-between">
-
-
-                  <div class="flex items-center gap-4">
-
-
-                     <div class="p-3 bg-white/20 rounded-2xl shadow-inner"><app-icon name="account_balance_wallet" [size]="32"></app-icon></div>
-
-
-                     <div class="flex flex-col">
-
-
-                        <h3 class="font-black text-xl uppercase tracking-widest leading-none">Fecho de Caixa Físico</h3>
-
-
-                        <span class="text-[9px] font-bold text-white/60 uppercase tracking-widest mt-1 italic">Conferência Real e Contagem de Numerário</span>
-
-
-                     </div>
-
-
-                  </div>
-
-
-                  <div class="flex flex-col items-end border-l border-white/20 pl-6">
-
-
-                     <span class="text-[10px] font-black text-white/70 uppercase mb-1">Total Disponível (Digital + Gaveta)</span>
-
-
-                     <div class="font-mono text-4xl font-black italic tracking-tighter">{{ getPhysicalTotal() | number:'1.2-2' }} <small class="text-[10px] font-sans opacity-50 not-italic">MT</small></div>
-
-
-                  </div>
-
-
-               </div>
-
-
-
-
-
-               <div class="p-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
-
-
-                  <!-- Coluna Esquerda: Contagem e Digital -->
-
-
-                  <div class="space-y-8">
-
-
-                     <!-- Contagem de Notas -->
-
-
-                     <div class="p-6 bg-gray-50 rounded-2xl border border-gray-200 shadow-inner group transition-all">
-
-
-                        <div class="flex items-center justify-between mb-4 px-1">
-
-
-                           <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-
-
-                              <app-icon name="payments" [size]="14"></app-icon> Contagem de Notas
-
-
-                           </h4>
-
-
-                           <span class="text-[9px] font-black text-blue-500 uppercase italic">Dinheiro Efetivo</span>
-
-
-                        </div>
-
-
-                        <div class="grid grid-cols-2 gap-3">
-
-
-                           <div *ngFor="let bill of denominations" class="flex items-center justify-between bg-white pl-4 pr-1 py-1 rounded-xl border border-gray-100 group hover:border-blue-300 transition-all shadow-sm">
-
-
-                              <span class="font-black text-blue-600 font-mono italic leading-none">{{ bill }}</span>
-
-
-                              <div class="flex items-center bg-gray-50 rounded-lg pr-2 ml-2">
-
-
-                                 <span class="text-[9px] font-bold text-gray-300 mx-2 italic">x</span>
-
-
-                                 <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="cashNotes[bill]" class="w-14 text-right bg-transparent border-none py-2 text-xs font-black text-gray-700 focus:ring-0 disabled:opacity-50" placeholder="0">
-
-
-                              </div>
-
-
-                           </div>
-
-
-                        </div>
-
-
-                        <div class="mt-6 p-4 bg-white rounded-xl border border-blue-50 shadow-sm space-y-3">
-
-
-                           <div class="flex items-center justify-between">
-
-
-                              <span class="text-[10px] font-black text-gray-400 uppercase italic">Moedas Totais</span>
-
-
-                              <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="cashCoins" class="w-28 text-right bg-blue-50/50 border-none rounded-lg px-3 py-2 text-xs font-black text-blue-700 shadow-inner disabled:opacity-50">
-
-
-                           </div>
-
-
-                           <div class="flex items-center justify-between">
-
-
-                              <span class="text-[10px] font-black text-gray-400 uppercase italic">Valor Direto (Mão)</span>
-
-
-                              <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="cashDirectTotal" class="w-28 text-right bg-emerald-50/50 border-none rounded-lg px-3 py-2 text-xs font-black text-emerald-700 shadow-inner disabled:opacity-50">
-
-
-                           </div>
-
-
-                        </div>
-
-
-                     </div>
-
-
-
-
-
-                     <!-- Digital & Bancário -->
-
-
-                     <div class="p-6 bg-indigo-50/20 rounded-2xl border border-indigo-100 shadow-inner space-y-6">
-
-
-                        <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-
-
-                           <div class="flex items-center gap-3">
-
-
-                              <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600"><app-icon name="credit_card" [size]="20"></app-icon></div>
-
-
-                              <span class="text-xs font-black text-indigo-700 uppercase italic">Recebimentos POS</span>
-
-
-                           </div>
-
-
-                           <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="cashPOS" class="w-32 text-right bg-indigo-50/30 border-none rounded-lg px-3 py-2.5 text-sm font-black text-indigo-800 disabled:opacity-50">
-
-
-                        </div>
-
-
-
-
-
-                        <div class="space-y-4">
-
-
-                           <div class="flex items-center justify-between px-2">
-
-
-                              <div class="flex flex-col">
-
-
-                                 <span class="text-[10px] font-black text-indigo-400 uppercase leading-none">Depósitos Bancários</span>
-
-
-                                 <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1 italic">Envios para Contas</span>
-
-
-                              </div>
-
-
-                              <button (click)="addBankDeposit()" [disabled]="control?.status !== 'OPENED'" class="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-lg shadow-lg hover:scale-110 active:scale-95 transition-all text-xl font-black disabled:opacity-50">+</button>
-
-
-                           </div>
-
-
-                           <div class="space-y-3">
-
-
-                              <div *ngFor="let dep of bankDeposits; let i = index" class="bg-white border border-indigo-50 rounded-xl p-4 shadow-sm group relative overflow-hidden">
-
-
-                                 <div class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-400"></div>
-
-
-                                 <div class="flex gap-4 mb-3">
-
-
-                                    <div class="flex-1 flex flex-col gap-1">
-
-
-                                       <span class="text-[8px] font-black text-gray-300 uppercase pl-1">Instituição</span>
-
-
-                                       <input type="text" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="dep.bankName" placeholder="EX: BIM, BCI..." class="w-full bg-gray-50 border-none rounded-lg px-3 py-1.5 text-[10px] font-black uppercase disabled:opacity-50">
-
-
-                                    </div>
-
-
-                                     <div class="w-28 flex flex-col gap-1">
-
-
-                                        <span class="text-[8px] font-black text-gray-300 uppercase pl-1 text-right">Valor</span>
-
-
-                                        <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="dep.value" class="w-full bg-emerald-50 border-none rounded-lg px-3 py-1.5 text-[11px] font-black text-emerald-800 text-right disabled:opacity-50">
-
-
-                                     </div>
-
-
-                                 </div>
-
-
-                                 <div class="flex items-center justify-between gap-4">
-
-
-                                    <input type="text" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="dep.depositor" placeholder="Responsável pelo Depósito..." class="flex-1 bg-gray-50/50 border-none rounded px-3 py-1.5 text-[9px] font-bold text-gray-400 italic disabled:opacity-50">
-
-
-                                    <button (click)="removeBankDeposit(i)" *ngIf="control?.status === 'OPENED'" class="text-rose-200 hover:text-rose-600 transition-colors"><app-icon name="delete" [size]="16"></app-icon></button>
-
-
-                                 </div>
-
-
-                              </div>
-
-
-                           </div>
-
-
-                        </div>
-
-
-                     </div>
-
-
-                  </div>
-
-
-
-
-
-                  <!-- Coluna Direita: Balanço Matemático -->
-
-
-                  <div class="space-y-6">
-
-
-                     <!-- Card de Diferença (Dashboard Estilo) -->
-
-
-                     <div class="p-8 rounded-3xl border shadow-2xl space-y-4 relative overflow-hidden group transition-all" 
-
-
-                          [class]="getDiscrepancy() < -1 ? 'bg-rose-600 text-white border-rose-400' : (getDiscrepancy() > 1 ? 'bg-emerald-600 text-white border-emerald-400' : 'bg-blue-600 text-white border-blue-400')">
-
-
-                        <div class="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform"></div>
-
-
-                        <div class="flex flex-col relative z-2">
-
-
-                           <span class="text-[9px] font-black uppercase tracking-[0.3em] opacity-60">Diferença de Caixa</span>
-
-
-                           <h4 class="text-xs font-bold italic mb-6">Status: {{ getDiscrepancy() < -1 ? 'Quebra (Falta Dinheiro)' : (getDiscrepancy() > 1 ? 'Sobra (Excesso)' : 'Valores Corretos') }}</h4>
-
-
-                           <div class="flex items-baseline gap-2">
-
-
-                              <span class="text-5xl font-mono font-black italic tabular-nums drop-shadow-lg">{{ getDiscrepancy() | number:'1.2-2' }}</span>
-
-
-                              <span class="text-sm font-black opacity-60">MT</span>
-
-
-                           </div>
-
-
-                           <div class="mt-6 h-1 w-full bg-white/20 rounded-full overflow-hidden">
-
-
-                              <div class="h-full bg-white animate-pulse" [style.width]="getDiscrepancy() === 0 ? '100%' : '50%'"></div>
-
-
-                           </div>
-
-
-                        </div>
-
-
-                     </div>
-
-
-
-
-
-                     <!-- Painel de Cálculos -->
-
-
-                     <div class="bg-gray-50/50 rounded-2xl border border-gray-200 p-8 space-y-6 shadow-inner">
-
-
-                        <div class="flex justify-between items-center text-xs font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-3">
-
-
-                           <span>Resumo Financeiro</span>
-
-
-                           <app-icon name="assessment" [size]="16"></app-icon>
-
-
-                        </div>
-
-
-                        
-
-
-                        <div class="space-y-4">
-
-
-                           <div class="flex justify-between items-center">
-
-
-                              <span class="text-[10px] font-black text-amber-600 uppercase italic">Abertura de Caixa:</span>
-
-
-                              <span class="text-lg font-mono font-black text-amber-700">{{ openingCash | number:'1.2-2' }} MT</span>
-
-
-                           </div>
-
-
-                           <div class="flex justify-between items-center">
-
-
-                              <span class="text-[10px] font-black text-blue-500 uppercase italic">Recebimentos:</span>
-
-
-                              <span class="text-[15px] font-mono font-black text-blue-700">(+) {{ (getGlobalTotal() + getCollectionsTotal()) | number:'1.2-2' }} MT</span>
-
-
-                           </div>
-
-
-                           <div class="flex justify-between items-center">
-
-
-                              <span class="text-[10px] font-black text-rose-500 uppercase italic">Despesas / Vales:</span>
-
-
-                              <span class="text-[15px] font-mono font-black text-rose-700">(-) {{ getExpensesTotal() | number:'1.2-2' }} MT</span>
-
-
-                           </div>
-
-
-                           <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-200 shadow-sm group">
-
-
-                              <span class="text-[10px] font-black text-orange-600 uppercase italic">Remessa (Sede/Sucursal):</span>
-
-
-                              <div class="flex items-center gap-2">
-
-
-                                 <span class="text-[9px] font-bold text-gray-300">(-)</span>
-
-
-                                 <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="cashHandover" class="w-32 text-right bg-orange-50/50 border-none rounded px-3 py-1.5 text-sm font-black text-orange-700 focus:ring-1 focus:ring-orange-200 shadow-inner group-hover:bg-orange-50 transition-all disabled:opacity-50">
-
-
-                              </div>
-
-
-                           </div>
-
-
-                        </div>
-
-
-
-
-
-                        <div class="pt-6 border-t border-gray-200 flex flex-col items-end">
-
-
-                           <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Saldo Final Esperado</span>
-
-
-                           <span class="text-[28px] font-black font-mono tracking-tighter text-gray-800 leading-none">{{ getExpectedBalance() | number:'1.2-2' }} <small class="text-[10px] font-sans opacity-30">MT</small></span>
-
-
-                        </div>
-
-
-                     </div>
-
-
-
-
-
-                  </div>
-
-
-               </div>
-
-
-            </div>
-
-
-
-
-
-         <!-- AUDIT LOG SECTION -->
-
-
-         <div *ngIf="control?.auditLog?.length > 0" class="mt-20 border-t-2 border-dashed border-gray-300 pt-12">
-
-
-            <div class="flex items-center gap-3 mb-8">
-
-
-               <div class="p-2 bg-gray-800 text-white rounded-lg shadow-lg"><app-icon name="history" [size]="24"></app-icon></div>
-
-
-               <div class="flex flex-col">
-
-
-                  <h3 class="font-black text-lg uppercase tracking-widest text-gray-700">Histórico de Alterações (Audit Log)</h3>
-
-
-                  <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Registo de modificações realizadas após o fecho do mapa</span>
-
-
-               </div>
-
-
-            </div>
-
-
-
-
-
-            <div class="space-y-3 pb-32">
-
-
-               <div *ngFor="let log of control.auditLog" class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex items-center justify-between group hover:border-amber-300 transition-all">
-
-
-                  <div class="flex items-center gap-5">
-
-
-                     <div class="flex flex-col items-center justify-center p-2 min-w-[70px] bg-gray-50 rounded-xl border border-gray-100">
-
-
-                        <span class="text-[9px] font-black text-gray-400 uppercase leading-none">{{ log.timestamp | date:'HH:mm' }}</span>
-
-
-                        <span class="text-[10px] font-bold text-gray-600 uppercase">{{ log.timestamp | date:'dd MMM' }}</span>
-
-
-                     </div>
-
-
-                     <div class="flex flex-col">
-
-
-                        <div class="flex items-center gap-2">
-
-
-                           <span class="text-xs font-black text-gray-800 uppercase">{{ log.user }}</span>
-
-
-                           <div class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-[8px] font-black uppercase">Edição Pós-Fecho</div>
-
-
-                        </div>
-
-
-                        <p class="text-[11px] font-medium text-gray-500 mt-1 italic">{{ log.summary }}</p>
-
-
-                     </div>
-
-
-                  </div>
-
-
-               </div>
-
-
-            </div>
-
-
-         </div>
-
-
-      </div>
-
-
-
-
-
-      <!-- STICKY ACTION BAR (FLOATING) -->
-
-
-      <div class="fixed bottom-32 left-0 right-0 z-[150] flex justify-center no-print pointer-events-none">
-
-
-         <div class="bg-white/95 backdrop-blur-md p-4 rounded-3xl shadow-2xl border border-blue-100 flex items-center gap-8 animate-in slide-in-from-bottom-8 duration-700 ring-4 ring-blue-50/50 pointer-events-auto">
-
-
-             <div class="flex items-center gap-4 pr-8 border-r-2 border-dashed border-gray-100">
-
-
-                <div class="w-12 h-12 rounded-2xl flex items-center justify-center font-black shadow-lg shadow-current/10 transform rotate-3" 
-
-
-                     [class]="control?.status === 'OPENED' ? 'bg-emerald-500 text-white' : (control?.status === 'CLOSED' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-400')">
-
-
-                    <app-icon [name]="control?.status === 'CLOSED' ? 'lock' : (control?.status === 'OPENED' ? 'lock_open' : 'schedule')" [size]="24"></app-icon>
-
-
-                </div>
-
-
-                <div class="flex flex-col">
-
-
-                    <span class="text-[9px] font-black uppercase text-gray-400 tracking-widest leading-none mb-1">Status Operacional</span>
-
-
-                    <div class="flex items-center gap-2">
-
-
-                       <span class="w-2 h-2 rounded-full animate-pulse" [class]="control?.status === 'OPENED' ? 'bg-emerald-500' : 'text-gray-400'"></span>
-
-
-                       <span class="text-sm font-black uppercase tracking-tight" [class]="control?.status === 'OPENED' ? 'text-emerald-700' : (control?.status === 'CLOSED' ? 'text-blue-700' : 'text-gray-500')">
-
-
-                          {{ control?.status === 'OPENED' ? 'Mapa Online' : (control?.status === 'CLOSED' ? 'Sessão Concluída' : 'Standby') }}
-
-
-                       </span>
-
-
-                    </div>
-
-
-                </div>
-
-
-             </div>
-
-
-
-
-
-             <div class="flex items-center gap-4">
-
-
-                 <button *ngIf="!control || control?.status === 'NOT_STARTED'" (click)="openDay()" class="px-10 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase hover:bg-blue-700 shadow-2xl shadow-blue-200 active:scale-95 transition-all flex items-center gap-3 group">
-
-
-                     <app-icon name="play_arrow" [size]="24" class="group-hover:translate-x-1 transition-transform"></app-icon> Iniciar Ciclo de Operações
-
-
-                 </button>
-
-
-
-
-
-                 <button *ngIf="control?.status === 'OPENED'" (click)="closeDay()" [disabled]="getDiscrepancy() < -1 || getDiscrepancy() > 1" class="px-10 py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase hover:bg-emerald-700 shadow-2xl shadow-emerald-200 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed group">
-
-
-                     <app-icon name="check_circle" [size]="24" class="group-hover:scale-110 transition-transform"></app-icon> Validar e Fechar Dia
-
-
-                 </button>
-
-
-
-
-
-                 <button *ngIf="control?.status === 'CLOSED'" (click)="reopenDay()" class="px-10 py-4 bg-amber-500 text-white rounded-2xl font-black text-xs uppercase hover:bg-amber-600 shadow-2xl shadow-amber-200 active:scale-95 transition-all flex items-center gap-3">
-
-
-                     <app-icon name="edit_note" [size]="24"></app-icon> Reabrir para Ajustes
-
-
-                 </button>
-
-
-                 
-
-
-                 <div class="h-10 w-px bg-gray-100 mx-1"></div>
-
-
-
-
-
-                 <div class="flex items-center gap-2">
-
-
-                      <button (click)="printReport('pdf')" class="p-4 bg-gray-50 text-gray-400 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all border border-gray-100" title="Exportar PDF"><app-icon name="picture_as_pdf" [size]="22"></app-icon></button>
-
-
-                      <button (click)="printReport('excel')" class="p-4 bg-gray-50 text-gray-400 rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all border border-gray-100" title="Exportar Excel"><app-icon name="table_view" [size]="22"></app-icon></button>
-
-
-                 </div>
-
-
-             </div>
-
-
-         </div>
-
-
-      </div>
-
-
-
-
-
-      <!-- PROFESSIONAL PRINT REPORT (EXCEL STYLE) -->
-
-
-      <div class="print-only print-a4 font-sans text-black bg-white">
-
-
-         <div class="flex flex-col items-center mb-6">
-
-
-            <h1 class="text-xl font-bold uppercase underline">Movimento Geral Diário do Armazém</h1>
-
-
-            <span class="text-lg font-bold">{{ selectedDate | date:'dd.MM.yyyy' }}</span>
-
-
-         </div>
-
-
-
-
-
-         <!-- STOCKS SECTION (SIDE-BY-SIDE FLEX) -->
-
-
-         <div style="display: flex; gap: 8mm; margin-bottom: 5mm; align-items: flex-start;">
-
-
-            <!-- Stock Inicial -->
-
-
-            <div style="flex: 1;">
-
-
-               <div class="flex items-center gap-2 mb-1">
-
-
-                  <div class="w-8 h-4 bg-emerald-500"></div>
-
-
-                  <span class="text-xs font-bold uppercase">Stock Inicial</span>
-
-
-               </div>
-
-
-               <table class="w-full text-[8pt] border-collapse border border-black text-center">
-
-
-                  <thead class="bg-gray-100 font-bold uppercase">
-
-
-                     <tr class="divide-x divide-black border-b border-black">
-
-
-                        <th class="p-1 px-2 border-r border-black font-black bg-gray-300">2026</th>
-
-
-                        <th *ngFor="let t of cylinderTypes" class="p-1 w-12">{{ t.name }}</th>
-
-
-                     </tr>
-
-
-                  </thead>
-
-
-                  <tbody class="divide-y divide-black">
-
-
-                     <tr class="divide-x divide-black">
-
-
-                        <td class="p-1 text-left font-bold bg-gray-200">Kit/Redut</td>
-
-
-                        <td *ngFor="let t of cylinderTypes" class="p-1">0</td>
-
-
-                     </tr>
-
-
-                     <tr class="divide-x divide-black">
-
-
-                        <td class="p-1 text-left font-bold bg-gray-200">Avariadas-</td>
-
-
-                        <td *ngFor="let t of cylinderTypes" class="p-1">{{ initialStock[t.name]?.damaged || 0 }}</td>
-
-
-                     </tr>
-
-
-                     <tr class="divide-x divide-black">
-
-
-                        <td class="p-1 text-left font-bold bg-gray-200">Vazias-</td>
-
-
-                        <td *ngFor="let t of cylinderTypes" class="p-1">{{ initialStock[t.name]?.empty || 0 }}</td>
-
-
-                     </tr>
-
-
-                     <tr class="divide-x divide-black">
-
-
-                        <td class="p-1 text-left font-bold bg-gray-200">GPL</td>
-
-
-                        <td *ngFor="let t of cylinderTypes" class="p-1">{{ initialStock[t.name]?.gpl || 0 }}</td>
-
-
-                     </tr>
-
-
-                  </tbody>
-
-
-                  <tfoot class="border-t border-black font-black bg-emerald-200">
-
-
-                     <tr class="divide-x divide-black">
-
-
-                        <td class="p-1 text-left">TOTAL</td>
-
-
-                        <td *ngFor="let t of cylinderTypes" class="p-1">{{ getInitialTotal(t.name) }}</td>
-
-
-                     </tr>
-
-
-                  </tfoot>
-
-
-               </table>
-
-
-            </div>
-
-
-
-
-
-            <!-- Stock Final -->
-
-
-            <div style="flex: 1;">
-
-
-               <div class="flex items-center justify-end gap-2 mb-1">
-
-
-                  <span class="text-xs font-bold uppercase">Stock Final</span>
-
-
-               </div>
-
-
-               <table class="w-full text-[8pt] border-collapse border border-black text-center">
-
-
-                  <thead class="bg-gray-100 font-bold uppercase">
-
-
-                     <tr class="divide-x divide-black border-b border-black">
-
-
-                        <th class="p-1 px-2 border-r border-black font-black bg-gray-300">.</th>
-
-
-                        <th *ngFor="let t of cylinderTypes" class="p-1 w-12">{{ t.name }}</th>
-
-
-                     </tr>
-
-
-                  </thead>
-
-
-                  <tbody class="divide-y divide-black">
-
-
-                     <tr class="divide-x divide-black">
-
-
-                        <td class="p-1 text-left font-bold bg-gray-200">Kit/Redut</td>
-
-
-                        <td *ngFor="let t of cylinderTypes" class="p-1">0</td>
-
-
-                     </tr>
-
-
-                     <tr class="divide-x divide-black">
-
-
-                        <td class="p-1 text-left font-bold bg-gray-200">Avariadas-</td>
-
-
-                        <td *ngFor="let t of cylinderTypes" class="p-1">{{ getFinalStock(t.name, 'damaged') }}</td>
-
-
-                     </tr>
-
-
-                     <tr class="divide-x divide-black">
-
-
-                        <td class="p-1 text-left font-bold bg-gray-200">Vazias-</td>
-
-
-                        <td *ngFor="let t of cylinderTypes" class="p-1">{{ getFinalStock(t.name, 'empty') }}</td>
-
-
-                     </tr>
-
-
-                     <tr class="divide-x divide-black">
-
-
-                        <td class="p-1 text-left font-bold bg-gray-200">Gpl-</td>
-
-
-                        <td *ngFor="let t of cylinderTypes" class="p-1">{{ getFinalStock(t.name, 'gpl') }}</td>
-
-
-                     </tr>
-
-
-                  </tbody>
-
-
-                  <tfoot class="border-t border-black font-black bg-emerald-200">
-
-
-                     <tr class="divide-x divide-black">
-
-
-                        <td class="p-1 text-left">TOTAL</td>
-
-
-                        <td *ngFor="let t of cylinderTypes" class="p-1">{{ getFinalTotal(t.name) }}</td>
-
-
-                     </tr>
-
-
-                  </tfoot>
-
-
-               </table>
-
-
-            </div>
-
-
-         </div>
-
-
-
-
-
-         <!-- MOVEMENTS PER TYPE (Excel Style) -->
-
-
-         <div *ngFor="let t of cylinderTypes; let first = first" [class.mt-4]="!first" [class.page-break]="!first && $index % 2 === 0" class="mb-4">
-
-
-            <!-- Group Header -->
-
-
-            <div class="flex items-center mb-1">
-
-
-               <div class="px-4 py-1 font-black text-xs text-white uppercase tabular-nums" [style.backgroundColor]="getTypeColor(t.name)">{{ t.name }}</div>
-
-
-               <div class="ml-auto flex border border-black">
-
-
-                  <span class="bg-gray-300 px-3 py-0.5 text-[10px] font-bold uppercase border-r border-black">Preço</span>
-
-
-                  <span class="bg-blue-300 px-6 py-0.5 text-[12px] font-black tabular-nums">{{ t.priceConsumidor }}</span>
-
-
-               </div>
-
-
-            </div>
-
-
-
-
-
-            <table class="w-full text-[9px] border-collapse border border-black text-center">
-
-
-               <thead class="bg-gray-400 font-bold uppercase tracking-widest border-b border-black">
-
-
-                  <tr class="divide-x divide-black">
-
-
-                     <th class="p-1 text-left w-[20%]">CLIENTE/ENTIDADE</th>
-
-
-                     <th class="p-1 w-10">S/GPL</th>
-
-
-                     <th class="p-1 w-10">S/VAZ</th>
-
-
-                     <th class="p-1 w-10">S/AV</th>
-
-
-                     <th class="p-1 w-10">VZ-VEND</th>
-
-
-                     <th class="p-1 w-[12%]">ADC/Caucao</th>
-
-
-                     <th class="p-1 w-10">E./GPL</th>
-
-
-                     <th class="p-1 w-10">E/VAZ</th>
-
-
-                     <th class="p-1 w-10">E./AV</th>
-
-
-                     <th class="p-1 w-[12%]">P.Divida</th>
-
-
-                     <th class="p-1 w-[14%] bg-orange-300">VD,s</th>
-
-
-                     <th class="p-1 w-6 bg-gray-300 print-only">GR</th>
-
-
-                     <th class="p-1 w-6 bg-gray-300 print-only">FA</th>
-
-
-                  </tr>
-
-
-               </thead>
-
-
-               <tbody class="divide-y divide-black">
-
-
-                  <tr *ngFor="let e of getEntriesForType(t.id!)" class="divide-x divide-black">
-
-
-                     <td class="p-1 text-left font-bold uppercase">{{ e.customerName || '---' }}</td>
-
-
-                     <td class="p-1">{{ e.s_gpl || 0 }}</td>
-
-
-                     <td class="p-1">{{ e.s_vaz || 0 }}</td>
-
-
-                     <td class="p-1">{{ e.s_av || 0 }}</td>
-
-
-                     <td class="p-1">{{ e.vz_vend || 0 }}</td>
-
-
-                     <td class="p-1">{{ e.adc_caucao || 0 | number:'1.2-2' }}</td>
-
-
-                     <td class="p-1">{{ e.e_gpl || 0 }}</td>
-
-
-                     <td class="p-1">{{ e.e_vaz || 0 }}</td>
-
-
-                     <td class="p-1">{{ e.e_av || 0 }}</td>
-
-
-                     <td class="p-1">{{ e.p_divida || 0 | number:'1.2-2' }}</td>
-
-
-                     <td class="p-1 font-black bg-orange-100 italic">{{ e.totalAmount || 0 | number:'1.2-2' }}</td>
-
-
-                     <td class="p-1 print-only font-black">{{ e.gr ? 'X' : '' }}</td>
-
-
-                     <td class="p-1 print-only font-black">{{ e.invoice ? 'X' : '' }}</td>
-
-
-                  </tr>
-
-
-               </tbody>
-
-
-               <tfoot class="border-t border-black font-black bg-gray-100 italic text-[11px]">
-
-
-                  <tr class="divide-x divide-black">
-
-
-                     <td class="p-1 text-right pr-6 uppercase bg-emerald-100">Totais</td>
-
-
-                     <td class="p-1">{{ sumEntries(getEntriesForType(t.id!), 's_gpl') }}</td>
-
-
-                     <td class="p-1">{{ sumEntries(getEntriesForType(t.id!), 's_vaz') }}</td>
-
-
-                     <td class="p-1">{{ sumEntries(getEntriesForType(t.id!), 's_av') }}</td>
-
-
-                     <td class="p-1">{{ sumEntries(getEntriesForType(t.id!), 'vz_vend') }}</td>
-
-
-                     <td class="p-1">{{ sumEntries(getEntriesForType(t.id!), 'adc_caucao') | number:'1.2-2' }}</td>
-
-
-                     <td class="p-1">{{ sumEntries(getEntriesForType(t.id!), 'e_gpl') }}</td>
-
-
-                     <td class="p-1">{{ sumEntries(getEntriesForType(t.id!), 'e_vaz') }}</td>
-
-
-                     <td class="p-1">{{ sumEntries(getEntriesForType(t.id!), 'e_av') }}</td>
-
-
-                     <td class="p-1">{{ sumEntries(getEntriesForType(t.id!), 'p_divida') | number:'1.2-2' }}</td>
-
-
-                     <td class="p-1 text-right pr-2 bg-orange-200">{{ sumEntries(getEntriesForType(t.id!), 'totalAmount') | number:'1.2-2' }}</td>
-
-
-                     <td class="p-1 bg-gray-200 print-only"></td>
-
-
-                     <td class="p-1 bg-gray-200 print-only"></td>
-
-
-                  </tr>
-
-
-               </tfoot>
-
-
-            </table>
-
-
-            <!-- Type Specific Summary (Exactly as screenshot) -->
-
-
-            <div class="flex flex-col items-end mt-2 text-[8pt] font-black space-y-1">
-
-
-               <div class="flex items-center gap-4">
-
-
-                  <span class="uppercase text-[7pt] text-gray-400 italic">Total de Saídas</span>
-
-
-                  <div class="w-24 text-right pr-2">{{ sumEntries(getEntriesForType(t.id!), 's_gpl') }} Botijas</div>
-
-
-               </div>
-
-
-               <div class="flex items-center gap-4">
-
-
-                  <span class="uppercase text-[7pt] text-gray-400 italic">Total de vendas Gerais</span>
-
-
-                  <div class="w-24 text-right pr-2">{{ sumEntries(getEntriesForType(t.id!), 'totalAmount') | number:'1.2-2' }}</div>
-
-
-               </div>
-
-
-               <div class="flex items-center gap-4 py-0.5">
-
-
-                  <span class="uppercase text-[8pt]">Total Recebido</span>
-
-
-                  <div class="w-28 border border-black bg-blue-300 p-1 text-center font-mono text-[9pt] tabular-nums shadow-[2px_2px_0px_#000]">{{ sumEntries(getEntriesForType(t.id!), 'totalAmount') | number:'1.2-2' }}</div>
-
-
-               </div>
-
-
-            </div>
-
-
-         </div>
-
-
-
-
-
-         <!-- 4. CONFERÃŠNCIA FINANCEIRA FINAL (Só no fim de tudo) -->
-
-
-         <div class="mt-4 border-t-2 border-black pt-4 page-break-avoid">
-
-
-            <h3 class="text-[9pt] font-black uppercase mb-2">Resumo Geral Financeiro do Dia</h3>
-
-
-            <div class="flex justify-between items-start gap-10">
-
-
-               <div class="flex-1 grid grid-cols-2 gap-4 text-[7pt]">
-
-
-                  <div class="border border-black p-2">
-
-
-                     <span class="block font-black border-b border-black mb-1 uppercase text-[6.5pt]">Conferência de Meios</span>
-
-
-                     <div class="flex justify-between"><span>Dinheiro/Gaveta:</span> <span>{{ getCashOnlyTotal() | number:'1.2-2' }}</span></div>
-
-
-                     <div class="flex justify-between"><span>Valor em POS:</span> <span>{{ cashPOS | number:'1.2-2' }}</span></div>
-
-
-                     <div class="flex justify-between"><span>Depósitos:</span> <span>{{ getBankTotal() | number:'1.2-2' }}</span></div>
-
-
-                     <div class="flex justify-between font-black border-t border-black mt-1"><span>TOTAL FÃSICO:</span> <span>{{ getPhysicalTotal() | number:'1.2-2' }} MT</span></div>
-
-
-                  </div>
-
-
-                  <div class="border border-black p-2">
-
-
-                     <span class="block font-black border-b border-black mb-1 uppercase text-[6.5pt]">Balanço do Dia</span>
-
-
-                     <div class="flex justify-between"><span>Saldo Abertura:</span> <span>{{ openingCash | number:'1.2-2' }}</span></div>
-
-
-                     <div class="flex justify-between"><span>Vendas Totais:</span> <span>{{ (getGlobalTotal() + getCollectionsTotal()) | number:'1.2-2' }}</span></div>
-
-
-                     <div class="flex justify-between"><span>Remessas/Vales:</span> <span>({{ (getExpensesTotal() + cashHandover) | number:'1.2-2' }})</span></div>
-
-
-                     <div class="flex justify-between font-black border-t border-black mt-1">
-
-
-                        <span class="uppercase">Diferença Final:</span> <span>{{ getDiscrepancy() | number:'1.2-2' }} MT</span>
-
-
-                     </div>
-
-
-                   </div>
-
-
-                </div>
-
-
-             </div>
-
-
-       </div>
-
-
-        </div>
-
-
-    </ng-container>
-
-
-
-
-
-         
-          <ng-container *ngIf="activeTab === 'INVENTORY'">
-
-             <!-- INVENTORY DASHBOARD -->
-             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 no-print mb-8">
-                
-                <!-- PATRIMONIO -->
-                <div class="bg-white rounded-2xl border border-gray-200 p-6 flex items-center gap-4 shadow-sm">
-                   <div class="p-3 bg-blue-100 text-blue-600 rounded-xl">
-                      <app-icon name="apartment" [size]="24"></app-icon>
-                   </div>
-                   <div>
-                      <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Património Total</span>
-                      <span class="text-2xl font-black text-gray-800 font-mono tracking-tighter">{{ sumGlobalStock('target') }} <small class="text-[10px] opacity-30 italic">UN</small></span>
-                   </div>
-                </div>
-
-                <!-- STOCK REAL (ARMAZEM + RUA) -->
-                <div class="bg-white rounded-2xl border border-gray-200 p-6 flex items-center gap-4 shadow-sm">
-                   <div class="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
-                      <app-icon name="warehouse" [size]="24"></app-icon>
-                   </div>
-                   <div>
-                      <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Stock Real (Físico + Rua)</span>
-                      <span class="text-2xl font-black text-emerald-700 font-mono tracking-tighter">{{ sumGlobalStock('total') + sumGlobalStock('toRecover') - sumGlobalStock('toReturn') }} <small class="text-[10px] opacity-30 italic">UN</small></span>
-                   </div>
-                </div>
-
-                <!-- DIFERENCA -->
-                <div class="bg-white rounded-2xl border-2 p-6 flex items-center gap-4 shadow-xl overflow-hidden relative"
-                     [class]="(sumGlobalStock('target') - (sumGlobalStock('total') + sumGlobalStock('toRecover') - sumGlobalStock('toReturn'))) === 0 ? 'border-emerald-200 bg-emerald-50/20' : 'border-rose-200 bg-rose-50/20'">
-                   <div class="p-3 rounded-xl" [class]="(sumGlobalStock('target') - (sumGlobalStock('total') + sumGlobalStock('toRecover') - sumGlobalStock('toReturn'))) === 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'">
-                      <app-icon [name]="(sumGlobalStock('target') - (sumGlobalStock('total') + sumGlobalStock('toRecover') - sumGlobalStock('toReturn'))) === 0 ? 'check_circle' : 'warning'" [size]="24"></app-icon>
-                   </div>
-                   <div>
-                      <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Diferença / Injustificado</span>
-                      <span class="text-2xl font-black font-mono tracking-tighter" [class]="(sumGlobalStock('target') - (sumGlobalStock('total') + sumGlobalStock('toRecover') - sumGlobalStock('toReturn'))) === 0 ? 'text-emerald-700' : 'text-rose-700'">
-                         {{ sumGlobalStock('target') - (sumGlobalStock('total') + sumGlobalStock('toRecover') - sumGlobalStock('toReturn')) }}
-                         <small class="text-[10px] opacity-30 italic">UN</small>
-                      </span>
-                   </div>
-                </div>
-
-                <!-- EXTERNO NET -->
-                <div class="bg-white rounded-2xl border border-gray-200 p-6 flex items-center gap-4 shadow-sm">
-                   <div class="p-3 bg-amber-100 text-amber-600 rounded-xl">
-                      <app-icon name="outgoing_mail" [size]="24"></app-icon>
-                   </div>
-                   <div>
-                      <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Saldo Externo (Net)</span>
-                      <span class="text-2xl font-black text-amber-700 font-mono tracking-tighter">{{ sumGlobalStock('toRecover') - sumGlobalStock('toReturn') }} <small class="text-[10px] opacity-30 italic">UN</small></span>
-                   </div>
-                </div>
-
-             </div>
-
-
-
-           <div class="bg-white rounded-2xl border border-gray-300 shadow-2xl overflow-hidden">
-
-
-              <div class="bg-blue-900 text-white px-8 py-5 flex items-center justify-between">
-
-
-                 <div>
-
-
-                     <h2 class="text-xl font-black uppercase tracking-tighter">GESt-GAS | Inventário de Garrafas</h2>
-
-
-                     <p class="text-[10px] text-blue-200 opacity-80 uppercase tracking-widest font-bold">Gestão Real de Vasilhames e Stock Físico</p>
-
-
-                 </div>
-
-
-                 <div class="text-right">
-
-
-                    <span class="text-[9px] font-black block opacity-50">ESTADO EM</span>
-
-
-                    <span class="text-sm font-mono font-bold">{{ selectedDate | date:'dd/MM/yyyy' }}</span>
-
-
-                 </div>
-
-
-              </div>
-
-
-
-
-
-              <div class="p-0 overflow-x-auto">
-
-
-                 <table class="w-full text-xs">
-
-
-                    <thead class="bg-gray-50 text-gray-400 font-black uppercase text-[10px] tracking-widest border-b border-gray-200 text-center">
-
-
-                       <tr>
-
-
-                          <th class="p-5 text-left text-gray-800">TIPO DE GARRAFA</th>
-                           <th class="p-3 bg-blue-50 text-blue-800 border-x border-blue-100 uppercase">Património</th>
-
-
-                          <th colspan="4" class="p-3 bg-emerald-50 text-emerald-700 border-x border-emerald-100 uppercase">Armazém (Stock Físico)</th>
-
-
-                          <th colspan="2" class="p-3 bg-amber-50 text-amber-700 border-x border-amber-100 uppercase">Externo (Vasilhames)</th>
-
-
-                          <th class="p-3 bg-gray-100 text-gray-800 uppercase">Frota</th>
-
-
-                       </tr>
-
-
-                       <tr class="bg-gray-50/50">
-
-
-                          <th class="p-3 border-b border-gray-200"></th>
-
-
-                          <th class="p-3 border-b border-gray-200 font-bold bg-emerald-50/30">CHEIAS</th>
-
-
-                          <th class="p-3 border-b border-gray-200 font-bold bg-emerald-50/30">VAZIAS</th>
-
-
-                          <th class="p-3 border-b border-gray-200 font-bold bg-emerald-50/30">AVARIA</th>
-
-
-                          <th class="p-3 border-b border-gray-200 font-black text-emerald-800 bg-emerald-50">TOTAL</th>
-
-
-                          <th class="p-3 border-b border-gray-200 font-black text-amber-800 bg-amber-50">A REAVER (CLIENTES)</th>
-
-
-                          <th class="p-3 border-b border-gray-200 font-black text-orange-800 bg-orange-50">A DEVOLVER (FORNEC.)</th>
-
-
-                          <th class="p-3 border-b border-gray-200 bg-gray-100">CÃLCULO TOTAL</th>
-
-
-                       </tr>
-
-
-                    </thead>
-
-
-                    <tbody class="divide-y divide-gray-100">
-
-
-                       <tr *ngFor="let t of cylinderTypes" class="hover:bg-gray-50 transition-colors">
-
-
-                          <td class="p-5 text-center font-black text-sm text-gray-700 tracking-tighter">
-
-
-                             <div class="flex items-center gap-3">
-
-
-                                <div class="w-3 h-3 rounded-full shadow-sm" [style.background]="getTypeColor(t.name)"></div>
-
-
-                                <span>{{ t.name }}</span>
-
-
-                                <span class="text-[9px] font-bold text-gray-300 uppercase tracking-tighter">[{{ t.brand }}]</span>
-
-
-                             </div>
-
-
-                          </td>
-
-
-                          
-                           <td class="p-5 text-center bg-blue-50/30 border-x border-blue-50">
-                              <input type="number" min="0" [(ngModel)]="t.inventoryTarget" (change)="saveTypePrice(t)" class="w-20 bg-white border border-blue-100 rounded px-2 py-1 text-center font-black text-blue-700 shadow-inner focus:ring-1 focus:ring-blue-300">
-                           </td>
-                           <td class="p-5 text-center font-bold text-gray-600 font-mono">{{ getFinalStock(t.name, 'gpl') }}</td>
-
-
-                          <td class="p-5 text-center font-bold text-gray-600 font-mono">{{ getFinalStock(t.name, 'empty') }}</td>
-
-
-                          <td class="p-5 text-center font-bold text-gray-600 font-mono">{{ getFinalStock(t.name, 'damaged') }}</td>
-
-
-                          <td class="p-5 text-center font-black text-emerald-600 bg-emerald-50/20 text-base font-mono tabular-nums">{{ getFinalTotal(t.name) }}</td>
-
-
-                          
-
-
-                          <td class="p-5 text-center bg-amber-50/20">
-
-
-                             <div class="flex flex-col items-center">
-
-
-                                <span class="font-black text-amber-600 text-lg font-mono tabular-nums">{{ getFinalStock(t.name, 'toRecover') }}</span>
-
-
-                                <span *ngIf="getEntryDiff(t.id!, 'CUSTOMER') !== 0" 
-
-
-                                      [class]="getEntryDiff(t.id!, 'CUSTOMER') > 0 ? 'text-emerald-500' : 'text-red-500'" 
-
-
-                                      class="text-[9px] font-black">
-
-
-                                   {{ getEntryDiff(t.id!, 'CUSTOMER') > 0 ? 'â†‘' : 'â†“' }} {{ getEntryDiff(t.id!, 'CUSTOMER') | number }} hoje
-
-
-                                </span>
-
-
-                             </div>
-
-
-                          </td>
-
-
-
-
-
-                          <td class="p-5 text-center bg-orange-50/20">
-
-
-                             <div class="flex flex-col items-center">
-
-
-                                <span class="font-black text-orange-600 text-lg font-mono tabular-nums">{{ getFinalStock(t.name, 'toReturn') }}</span>
-
-
-                                <span *ngIf="getEntryDiff(t.id!, 'SUPPLIER') !== 0" 
-
-
-                                      [class]="getEntryDiff(t.id!, 'SUPPLIER') > 0 ? 'text-emerald-500' : 'text-red-500'" 
-
-
-                                      class="text-[9px] font-black">
-
-
-                                   {{ getEntryDiff(t.id!, 'SUPPLIER') > 0 ? 'â†‘' : 'â†“' }} {{ getEntryDiff(t.id!, 'SUPPLIER') | number }} hoje
-
-
-                                </span>
-
-
-                             </div>
-
-
-                          </td>
-
-
-
-
-
-                          <td class="p-5 text-center font-black text-gray-800 bg-gray-50/80 italic text-base font-mono">
-
-
-                             {{ getFinalTotal(t.name) + getFinalStock(t.name, 'toRecover') - getFinalStock(t.name, 'toReturn') }}
-
-
-                          </td>
-
-
-                       </tr>
-
-
-                    </tbody>
-
-
-                    <tfoot class="bg-gray-800 text-white font-black uppercase text-[10px]">
-
-
-                       <tr>
-
-
-                          <td class="p-4 text-right pr-8">TOTAIS GLOBAIS</td>
-
-
-                          <td class="p-4 text-center text-sm tabular-nums">{{ sumGlobalStock('gpl') }}</td>
-
-
-                          <td class="p-4 text-center text-sm tabular-nums">{{ sumGlobalStock('empty') }}</td>
-
-
-                          <td class="p-4 text-center text-sm tabular-nums">{{ sumGlobalStock('damaged') }}</td>
-
-
-                          <td class="p-4 text-center text-emerald-400 text-xl tabular-nums shadow-inner">{{ sumGlobalStock('total') }}</td>
-
-
-                          <td class="p-4 text-center text-amber-400 text-xl tabular-nums shadow-inner">{{ sumGlobalStock('toRecover') }}</td>
-
-
-                          <td class="p-4 text-center text-orange-400 text-xl tabular-nums shadow-inner">{{ sumGlobalStock('toReturn') }}</td>
-
-
-                           <td class="p-4 text-center text-white bg-black text-lg tabular-nums">
-
-
-                              {{ sumGlobalStock('total') + sumGlobalStock('toRecover') - sumGlobalStock('toReturn') }}
-
-
-                           </td>
-
-
-                       </tr>
-
-
-                    </tfoot>
-
-
-                 </table>
-
-
-              </div>
-
-
-           </div>
-
-
-        </ng-container>
-
-
-
-
-
-    <!-- REUSABLE TABLE TEMPLATE -->
-
-
-    <ng-template #movementTable let-entries="entries" let-t="type" let-isSupplier="isSupplier">
-
-
-       <div class="overflow-x-auto">
-
-
-          <table class="w-full text-[11px] border-collapse">
-
-
-            <thead [class]="isSupplier ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-600'" class="font-black text-[9px] uppercase tracking-tighter text-center">
-
-
-              <tr class="divide-x divide-white/20 border-b border-gray-400">
-
-
-                <th class="p-3 text-left px-5 min-w-[220px] italic tracking-widest">{{ isSupplier ? 'FORNECEDOR / OPERADOR' : 'CLIENTE / ENTIDADE' }}</th>
-
-
-                <th *ngIf="!isSupplier" class="p-2 w-28 bg-gray-300 text-gray-700">TIPO PREÇO</th>
-
-
-                <th class="p-2 w-16" [class]="isSupplier ? 'bg-orange-700' : 'bg-amber-50'">S/GPL</th>
-
-
-                <th class="p-2 w-16" [class]="isSupplier ? 'bg-orange-700' : 'bg-amber-50'">S/VAZ</th>
-
-
-                <th class="p-2 w-16" [class]="isSupplier ? 'bg-orange-700' : 'bg-amber-50'">S/AV</th>
-
-
-                <th class="p-2 w-16" [class]="isSupplier ? 'bg-blue-600' : 'bg-blue-100/50 text-blue-800 font-mono italic'">VZ-VEND</th>
-
-
-                <th class="p-2 w-20" [class]="isSupplier ? 'bg-blue-600' : 'bg-blue-100/50 text-blue-800 font-mono italic'">CAUÇÃO</th>
-
-
-                <th class="p-2 w-16" [class]="isSupplier ? 'bg-emerald-600' : 'bg-emerald-50'">E./GPL</th>
-
-
-                <th class="p-2 w-16" [class]="isSupplier ? 'bg-emerald-600' : 'bg-emerald-50'">E/VAZ</th>
-
-
-                <th class="p-2 w-16" [class]="isSupplier ? 'bg-emerald-600' : 'bg-emerald-50'">E./AV</th>
-
-
-                <th class="p-2 w-24" [class]="isSupplier ? 'bg-pink-600' : 'bg-pink-50 text-pink-800 font-mono italic font-black'">P. DÃVIDA</th>
-
-
-                <th class="p-2 w-36 bg-gray-800 text-white font-mono uppercase italic tracking-tighter">TOTAL VD</th>
-
-
-                <th class="p-2 w-10 text-[9px] font-black text-gray-500 uppercase tracking-tighter" title="Guia de Remessa">GR</th>
-
-
-                <th class="p-2 w-10 text-[9px] font-black text-gray-500 uppercase tracking-tighter" title="Fatura">FA</th>
-
-
-                <th class="p-2 w-10 bg-white border-none"></th>
-
-
-              </tr>
-
-
-            </thead>
-
-
-            <tbody class="divide-y divide-gray-200">
-
-
-              <tr *ngFor="let e of entries" class="divide-x divide-gray-100 hover:bg-blue-50/30 group transition-all">
-
-
-                <td class="p-0 border-l-4 border-l-transparent group-hover:border-l-blue-400 relative">
-
-
-                  <input type="text" [disabled]="control?.status !== 'OPENED'" 
-
-
-                         [(ngModel)]="e.customerName" 
-
-
-                         (blur)="clearSuggestions(); updateEntry(e)" 
-
-
-                         (focus)="onSearchInput(e, isSupplier ? 'SUPPLIER' : 'CUSTOMER')"
-
-
-                         (input)="onSearchInput(e, isSupplier ? 'SUPPLIER' : 'CUSTOMER')"
-
-
-                         [placeholder]="isSupplier ? 'Motorista / Carga...' : 'Nome do Cliente...'" 
-
-
-                         class="w-full px-5 py-2.5 bg-transparent border-none text-[11px] font-black focus:ring-0 disabled:opacity-50 outline-none">
 
 
                   
 
 
-                  <!-- SUGGESTION DROPDOWN -->
+                  <div class="flex border border-black text-center font-black">
 
 
-                   <div *ngIf="!showQuickModal && activeSuggestionEntry === e && filteredSuggestions.length > 0" 
+                     <div class="border-r border-black"><div class="bg-gray-100 px-3 py-0.5 border-b border-black">Dia</div><div class="px-3 py-1 text-lg">{{ selectedDate | date:'dd' }}</div></div>
 
 
-                        class="absolute left-0 top-full w-full bg-white border border-gray-200 shadow-2xl z-[200] rounded-b-xl overflow-hidden animate-in slide-in-from-top-1 duration-200">
+                     <div class="border-r border-black"><div class="bg-gray-100 px-3 py-0.5 border-b border-black">MÃªs</div><div class="px-3 py-1 text-lg">{{ selectedDate | date:'MM' }}</div></div>
 
 
-                    <div *ngFor="let s of filteredSuggestions" 
+                     <div><div class="bg-gray-100 px-3 py-0.5 border-b border-black">no</div><div class="px-3 py-1 text-lg">{{ selectedDate | date:'yyyy' }}</div></div>
 
 
-                         (mousedown)="selectSuggestion(s, e)"
+                  </div>
 
 
-                         class="px-4 py-2 hover:bg-blue-50 cursor-pointer flex items-center justify-between group">
+               </div>
 
 
-                      <div class="flex flex-col">
+               <div class="grid grid-cols-12 gap-8">
 
 
-                        <span class="text-[11px] font-black text-gray-700">{{ s.name }}</span>
+                  <!-- COLUN ESQUERD -->
 
 
-                        <span class="text-[9px] text-gray-400 uppercase tracking-tighter">{{ s.code }}</span>
+                  <div class="col-span-8 space-y-8">
 
 
+                     <div class="flex gap-4 items-start">
+
+
+                        <div class="flex-1">
+
+
+                           <table class="w-full border-collapse border border-black text-center uppercase text-[9px]">
+
+
+                              <thead>
+
+
+                                 <tr class="bg-[#2E3137] text-white">
+
+
+                                    <th colspan="8" class="p-1 font-black italic">QUNTIDDES EM STOCK (FÃSICO)</th>
+
+
+                                 </tr>
+
+
+                                 <tr class="bg-gray-200 text-black">
+
+
+                                    <th class="p-1 border border-black font-black">TIPOS</th>
+
+
+                                    <th *ngFor="let t of cylinderTypes" class="p-1 border border-black w-10 font-bold">{{ t.name }}</th>
+
+
+                                 </tr>
+
+
+                              </thead>
+
+
+                              <tbody>
+
+
+                                 <tr><td class="p-1 font-bold text-left bg-gray-50 border border-black italic">Cheias</td><td *ngFor="let t of cylinderTypes" class="p-1 text-blue-700 font-black border border-black tabular-nums">{{ getFinalStock(t.name, 'gpl') }}</td></tr>
+
+
+                                 <tr><td class="p-1 font-bold text-left bg-gray-50 border border-black italic">Vazias</td><td *ngFor="let t of cylinderTypes" class="p-1 border border-black tabular-nums">{{ getFinalStock(t.name, 'empty') }}</td></tr>
+
+
+                                 <tr><td class="p-1 font-bold text-left bg-gray-50 text-rose-600 border border-black italic">variad.</td><td *ngFor="let t of cylinderTypes" class="p-1 text-rose-600 border border-black tabular-nums">{{ getFinalStock(t.name, 'damaged') }}</td></tr>
+
+
+                              </tbody>
+
+
+                              <tfoot class="bg-orange-400 font-black text-white">
+
+
+                                 <tr><td class="p-1 border border-black text-left">TOTIS</td><td *ngFor="let t of cylinderTypes" class="p-1 border border-black tabular-nums">{{ getFinalTotal(t.name) }}</td></tr>
+
+
+                              </tfoot>
+
+
+                           </table>
+
+
+                        </div>
+
+
+                     </div>
+
+
+                     <!-- POR REVER VS DEVOLVER -->
+
+
+                     <div class="grid grid-cols-2 gap-4">
+
+
+                        <div class="border border-black">
+
+
+                           <div class="bg-gray-100 text-center font-bold p-1 italic border-b border-black text-[10px] uppercase">Garrafas Por Reaver (Clientes/Staff)</div>
+
+
+                           <table class="w-full text-center text-[8px] uppercase">
+
+
+                              <thead>
+
+
+                                 <tr class="bg-[#2E3137] text-white">
+
+
+                                    <th class="p-1 text-left border-r border-black">NOMES</th>
+
+
+                                    <th *ngFor="let t of cylinderTypes" class="p-1 border-r border-black w-7">{{ t.name }}</th>
+
+
+                                 </tr>
+
+
+                              </thead>
+
+
+                              <tbody>
+
+
+                                 <tr class="bg-blue-100 font-black"><td [attr.colspan]="cylinderTypes.length + 1" class="p-1 text-left border-b border-black">Trabalhadores/Funcionários</td></tr>
+
+
+                                 <tr *ngFor="let ent of getCategorizedEntities('TRBLHDOR')" [class.highlight-entity]="highlightedEntityName === ent.name" class="divide-x divide-gray-300 border-b border-gray-100 group">
+
+
+                                    <td class="p-1 text-left font-bold flex items-center justify-between"><span>{{ ent.name }}</span><button (click)="clearEntityEntries(ent.name)" class="text-rose-400 opacity-0 group-hover:opacity-100 p-0.5"><app-icon name="delete" [size]="10"></app-icon></button></td>
+
+
+                                    <td *ngFor="let t of cylinderTypes" class="p-0 border-l border-gray-200">
+
+
+                                       <input type="number" [value]="ent.balances[t.name] || 0" (change)="updateInventoryValue(ent.name, t, $event, 'TRBLHDOR', 'CUSTOMER')" class="w-full text-center font-bold py-1 bg-transparent border-none text-[8px] text-blue-600 focus:bg-white focus:ring-0">
+
+
+                                    </td>
+
+
+                                 </tr>
+
+
+                                 <ng-container *ngTemplateOutlet="addInventoryRowTemplate; context: { cat: 'TRBLHDOR', type: 'CUSTOMER' }"></ng-container>
+
+
+                                 <tr class="bg-blue-100 font-black"><td [attr.colspan]="cylinderTypes.length + 1" class="p-1 text-left border-b border-black">Clientes/Instituições</td></tr>
+
+
+                                 <tr *ngFor="let ent of getCategorizedEntities('CLIENTE')" [class.highlight-entity]="highlightedEntityName === ent.name" class="divide-x divide-gray-300 border-b border-gray-100 group">
+
+
+                                    <td class="p-1 text-left font-bold flex items-center justify-between"><span>{{ ent.name }}</span><button (click)="clearEntityEntries(ent.name)" class="text-rose-400 opacity-0 group-hover:opacity-100 p-0.5"><app-icon name="delete" [size]="10"></app-icon></button></td>
+
+
+                                    <td *ngFor="let t of cylinderTypes" class="p-0 border-l border-gray-200">
+
+
+                                       <input type="number" [value]="ent.balances[t.name] || 0" (change)="updateInventoryValue(ent.name, t, $event, 'CLIENTE', 'CUSTOMER')" class="w-full text-center font-bold py-1 bg-transparent border-none text-[8px] text-blue-600 focus:bg-white focus:ring-0">
+
+
+                                    </td>
+
+
+                                 </tr>
+
+
+                                 <ng-container *ngTemplateOutlet="addInventoryRowTemplate; context: { cat: 'CLIENTE', type: 'CUSTOMER' }"></ng-container>
+
+
+                                 <tr class="bg-[#C6E0B4] font-black text-black">
+
+
+                                    <td class="p-1 text-left italic">Total por Reaver</td>
+
+
+                                    <td *ngFor="let t of cylinderTypes" class="p-1 font-mono">{{ sumTotalReaver(t.name) }}</td>
+
+
+                                 </tr>
+
+
+                              </tbody>
+
+
+                           </table>
+
+
+                        </div>
+
+
+                        <div class="border border-black">
+
+
+                           <div class="bg-gray-100 text-center font-bold p-1 italic border-b border-black text-[10px] uppercase">Garf. por Devolver (Fornecedores)</div>
+
+
+                           <table class="w-full text-center text-[8px] uppercase">
+
+
+                              <thead><tr class="bg-[#2E3137] text-white"><th class="p-1 text-left border-r border-black">NOMES</th><th *ngFor="let t of cylinderTypes" class="p-1 border-r border-black w-7">{{ t.name }}</th></tr></thead>
+
+
+                              <tbody>
+
+
+                                 <tr *ngFor="let ent of getCategorizedEntities('SUPPLIER')" class="divide-x divide-gray-300 border-b border-gray-100 group">
+
+
+                                    <td class="p-1 text-left font-bold flex items-center justify-between"><span>{{ ent.name }}</span><button (click)="clearEntityEntries(ent.name)" class="text-rose-400 opacity-0 group-hover:opacity-100 p-0.5"><app-icon name="delete" [size]="10"></app-icon></button></td>
+
+
+                                    <td *ngFor="let t of cylinderTypes" class="p-0 border-l border-gray-200">
+
+
+                                       <input type="number" [value]="ent.balances[t.name] || 0" (change)="updateInventoryValue(ent.name, t, $event, 'SUPPLIER', 'SUPPLIER')" class="w-full text-center font-bold py-1 bg-transparent border-none text-[8px] text-orange-600 focus:bg-white focus:ring-0">
+
+
+                                    </td>
+
+
+                                 </tr>
+
+
+                                 <ng-container *ngTemplateOutlet="addInventoryRowTemplate; context: { cat: 'SUPPLIER', type: 'SUPPLIER' }"></ng-container>
+
+
+                                 <tr class="bg-orange-100 font-black text-orange-900 border-t border-black">
+
+
+                                    <td class="p-1 text-left italic">Total por Devolver</td>
+
+
+                                    <td *ngFor="let t of cylinderTypes" class="p-1 font-mono">{{ getFinalStock(t.name, 'toReturn') }}</td>
+
+
+                                 </tr>
+
+
+                              </tbody>
+
+
+                           </table>
+
+
+                        </div>
+
+
+                     </div>
+
+
+                  </div>
+
+
+                  <div class="col-span-4 flex flex-col gap-4">
+
+
+                     <div class="bg-[#2E3137] text-white p-2 text-center font-black uppercase text-[10px] italic skew-x-[-12deg]">BLNÇO PTRIMONIL DO DI</div>
+
+
+                     <div *ngFor="let t of cylinderTypes" class="border border-black flex flex-col">
+
+
+                        <div class="bg-gray-200 p-1 flex justify-between items-center font-bold border-b border-black"><span class="text-[9px]">{{ t.name }}</span><span class="text-[8px] opacity-60">{{ t.brand }}</span></div>
+
+
+                        <div class="grid grid-cols-2 divide-x divide-black h-12">
+
+
+                           <div class="flex flex-col items-center justify-center bg-blue-50">
+
+
+                              <span class="text-[7px] font-bold text-blue-800 uppercase leading-none">Património</span>
+
+
+                              <span class="text-xs font-black">{{ t.inventoryTarget || 0 }}</span>
+
+
+                           </div>
+
+
+                           <div class="flex flex-col items-center justify-center" [class.bg-rose-100]="(getFinalTotal(t.name) + getFinalStock(t.name, 'toRecover') - getFinalStock(t.name, 'toReturn')) !== (t.inventoryTarget || 0)">
+
+
+                              <span class="text-[7px] font-bold text-gray-500 uppercase leading-none">Stock Real</span>
+
+
+                              <span class="text-xs font-black">{{ getFinalTotal(t.name) + getFinalStock(t.name, 'toRecover') - getFinalStock(t.name, 'toReturn') }}</span>
+
+
+                           </div>
+
+
+                        </div>
+
+
+                     </div>
+
+
+                  </div>
+
+
+               </div>
+
+
+            </div>
+
+
+        </ng-container>
+
+
+    <!-- REUSBLE TBLE TEMPLTE -->
+
+
+    
+    <ng-template #movementTable let-entries="entries" let-t="type" let-isSupplier="isSupplier">
+       <div class="overflow-x-auto">
+          <table class="w-full text-[8px] border-collapse border border-black uppercase text-center">
+             <thead>
+                <tr class="bg-[#2E3137] text-white">
+                   <th class="p-1 border-r border-white text-left w-32">CLIENTE/ENTIDADE</th>
+                   <th *ngIf="!isSupplier" class="p-1 border-r border-white w-20">TIPO PREÇO</th>
+                   <th class="p-1 border-r border-white w-8">S/GPL</th>
+                   <th class="p-1 border-r border-white w-8">S/VAZ</th>
+                   <th class="p-1 border-r border-white w-8">S/AV</th>
+                   <th class="p-1 border-r border-white w-8">VZ-VEND</th>
+                   <th class="p-1 border-r border-white w-8">ADC/Caução</th>
+                   <th class="p-1 border-r border-white w-8 bg-blue-900">E./GPL</th>
+                   <th class="p-1 border-r border-white w-8 bg-blue-900">E./VAZ</th>
+                   <th class="p-1 border-r border-white w-8 bg-blue-900">E./AV</th>
+                   <th class="p-1 border-r border-white w-8">P.Dívida</th>
+                   <th class="p-1 border-r border-white w-12">VD,s</th>
+                   <th class="p-1 border-r border-white w-12">FACTURAS</th>
+                   <th class="p-1 w-12">GUIAS</th>
+                </tr>
+             </thead>
+             <tbody>
+                <tr *ngFor="let e of entries" class="border-b border-gray-300 hover:bg-gray-50 group">
+                   <td class="p-1 border-r border-black text-left font-bold relative group/name">
+                      <input type="text" [(ngModel)]="e.customerName" 
+                             (input)="onSearchInput(e, 'CUSTOMER')"
+                             (blur)="onNameBlur()"
+                             (change)="updateEntry(e)"
+                             placeholder="NOME DO CLIENTE..."
+                             class="w-full bg-transparent border-none p-0 text-[10px] font-black focus:ring-0 placeholder:text-gray-300">
+                      
+                      <!-- Custom Suggestions Dropdown -->
+                      <div *ngIf="activeSuggestionEntry === e && (filteredSuggestions.length > 0 || (e.customerName && e.customerName.length > 2))" 
+                           class="absolute left-0 top-full w-full bg-white border border-gray-300 shadow-2xl z-[100] rounded-b-md overflow-hidden">
+                         
+                         <div *ngFor="let s of filteredSuggestions" 
+                              (mousedown)="selectSuggestion(s, e)"
+                              class="p-2 text-[10px] font-bold hover:bg-blue-50 cursor-pointer border-b border-gray-100 flex items-center gap-2">
+                            <app-icon name="person" [size]="12" class="text-blue-500"></app-icon>
+                            <div class="flex flex-col">
+                               <span class="leading-none">{{ s.name }}</span>
+                               <span class="text-[8px] text-gray-400">{{ s.code }}</span>
+                            </div>
+                         </div>
+
+                         <div *ngIf="filteredSuggestions.length === 0 && e.customerName && e.customerName.length > 2" 
+                              (mousedown)="triggerQuickRegistration(e, 'CUSTOMER')"
+                              class="p-2 text-[10px] font-black text-blue-600 hover:bg-blue-50 cursor-pointer flex items-center gap-2 bg-blue-50/30">
+                            <app-icon name="person_add" [size]="14"></app-icon>
+                            CADASTRAR: "{{ e.customerName | uppercase }}"
+                         </div>
                       </div>
 
-
-                      <app-icon name="keyboard_return" [size]="14" class="text-gray-200 group-hover:text-blue-500"></app-icon>
-
-
-                    </div>
-
-
-                  </div>
-
-
-
-
-
-                  <!-- NO RESULTS / QUICK ADD -->
-
-
-                   <div *ngIf="!showQuickModal && activeSuggestionEntry === e && (e.customerName?.length || 0) > 2 && filteredSuggestions.length === 0" 
-
-
-                        class="absolute left-0 top-full w-full bg-white border border-gray-200 shadow-2xl z-[200] rounded-b-xl overflow-hidden p-2">
-
-
-                     <button (mousedown)="triggerQuickRegistration(e, isSupplier ? 'SUPPLIER' : 'CUSTOMER')" 
-
-
-                             class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
-
-
-                         <app-icon name="person_add" [size]="16"></app-icon> Cadastrar "{{ e.customerName }}"
-
-
-                     </button>
-
-
-                  </div>
-
-
-                </td>
-
-
-                <td *ngIf="!isSupplier" class="p-0">
-
-
-                  <select [(ngModel)]="e.priceType" [disabled]="control?.status !== 'OPENED'" (change)="recalculateEntry(e, t)" class="w-full px-3 py-2.5 bg-gray-50/50 border-none text-[10px] font-black text-gray-500 uppercase focus:ring-0 cursor-pointer disabled:opacity-50">
-
-
-                    <option value="REVENDEDOR">Revendedor</option>
-
-
-                    <option value="BOMBA">Bomba</option>
-
-
-                    <option value="CONSUMIDOR">Consumidor</option>
-
-
-                  </select>
-
-
-                </td>
-
-
-                <td class="p-0"><input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="e.s_gpl" (change)="recalculateEntry(e, t)" class="w-full text-center p-2.5 bg-transparent border-none font-black text-amber-700 shadow-inner disabled:opacity-50"></td>
-
-
-                <td class="p-0"><input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="e.s_vaz" (change)="updateEntry(e)" class="w-full text-center p-2.5 bg-transparent border-none disabled:opacity-50"></td>
-
-
-                <td class="p-0"><input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="e.s_av" (change)="updateEntry(e)" class="w-full text-center p-2.5 bg-transparent border-none disabled:opacity-50"></td>
-
-
-                <td class="p-0 bg-blue-50/20"><input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="e.vz_vend" (change)="updateEntry(e)" class="w-full text-center p-2.5 bg-transparent border-none font-black text-blue-700 italic disabled:opacity-50"></td>
-
-
-                <td class="p-0 bg-blue-50/20"><input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="e.adc_caucao" (change)="updateEntry(e)" class="w-full text-center p-2.5 bg-transparent border-none font-black text-blue-700 italic font-mono disabled:opacity-50"></td>
-
-
-                <td class="p-0"><input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="e.e_gpl" (change)="updateEntry(e)" class="w-full text-center p-2.5 bg-transparent border-none font-black text-emerald-700 shadow-inner disabled:opacity-50"></td>
-
-
-                <td class="p-0"><input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="e.e_vaz" (change)="updateEntry(e)" class="w-full text-center p-2.5 bg-transparent border-none disabled:opacity-50"></td>
-
-
-                <td class="p-0"><input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="e.e_av" (change)="updateEntry(e)" class="w-full text-center p-2.5 bg-transparent border-none disabled:opacity-50"></td>
-
-
-                <td class="p-0 bg-pink-50/20 font-black"><input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="e.p_divida" (change)="updateEntry(e)" class="w-full text-center p-2.5 bg-transparent border-none text-pink-700 font-mono disabled:opacity-50"></td>
-
-
-                <td class="p-0 bg-gray-700 group-hover:bg-gray-800 transition-colors border-l-2 border-gray-600 shadow-xl">
-
-
-                  <div class="px-4 py-2.5 text-right font-mono font-bold text-emerald-400 text-sm tracking-widest drop-shadow-sm tabular-nums">{{ e.totalAmount | number:'1.2-2' }}</div>
-
-
-                </td>
-
-
-                <td class="p-2 text-center bg-gray-50 align-middle">
-
-
-                  <label class="flex items-center justify-center cursor-pointer">
-
-
-                    <input type="checkbox" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="e.gr" (change)="onGrChange(e)" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50">
-
-
-                  </label>
-
-
-                </td>
-
-
-                <td class="p-2 text-center bg-gray-50 align-middle">
-
-
-                  <label class="flex items-center justify-center cursor-pointer">
-
-
-                    <input type="checkbox" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="e.invoice" (change)="onInvoiceChange(e)" class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 disabled:opacity-50">
-
-
-                  </label>
-
-
-                </td>
-
-
-                <td class="p-0 text-center bg-white border-none">
-
-
-                  <button (click)="removeEntry(e)" *ngIf="control?.status === 'OPENED'" class="text-gray-200 hover:text-red-600 p-2.5 opacity-0 group-hover:opacity-100 transition-all"><app-icon name="close" [size]="18"></app-icon></button>
-
-
-                </td>
-
-
-              </tr>
-
-
-              <tr *ngIf="entries.length === 0" class="divide-x divide-gray-100">
-
-
-                 <td [attr.colspan]="isSupplier ? 14 : 15" class="p-16 text-center text-gray-200 italic font-black uppercase tracking-[0.5em] bg-gray-50/20 select-none">Sem movimentos</td>
-
-
-              </tr>
-
-
-              <!-- TOTAIS DA SUB-TABELA -->
-
-
-              <tr class="bg-gray-100 font-black text-[10px] text-gray-700 border-t-2 border-gray-400 shadow-inner divide-x divide-gray-300 uppercase italic">
-
-
-                <td [attr.colspan]="isSupplier ? 1 : 2" class="p-4 text-right pr-6 tracking-widest text-gray-400 font-mono">Sub-Totais {{ t.name }}</td>
-
-
-                <td class="p-4 text-center text-amber-700 bg-amber-50/20">{{ sumEntries(entries, 's_gpl') }}</td>
-
-
-                <td class="p-4 text-center text-amber-700 bg-amber-50/20">{{ sumEntries(entries, 's_vaz') }}</td>
-
-
-                <td class="p-4 text-center text-amber-700 bg-amber-50/20">{{ sumEntries(entries, 's_av') }}</td>
-
-
-                <td class="p-4 text-center text-blue-900 bg-blue-50/50">{{ sumEntries(entries, 'vz_vend') }}</td>
-
-
-                <td class="p-4 text-center text-blue-900 bg-blue-50/50 text-[12px] tabular-nums tracking-tighter">{{ sumEntries(entries, 'adc_caucao') | number:'1.2-2' }}</td>
-
-
-                <td class="p-4 text-center text-emerald-900 bg-emerald-50/20">{{ sumEntries(entries, 'e_gpl') }}</td>
-
-
-                <td class="p-4 text-center text-emerald-900 bg-emerald-50/20">{{ sumEntries(entries, 'e_vaz') }}</td>
-
-
-                <td class="p-4 text-center text-emerald-900 bg-emerald-50/20">{{ sumEntries(entries, 'e_av') }}</td>
-
-
-                <td class="p-4 text-center text-pink-900 bg-pink-50/50 text-[12px] tabular-nums tracking-tighter">{{ sumEntries(entries, 'p_divida') | number:'1.2-2' }}</td>
-
-
-                <td class="p-4 text-right bg-gray-900 text-yellow-300 font-mono text-xl tracking-tighter tabular-nums drop-shadow-md">{{ sumEntries(entries, 'totalAmount') | number:'1.2-2' }}</td>
-
-
-                <td class="p-4 bg-gray-200 border-none"></td>
-
-
-                <td class="p-4 bg-gray-200 border-none"></td>
-
-
-                <td class="bg-white border-none"></td>
-
-
-              </tr>
-
-
-            </tbody>
-
-
+                      <button (click)="removeEntry(e)" *ngIf="e.id" class="absolute right-1 top-1/2 -translate-y-1/2 no-print opacity-0 group-hover/name:opacity-100 text-rose-500 p-0.5 hover:bg-rose-50 rounded transition-all">
+                         <app-icon name="delete" [size]="10"></app-icon>
+                      </button>
+                   </td>
+                   <td *ngIf="!isSupplier" class="p-0 border-r border-black">
+                      <select [(ngModel)]="e.priceType" (change)="recalculateEntry(e, t)" class="w-full bg-transparent border-none text-[8px] font-black p-0 h-full text-center focus:ring-0">
+                         <option value="CONSUMIDOR">Cons.</option>
+                         <option value="REVENDEDOR">Rev.</option>
+                         <option value="BOMBA">Bomb.</option>
+                      </select>
+                   </td>
+                   <td class="p-0 border-r border-black">
+                      <input type="number" [(ngModel)]="e.s_gpl" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 text-blue-800 font-bold focus:bg-blue-50">
+                   </td>
+                   <td class="p-0 border-r border-black">
+                      <input type="number" [(ngModel)]="e.s_vaz" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 focus:bg-blue-50">
+                   </td>
+                   <td class="p-0 border-r border-black">
+                      <input type="number" [(ngModel)]="e.s_av" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 text-rose-500 focus:bg-blue-50">
+                   </td>
+                   <td class="p-0 border-r border-black">
+                      <input type="number" [(ngModel)]="e.vz_vend" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 focus:bg-blue-50">
+                   </td>
+                   <td class="p-0 border-r border-black">
+                      <input type="number" [(ngModel)]="e.adc_caucao" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 font-mono italic focus:bg-blue-50">
+                   </td>
+                   <td class="p-0 border-r border-black bg-blue-50">
+                      <input type="number" [(ngModel)]="e.e_gpl" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 font-bold text-blue-900 focus:bg-white">
+                   </td>
+                   <td class="p-0 border-r border-black bg-blue-50">
+                      <input type="number" [(ngModel)]="e.e_vaz" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 font-bold focus:bg-white">
+                   </td>
+                   <td class="p-0 border-r border-black bg-blue-50">
+                      <input type="number" [(ngModel)]="e.e_av" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 text-rose-600 focus:bg-white">
+                   </td>
+                   <td class="p-0 border-r border-black">
+                      <input type="number" [(ngModel)]="e.p_divida" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 text-emerald-600 font-bold font-mono focus:bg-blue-50">
+                   </td>
+                   <td class="p-1 border-r border-black font-mono font-black italic whitespace-nowrap text-right text-gray-400"
+                       [class.text-blue-800]="!e.invoice && !e.gr" [class.opacity-30]="e.invoice || e.gr">
+                      {{ (!e.invoice && !e.gr) ? (e.totalAmount | number:'1.2-2') : '0.00' }}
+                   </td>
+                   <td class="p-1 border-r border-black font-bold font-mono tabular-nums text-right cursor-pointer hover:bg-blue-50" 
+                       (click)="e.invoice = !e.invoice; onInvoiceChange(e)">
+                      {{ e.invoice ? (e.totalAmount | number:'1.2-2') : '' }}
+                   </td>
+                   <td class="p-1 font-black text-center text-[10px] cursor-pointer hover:bg-blue-50" 
+                       (click)="e.gr = !e.gr; onGrChange(e)">
+                      {{ e.gr ? 'X' : '' }}
+                   </td>
+                </tr>
+             </tbody>
+             <tfoot class="bg-[#C6E0B4] font-black">
+                <tr>
+                   <td class="p-1 border-r border-black text-left uppercase">TOTAIS</td>
+                   <td *ngIf="!isSupplier" class="p-1 border-r border-black"></td>
+                   <td class="p-1 border-r border-black">{{ sumEntries(entries, 's_gpl') }}</td>
+                   <td class="p-1 border-r border-black">{{ sumEntries(entries, 's_vaz') }}</td>
+                   <td class="p-1 border-r border-black">{{ sumEntries(entries, 's_av') }}</td>
+                   <td class="p-1 border-r border-black">{{ sumEntries(entries, 'vz_vend') }}</td>
+                   <td class="p-1 border-r border-black">{{ sumEntries(entries, 'adc_caucao') | number:'1.0-0' }}</td>
+                   <td class="p-1 border-r border-black">{{ sumEntries(entries, 'e_gpl') }}</td>
+                   <td class="p-1 border-r border-black">{{ sumEntries(entries, 'e_vaz') }}</td>
+                   <td class="p-1 border-r border-black">{{ sumEntries(entries, 'e_av') }}</td>
+                   <td class="p-1 border-r border-black font-mono">{{ sumEntries(entries, 'p_divida') | number:'1.2-2' }}</td>
+                   <td class="p-1 border-r border-black font-mono text-right">{{ sumVDs(entries) | number:'1.2-2' }}</td>
+                   <td class="p-1 border-r border-black font-mono tabular-nums text-right">{{ sumInvoices(entries) | number:'1.2-2' }}</td>
+                   <td class="p-1"></td>
+                </tr>
+             </tfoot>
           </table>
-
-
        </div>
+    </ng-template>
+
+
+
+    <ng-template #addInventoryRowTemplate let-cat="cat" let-type="type">
+
+
+       <tr class="bg-gray-50 no-print border-b border-gray-200">
+
+
+          <td class="p-1 relative min-w-[120px]">
+
+
+             <input type="text" [(ngModel)]="inventorySearch[cat]" (input)="onInventorySearchInput(cat, type)" (blur)="clearSuggestions()" placeholder="Pesquisar/dicionar..." class="w-full bg-transparent border-none text-[8px] font-bold px-1 italic focus:outline-none">
+
+
+             <div *ngIf="suggestedInventoryEntities.length > 0 && inventorySearch[cat]" class="absolute left-0 top-full z-50 w-full bg-white shadow-2xl border border-gray-300 rounded-lg overflow-hidden translate-y-1">
+
+
+                <button *ngFor="let s of suggestedInventoryEntities" (mousedown)="selectInventorySuggestion(s, cat, type)" class="w-full p-2 text-left hover:bg-blue-50 flex flex-col border-b border-gray-100 last:border-none transition-colors">
+
+
+                   <span class="text-[9px] font-black uppercase text-gray-800">{{ s.name }}</span>
+
+
+                   <span class="text-[7px] text-gray-400 uppercase tracking-widest">{{ s.category }}</span>
+
+
+                </button>
+
+
+             </div>
+
+
+             <div *ngIf="inventorySearch[cat] && suggestedInventoryEntities.length === 0" class="absolute left-0 top-full z-50 w-full bg-white shadow-2xl border border-gray-300 p-2 text-center translate-y-1">
+
+
+                <span class="text-[7px] text-gray-500 block mb-1">Entidade não encontrada?</span>
+
+
+                <button (mousedown)="triggerQuickRegistrationFromMap(cat, type)" class="w-full py-1.5 bg-blue-600 text-white rounded text-[7px] font-black uppercase hover:bg-blue-700 transition-colors">Criar Nova</button>
+
+
+             </div>
+
+
+          </td>
+
+
+          <td *ngFor="let t of cylinderTypes" class="p-0 border-l border-gray-200">
+
+
+             <button (click)="inventorySearch[cat] = inventorySearch[cat] || ''; commitInventoryEntry(cat, t, type)" class="w-full h-full p-1 opacity-20 hover:opacity-100 transition-opacity flex items-center justify-center">
+
+
+                <app-icon name="add" [size]="10"></app-icon>
+
+
+             </button>
+
+
+          </td>
+
+
+       </tr>
 
 
     </ng-template>
 
 
-
-
-
-    <!-- QUICK REGISTRATION MODAL -->
+    <!-- QUICK REGISTRTION MODL -->
 
 
     <app-quick-entity-modal 
@@ -3079,14 +1155,8 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
 
 
     </app-quick-entity-modal>
-
-
     </div>
-
-
     </div>
-
-
   `
 
 
@@ -3114,22 +1184,29 @@ export class GasControlComponent implements OnInit, OnDestroy {
    @Input() activeTab: 'MOVEMENT' | 'INVENTORY' = 'MOVEMENT';
 
 
-
-
-
    initialStock: any = {};
 
 
    finalStock: any = {};
 
 
+   highlightedEntityName: string | null = null;
 
 
+   inventorySearch: { [cat: string]: string } = {};
 
-   // FOOTER DATA
+
+   suggestedInventoryEntities: any[] = [];
+
+
+   inventoryEntryValues: any = {};
+
+
+   // FOOTER DT
 
 
    openingCash: number = 0;
+   extraIncome: number = 0;
 
 
    denominations = [1000, 500, 200, 100, 50, 20];
@@ -3155,14 +1232,13 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
    dailyExpenses: { description: string, value: number }[] = [];
 
+   kitMovements: { name: string, out: number, ing: number, sale: number }[] = [];
+
 
    externalEmpties: { [typeName: string]: number } = {};
 
 
    damagedLog: { typeName: string, fault: string, qty: number }[] = [];
-
-
-
 
 
    // SUGGESTION SYSTEM
@@ -3189,22 +1265,13 @@ export class GasControlComponent implements OnInit, OnDestroy {
    quickModalName = '';
 
 
-
-
-
    isLoading = false;
 
 
    private sub = new Subscription();
 
 
-
-
-
    dateNow = new Date();
-
-
-
 
 
    constructor(
@@ -3232,9 +1299,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    ) { }
-
-
-
 
 
    ngOnInit() {
@@ -3267,9 +1331,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    ngOnDestroy() {
 
 
@@ -3277,9 +1338,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    }
-
-
-
 
 
    async loadEntities() {
@@ -3300,9 +1358,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    initModule() {
 
 
@@ -3310,9 +1365,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
       if (!cid) return;
-
-
-
 
 
       this.isLoading = true;
@@ -3329,6 +1381,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
             this.ensureDefaultTypes(cid);
 
+            this.ensureBlankEntries();
 
          },
 
@@ -3351,46 +1404,40 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    ensureDefaultTypes(cid: string) {
 
 
       const defaults = [
 
 
-         { name: '9KG', brand: 'PETROGAS', priceRevendedor: 739, priceBomba: 739, priceConsumidor: 850 },
+         { name: '9KG', brand: 'PETROGS', priceRevendedor: 739, priceBomba: 739, priceConsumidor: 850 },
 
 
-         { name: '14KG', brand: 'PETROGAS', priceRevendedor: 1149, priceBomba: 1149, priceConsumidor: 1300 },
+         { name: '14KG', brand: 'PETROGS', priceRevendedor: 1149, priceBomba: 1149, priceConsumidor: 1300 },
 
 
-         { name: '19KG', brand: 'PETROGAS', priceRevendedor: 1560, priceBomba: 1560, priceConsumidor: 1750 },
+         { name: '19KG', brand: 'PETROGS', priceRevendedor: 1560, priceBomba: 1560, priceConsumidor: 1750 },
 
 
-         { name: '48KG', brand: 'PETROGAS', priceRevendedor: 3800, priceBomba: 3800, priceConsumidor: 4200 },
+         { name: '48KG', brand: 'PETROGS', priceRevendedor: 3800, priceBomba: 3800, priceConsumidor: 4200 },
 
 
-         { name: '6KG', brand: 'PETROGAS', priceRevendedor: 480, priceBomba: 480, priceConsumidor: 550 },
+         { name: '6KG', brand: 'PETROGS', priceRevendedor: 480, priceBomba: 480, priceConsumidor: 550 },
 
 
-         { name: '11KG', brand: 'GALP', priceRevendedor: 900, priceBomba: 900, priceConsumidor: 1050 },
+         { name: '11KG', brand: 'GLP', priceRevendedor: 900, priceBomba: 900, priceConsumidor: 1050 },
 
 
-         { name: '45KG', brand: 'GALP', priceRevendedor: 3750, priceBomba: 3750, priceConsumidor: 4100 },
+         { name: '45KG', brand: 'GLP', priceRevendedor: 3750, priceBomba: 3750, priceConsumidor: 4100 },
 
 
-         { name: '05KG', brand: 'GALP', priceRevendedor: 410, priceBomba: 410, priceConsumidor: 480 }
+         { name: '05KG', brand: 'GLP', priceRevendedor: 410, priceBomba: 410, priceConsumidor: 480 }
 
 
       ] as any[];
 
 
-
-
-
-      // Fix brand mismatch for existing types (Force 11KG to be GALP)
+      // Fix brand mismatch for existing types (Force 11KG to be GLP)
 
 
       this.cylinderTypes.forEach(t => {
@@ -3414,9 +1461,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
       });
 
 
-
-
-
       const missing = defaults.filter(d => !this.cylinderTypes.some(t => t.name === d.name));
 
 
@@ -3433,9 +1477,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
       }
-
-
-
 
 
       let created = 0;
@@ -3480,9 +1521,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    prepareStockObjects() {
 
 
@@ -3507,9 +1545,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
          if (this.initialStock[t.name].toReturn === undefined) this.initialStock[t.name].toReturn = 0;
 
 
-
-
-
          if (!this.finalStock[t.name]) this.finalStock[t.name] = { damaged: 0, empty: 0, gpl: 0, toRecover: 0, toReturn: 0 };
 
 
@@ -3519,9 +1554,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    loadData() {
 
 
@@ -3529,9 +1561,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
       if (!cid) return;
-
-
-
 
 
       this.isLoading = true;
@@ -3544,36 +1573,27 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
             this.control = res.control;
+            this.initialStock = {}; // Reset to avoid carrying over from previous date
 
 
             this.entries = res.entries;
 
-
-
+            this.ensureBlankEntries();
 
 
             // ROLLOVER INVENTORY
 
 
-            if (this.control.initialStock) {
-
-
+            if (this.control && this.control.initialStock) {
                this.initialStock = { ...this.initialStock, ...this.control.initialStock };
-
-
-               // ROLLOVER CASH
-
-
+               // Tenta carregar do initialStock do dia (que vem do finalStock de ontem)
                this.openingCash = this.control.initialStock.footers?.closingBalance || 0;
-
-
             }
 
 
-
-
-
             const footers = this.control.finalStock?.footers || {};
+            this.extraIncome = footers.extraIncome || 0;
+            this.openingCash = footers.openingCash || this.openingCash;
 
 
             this.cashNotes = footers.cashNotes || { 1000: 0, 500: 0, 200: 0, 100: 0, 50: 0, 20: 0 };
@@ -3592,21 +1612,12 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
             this.bankDeposits = footers.bankDeposits || [];
-
-
             this.dailyExpenses = footers.dailyExpenses || [];
-
+            this.kitMovements = footers.kitMovements || [];
 
             // Vasilhame exterior assume o valor do dia anterior se não houver registo hoje
-
-
             this.externalEmpties = footers.externalEmpties || this.control.initialStock?.footers?.externalEmpties || this.externalEmpties;
-
-
             this.damagedLog = footers.damagedLog || [];
-
-
-
 
 
             this.isLoading = false;
@@ -3634,9 +1645,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    }
-
-
-
 
 
    getFinalStockPayload() {
@@ -3672,10 +1680,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
       });
 
 
-
-
-
-      // FOOTERS (CASHIER CLOSURE)
+      // FOOTERS (CSHIER CLOSURE)
 
 
       const drawerCash = this.getCashOnlyTotal();
@@ -3701,18 +1706,18 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
          bankDeposits: this.bankDeposits,
 
-
          dailyExpenses: this.dailyExpenses,
 
+         kitMovements: this.kitMovements,
 
          externalEmpties: this.externalEmpties,
 
-
          damagedLog: this.damagedLog,
 
+         openingCash: this.openingCash,
+         extraIncome: this.extraIncome,
 
-         closingBalance: drawerCash // Saldo que herda para amanhã (Apenas Gaveta)
-
+         closingBalance: drawerCash // Saldo que herda para amanhã (penas Gaveta)
 
       };
 
@@ -3721,9 +1726,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    }
-
-
-
 
 
    saveStocks() {
@@ -3735,16 +1737,10 @@ export class GasControlComponent implements OnInit, OnDestroy {
       if (!cid || !this.control) return;
 
 
-
-
-
       const fs = this.getFinalStockPayload();
 
 
       const user = this.authService.currentUserValue?.username || 'admin';
-
-
-
 
 
       this.isLoading = true;
@@ -3765,7 +1761,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
             if (this.control.status === 'CLOSED') {
 
 
-               this.toaster.showWarning('Audit Log', 'Alteração registada após fecho do mapa.');
+               this.toaster.showWarning('udit Log', 'lteração registada após fecho do mapa.');
 
 
             }
@@ -3792,9 +1788,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    openDay() {
 
 
@@ -3807,16 +1800,10 @@ export class GasControlComponent implements OnInit, OnDestroy {
       if (!cid) return;
 
 
-
-
-
       this.isLoading = true;
 
 
       console.log('[GasControl] Requesting opening for:', { date: this.selectedDate, user, cid });
-
-
-
 
 
       this.gasService.openDaily(this.selectedDate, user, cid).subscribe({
@@ -3833,16 +1820,14 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
             this.control = res;
 
-             this.loadData(); // Reload to show rollover stock
+
+            this.loadData(); // Reload to show rollover stock
 
 
             this.entries = []; // New day starts empty
 
 
             this.toaster.showSuccess('Abertura Concluída', 'O mapa está pronto para lançamentos.');
-
-
-
 
 
             if (this.cdr) this.cdr.detectChanges();
@@ -3860,7 +1845,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
             this.isLoading = false;
 
 
-            const msg = err.error?.message || 'Falha ao realizar abertura.';
+            const msg = err.error?.message || 'Falha ao realizar Abertura.';
 
 
             this.toaster.showError('Erro de Abertura', msg);
@@ -3875,31 +1860,24 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    closeDay() {
 
 
-      if (Math.abs(this.getDiscrepancy()) > 1) {
-
-
-         this.toaster.showWarning('Atenção', 'O caixa não pode ser fechado com discrepância superior a 1 MT.');
-
-
+      const disc = this.getDiscrepancy();
+      
+      if (disc < -1) {
+         this.toaster.showWarning('Atenção', `O caixa tem um défice de ${Math.abs(disc).toFixed(2)} MT. Verifique os movimentos antes de fechar.`);
          return;
+      }
 
-
+      if (disc > 1) {
+         if (!confirm(`Existe um excesso de ${disc.toFixed(2)} MT no caixa. Deseja fechar o dia mesmo assim?`)) {
+            return;
+         }
       }
 
 
-
-
-
       if (!confirm('Deseja realmente fechar o mapa do dia? Os dados serão guardados e o mapa bloqueado.')) return;
-
-
-
 
 
       const cid = this.dataService.getCompanyId();
@@ -3911,19 +1889,13 @@ export class GasControlComponent implements OnInit, OnDestroy {
       if (!cid || !this.control?.id) return;
 
 
-
-
-
       this.isLoading = true;
 
 
       const fs = this.getFinalStockPayload();
 
 
-
-
-
-      // SAVE first, then CLOSE
+      // SVE first, then CLOSE
 
 
       this.gasService.updateStocks(this.control.id, this.initialStock, fs, user, cid).subscribe({
@@ -3986,28 +1958,27 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    reopenDay() {
+      if (!confirm('Deseja reabrir este mapa para edição? Esta ação será registrada no log de auditoria.')) return;
 
+      const cid = this.dataService.getCompanyId();
+      const user = this.authService.currentUserValue?.username || 'admin';
 
-      if (confirm('Deseja reabrir o mapa para rectificação? Todas as alterações serão auditadas.')) {
+      if (!cid || !this.control?.id) return;
 
-
-         if (this.control) { this.control.status = 'OPENED'; }
-
-
-         this.toaster.showInfo('Modo de Edição', 'Mapa reaberto temporariamente.');
-
-
-      }
-
-
+      this.isLoading = true;
+      this.gasService.reopenDaily(this.control.id, user, cid).subscribe({
+         next: () => {
+            this.isLoading = false;
+            this.toaster.showSuccess('Sucesso', 'Documento reaberto para edição.');
+            this.loadData();
+         },
+         error: () => {
+            this.isLoading = false;
+            this.toaster.showError('Erro', 'Falha ao reabrir o documento.');
+         }
+      });
    }
-
-
-
 
 
    printReport(format: 'pdf' | 'excel') {
@@ -4016,7 +1987,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
       this.dateNow = new Date();
 
 
-      this.toaster.showInfo('A processar...', `A preparar documento para impressão...`);
+      this.toaster.showInfo(' processar...', ` preparar documento para impressão...`);
 
 
       setTimeout(() => {
@@ -4034,9 +2005,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
    getDiscrepancy() { return this.getPhysicalTotal() - this.getExpectedBalance(); }
 
 
-
-
-
    getGlobalSaidasCount(): number {
 
 
@@ -4049,16 +2017,10 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
-   // --- MATEMÃTICA DO CAIXA ---
+   // --- MTEMÃÂTIC DO CIX ---
 
 
    getBankTotal() { return this.bankDeposits.reduce((acc, d) => acc + (Number(d.value) || 0), 0); }
-
-
-
 
 
    getCashOnlyTotal(): number {
@@ -4082,9 +2044,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    getPhysicalTotal(): number {
 
 
@@ -4097,49 +2056,36 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    getExpensesTotal() { return this.dailyExpenses.reduce((acc, ex) => acc + (Number(ex.value) || 0), 0); }
-
-
-
 
 
    getExpectedBalance() {
 
-
-      const recpt = (this.getGlobalTotal() + this.getCollectionsTotal());
-
-
-      return (Number(this.openingCash) || 0) + recpt - this.getExpensesTotal() - (Number(this.cashHandover) || 0);
-
+      const recpt = (this.getGlobalTotal() + this.getCollectionsTotal() + (Number(this.extraIncome) || 0));
+      return (Number(this.openingCash) || 0) + recpt - this.getExpensesTotal() - this.getBankTotal() - (Number(this.cashHandover) || 0);
 
    }
 
 
-
-
-
    addExpense() { this.dailyExpenses.unshift({ description: '', value: 0 }); }
-
 
    removeExpense(i: number) { this.dailyExpenses.splice(i, 1); }
 
-
    addBankDeposit() { this.bankDeposits.unshift({ bankName: '', value: 0, depositor: '' }); }
 
-
    removeBankDeposit(i: number) { this.bankDeposits.splice(i, 1); }
+
+   addKit() { this.kitMovements.push({ name: '', out: 0, ing: 0, sale: 0 }); }
+
+   removeKit(i: number) { this.kitMovements.splice(i, 1); }
+
+   getKitSum(field: 'out' | 'ing'| 'sale') { return this.kitMovements.reduce((acc, k) => acc + (Number(k[field]) || 0), 0); }
 
 
    addDamagedLog() { this.damagedLog.unshift({ typeName: this.cylinderTypes[0]?.name, fault: '', qty: 0 }); }
 
 
    removeDamagedLog(i: number) { this.damagedLog.splice(i, 1); }
-
-
-
 
 
    changeDate(days: number) {
@@ -4158,9 +2104,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    }
-
-
-
 
 
    addEntry(type: GasCylinderType, entryType: 'CUSTOMER' | 'SUPPLIER') {
@@ -4202,9 +2145,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    validateEntry(e: GasDailyEntry) {
 
 
@@ -4223,25 +2163,81 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    updateEntry(entry: GasDailyEntry) {
 
+      const isBlank = !entry.customerName && 
+                     (Number(entry.s_gpl) || 0) === 0 && 
+                     (Number(entry.s_vaz) || 0) === 0 && 
+                     (Number(entry.s_av) || 0) === 0 && 
+                     (Number(entry.e_gpl) || 0) === 0 &&
+                     (Number(entry.e_vaz) || 0) === 0 &&
+                     (Number(entry.adc_caucao) || 0) === 0;
+
+      if (isBlank && !entry.id) return;
 
       this.validateEntry(entry);
 
-
       const cid = this.dataService.getCompanyId();
 
+      if (cid) {
 
-      if (cid) this.gasService.saveEntry(entry, cid).subscribe();
+         this.gasService.saveEntry(entry, cid).subscribe(saved => {
 
+            if (!entry.id && saved.id) {
+
+               Object.assign(entry, saved);
+
+               this.ensureBlankEntries();
+
+            }
+
+            this.cdr.detectChanges();
+
+         });
+
+      }
 
    }
 
+   ensureBlankEntries() {
 
+      if (!this.control || this.control.status !== 'OPENED') return;
 
+      this.cylinderTypes.forEach(t => {
+
+         this.addBlankIfMissing(t.id!, 'CUSTOMER');
+
+      });
+
+   }
+
+   private addBlankIfMissing(typeId: string, entryType: 'CUSTOMER' | 'SUPPLIER') {
+
+      const ents = this.entries.filter(e => e.cylinderTypeId === typeId && e.entryType === entryType);
+
+      const hasBlank = ents.some(e => !e.customerName && !e.id && e.totalAmount === 0);
+
+      if (!hasBlank) {
+
+         this.entries.push({
+
+            controlId: this.control!.id,
+
+            cylinderTypeId: typeId,
+
+            customerName: '',
+
+            entryType: entryType,
+
+            priceType: 'REVENDEDOR',
+
+            s_gpl: 0, s_vaz: 0, s_av: 0, vz_vend: 0, adc_caucao: 0, e_gpl: 0, e_vaz: 0, e_av: 0, p_divida: 0, totalAmount: 0, gr: false, invoice: false
+
+         } as GasDailyEntry);
+
+      }
+
+   }
 
 
    onGrChange(e: GasDailyEntry) {
@@ -4256,9 +2252,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    onInvoiceChange(e: GasDailyEntry) {
 
 
@@ -4269,9 +2262,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    }
-
-
-
 
 
    recalculateEntry(e: GasDailyEntry, t: GasCylinderType) {
@@ -4289,9 +2279,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
       if (e.priceType === 'BOMBA') price = t.priceBomba || 0;
 
 
-
-
-
       e.totalAmount = (Number(e.s_gpl) || 0) * price;
 
 
@@ -4299,9 +2286,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    }
-
-
-
 
 
    removeEntry(entry: GasDailyEntry) {
@@ -4331,9 +2315,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    saveTypePrice(type: GasCylinderType) {
 
 
@@ -4346,15 +2327,20 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
-
    get activeBrands(): string[] {
-      const brands = new Set(this.cylinderTypes.map(t => (t.brand || 'PETROGAS').toUpperCase()));
-      if (brands.size === 0) return ['PETROGAS', 'GALP'];
+
+
+      const brands = new Set(this.cylinderTypes.map(t => (t.brand || 'PETROGS').toUpperCase()));
+
+
+      if (brands.size === 0) return ['PETROGS', 'GLP'];
+
+
       return Array.from(brands);
+
+
    }
+
 
    getTypesByBrand(brand: string) {
 
@@ -4362,28 +2348,25 @@ export class GasControlComponent implements OnInit, OnDestroy {
       return this.cylinderTypes
 
 
-         .filter(t => (t.brand || 'PETROGAS').toUpperCase() === brand.toUpperCase())
+         .filter(t => (t.brand || 'PETROGS').toUpperCase() === brand.toUpperCase())
 
 
          .sort((a, b) => {
 
 
-            const valA = parseInt(a.name.replace(/\D/g, '') || '0');
+            const val = parseInt(a.name.replace(/\D/g, '') || '0');
 
 
             const valB = parseInt(b.name.replace(/\D/g, '') || '0');
 
 
-            return valA - valB;
+            return val - valB;
 
 
          });
 
 
    }
-
-
-
 
 
    getEntriesForType(typeId: string, entryType?: 'CUSTOMER' | 'SUPPLIER') {
@@ -4395,22 +2378,34 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    sumEntries(ents: GasDailyEntry[], f: keyof GasDailyEntry) { return ents.reduce((acc, e) => acc + (Number(e[f]) || 0), 0); }
 
+   sumVDs(ents: GasDailyEntry[]) {
+      return ents.reduce((acc, e) => acc + ((!e.invoice && !e.gr) ? (Number(e.totalAmount) || 0) : 0), 0);
+   }
 
-   getGlobalTotal() { return this.entries.filter(e => e.entryType === 'CUSTOMER').reduce((acc, e) => acc + (Number(e.totalAmount) || 0), 0); }
+   sumInvoices(ents: GasDailyEntry[]) {
+      return ents.reduce((acc, e) => acc + (e.invoice ? (Number(e.totalAmount) || 0) : 0), 0);
+   }
+
+
+   getGlobalTotal() { 
+      return this.entries
+         .filter(e => e.entryType === 'CUSTOMER' && !e.invoice && !e.gr)
+         .reduce((acc, e) => acc + (Number(e.totalAmount) || 0), 0); 
+   }
+
+   getInvoicesTotal() {
+      return this.entries
+         .filter(e => e.entryType === 'CUSTOMER' && e.invoice)
+         .reduce((acc, e) => acc + (Number(e.totalAmount) || 0), 0);
+   }
 
 
    getCollectionsTotal() { return this.entries.filter(e => e.entryType === 'CUSTOMER').reduce((acc, e) => acc + (Number(e.adc_caucao) || 0) + (Number(e.p_divida) || 0), 0); }
 
 
    getInitialTotal(tn: string) { const s = this.initialStock[tn]; return s ? (s.damaged || 0) + (s.empty || 0) + (s.gpl || 0) : 0; }
-
-
-
 
 
    getFinalStock(tn: string, f: 'gpl' | 'empty' | 'damaged' | 'toRecover' | 'toReturn'): number {
@@ -4428,19 +2423,13 @@ export class GasControlComponent implements OnInit, OnDestroy {
       const init = this.initialStock[tn];
 
 
-
-
-
       if (f === 'gpl') return Math.max(0, (init.gpl || 0) - this.sumEntries(ents, 's_gpl') + this.sumEntries(ents, 'e_gpl'));
 
 
-      if (f === 'empty') return Math.max(0, (init.empty || 0) - this.sumEntries(ents, 's_vaz') + this.sumEntries(ents, 'e_vaz'));
+      if (f === 'empty') return Math.max(0, (init.empty || 0) - this.sumEntries(ents, 's_vaz') + this.sumEntries(ents, 'e_vaz') - this.sumEntries(ents, 'vz_vend'));
 
 
       if (f === 'damaged') return Math.max(0, (init.damaged || 0) - this.sumEntries(ents, 's_av') + this.sumEntries(ents, 'e_av'));
-
-
-
 
 
       if (f === 'toRecover') {
@@ -4473,9 +2462,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    getEntryDiff(typeId: string, entryType: 'CUSTOMER' | 'SUPPLIER'): number {
 
 
@@ -4485,13 +2471,10 @@ export class GasControlComponent implements OnInit, OnDestroy {
       // Caução (vz_vend) também conta como saída de vasilhame
 
 
-      const out = this.sumEntries(ents, 's_gpl') + this.sumEntries(ents, 's_vaz') + this.sumEntries(ents, 's_av') + this.sumEntries(ents, 'vz_vend');
+      const out = this.sumEntries(ents, 's_gpl') + this.sumEntries(ents, 's_vaz') + this.sumEntries(ents, 's_av');
 
 
       const inc = this.sumEntries(ents, 'e_gpl') + this.sumEntries(ents, 'e_vaz') + this.sumEntries(ents, 'e_av');
-
-
-
 
 
       if (entryType === 'CUSTOMER') return out - inc;
@@ -4503,9 +2486,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    sumGlobalStock(f: 'gpl' | 'empty' | 'damaged' | 'total' | 'toRecover' | 'toReturn' | 'target'): number {
 
 
@@ -4513,7 +2493,9 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
          if (f === 'target') return acc + (Number(t.inventoryTarget) || 0);
-          if (f === 'total') return acc + this.getFinalTotal(t.name);
+
+
+         if (f === 'total') return acc + this.getFinalTotal(t.name);
 
 
          return acc + this.getFinalStock(t.name, f);
@@ -4525,13 +2507,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    getFinalTotal(tn: string) { return this.getFinalStock(tn, 'gpl') + this.getFinalStock(tn, 'empty') + this.getFinalStock(tn, 'damaged'); }
-
-
-
 
 
    getTypeColor(tn: string): string {
@@ -4540,7 +2516,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
       const c: any = {
 
 
-         '9KG': '#70AD47',  // Green
+         '9KG': '#70D47',  // Green
 
 
          '14KG': '#4472C4', // Blue
@@ -4549,13 +2525,13 @@ export class GasControlComponent implements OnInit, OnDestroy {
          '19KG': '#ED7D31', // Orange
 
 
-         '48KG': '#A5A5A5', // Gray
+         '48KG': '#555', // Gray
 
 
          '6KG': '#FFC000',  // Yellow
 
 
-         '11KG': '#334155', // Slate/Dark Blue (Avoid Purple)
+         '11KG': '#334155', // Slate/Dark Blue (void Purple)
 
 
          '45KG': '#C00000', // Red
@@ -4573,10 +2549,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
-   // SUGGESTION HANDLERS
+   // SUGGESTION HNDLERS
 
 
    onSearchInput(entry: GasDailyEntry, entryType: 'CUSTOMER' | 'SUPPLIER') {
@@ -4586,9 +2559,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
       const query = (entry.customerName || '').toLowerCase().trim();
-
-
-
 
 
       if (!query) {
@@ -4601,9 +2571,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
       }
-
-
-
 
 
       const list = entryType === 'CUSTOMER' ? this.customers : this.suppliers;
@@ -4624,9 +2591,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
-
    selectSuggestion(suggestion: any, entry: GasDailyEntry) {
 
 
@@ -4645,8 +2609,24 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
+   openQuickRegistration() {
+      if (!this.control || this.control?.status !== 'OPENED') {
+         this.openDay();
+         return;
+      }
+      this.cylinderTypes.forEach(t => {
+         this.entries.push({
+            controlId: this.control!.id,
+            cylinderTypeId: t.id!,
+            customerName: '',
+            entryType: 'CUSTOMER',
+            priceType: 'REVENDEDOR',
+            s_gpl: 0, s_vaz: 0, s_av: 0, vz_vend: 0, adc_caucao: 0, e_gpl: 0, e_vaz: 0, e_av: 0, p_divida: 0, totalAmount: 0, gr: false, invoice: false
+         });
+      });
+      this.toaster.showSuccess('Novas Linhas', 'Adicionadas linhas para lançamento.');
+      if (this.cdr) this.cdr.detectChanges();
+   }
 
    triggerQuickRegistration(entry: GasDailyEntry, type: 'CUSTOMER' | 'SUPPLIER') {
 
@@ -4667,9 +2647,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    }
-
-
-
 
 
    handleQuickSave(newEntity: any) {
@@ -4702,8 +2679,12 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-
-
+   onNameBlur() {
+      setTimeout(() => {
+         this.activeSuggestionEntry = null;
+         this.filteredSuggestions = [];
+      }, 250);
+   }
 
    clearSuggestions() {
 
@@ -4726,12 +2707,378 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
+   getCategorizedEntities(category: 'TRBLHDOR' | 'CLIENTE' | 'INSTITUICO' | 'SUPPLIER') {
+
+
+      const allEntities: any[] = [];
+
+
+      const entries = this.entries;
+
+
+      const uniqueNames = new Set(entries.map(e => e.customerName));
+
+
+      uniqueNames.forEach(name => {
+
+
+         const entityCat = this.resolveCategoryByName(name);
+
+
+         if ((category === 'SUPPLIER' && this.suppliers.some(s => s.name === name)) ||
+
+
+            (category !== 'SUPPLIER' && entityCat === category)) {
+
+
+            const entBalances: any = {};
+
+
+            this.cylinderTypes.forEach(t => {
+
+
+               const typeEntries = entries.filter(e => e.customerName === name && e.cylinderTypeId === t.id);
+
+
+               entBalances[t.name] = (entBalances[t.name] || 0) + this.sumEntries(typeEntries, 'e_gpl') + this.sumEntries(typeEntries, 'e_vaz') + this.sumEntries(typeEntries, 'e_av')
+
+
+                  - (this.sumEntries(typeEntries, 's_gpl') + this.sumEntries(typeEntries, 's_vaz') + this.sumEntries(typeEntries, 's_av'));
+
+
+            });
+
+
+            if (Object.values(entBalances).some(v => v !== 0)) {
+
+
+               allEntities.push({ name, balances: entBalances });
+
+
+            }
+
+
+         }
+
+
+      });
+
+
+      return allEntities.sort((a, b) => a.name.localeCompare(b.name));
+
+
+   }
+
+
+   resolveCategoryByName(name: string): 'TRBLHDOR' | 'INSTITUICO' | 'CLIENTE' | 'SUPPLIER' {
+
+
+      const supplier = this.suppliers.find(s => s.name?.toLowerCase() === name?.toLowerCase());
+
+
+      if (supplier) return 'SUPPLIER';
+
+
+      const cust: any = this.customers.find(c => c.name?.toLowerCase() === name?.toLowerCase());
+
+
+      if (!cust) return 'CLIENTE';
+
+
+      if (cust.category === 'TRBLHDOR' || cust.category === 'INSTITUICO') return cust.category;
+
+
+      return 'CLIENTE';
+
+
+   }
+
+
+   updateInventoryValue(name: string, type: GasCylinderType, event: any, currentCat: string, typeId: 'CUSTOMER' | 'SUPPLIER') {
+
+
+      const newVal = parseInt((event.target as HTMLInputElement).value) || 0;
+
+
+      const correctCat = this.resolveCategoryByName(name);
+
+
+      if (correctCat !== currentCat && correctCat !== 'SUPPLIER') {
+
+
+         this.toaster.showInfo('Movimento Identificado', ` entidade ${name} foi identificada como ${correctCat} e movida para o respetivo lugar.`);
+
+
+         this.highlightedEntityName = name;
+
+
+         setTimeout(() => { this.highlightedEntityName = null; this.cdr.detectChanges(); }, 3000);
+
+
+      }
+
+
+      let entry = this.entries.find(e => e.customerName === name && e.cylinderTypeId === type.id && e.entryType === typeId);
+
+
+      if (!entry) {
+
+
+         const newEntry = {
+
+
+            customerName: name,
+
+
+            cylinderTypeId: type.id!,
+
+
+            entryType: typeId,
+
+
+            controlId: this.control?.id,
+
+
+            s_gpl: 0, s_vaz: 0, s_av: 0, e_gpl: 0, e_vaz: 0, e_av: 0,
+
+
+            vz_vend: 0, adc_caucao: 0, p_divida: 0, totalAmount: 0, gr: false, invoice: false,
+
+
+            priceType: 'CONSUMIDOR'
+
+
+         } as GasDailyEntry;
+
+
+         this.entries.push(newEntry);
+
+
+         entry = newEntry;
+
+
+      }
+
+
+      const currentBalance = (entry.e_gpl || 0) + (entry.e_vaz || 0) + (entry.e_av || 0)
+
+
+         - ((entry.s_gpl || 0) + (entry.s_vaz || 0) + (entry.s_av || 0));
+
+
+      const diff = newVal - currentBalance;
+
+
+      if (diff > 0) entry.e_gpl = (entry.e_gpl || 0) + diff;
+
+
+      else entry.s_gpl = (entry.s_gpl || 0) - diff;
+
+
+      this.updateEntry(entry);
+
+
+   }
+
+
+   sumCategoryTotal(category: string, typeName: string): number {
+
+
+      const entities = this.getCategorizedEntities(category as any);
+
+
+      return entities.reduce((sum, ent) => sum + (ent.balances[typeName] || 0), 0);
+
+
+   }
+
+
+   sumTotalReaver(typeName: string): number {
+
+
+      return this.sumCategoryTotal('TRBLHDOR', typeName) + this.sumCategoryTotal('CLIENTE', typeName) + this.sumCategoryTotal('INSTITUICO', typeName);
+
+
+   }
+
+
+   clearEntityEntries(name: string) {
+
+
+      if (confirm(`Remover todos os registos pendentes de ${name}?`)) {
+
+
+         this.entries = this.entries.filter(e => e.customerName !== name);
+
+
+         this.toaster.showSuccess('Sucesso', `Registos de ${name} removidos.`);
+
+
+         this.cdr.detectChanges();
+
+
+      }
+
+
+   }
+
+
+   onInventorySearchInput(cat: string, entryType: 'CUSTOMER' | 'SUPPLIER') {
+
+
+      const query = this.inventorySearch[cat]?.toLowerCase() || '';
+
+
+      if (query.length < 2) {
+
+
+         this.suggestedInventoryEntities = [];
+
+
+         return;
+
+
+      }
+
+
+      if (entryType === 'CUSTOMER') {
+
+
+         this.suggestedInventoryEntities = this.customers
+
+
+            .filter(c => c.name?.toLowerCase().includes(query))
+
+
+            .map(c => ({ name: c.name, category: (c as any).category }));
+
+
+      } else {
+
+
+         this.suggestedInventoryEntities = this.suppliers
+
+
+            .filter(s => s.name?.toLowerCase().includes(query))
+
+
+            .map(s => ({ name: s.name, category: 'SUPPLIER' }));
+
+
+      }
+
+
+   }
+
+
+   selectInventorySuggestion(s: any, cat: string, entryType: 'CUSTOMER' | 'SUPPLIER') {
+
+
+      this.inventorySearch[cat] = s.name;
+
+
+      this.suggestedInventoryEntities = [];
+
+
+      this.commitInventoryEntry(cat, this.cylinderTypes[0], entryType);
+
+
+   }
+
+
+   triggerQuickRegistrationFromMap(cat: string, entryType: 'CUSTOMER' | 'SUPPLIER') {
+
+
+      const mockEntry = { customerName: this.inventorySearch[cat] } as unknown as GasDailyEntry;
+
+
+      this.triggerQuickRegistration(mockEntry, entryType);
+
+
+   }
+
+
+   commitInventoryEntry(cat: string, cylinderType: GasCylinderType, entryType: 'CUSTOMER' | 'SUPPLIER') {
+
+
+      const name = this.inventorySearch[cat];
+
+
+      if (!name) return;
+
+
+      const correctCat = this.resolveCategoryByName(name);
+
+
+      if (correctCat !== cat && correctCat !== 'SUPPLIER') {
+
+
+         this.toaster.showInfo('Movimento Identificado', ` entidade ${name} foi identificada como ${correctCat} e redirecionada.`);
+
+
+         this.highlightedEntityName = name;
+
+
+         setTimeout(() => { this.highlightedEntityName = null; this.cdr.detectChanges(); }, 3000);
+
+
+      }
+
+
+      let entry = this.entries.find(e => e.customerName === name && e.cylinderTypeId === cylinderType.id && e.entryType === entryType);
+
+
+      if (!entry) {
+
+
+         const newEntry = {
+
+
+            customerName: name,
+
+
+            cylinderTypeId: cylinderType.id!,
+
+
+            entryType: entryType,
+
+
+            controlId: this.control?.id,
+
+
+            s_gpl: 0, s_vaz: 0, s_av: 0, e_gpl: 0, e_vaz: 0, e_av: 0,
+
+
+            vz_vend: 0, adc_caucao: 0, p_divida: 0, totalAmount: 0, gr: false, invoice: false,
+
+
+            priceType: 'CONSUMIDOR'
+
+
+         } as GasDailyEntry;
+
+
+         this.entries.push(newEntry);
+
+
+         entry = newEntry;
+
+
+      }
+
+
+      this.updateEntry(entry);
+
+
+      this.inventorySearch[cat] = '';
+
+
+      this.cdr.detectChanges();
+
+
+   }
+
+
 }
-
-
-
-
-
-
 
 
