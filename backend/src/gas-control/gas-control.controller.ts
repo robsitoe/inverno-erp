@@ -49,6 +49,12 @@ export class GasControlController {
         return this.gasService.closeDaily(id, body.user, companyId);
     }
 
+    @Post('daily/:id/reopen')
+    @ApiOperation({ summary: 'Reopen daily control' })
+    reopenDaily(@Param('id') id: string, @Body() body: { user: string }, @Query('companyId') companyId?: string) {
+        return this.gasService.reopenDaily(id, body.user, companyId);
+    }
+
     @Patch('daily/:id/stocks')
     @ApiOperation({ summary: 'Update initial and final stocks' })
     updateStocks(

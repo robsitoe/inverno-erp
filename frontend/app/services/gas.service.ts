@@ -204,11 +204,11 @@ export class GasService {
 
 
     closeDaily(id: string, user: string, companyId: string): Observable<any> {
-
-
         return this.http.post(`${this.apiUrl}/daily/${id}/close?companyId=${companyId}`, { user });
+    }
 
-
+    reopenDaily(id: string, user: string, companyId: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/daily/${id}/reopen?companyId=${companyId}`, { user });
     }
 
 
