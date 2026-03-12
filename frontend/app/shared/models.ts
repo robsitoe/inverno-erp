@@ -130,7 +130,12 @@ export interface SalesDocument {
     status: WorkflowStatus;
     statusNotes?: string;
     journalEntryId?: string;
-    notes: string;
+    notes: string;
+    currency?: string;
+    paymentCondition?: string;
+    clientDiscount?: number;
+    financialDiscount?: number;
+    exchangeRate?: number;
 }
 
 export interface SalesDocumentLine {

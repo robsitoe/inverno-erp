@@ -754,7 +754,9 @@ export class SalesDocumentFormComponent implements OnDestroy {
   paymentCondition: 'PRONTO' | 'PRAZO' = 'PRONTO';
 
   treasuryAccounts: any[] = [];
-  selectedTreasuryAccountId: string = '';
+  selectedTreasuryAccountId: string = '';
+  currentCurrency: string = 'MZN';
+  exchangeRate: number = 1.0;
 
   // Totals
   merchandiseTotal = 0;
@@ -1614,7 +1616,12 @@ export class SalesDocumentFormComponent implements OnDestroy {
       totalIva: this.totalIva,
       total: this.totalValue,
       status: this.status,
-      notes: ''
+      notes: '',
+      currency: this.currentCurrency,
+      paymentCondition: this.paymentCondition,
+      clientDiscount: this.clientDiscount,
+      financialDiscount: this.financialDiscount,
+      exchangeRate: this.exchangeRate,
     };
   }
 
@@ -1798,7 +1805,12 @@ export class SalesDocumentFormComponent implements OnDestroy {
       totalIva: this.totalIva,
       total: this.totalValue,
       status: newStatus,
-      notes: ''
+      notes: '',
+      currency: this.currentCurrency,
+      paymentCondition: this.paymentCondition,
+      clientDiscount: this.clientDiscount,
+      financialDiscount: this.financialDiscount,
+      exchangeRate: this.exchangeRate,
     };
 
     this.dataService.getSalesDocuments(this.activeCompanyId || undefined).subscribe(docs => {
