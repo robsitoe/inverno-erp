@@ -28,6 +28,15 @@ export class GasCylinderType {
 
     @Column({ type: 'int', default: 0 })
     inventoryTarget: number; // Quantidade de botijas que a empresa tem
+
+    @Column({ nullable: true })
+    fullArticleCode: string;
+
+    @Column({ nullable: true })
+    emptyArticleCode: string;
+
+    @Column({ nullable: true })
+    damagedArticleCode: string;
 }
 
 @Entity('gas_daily_controls')
@@ -134,4 +143,7 @@ export class GasDailyEntry {
 
     @Column({ default: false })
     invoice: boolean;
+
+    @Column({ default: false })
+    isAdj: boolean;
 }

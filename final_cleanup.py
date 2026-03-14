@@ -1,29 +1,20 @@
-import io, re
+import os
+import re
 
 path = r'c:\Users\Nelson\Documents\Programacao\inverno-erp\frontend\app\features\inventory\gas-control.component.ts'
 
-with io.open(path, 'r', encoding='utf-8') as f:
-    c = f.read()
+with open(path, 'r', encoding='utf-8') as f:
+    content = f.read()
 
-# 1. Ensure loadData() exists in openDay
-if 'this.loadData(); // Reload to show rollover stock' not in c:
-    # Find next: (res) => { ... } block inside openDay
-    c = re.sub(
-        r'(openDay\s*\(.*?\s*next:\s*\(res\)\s*=>\s*\{.*?this\.control\s*=\s*res;.*?\n)',
-        r'\1\n             this.loadData(); // Reload to show rollover stock\n',
-        c, flags=re.DOTALL
-    )
+# Remove signature block
+sig_block = re.compile(r'<div class="print-only signature-area.*?</div>\s+</div>', re.DOTALL)
+content = sig_block.sub('</div>', content)
 
-# 2. Fix remaining control.status
-c = re.sub(r'(?<!\.)control\.status', 'control?.status', c)
-# But keep assignments as they were correctly fixed by my previous script or fix them again safely
-c = c.replace("this.control?.status = 'OPENED';", "if (this.control) { this.control.status = 'OPENED'; }")
-c = c.replace("this.control?.status = 'CLOSED';", "if (this.control) { this.control.status = 'CLOSED'; }")
+# Remove extra closings or debris if any
+# Just to be safe, search for the end of the kits section
+# <td class="p-1">{{ getKitSum(\'sale\') }}</td>\s+<td></td>\s+</tr>\s+</tbody>\s+</table>\s+</div>\s+</div>\s+</div>
 
-# 3. Clean up the style block (just in case there's mess)
-c = c.replace('●', '●')
+with open(path, 'w', encoding='utf-8') as f:
+    f.write(content)
 
-with io.open(path, 'w', encoding='utf-8') as f:
-    f.write(c)
-
-print("Final cleanup and openDay fix applied.")
+print("Final cleanup complete.")

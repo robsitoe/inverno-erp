@@ -228,4 +228,37 @@ export class InventoryService {
     }
     return movement;
   }
+
+  async getStockBalanceAtDate(articleCode: string, date: string, warehouseId?: string, companyId?: string): Promise<number> {
+    const repo = await this.getStockMovementRepo(companyId);
+    const cid = companyId || TenancyContext.getCompanyId();
+
+    const query = repo.createQueryBuilder('m')
+      .where('m.articleCode = :articleCode AND m.date <= :date', { articleCode, date });
+    
+    if (cid) {
+      query.andWhere('m.companyId = :cid', { cid });
+    }
+
+    if (warehouseId) {
+      query.andWhere('m.warehouseId = :warehouseId', { warehouseId });
+    }
+
+    const movements = await query.getMany();
+
+    return movements.reduce((balance, m) => {
+      const qty = Number(m.quantity);
+      const type = m.movementType;
+
+      if (type === 'IN' || type === 'ADJUSTMENT_IN' || (type === 'ADJUSTMENT' && qty > 0)) {
+        return balance + Math.abs(qty);
+      } else if (type === 'OUT' || type === 'ADJUSTMENT_OUT' || (type === 'ADJUSTMENT' && qty < 0)) {
+        return balance - Math.abs(qty);
+      } else if (type === 'TRANSFER') {
+        // Simple sign-based logic for transfers
+        return balance + qty;
+      }
+      return balance;
+    }, 0);
+  }
 }

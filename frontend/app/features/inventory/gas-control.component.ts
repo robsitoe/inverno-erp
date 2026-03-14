@@ -35,18 +35,12 @@ import { Customer, Supplier } from '../../shared/models';
 
 
 import { QuickEntityModalComponent } from '../../shared/components/quick-entity-modal.component';
-
+import { GasControlReportPrintComponent } from './gas-control-report-print.component';
 
 @Component({
-
-
-   selector: 'app-gas-control',
-
-
-   standalone: true,
-
-
-   imports: [CommonModule, FormsModule, AppIconComponent, QuickEntityModalComponent],
+  selector: 'app-gas-control',
+  standalone: true,
+  imports: [CommonModule, FormsModule, AppIconComponent, QuickEntityModalComponent, GasControlReportPrintComponent],
 
 
    template: `
@@ -56,41 +50,12 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
 
 
       .print-only { display: none; }
-
-
       @media print {
-
-
         .no-print { display: none !important; }
-
-
         .print-only { display: block !important; }
-
-
-        .page-break { page-break-before: always; }
-
-
-        body { background: white !important; padding: 0 !important; margin: 0 !important; font-size: 8pt !important; }
-
-
-        .main-container { padding: 0 !important; background: white !important; overflow: visible !important; }
-
-
-        .print-a4 { width: 100%; padding: 10mm; margin: 0 auto; background: white; }
-
-
-        table { border-collapse: collapse !important; width: 100% !important; margin-bottom: 3mm !important; }
-
-
-        th, td { padding: 0.5px 2px !important; border: 0.5pt solid black !important; line-height: 1 !important; }
-
-
-        .grid-cols-2 { display: flex !important; gap: 10mm !important; }
-
-
-        .grid-cols-2 > div { flex: 1 !important; }
-
-
+        
+        @page { size: landscape; margin: 10mm; }
+        body { background: white !important; margin: 0 !important; }
       }
 
 
@@ -104,15 +69,20 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
 
 
       @keyframes highlight-fade {
-
-
         0% { background-color: #fef08a; }
-
-
         100% { background-color: transparent; }
-
-
       }
+
+      .inventory-sheet-table { border-collapse: collapse; border: 1px solid black; text-align: center; text-transform: uppercase; }
+      .inventory-sheet-table th, .inventory-sheet-table td { border: 1px solid black; padding: 1px 3px; line-height: 1.1; }
+      .inventory-sheet-table thead th { font-weight: 800; font-size: 7px; }
+      .inventory-sheet-table tbody td { font-size: 8px; }
+      .bg-header-grey { background-color: #D9D9D9; }
+      .bg-dark-header { background-color: #31353D; color: white; }
+      .bg-total-orange { background-color: #ED7D31; color: white; }
+      .bg-dark-red { background-color: #C00000; color: white; }
+      .divider-row td { border-bottom: 2px solid black; }
+      .entities-body td { height: 14px; }
 
 
     </style>
@@ -161,11 +131,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
 
 
             </div>
-
-
          </div>
-
-
       </div>
 
 
@@ -182,42 +148,35 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
 
 
              <div class="p-1.5 bg-blue-600 rounded text-white italic font-black text-sm tracking-tighter shadow-inner">GESt-GS</div>
+              <div class="flex flex-col">
+                 <h1 class="text-xs font-black text-gray-600 uppercase tracking-widest leading-none">
+                    {{ activeTab === 'MOVEMENT' ? 'Movimento Geral Diário' : (activeTab === 'INVENTORY' ? 'Mapa de Inventário Global' : 'Relatórios e Estatísticas') }}
+                 </h1>
+                 <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">Gestão de Armazém e Caixa</span>
+              </div>
 
-
-             <div class="flex flex-col">
-
-
-                <h1 class="text-xs font-black text-gray-600 uppercase tracking-widest leading-none">{{ activeTab === 'MOVEMENT' ? 'Movimento Geral Diário' : 'Mapa de Inventário Global' }}</h1>
-
-
-                <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">Gestão de rmazém e Caixa</span>
-
-
-             </div>
-
-
-             <div *ngIf="control" class="ml-4 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-sm"
-
-
-                  [class]="control?.status === 'OPENED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : (control?.status === 'CLOSED' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-gray-50 text-gray-400 border-gray-200')">
-
-
-                 {{ control?.status === 'OPENED' ? 'Ã¢â€”Â berto' : (control?.status === 'CLOSED' ? 'Ã¢â€”Â Fechado' : '○ Não Iniciado') }}
-
-
-             </div>
-
-
+              <div *ngIf="control" class="ml-4 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-sm">
+                 <span [class]="control?.status === 'OPENED' ? 'text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100' : (control?.status === 'CLOSED' ? 'text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100' : 'text-gray-400 bg-gray-50 px-2 py-0.5 rounded border border-gray-100')">
+                    {{ control?.status === 'OPENED' ? '● Aberto' : (control?.status === 'CLOSED' ? '● Fechado' : '○ Não Iniciado') }}
+                 </span>
+              </div>
            </div>
-
-
-           
-
 
            <div class="h-6 w-px bg-gray-300"></div>
 
+           <div class="flex items-center bg-white/50 backdrop-blur-sm p-1 rounded-xl shadow-inner no-print border border-gray-200">
+              <button (click)="activeTab = 'MOVEMENT'" [class]="activeTab === 'MOVEMENT' ? 'bg-blue-600 text-white shadow-md scale-105' : 'text-gray-500 hover:text-blue-600 hover:bg-white/80'" class="px-4 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all transform duration-200 flex items-center gap-1.5">
+                 <app-icon name="list_alt" [size]="14"></app-icon> Diário
+              </button>
+              <button (click)="activeTab = 'INVENTORY'" [class]="activeTab === 'INVENTORY' ? 'bg-blue-600 text-white shadow-md scale-105' : 'text-gray-500 hover:text-blue-600 hover:bg-white/80'" class="px-4 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all transform duration-200 flex items-center gap-1.5 border-x border-gray-100">
+                 <app-icon name="grid_view" [size]="14"></app-icon> Inventário
+              </button>
+              <button (click)="activeTab = 'STATS'; loadStatistics()" [class]="activeTab === 'STATS' ? 'bg-blue-600 text-white shadow-md scale-105' : 'text-gray-500 hover:text-blue-600 hover:bg-white/80'" class="px-4 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all transform duration-200 flex items-center gap-1.5">
+                 <app-icon name="trending_up" [size]="14"></app-icon> Estatísticas
+              </button>
+           </div>
 
-           
+           <div class="h-6 w-px bg-gray-300"></div>
 
 
            <div class="flex items-center bg-gray-50 border border-gray-300 rounded overflow-hidden">
@@ -232,10 +191,8 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
              <button (click)="changeDate(1)" class="p-1 hover:bg-gray-200 transition-colors border-l border-gray-300"><app-icon name="chevron_right" [size]="18"></app-icon></button>
 
 
-           </div>
-
-
-        </div>
+            </div>
+         </div>
 
 
         <div class="flex items-center gap-3">
@@ -247,7 +204,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
              <div class="animate-spin rounded-full h-3 w-3 border-2 border-amber-500 border-t-transparent"></div>
 
 
-             <span class="text-[10px] font-bold text-amber-700 animate-pulse"> PROCESSR...</span>
+             <span class="text-[10px] font-bold text-amber-700 animate-pulse"> PROCESSANDO...</span>
 
 
            </div>
@@ -284,7 +241,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
       <!-- Main Spreadsheet rea -->
 
 
-      <div class="flex-1 overflow-auto p-4 space-y-6 pb-24 no-print">
+      <div class="flex-1 overflow-auto p-4 space-y-6 pb-24">
 
 
         
@@ -294,646 +251,594 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
 
 
 
-        <div *ngIf="activeTab === 'MOVEMENT'" class="p-2 space-y-4 print-a4 bg-white rounded-xl shadow-lg border border-gray-200">
-           
-           <div class="text-center font-bold uppercase tracking-widest text-[12px] border-b-2 border-black pb-1 mb-4 flex justify-between items-center">
-              <span>Movimento Geral Diário do Armazém - {{ selectedDate | date:'dd.MM.yyyy' }}</span>
-              <div class="flex gap-2 no-print">
-                 <button (click)="openQuickRegistration()" class="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase hover:bg-blue-700 shadow-lg">Novo Lançamento</button>
+        <div *ngIf="activeTab === 'MOVEMENT'" class="space-y-6">
+           <!-- PRINT COMPONENT (HIDDEN BY ITS OWN CSS ON SCREEN) -->
+           <app-gas-control-report-print 
+              [selectedDate]="selectedDate"
+              [cylinderTypes]="cylinderTypes"
+              [initialStock]="initialStock"
+              [entries]="entries"
+              [currentYear]="currentYear"
+              [totals]="printTotals"
+              [globalTotal]="getGlobalTotal()">
+           </app-gas-control-report-print>
+
+           <!-- DASHBOARD HEADER & STOCK -->
+           <div class="p-4 bg-white rounded-xl shadow-lg border border-gray-200 no-print space-y-6">
+              <div class="text-center font-bold uppercase tracking-widest text-[12px] border-b-2 border-black pb-2 mb-2 flex justify-between items-center">
+                 <span class="text-blue-900">Movimento Geral Diário do Armazém - {{ selectedDate | date:'dd.MM.yyyy' }}</span>
+                 <button (click)="openQuickRegistration()" class="px-5 py-2 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase hover:bg-blue-700 shadow-lg transition-all active:scale-95">Novo Lançamento</button>
+              </div>
+
+              <!-- Stock Tables -->
+              <div class="flex flex-col md:flex-row justify-between gap-6 items-start">
+                 <div class="flex-1 w-full md:w-1/2">
+                    <div class="text-[8px] font-black uppercase text-gray-400 mb-1 ml-1">Tabela de Stock Inicial</div>
+                    <table class="w-full text-[10px] border-collapse border border-black uppercase text-center">
+                       <thead>
+                          <tr class="bg-gray-100 border-b border-black">
+                             <th class="p-1 border-r border-black text-left w-24">Initial</th>
+                             <th *ngFor="let t of cylinderTypes" class="p-1 border-r border-black font-bold">{{ t.name }}</th>
+                          </tr>
+                       </thead>
+                       <tbody class="font-bold">
+                          <tr class="border-b border-black"><td class="p-1 border-r border-black text-left bg-gray-50 text-[8px]">Kit/Redut</td><td *ngFor="let t of cylinderTypes">0</td></tr>
+                          <tr class="border-b border-black"><td class="p-1 border-r border-black text-left bg-gray-50 text-[8px]">Avariadas</td><td *ngFor="let t of cylinderTypes" class="text-rose-500">{{ initialStock[t.name]?.damaged || 0 }}</td></tr>
+                          <tr class="border-b border-black"><td class="p-1 border-r border-black text-left bg-gray-50 text-[8px]">Vazias</td><td *ngFor="let t of cylinderTypes">{{ initialStock[t.name]?.empty || 0 }}</td></tr>
+                          <tr class="border-b border-black"><td class="p-1 border-r border-black text-left bg-gray-50 text-[8px]">GPL</td><td *ngFor="let t of cylinderTypes" class="text-blue-700">{{ initialStock[t.name]?.gpl || 0 }}</td></tr>
+                       </tbody>
+                       <tfoot class="bg-[#C6E0B4] font-black">
+                          <tr><td class="p-1 border-r border-black text-left uppercase">TOTAL</td><td *ngFor="let t of cylinderTypes">{{ getInitialTotal(t.name) }}</td></tr>
+                       </tfoot>
+                    </table>
+                 </div>
+                 <div class="flex-1 w-full md:w-1/2">
+                    <div class="text-[8px] font-black uppercase text-gray-400 mb-1 ml-1">Tabela de Stock Final</div>
+                    <table class="w-full text-[10px] border-collapse border border-black uppercase text-center">
+                       <thead>
+                          <tr class="bg-gray-100 border-b border-black">
+                             <th class="p-1 border-r border-black text-left w-24">Final</th>
+                             <th *ngFor="let t of cylinderTypes" class="p-1 border-r border-black font-bold">{{ t.name }}</th>
+                          </tr>
+                       </thead>
+                       <tbody class="font-bold">
+                          <tr class="border-b border-black"><td class="p-1 border-r border-black text-left bg-gray-50 text-[8px]">Kit/Redut</td><td *ngFor="let t of cylinderTypes">0</td></tr>
+                          <tr class="border-b border-black"><td class="p-1 border-r border-black text-left bg-gray-50 text-[8px]">Avariadas</td><td *ngFor="let t of cylinderTypes" class="text-rose-500">{{ getFinalStock(t.name, 'damaged') }}</td></tr>
+                          <tr class="border-b border-black"><td class="p-1 border-r border-black text-left bg-gray-50 text-[8px]">Vazias</td><td *ngFor="let t of cylinderTypes">{{ getFinalStock(t.name, 'empty') }}</td></tr>
+                          <tr class="border-b border-black"><td class="p-1 border-r border-black text-left bg-gray-50 text-[8px]">Gpl</td><td *ngFor="let t of cylinderTypes" class="text-blue-700">{{ getFinalStock(t.name, 'gpl') }}</td></tr>
+                       </tbody>
+                       <tfoot class="bg-[#C6E0B4] font-black">
+                          <tr><td class="p-1 border-r border-black text-left uppercase">TOTAL</td><td *ngFor="let t of cylinderTypes">{{ getFinalTotal(t.name) }}</td></tr>
+                       </tfoot>
+                    </table>
+                 </div>
               </div>
            </div>
 
-           <div class="flex justify-between gap-4 items-start">
-              <div class="flex-1">
-                 <table class="w-full text-[9px] border-collapse border border-black uppercase text-center">
-                    <thead>
-                       <tr class="bg-gray-200 border-b border-black">
-                          <th class="p-1 border-r border-black text-left w-24">Stock Inicial</th>
-                          <th *ngFor="let t of cylinderTypes" class="p-1 border-r border-black font-bold">{{ t.name }}</th>
-                       </tr>
-                    </thead>
-                    <tbody class="font-bold">
-                       <tr class="border-b border-black">
-                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Kit/Redut</td>
-                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black">0</td>
-                       </tr>
-                       <tr class="border-b border-black">
-                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Avariadas</td>
-                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black text-rose-500">{{ initialStock[t.name]?.damaged || 0 }}</td>
-                       </tr>
-                       <tr class="border-b border-black">
-                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Vazias</td>
-                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black">{{ initialStock[t.name]?.empty || 0 }}</td>
-                       </tr>
-                       <tr class="border-b border-black">
-                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">GPL</td>
-                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black text-blue-700">{{ initialStock[t.name]?.gpl || 0 }}</td>
-                       </tr>
-                    </tbody>
-                    <tfoot class="bg-[#C6E0B4] font-black">
-                       <tr>
-                          <td class="p-1 border-r border-black text-left uppercase">TOTAL</td>
-                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black">{{ getInitialTotal(t.name) }}</td>
-                       </tr>
-                    </tfoot>
-                 </table>
-              </div>
+           <!-- TRANSACTION TABLES BY TYPE -->
+           <div class="space-y-6 no-print">
+              <div *ngFor="let t of cylinderTypes" class="bg-white p-4 rounded-xl shadow-lg border border-gray-200">
+                 <div class="flex items-center gap-4 mb-4 pb-2 border-b border-gray-50">
+                    <span class="px-4 py-1.5 font-black text-white text-[11px] rounded-lg shadow-sm uppercase tracking-widest" [style.background-color]="getTypeColor(t.name)">{{ t.name }}</span>
+                    <div class="flex items-center gap-6 ml-4">
+                       <div class="flex flex-col">
+                          <span class="text-[8px] font-black uppercase text-gray-400 mb-0.5 ml-1">Revendedor</span>
+                          <div class="flex items-center bg-gray-50 border border-gray-200 rounded px-2 h-8">
+                             <span class="text-[9px] font-bold text-gray-400 mr-1">MT</span>
+                             <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="t.priceRevendedor" (change)="saveTypePrice(t)" class="w-20 border-none p-0 text-[12px] font-black focus:ring-0 bg-transparent">
+                          </div>
+                       </div>
+                       <div class="flex flex-col border-l border-gray-100 pl-4">
+                          <span class="text-[8px] font-black uppercase text-gray-400 mb-0.5 ml-1">Bomba</span>
+                          <div class="flex items-center bg-gray-50 border border-gray-200 rounded px-2 h-8">
+                             <span class="text-[9px] font-bold text-gray-400 mr-1">MT</span>
+                             <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="t.priceBomba" (change)="saveTypePrice(t)" class="w-20 border-none p-0 text-[12px] font-black focus:ring-0 bg-transparent">
+                          </div>
+                       </div>
+                       <div class="flex flex-col border-l border-gray-100 pl-4">
+                           <span class="text-[8px] font-black uppercase text-gray-400 mb-0.5 ml-1">Consumidor</span>
+                           <div class="flex items-center bg-gray-50 border border-gray-200 rounded px-2 h-8">
+                              <span class="text-[9px] font-bold text-gray-400 mr-1">MT</span>
+                              <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="t.priceConsumidor" (change)="saveTypePrice(t)" class="w-20 border-none p-0 text-[12px] font-black focus:ring-0 bg-transparent">
+                           </div>
+                        </div>
 
-              <div class="flex-1">
-                 <table class="w-full text-[9px] border-collapse border border-black uppercase text-center">
-                    <thead>
-                       <tr class="bg-gray-200 border-b border-black">
-                          <th class="p-1 border-r border-black text-left w-24">Stock Final</th>
-                          <th *ngFor="let t of cylinderTypes" class="p-1 border-r border-black font-bold">{{ t.name }}</th>
-                       </tr>
-                    </thead>
-                    <tbody class="font-bold">
-                       <tr class="border-b border-black">
-                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Kit/Redut</td>
-                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black">0</td>
-                       </tr>
-                       <tr class="border-b border-black">
-                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Avariadas</td>
-                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black text-rose-500">{{ getFinalStock(t.name, 'damaged') }}</td>
-                       </tr>
-                       <tr class="border-b border-black">
-                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Vazias</td>
-                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black">{{ getFinalStock(t.name, 'empty') }}</td>
-                       </tr>
-                       <tr class="border-b border-black">
-                          <td class="p-1 border-r border-black text-left bg-gray-50 uppercase">Gpl</td>
-                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black text-blue-700">{{ getFinalStock(t.name, 'gpl') }}</td>
-                       </tr>
-                    </tbody>
-                    <tfoot class="bg-[#C6E0B4] font-black">
-                       <tr>
-                          <td class="p-1 border-r border-black text-left uppercase">TOTAL</td>
-                          <td *ngFor="let t of cylinderTypes" class="p-1 border-r border-black">{{ getFinalTotal(t.name) }}</td>
-                       </tr>
-                    </tfoot>
-                 </table>
-              </div>
-           </div>
-
-           <div class="space-y-10">
-              <div *ngFor="let t of cylinderTypes" class="space-y-4">
-                <div class="flex items-center gap-4 bg-gray-50/50 p-1 px-3 rounded-xl border border-gray-200 no-print">
-                   <span class="px-3 py-1 font-black text-white text-xs rounded-lg shadow-sm" [style.background-color]="getTypeColor(t.name)">{{ t.name }}</span>
-                   <div class="flex items-center gap-4 ml-2">
-                      <div class="flex flex-col">
-                         <span class="text-[7px] font-black uppercase text-gray-500 mb-0.5 ml-1 leading-none">Revendedor</span>
-                         <div class="flex items-center bg-white border border-gray-300 rounded px-2 shadow-inner h-7">
-                            <span class="text-[8px] font-bold text-gray-400 mr-1">MT</span>
-                            <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="t.priceRevendedor" (change)="saveTypePrice(t)" class="w-16 border-none p-0 py-1 text-[11px] font-black focus:ring-0 disabled:opacity-50 bg-transparent">
-                         </div>
-                      </div>
-                      <div class="flex flex-col border-l border-gray-200 pl-4">
-                         <span class="text-[7px] font-black uppercase text-gray-500 mb-0.5 ml-1 leading-none">Bomba</span>
-                         <div class="flex items-center bg-white border border-gray-300 rounded px-2 shadow-inner h-7">
-                            <span class="text-[8px] font-bold text-gray-400 mr-1">MT</span>
-                            <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="t.priceBomba" (change)="saveTypePrice(t)" class="w-16 border-none p-0 py-1 text-[11px] font-black focus:ring-0 disabled:opacity-50 bg-transparent">
-                         </div>
-                      </div>
-                      <div class="flex flex-col border-l border-gray-200 pl-4">
-                         <span class="text-[7px] font-black uppercase text-gray-500 mb-0.5 ml-1 leading-none">Consumidor</span>
-                         <div class="flex items-center bg-white border border-gray-300 rounded px-2 shadow-inner h-7">
-                            <span class="text-[8px] font-bold text-gray-400 mr-1">MT</span>
-                            <input type="number" min="0" [disabled]="control?.status !== 'OPENED'" [(ngModel)]="t.priceConsumidor" (change)="saveTypePrice(t)" class="w-16 border-none p-0 py-1 text-[11px] font-black focus:ring-0 disabled:opacity-50 bg-transparent">
-                         </div>
-                      </div>
+                        <!-- ARTICLE CODES MAPPING -->
+                        <div class="flex flex-col border-l border-gray-100 pl-4 border-dashed">
+                           <span class="text-[8px] font-black uppercase text-blue-400 mb-0.5 ml-1">Códigos Inventário (Opcional)</span>
+                           <div class="flex items-center gap-2">
+                              <div class="flex flex-col">
+                                 <span class="text-[6px] text-gray-400 uppercase">Cheia</span>
+                                 <input type="text" [(ngModel)]="t.fullArticleCode" (change)="saveTypePrice(t)" [disabled]="control?.status !== 'OPENED'" class="w-16 h-6 border border-gray-200 rounded text-[9px] font-bold px-1 focus:ring-1 focus:ring-blue-100" placeholder="Default">
+                              </div>
+                              <div class="flex flex-col">
+                                 <span class="text-[6px] text-gray-400 uppercase">Vazia</span>
+                                 <input type="text" [(ngModel)]="t.emptyArticleCode" (change)="saveTypePrice(t)" [disabled]="control?.status !== 'OPENED'" class="w-16 h-6 border border-gray-200 rounded text-[9px] font-bold px-1 focus:ring-1 focus:ring-blue-100" placeholder="Default">
+                              </div>
+                              <div class="flex flex-col">
+                                 <span class="text-[6px] text-gray-400 uppercase">Avar.</span>
+                                 <input type="text" [(ngModel)]="t.damagedArticleCode" (change)="saveTypePrice(t)" [disabled]="control?.status !== 'OPENED'" class="w-16 h-6 border border-gray-200 rounded text-[9px] font-bold px-1 focus:ring-1 focus:ring-blue-100" placeholder="Default">
+                              </div>
+                           </div>
+                        </div>
+                     </div>
                    </div>
-                   <div class="only-print flex items-center gap-3 text-[9px] font-bold">
-                      <span>REV: {{ (t.priceRevendedor || 0) | currency:'MZN':'symbol':'1.0-0' }}</span>
-                      <span>BOM: {{ (t.priceBomba || 0) | currency:'MZN':'symbol':'1.0-0' }}</span>
-                      <span>CON: {{ (t.priceConsumidor || 0) | currency:'MZN':'symbol':'1.0-0' }}</span>
-                   </div>
-                </div>
-                 <ng-container *ngTemplateOutlet="movementTable; context: { entries: getEntriesForType(t.id!), type: t }"></ng-container>
+                 
+                 <ng-container *ngTemplateOutlet="movementTable; context: { entries: getEntriesForType(t.id!, undefined, false), type: t }"></ng-container>
               </div>
            </div>
 
-           <div class="grid grid-cols-4 gap-4 mt-10 no-print">
-              <div class="border border-black">
-                 <div class="bg-gray-200 p-1 font-bold text-[9px] border-b border-black uppercase flex justify-between items-center group">
-                     <span>Registo de Saídas para o Banco</span>
-                     <button (click)="addBankDeposit()" class="bg-blue-600 text-white px-1 rounded text-[8px] opacity-0 group-hover:opacity-100 transition-all">+ ADD</button>
+           <!-- BOTTOM GRID: BANK, EXPENSES, CASH, KITS -->
+           <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 no-print pb-10">
+              <!-- BANK DEPOSITS -->
+              <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                 <div class="bg-gray-100 p-2 font-black text-[10px] border-b border-gray-200 uppercase flex justify-between items-center group">
+                     <span class="text-blue-900">Saídas p/ Banco</span>
+                     <button (click)="addBankDeposit()" class="bg-blue-600 text-white px-2 py-0.5 rounded text-[8px] hover:bg-blue-700 transition-all shadow-sm">+ ADD</button>
                   </div>
-                 <table class="w-full text-[8px] text-center border-collapse">
+                 <table class="w-full text-[9px] text-center border-collapse">
                     <thead>
-                       <tr class="bg-gray-50 border-b border-black">
-                          <th class="p-1 border-r border-black w-20 uppercase">DEPOSITADO</th>
-                          <th class="p-1 border-r border-black uppercase">DATA / RECIBO</th>
-                          <th class="p-1 w-20 uppercase">VALOR (MT)</th>
+                       <tr class="bg-gray-50 border-b border-gray-200 text-gray-500 font-bold">
+                          <th class="p-1 border-r border-gray-100 uppercase text-[8px]">Banco</th>
+                          <th class="p-1 border-r border-gray-100 uppercase text-[8px]">Doc/Data</th>
+                          <th class="p-1 uppercase text-[8px]">Valor</th>
                        </tr>
                     </thead>
-                    <tbody>
-                       <tr *ngFor="let b of bankDeposits; let i = index" class="border-b border-gray-100 group">
-                           <td class="p-0 border-r border-black">
-                              <input type="text" [(ngModel)]="b.bankName" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-center uppercase font-bold focus:bg-white focus:outline-none">
+                    <tbody class="divide-y divide-gray-50">
+                       <tr *ngFor="let b of bankDeposits; let i = index" class="hover:bg-blue-50/30 group">
+                           <td class="p-0 border-r border-gray-100">
+                              <input type="text" [(ngModel)]="b.bankName" (change)="saveStocks()" class="w-full border-none p-1.5 bg-transparent text-center uppercase font-black focus:bg-white focus:ring-1 focus:ring-blue-100">
                            </td>
-                           <td class="p-0 border-r border-black">
-                              <input type="text" [(ngModel)]="b.depositor" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-center italic focus:bg-white text-[7px]" placeholder="...">
+                           <td class="p-0 border-r border-gray-100">
+                              <input type="text" [(ngModel)]="b.depositor" (change)="saveStocks()" class="w-full border-none p-1.5 bg-transparent text-center italic text-[9px] focus:bg-white focus:ring-1 focus:ring-blue-100">
                            </td>
-                           <td class="p-0 border-r border-black">
-                              <input type="number" [(ngModel)]="b.value" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-center font-bold font-mono focus:bg-white focus:outline-none text-[8px]">
-                           </td>
-                           <td class="p-0 text-rose-500">
-                              <button (click)="removeBankDeposit(i); saveStocks()" class="opacity-0 group-hover:opacity-100 transition-all"><app-icon name="close" [size]="10"></app-icon></button>
+                           <td class="p-0 relative">
+                              <input type="number" [(ngModel)]="b.value" (change)="saveStocks()" class="w-full border-none p-1.5 bg-transparent text-center font-black font-mono focus:bg-white focus:ring-1 focus:ring-blue-100">
+                              <button (click)="removeBankDeposit(i); saveStocks()" class="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all text-rose-500 p-1"><app-icon name="close" [size]="10"></app-icon></button>
                            </td>
                         </tr>
-                       <tr class="bg-blue-100 font-black">
-                          <td colspan="2" class="p-1 border-r border-black text-left uppercase italic">Total Banco</td>
-                          <td class="p-1 font-mono tabular-nums">{{ getBankTotal() | number:'1.2-2' }}</td>
-                       </tr>
                     </tbody>
+                    <tfoot class="bg-blue-50 font-black border-t border-blue-100">
+                       <tr>
+                          <td colspan="2" class="p-2 text-left uppercase italic text-[9px] text-blue-800">Total Banco</td>
+                          <td class="p-2 font-mono tabular-nums text-blue-900 border-l border-blue-100">{{ getBankTotal() | number:'1.2-2' }}</td>
+                       </tr>
+                    </tfoot>
                  </table>
               </div>
-              <div class="border border-black">
-                  <div class="bg-gray-200 p-1 font-bold text-[9px] border-b border-black uppercase text-center">Despesas e Saldos do dia</div>
-                  <div class="p-1 space-y-1">
-                     <div class="flex justify-between items-center text-[8px] border-b border-gray-100 pb-1">
-                        <span class="uppercase font-bold">Saldo de Abertura</span>
-                        <input type="number" [(ngModel)]="openingCash" (change)="saveStocks()" class="w-20 text-right font-mono border border-gray-200 rounded p-0.5 bg-gray-50">
+
+              <!-- EXPENSES -->
+              <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                  <div class="bg-gray-100 p-2 font-black text-[10px] border-b border-gray-200 uppercase text-center text-rose-900">Despesas e Saldos</div>
+                  <div class="p-2 space-y-2">
+                     <div class="flex justify-between items-center p-1.5 bg-gray-50 rounded border border-gray-100">
+                        <span class="uppercase font-bold text-[9px] text-gray-500">Saldo Abertura</span>
+                        <input type="number" [(ngModel)]="openingCash" (change)="saveStocks()" class="w-24 text-right font-black font-mono border-none p-0 bg-transparent text-gray-700">
                      </div>
 
-                     <div class="group">
-                        <div class="flex justify-between items-center text-[7px] uppercase font-black text-gray-400 mb-1">
-                           <span>Despesas Detalhadas</span>
-                           <button (click)="addExpense()" class="text-blue-600 font-bold hover:underline transition-all text-[8px]">+ REGISTRAR DESPESA</button>
+                     <div class="space-y-1">
+                        <div class="flex justify-between items-center text-[8px] uppercase font-black text-gray-400 px-1">
+                           <span>Detalhes</span>
+                           <button (click)="addExpense()" class="text-blue-600 hover:scale-105 transition-transform">+ ADD DESPESA</button>
                         </div>
-                        <div *ngFor="let ex of dailyExpenses; let i = index" class="flex gap-1 mb-1 items-center bg-white border border-gray-100 p-0.5 rounded shadow-sm">
-                           <input type="text" [(ngModel)]="ex.description" (change)="saveStocks()" class="flex-1 border-none bg-transparent text-[7px] p-0.5 focus:ring-0" placeholder="Descrição...">
-                           <input type="number" [(ngModel)]="ex.value" (change)="saveStocks()" class="w-12 border-none bg-transparent text-[7px] p-0.5 text-right font-black font-mono focus:ring-0" placeholder="0.00">
-                           <button (click)="removeExpense(i); saveStocks()" class="text-rose-500 hover:bg-rose-50 rounded p-0.5"><app-icon name="delete" [size]="10"></app-icon></button>
+                        <div *ngFor="let ex of dailyExpenses; let i = index" class="flex gap-1 items-center bg-rose-50/30 border border-rose-100/50 p-1 rounded">
+                           <input type="text" [(ngModel)]="ex.description" (change)="saveStocks()" class="flex-1 border-none bg-transparent text-[9px] p-0 font-bold focus:ring-0" placeholder="...">
+                           <input type="number" [(ngModel)]="ex.value" (change)="saveStocks()" class="w-16 border-none bg-transparent text-[9px] p-0 text-right font-black font-mono focus:ring-0">
+                           <button (click)="removeExpense(i); saveStocks()" class="text-rose-500 p-0.5"><app-icon name="delete" [size]="10"></app-icon></button>
                         </div>
                      </div>
 
-                     <table class="w-full text-[8px] border-collapse mt-2">
-                        <tbody class="font-bold">
-                           <tr class="border-b border-gray-300">
-                              <td class="p-1 uppercase text-gray-500">(-) Total Despesas</td>
-                              <td class="p-1 text-right text-rose-600 font-mono">{{ getExpensesTotal() | number:'1.2-2' }}</td>
-                           </tr>
-                           <tr class="border-b border-gray-300">
-                              <td class="p-1 uppercase text-gray-500">(+) Arrecadação (VD)</td>
-                              <td class="p-1 text-right text-emerald-600 font-mono italic">{{ getGlobalTotal() | number:'1.2-2' }}</td>
-                           </tr>
-                           <tr class="border-b border-gray-300 bg-emerald-50">
-                              <td class="p-1 uppercase text-emerald-700 font-bold tracking-tighter">(+) Ajuste / Outras Entradas</td>
-                              <td class="p-1">
-                                 <input type="number" [(ngModel)]="extraIncome" (change)="saveStocks()" class="w-full text-right font-black font-mono border-none p-0 focus:ring-0 bg-transparent text-emerald-700 placeholder:text-emerald-200" placeholder="0.00">
-                              </td>
-                           </tr>
-                           <tr class="border-b border-black">
-                              <td class="p-1 uppercase font-black">Saldo Esperado (A+R-D-B)</td>
-                              <td class="p-1 text-right font-black text-blue-800 font-mono italic">{{ getExpectedBalance() | number:'1.2-2' }}</td>
-                           </tr>
-                           <tr class="border-b border-black bg-yellow-50">
-                              <td class="p-1 uppercase font-black">DINHEIRO EM GAVETA</td>
-                              <td class="p-1 text-right bg-yellow-400 font-black text-[10px] font-mono tabular-nums">{{ getPhysicalTotal() | number:'1.2-2' }}</td>
-                           </tr>
-                           <tr [class.bg-rose-50]="getDiscrepancy() !== 0" [class.bg-emerald-50]="getDiscrepancy() === 0">
-                              <td class="p-1 uppercase font-black">DIFERENCIAL</td>
-                              <td class="p-1 text-right font-black font-mono text-[9px]" [class.text-rose-600]="getDiscrepancy() < 0" [class.text-emerald-600]="getDiscrepancy() >= 0">
-                                 {{ getDiscrepancy() | number:'1.2-2' }}
-                              </td>
+                     <table class="w-full text-[9px] border-collapse mt-2 border-t border-gray-100">
+                        <tbody class="font-bold divide-y divide-gray-50">
+                           <tr><td class="p-1 uppercase text-gray-400 text-[8px]">(-) Despesas</td><td class="p-1 text-right text-rose-600 font-mono">{{ getExpensesTotal() | number:'1.2-2' }}</td></tr>
+                           <tr><td class="p-1 uppercase text-gray-400 text-[8px]">(+) Arrecadação</td><td class="p-1 text-right text-emerald-600 font-mono">{{ getGlobalTotal() | number:'1.2-2' }}</td></tr>
+                           <tr class="bg-emerald-50/50"><td class="p-1 uppercase text-emerald-700 text-[8px]">(+) Ajustes</td><td class="p-1"><input type="number" [(ngModel)]="extraIncome" (change)="saveStocks()" class="w-full text-right font-black font-mono border-none p-0 bg-transparent text-emerald-700"></td></tr>
+                           <tr class="bg-blue-50 mt-1 font-black"><td class="p-1 uppercase text-blue-900">ESPERADO</td><td class="p-1 text-right font-mono text-blue-900">{{ getExpectedBalance() | number:'1.2-2' }}</td></tr>
+                           <tr class="bg-yellow-400 text-black font-black"><td class="p-1 uppercase">EM GAVETA</td><td class="p-1 text-right font-mono text-[11px]">{{ getPhysicalTotal() | number:'1.2-2' }}</td></tr>
+                           <tr [class.bg-rose-600]="getDiscrepancy() < 0" [class.bg-emerald-600]="getDiscrepancy() >= 0" class="text-white font-black">
+                              <td class="p-1 uppercase">DIFERENÇA</td>
+                              <td class="p-1 text-right font-mono">{{ getDiscrepancy() | number:'1.2-2' }}</td>
                            </tr>
                         </tbody>
                      </table>
                   </div>
-               </div>
+              </div>
 
-               <div class="border border-black">
-                  <div class="bg-gray-200 p-1 font-bold text-[9px] border-b border-black uppercase text-center">Contagem Física (Notas/Moedas)</div>
-                  <div class="p-1 space-y-1">
-                     <div class="grid grid-cols-2 gap-x-2 gap-y-0.5">
-                        <div *ngFor="let den of denominations" class="flex items-center justify-between border-b border-gray-100">
-                           <span class="text-[7px] font-black text-gray-400">{{ den }} MT:</span>
-                           <input type="number" [(ngModel)]="cashNotes[den]" (change)="saveStocks()" class="w-10 text-right font-mono text-[8px] border-none p-0 focus:ring-0 bg-transparent" placeholder="0">
+              <!-- PHYSICAL CASH -->
+              <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                  <div class="bg-gray-100 p-2 font-black text-[10px] border-b border-gray-200 uppercase text-center text-amber-900">Contagem Física</div>
+                  <div class="p-2 space-y-2">
+                     <div class="grid grid-cols-2 gap-x-3 gap-y-1">
+                        <div *ngFor="let den of denominations" class="flex items-center justify-between border-b border-gray-50 pb-0.5">
+                           <span class="text-[9px] font-bold text-gray-500 italic">{{ den }}:</span>
+                           <input type="number" [(ngModel)]="cashNotes[den]" (change)="saveStocks()" class="w-12 text-right font-black font-mono text-[10px] border-none p-0 bg-transparent focus:ring-0">
                         </div>
                      </div>
-                     <div class="flex justify-between items-center border-t border-gray-200 pt-1">
-                        <span class="text-[7px] font-black uppercase">Moedas:</span>
-                        <input type="number" [(ngModel)]="cashCoins" (change)="saveStocks()" class="w-16 text-right font-mono text-[8px] border-none p-0 focus:ring-0 bg-transparent" placeholder="0.00">
+                     <div class="flex justify-between items-center border-t border-gray-100 pt-2 px-1">
+                        <span class="text-[9px] font-bold uppercase text-gray-500">Moedas</span>
+                        <input type="number" [(ngModel)]="cashCoins" (change)="saveStocks()" class="w-20 text-right font-black font-mono text-[10px] border-none p-0 bg-transparent">
                      </div>
-                     <div class="bg-yellow-50 p-1 rounded flex justify-between items-center border border-yellow-200 mt-1">
-                        <span class="text-[7px] font-black uppercase tracking-tighter">TOTAL FÍSICO (N+M):</span>
-                        <span class="text-[9px] font-mono font-black text-yellow-800">{{ getCashOnlyTotal() | number:'1.2-2' }}</span>
-                     </div>
-
-                     <div class="bg-gray-50 p-1 mt-2 border-t border-black space-y-1">
+                     <div class="bg-amber-100 p-2 rounded-lg border border-amber-200">
                         <div class="flex justify-between items-center">
-                           <span class="text-[7px] font-black uppercase text-rose-600">Entrega à Circusal:</span>
-                           <input type="number" [(ngModel)]="cashHandover" (change)="saveStocks()" class="w-20 text-right font-black font-mono text-[9px] border border-rose-100 rounded bg-rose-50 p-0.5 focus:bg-white text-rose-700">
+                           <span class="text-[8px] font-black uppercase text-amber-900 tracking-tighter">TOTAL (N+M)</span>
+                           <span class="text-[12px] font-mono font-black text-amber-900">{{ getCashOnlyTotal() | number:'1.2-2' }}</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                           <span class="text-[7px] font-black uppercase text-blue-600">Pagamentos POS (Cartão):</span>
-                           <input type="number" [(ngModel)]="cashPOS" (change)="saveStocks()" class="w-20 text-right font-mono text-[9px] border border-blue-100 rounded bg-blue-50 p-0.5 focus:bg-white text-blue-700">
+                     </div>
+                     <div class="pt-2 border-t border-gray-100 space-y-2">
+                        <div class="flex flex-col">
+                           <span class="text-[8px] font-black uppercase text-rose-500 ml-1">Para Circusal</span>
+                           <input type="number" [(ngModel)]="cashHandover" (change)="saveStocks()" class="w-full text-right font-black font-mono text-[11px] bg-rose-50 border border-rose-100 rounded-lg p-1.5 focus:bg-white text-rose-700">
+                        </div>
+                        <div class="flex flex-col">
+                           <span class="text-[8px] font-black uppercase text-blue-500 ml-1">Vendas POS</span>
+                           <input type="number" [(ngModel)]="cashPOS" (change)="saveStocks()" class="w-full text-right font-black font-mono text-[11px] bg-blue-50 border border-blue-100 rounded-lg p-1.5 focus:bg-white text-blue-700">
                         </div>
                      </div>
                   </div>
-               </div>
+              </div>
 
-               <div class="border border-black">
-                  <div class="bg-gray-200 p-1 font-bold text-[9px] border-b border-black uppercase flex justify-between items-center group">
-                     <span>Movimento de KIT,S DE REDUTORES</span>
-                     <button (click)="addKit()" class="bg-blue-600 text-white px-1 rounded text-[8px] opacity-0 group-hover:opacity-100 transition-all">+ ADD</button>
+              <!-- KITS -->
+              <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                  <div class="bg-gray-100 p-2 font-black text-[10px] border-b border-gray-200 uppercase flex justify-between items-center group">
+                     <span class="text-emerald-900">KITS de Redutores</span>
+                     <button (click)="addKit()" class="bg-blue-600 text-white px-2 py-0.5 rounded text-[8px] shadow-sm">+ ADD</button>
                   </div>
-                  <table class="w-full text-[8px] text-center border-collapse">
+                  <table class="w-full text-[9px] text-center border-collapse">
                      <thead>
-                        <tr class="bg-gray-50 border-b border-black uppercase italic">
-                           <th class="p-1 border-r border-black text-left">Item</th>
-                           <th class="p-1 border-r border-black w-8">Sai.</th>
-                           <th class="p-1 border-r border-black w-8">Ent.</th>
-                           <th class="p-1 w-8">Vend.</th>
-                           <th class="w-4 no-print"></th>
+                        <tr class="bg-gray-50 border-b border-gray-100 text-[8px] font-bold text-gray-500 uppercase italic">
+                           <th class="p-1 border-r border-gray-50 text-left">Item</th>
+                           <th class="p-1 border-r border-gray-50 w-8">Sai.</th>
+                           <th class="p-1 border-r border-gray-50 w-8">Ent.</th>
+                           <th class="p-1 w-8">Vnd.</th>
                         </tr>
                      </thead>
-                     <tbody>
-                        <tr *ngFor="let k of kitMovements; let i = index" class="border-b border-gray-200 group">
-                           <td class="p-0 border-r border-black">
-                              <input type="text" [(ngModel)]="k.name" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-left uppercase focus:bg-white focus:outline-none">
+                     <tbody class="divide-y divide-gray-50">
+                        <tr *ngFor="let k of kitMovements; let i = index" class="hover:bg-emerald-50/30 group">
+                           <td class="p-0 border-r border-gray-50">
+                              <input type="text" [(ngModel)]="k.name" (change)="saveStocks()" class="w-full border-none p-1.5 bg-transparent text-left uppercase text-[9px] font-bold focus:bg-white">
                            </td>
-                           <td class="p-0 border-r border-black">
-                              <input type="number" [(ngModel)]="k.out" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-center focus:bg-white focus:outline-none focus:bg-white">
+                           <td class="p-0 border-r border-gray-50">
+                              <input type="number" [(ngModel)]="k.out" (change)="saveStocks()" class="w-full border-none p-1.5 bg-transparent text-center focus:bg-white">
                            </td>
-                           <td class="p-0 border-r border-black">
-                              <input type="number" [(ngModel)]="k.ing" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-center focus:bg-white text-blue-600 font-bold focus:outline-none focus:bg-white">
+                           <td class="p-0 border-r border-gray-50">
+                              <input type="number" [(ngModel)]="k.ing" (change)="saveStocks()" class="w-full border-none p-1.5 bg-transparent text-center text-blue-600 font-bold focus:bg-white">
                            </td>
-                           <td class="p-0 border-r border-black">
-                              <input type="number" [(ngModel)]="k.sale" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-center focus:bg-white text-emerald-600 font-bold focus:outline-none focus:bg-white">
+                           <td class="p-0 relative">
+                              <input type="number" [(ngModel)]="k.sale" (change)="saveStocks()" class="w-full border-none p-1.5 bg-transparent text-center text-emerald-600 font-black focus:bg-white">
+                              <button (click)="removeKit(i); saveStocks()" class="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-rose-500"><app-icon name="close" [size]="10"></app-icon></button>
                            </td>
-                           <td class="p-0 text-rose-500 no-print">
-                              <button (click)="removeKit(i); saveStocks()" class="opacity-0 group-hover:opacity-100"><app-icon name="close" [size]="8"></app-icon></button>
-                           </td>
-                        </tr>
-                        <tr class="bg-[#C6E0B4] font-black italic uppercase">
-                           <td class="p-1 border-r border-black text-left">TOTAIS</td>
-                           <td class="p-1 border-r border-black">{{ getKitSum('out') }}</td>
-                           <td class="p-1 border-r border-black">{{ getKitSum('ing') }}</td>
-                           <td class="p-1">{{ getKitSum('sale') }}</td>
-                           <td></td>
                         </tr>
                      </tbody>
+                     <tfoot class="bg-emerald-50 font-black border-t border-emerald-100 text-emerald-900">
+                        <tr>
+                           <td class="p-2 border-r border-emerald-100 text-left uppercase text-[8px]">TOTAIS</td>
+                           <td class="p-2 border-r border-emerald-100">{{ getKitSum('out') }}</td>
+                           <td class="p-2 border-r border-emerald-100">{{ getKitSum('ing') }}</td>
+                           <td class="p-2">{{ getKitSum('sale') }}</td>
+                        </tr>
+                     </tfoot>
                   </table>
-               </div>
+              </div>
             </div>
          </div>
-
-          <ng-container *ngIf="activeTab === 'INVENTORY'">
-
-
-            <div class="print-a4 bg-white p-4 font-sans text-[10px] text-black overflow-auto">
-
-
-               
-
-
-               <!-- HEADER: INVENTÁRIO -->
-
-
-               <div class="flex justify-between items-start mb-6">
-
-
-                  <div class="space-y-0.5 text-left">
-
-
-                     <div class="flex gap-2"><span class="font-bold uppercase tracking-widest text-[#2E3137]">Supervisão:</span> <span class="bg-blue-50 px-2 uppercase font-black">{{ control?.user || '---' }}</span></div>
-
-
-                     <div class="flex gap-2"><span class="font-bold uppercase tracking-widest text-[#2E3137]">rmazém:</span> <span class="bg-blue-50 px-2 uppercase font-black">SEDE / {{ authService.currentUserValue?.username }}</span></div>
-
-
-                     <div class="text-xs font-black mt-1 text-blue-900">{{ selectedDate | date:'dd.MM.yyyy' }}</div>
-
-
-                  </div>
-
-
-                  
-
-
-                  <div class="flex border border-black text-center font-black">
-
-
-                     <div class="border-r border-black"><div class="bg-gray-100 px-3 py-0.5 border-b border-black">Dia</div><div class="px-3 py-1 text-lg">{{ selectedDate | date:'dd' }}</div></div>
-
-
-                     <div class="border-r border-black"><div class="bg-gray-100 px-3 py-0.5 border-b border-black">MÃªs</div><div class="px-3 py-1 text-lg">{{ selectedDate | date:'MM' }}</div></div>
-
-
-                     <div><div class="bg-gray-100 px-3 py-0.5 border-b border-black">no</div><div class="px-3 py-1 text-lg">{{ selectedDate | date:'yyyy' }}</div></div>
-
-
-                  </div>
-
-
-               </div>
-
-
-               <div class="grid grid-cols-12 gap-8">
-
-
-                  <!-- COLUN ESQUERD -->
-
-
-                  <div class="col-span-8 space-y-8">
-
-
-                     <div class="flex gap-4 items-start">
-
-
-                        <div class="flex-1">
-
-
-                           <table class="w-full border-collapse border border-black text-center uppercase text-[9px]">
-
-
-                              <thead>
-
-
-                                 <tr class="bg-[#2E3137] text-white">
-
-
-                                    <th colspan="8" class="p-1 font-black italic">QUNTIDDES EM STOCK (FÃSICO)</th>
-
-
-                                 </tr>
-
-
-                                 <tr class="bg-gray-200 text-black">
-
-
-                                    <th class="p-1 border border-black font-black">TIPOS</th>
-
-
-                                    <th *ngFor="let t of cylinderTypes" class="p-1 border border-black w-10 font-bold">{{ t.name }}</th>
-
-
-                                 </tr>
-
-
-                              </thead>
-
-
-                              <tbody>
-
-
-                                 <tr><td class="p-1 font-bold text-left bg-gray-50 border border-black italic">Cheias</td><td *ngFor="let t of cylinderTypes" class="p-1 text-blue-700 font-black border border-black tabular-nums">{{ getFinalStock(t.name, 'gpl') }}</td></tr>
-
-
-                                 <tr><td class="p-1 font-bold text-left bg-gray-50 border border-black italic">Vazias</td><td *ngFor="let t of cylinderTypes" class="p-1 border border-black tabular-nums">{{ getFinalStock(t.name, 'empty') }}</td></tr>
-
-
-                                 <tr><td class="p-1 font-bold text-left bg-gray-50 text-rose-600 border border-black italic">variad.</td><td *ngFor="let t of cylinderTypes" class="p-1 text-rose-600 border border-black tabular-nums">{{ getFinalStock(t.name, 'damaged') }}</td></tr>
-
-
-                              </tbody>
-
-
-                              <tfoot class="bg-orange-400 font-black text-white">
-
-
-                                 <tr><td class="p-1 border border-black text-left">TOTIS</td><td *ngFor="let t of cylinderTypes" class="p-1 border border-black tabular-nums">{{ getFinalTotal(t.name) }}</td></tr>
-
-
-                              </tfoot>
-
-
-                           </table>
-
-
-                        </div>
-
-
-                     </div>
-
-
-                     <!-- POR REVER VS DEVOLVER -->
-
-
-                     <div class="grid grid-cols-2 gap-4">
-
-
-                        <div class="border border-black">
-
-
-                           <div class="bg-gray-100 text-center font-bold p-1 italic border-b border-black text-[10px] uppercase">Garrafas Por Reaver (Clientes/Staff)</div>
-
-
-                           <table class="w-full text-center text-[8px] uppercase">
-
-
-                              <thead>
-
-
-                                 <tr class="bg-[#2E3137] text-white">
-
-
-                                    <th class="p-1 text-left border-r border-black">NOMES</th>
-
-
-                                    <th *ngFor="let t of cylinderTypes" class="p-1 border-r border-black w-7">{{ t.name }}</th>
-
-
-                                 </tr>
-
-
-                              </thead>
-
-
-                              <tbody>
-
-
-                                 <tr class="bg-blue-100 font-black"><td [attr.colspan]="cylinderTypes.length + 1" class="p-1 text-left border-b border-black">Trabalhadores/Funcionários</td></tr>
-
-
-                                 <tr *ngFor="let ent of getCategorizedEntities('TRBLHDOR')" [class.highlight-entity]="highlightedEntityName === ent.name" class="divide-x divide-gray-300 border-b border-gray-100 group">
-
-
-                                    <td class="p-1 text-left font-bold flex items-center justify-between"><span>{{ ent.name }}</span><button (click)="clearEntityEntries(ent.name)" class="text-rose-400 opacity-0 group-hover:opacity-100 p-0.5"><app-icon name="delete" [size]="10"></app-icon></button></td>
-
-
-                                    <td *ngFor="let t of cylinderTypes" class="p-0 border-l border-gray-200">
-
-
-                                       <input type="number" [value]="ent.balances[t.name] || 0" (change)="updateInventoryValue(ent.name, t, $event, 'TRBLHDOR', 'CUSTOMER')" class="w-full text-center font-bold py-1 bg-transparent border-none text-[8px] text-blue-600 focus:bg-white focus:ring-0">
-
-
+<ng-container *ngIf="activeTab === 'INVENTORY'">
+             <div class="print-a4 bg-white p-4 font-sans text-black overflow-auto min-h-screen">
+                <!-- HEADER SECTION -->
+                <div class="flex flex-col mb-4">
+                   <div class="flex justify-center mb-4">
+                      <div class="flex border border-black text-center font-bold text-[10px] shadow-sm">
+                         <div class="border-r border-black"><div class="bg-gray-200 px-4 py-1 border-b border-black uppercase text-[7px] font-black tracking-widest">Dia</div><div class="px-4 py-1 text-base">{{ selectedDate | date:'dd' }}</div></div>
+                         <div class="border-r border-black"><div class="bg-gray-200 px-4 py-1 border-b border-black uppercase text-[7px] font-black tracking-widest">Mês</div><div class="px-4 py-1 text-base">{{ selectedDate | date:'MM' }}</div></div>
+                         <div><div class="bg-gray-200 px-4 py-1 border-b border-black uppercase text-[7px] font-black tracking-widest">Ano</div><div class="px-4 py-1 text-base">{{ selectedDate | date:'yyyy' }}</div></div>
+                      </div>
+                   </div>
+                   <div class="flex justify-between items-start text-[10px]">
+                      <div class="space-y-1">
+                         <div class="flex gap-2"><span class="font-bold text-gray-500 uppercase tracking-tighter w-20">Supervisão:</span> <span class="font-black text-rose-600 uppercase">{{ control?.user || '---' }}</span></div>
+                         <div class="flex gap-2"><span class="font-bold text-gray-500 uppercase tracking-tighter w-20">Armazém:</span> <span class="font-black">SEDE</span></div>
+                         <div class="text-[9px] font-black text-blue-900 border-b border-blue-100 pb-0.5 inline-block">{{ selectedDate | date:'dd.MM.yyyy' }}</div>
+                      </div>
+                      <div class="text-right">
+                         <h1 class="text-2xl font-black text-blue-900 leading-none tracking-tighter">INVERNO ERP</h1>
+                         <p class="text-[9px] uppercase font-bold text-gray-400 tracking-widest border-t border-gray-100 pt-1 mt-1">Mapa de Inventário Global</p>
+                      </div>
+                   </div>
+                </div>
+
+                <!-- TOP TABLES -->
+                <div class="flex gap-4 mb-8">
+                   <div class="flex-[1.2]">
+                      <table class="inventory-sheet-table w-full">
+                         <thead>
+                            <tr class="bg-[#31353D] text-white"><th colspan="8" class="p-1 uppercase text-[8px] font-black tracking-[0.2em]">Quantidades em Stock</th></tr>
+                            <tr class="bg-gray-100">
+                               <th class="w-20"></th>
+                               <th *ngFor="let t of cylinderTypes" class="w-10 text-[8px] font-black">{{ t.name }}</th>
+                            </tr>
+                         </thead>
+                         <tbody class="font-bold">
+                            <tr>
+                               <td class="text-left px-2 bg-gray-50/50">Cheias</td>
+                               <td *ngFor="let t of cylinderTypes" class="p-0 border border-transparent focus-within:border-blue-400">
+                                  <input type="number" min="0" [value]="getFinalStock(t.name, 'gpl')" (change)="updateEditableStock(t.name, 'gpl', $event)" class="w-full text-center bg-transparent border-none focus:ring-0 text-blue-700 font-bold px-0 hide-arrows">
+                               </td>
+                            </tr>
+                            <tr>
+                               <td class="text-left px-2 bg-gray-50/50">Vazias</td>
+                               <td *ngFor="let t of cylinderTypes" class="p-0 border border-transparent focus-within:border-blue-400">
+                                  <input type="number" min="0" [value]="getFinalStock(t.name, 'empty')" (change)="updateEditableStock(t.name, 'empty', $event)" class="w-full text-center bg-transparent border-none focus:ring-0 font-bold px-0 hide-arrows">
+                               </td>
+                            </tr>
+                            <tr>
+                               <td class="text-left px-2 bg-gray-50/50 text-rose-600">Avariadas</td>
+                               <td *ngFor="let t of cylinderTypes" class="p-0 border border-transparent focus-within:border-blue-400">
+                                  <input type="number" min="0" [value]="getFinalStock(t.name, 'damaged')" (change)="updateEditableStock(t.name, 'damaged', $event)" class="w-full text-center bg-transparent border-none focus:ring-0 text-rose-600 font-bold px-0 hide-arrows">
+                               </td>
+                            </tr>
+                         </tbody>
+                         <tfoot class="bg-orange-500 font-black text-white">
+                            <tr><td class="text-left px-2">TOTAIS</td><td *ngFor="let t of cylinderTypes">{{ getFinalTotal(t.name) }}</td></tr>
+                         </tfoot>
+                      </table>
+                   </div>
+
+                   <div class="flex-[1.2]">
+                       <table class="inventory-sheet-table w-full">
+                          <thead>
+                             <tr class="bg-[#31353D] text-white">
+                                <th class="w-16 p-1 text-left text-[7px] font-black tracking-wider uppercase"></th>
+                                <th *ngFor="let t of cylinderTypes" class="w-10 text-[8px] font-black">{{ t.name }}</th>
+                                <th class="w-14 text-[8px] font-black">KIT</th>
+                             </tr>
+                          </thead>
+                          <tbody>
+                             <!-- Row 1: Calculated -->
+                             <tr class="font-black text-blue-900 bg-blue-50">
+                                <td class="text-left px-1 text-[7px] uppercase text-blue-700 bg-blue-100 border-r border-black">Calculado</td>
+                                <td *ngFor="let t of cylinderTypes" class="py-1">{{ getManeioCalculated(t.name) }}</td>
+                                <td class="py-1">{{ getKitSum('ing') - getKitSum('out') }}</td>
+                             </tr>
+                             <!-- Row 2: Physical (mostly auto-calculated now) -->
+                             <tr class="font-black text-gray-800 bg-white">
+                                <td class="text-left px-1 text-[7px] uppercase text-gray-600 bg-gray-100 border-r border-black">Físico</td>
+                                <td *ngFor="let t of cylinderTypes" class="py-1 text-center text-[10px] bg-gray-50/20">
+                                   {{ physicalManeio[t.name] || 0 }}
+                                </td>
+                                <td class="py-0">
+                                   <input type="number" min="0"
+                                      [(ngModel)]="physicalManeio['kit']"
+                                      (change)="saveStocks()"
+                                      class="w-full border-none bg-transparent text-center font-black text-[10px] focus:bg-yellow-50 focus:ring-1 focus:ring-yellow-300 focus:outline-none p-0.5"
+                                      [placeholder]="'0'">
+                                </td>
+                             </tr>
+                             <!-- Row 3: Difference -->
+                             <tr class="font-black">
+                                <td class="text-left px-1 text-[7px] uppercase bg-gray-100 border-r border-black tracking-widest text-rose-700">Dif.</td>
+                                <td *ngFor="let t of cylinderTypes" class="py-1"
+                                   [class.text-rose-600]="getManeioDifference(t.name) !== 0"
+                                   [class.text-emerald-600]="getManeioDifference(t.name) === 0"
+                                   [class.font-black]="getManeioDifference(t.name) !== 0">
+                                   {{ getManeioDifference(t.name) === 0 ? '✓' : getManeioDifference(t.name) }}
+                                </td>
+                                <td class="py-1"
+                                   [class.text-rose-600]="getKitDifference() !== 0"
+                                   [class.text-emerald-600]="getKitDifference() === 0">
+                                   {{ getKitDifference() === 0 ? '✓' : getKitDifference() }}
+                                </td>
+                             </tr>
+                          </tbody>
+                       </table>
+                    </div>
+
+                   <div class="flex-1">
+                      <table class="inventory-sheet-table w-full">
+                         <thead>
+                            <tr class="bg-[#31353D] text-white"><th colspan="7" class="p-1 uppercase text-[8px] font-black tracking-[0.2em]">Líquidos Vendidos</th></tr>
+                            <tr class="bg-gray-100">
+                               <th *ngFor="let t of cylinderTypes" class="w-10 text-[8px] font-black">{{ t.name }}</th>
+                            </tr>
+                         </thead>
+                         <tbody>
+                            <tr class="font-black text-rose-600">
+                               <td *ngFor="let t of cylinderTypes" class="py-1">{{ sumEntries(getEntriesForType(t.id!, 'CUSTOMER'), 'vz_vend') }}</td>
+                            </tr>
+                         </tbody>
+                      </table>
+                   </div>
+                </div>
+
+                <!-- MAIN GRID -->
+                <div class="grid grid-cols-12 gap-6">
+                   <div class="col-span-4 space-y-1">
+                      <div class="text-center font-black text-[10px] uppercase border-b-2 border-black pb-1 mb-2 italic">Garrafas Por Reaver</div>
+                      <table class="inventory-sheet-table w-full text-[8px]">
+                         <thead>
+                            <tr class="bg-gray-100"><th [attr.colspan]="cylinderTypes.length + 1" class="text-center font-bold p-1">Quantidades</th></tr>
+                            <tr class="bg-[#31353D] text-white border-t border-black">
+                               <th class="text-left px-2 w-32">NOMES</th>
+                               <th *ngFor="let t of cylinderTypes" class="w-8">{{ t.name }}</th>
+                            </tr>
+                         </thead>
+                         <tbody class="entities-body">
+                            <tr class="bg-blue-50 font-black"><td [attr.colspan]="cylinderTypes.length + 1" class="text-left px-2 border-b border-black text-blue-800 tracking-tighter">TRABALHADOR / STAFF</td></tr>
+                            <tr *ngFor="let ent of getCategorizedEntities('TRBLHDOR', 'CUSTOMER')">
+                               <td class="text-left px-2 font-bold border-r border-black group">
+                                  <div class="flex items-center justify-between w-full">
+                                     <span class="truncate">{{ ent.name }}</span>
+                                     <button (click)="clearEntityEntries(ent.name, 'CUSTOMER')" class="text-red-500 opacity-0 group-hover:opacity-100" title="Remover"><span class="material-symbols-outlined text-[12px] font-bold">close</span></button>
+                                  </div>
+                               </td>
+                                <td *ngFor="let t of cylinderTypes" class="font-mono p-0 relative group/cell">
+                                   <input type="number" [value]="ent.balances[t.name]" (change)="updateInventoryValue(ent.name, t, $event, 'CUSTOMER')" class="w-full text-center bg-transparent outline-none font-bold text-[9px] py-1 border border-transparent focus:bg-white focus:border-blue-400 hide-arrows">
+                                </td>
+                            </tr>
+                            <ng-container *ngTemplateOutlet="addInventoryRowTemplate; context: { cat: 'TRBLHDOR', entRole: 'CUSTOMER', dbEntry: 'CUSTOMER' }"></ng-container>
+                            <tr class="bg-[#ED7D31] font-black text-white"><td class="text-left px-2 uppercase">Total</td><td *ngFor="let t of cylinderTypes" class="font-mono">{{ sumCategorizedBalances('TRBLHDOR', t.name, 'CUSTOMER') }}</td></tr>
+
+                            <tr class="bg-blue-50 font-black"><td [attr.colspan]="cylinderTypes.length + 1" class="text-left px-2 border-b border-black text-blue-800 tracking-tighter mt-2">CLIENTES</td></tr>
+                            <tr *ngFor="let ent of getCategorizedEntities('CLIENTE', 'CUSTOMER')">
+                               <td class="text-left px-2 font-bold border-r border-black group">
+                                  <div class="flex items-center justify-between w-full">
+                                     <span class="truncate">{{ ent.name }}</span>
+                                     <button (click)="clearEntityEntries(ent.name, 'CUSTOMER')" class="text-red-500 opacity-0 group-hover:opacity-100" title="Remover"><span class="material-symbols-outlined text-[12px] font-bold">close</span></button>
+                                  </div>
+                               </td>
+                                <td *ngFor="let t of cylinderTypes" class="font-mono p-0 relative group/cell">
+                                   <input type="number" [value]="ent.balances[t.name]" (change)="updateInventoryValue(ent.name, t, $event, 'CUSTOMER')" class="w-full text-center bg-transparent outline-none font-bold text-[9px] py-1 border border-transparent focus:bg-white focus:border-blue-400 hide-arrows">
+                                </td>
+                            </tr>
+                            <ng-container *ngTemplateOutlet="addInventoryRowTemplate; context: { cat: 'CLIENTE', entRole: 'CUSTOMER', dbEntry: 'CUSTOMER' }"></ng-container>
+                            <tr class="bg-[#ED7D31] font-black text-white"><td class="text-left px-2 uppercase">Total</td><td *ngFor="let t of cylinderTypes" class="font-mono">{{ sumCategorizedBalances('CLIENTE', t.name, 'CUSTOMER') }}</td></tr>
+
+                            <tr class="bg-blue-50 font-black"><td [attr.colspan]="cylinderTypes.length + 1" class="text-left px-2 border-b border-black text-blue-800 tracking-tighter mt-2">INSTITUIÇÕES</td></tr>
+                            <tr *ngFor="let ent of getCategorizedEntities('INSTITUICO', 'CUSTOMER')">
+                               <td class="text-left px-2 font-bold border-r border-black group">
+                                  <div class="flex items-center justify-between w-full">
+                                     <span class="truncate">{{ ent.name }}</span>
+                                     <button (click)="clearEntityEntries(ent.name, 'CUSTOMER')" class="text-red-500 opacity-0 group-hover:opacity-100" title="Remover"><span class="material-symbols-outlined text-[12px] font-bold">close</span></button>
+                                  </div>
+                               </td>
+                                <td *ngFor="let t of cylinderTypes" class="font-mono p-0 relative group/cell">
+                                   <input type="number" [value]="ent.balances[t.name]" (change)="updateInventoryValue(ent.name, t, $event, 'CUSTOMER')" class="w-full text-center bg-transparent outline-none font-bold text-[9px] py-1 border border-transparent focus:bg-white focus:border-blue-400 hide-arrows">
+                                </td>
+                            </tr>
+                            <ng-container *ngTemplateOutlet="addInventoryRowTemplate; context: { cat: 'INSTITUICO', entRole: 'CUSTOMER', dbEntry: 'CUSTOMER' }"></ng-container>
+                            <tr class="bg-[#ED7D31] font-black text-white"><td class="text-left px-2 uppercase border-b border-black">Total</td><td *ngFor="let t of cylinderTypes" class="font-mono border-b border-black">{{ sumCategorizedBalances('INSTITUICO', t.name, 'CUSTOMER') }}</td></tr>
+                            <tr class="bg-blue-50 font-black"><td [attr.colspan]="cylinderTypes.length + 1" class="text-left px-2 border-b border-black text-blue-800 tracking-tighter mt-2">FORNECEDORES</td></tr>
+                             <tr *ngFor="let ent of getCategorizedEntities('SUPPLIER', 'CUSTOMER')">
+                                <td class="text-left px-2 font-bold border-r border-black group">
+                                   <div class="flex items-center justify-between w-full">
+                                      <span class="truncate">{{ ent.name }}</span>
+                                      <button (click)="clearEntityEntries(ent.name, 'CUSTOMER')" class="text-red-500 opacity-0 group-hover:opacity-100" title="Remover"><span class="material-symbols-outlined text-[12px] font-bold">close</span></button>
+                                   </div>
+                                </td>
+                                <td *ngFor="let t of cylinderTypes" class="font-mono p-0">
+                                   <input type="number" min="0" [value]="ent.balances[t.name]" (change)="updateInventoryValue(ent.name, t, $event, 'CUSTOMER')" class="w-full text-center bg-transparent outline-none font-bold text-[9px] py-1 border border-transparent focus:bg-white focus:border-blue-400 hide-arrows">
+                                </td>
+                             </tr>
+                             <ng-container *ngTemplateOutlet="addInventoryRowTemplate; context: { cat: 'SUPPLIER', entRole: 'SUPPLIER', dbEntry: 'CUSTOMER' }"></ng-container>
+                             <tr class="bg-[#ED7D31] font-black text-white"><td class="text-left px-2 uppercase border-b border-black">Total</td><td *ngFor="let t of cylinderTypes" class="font-mono border-b border-black">{{ sumCategorizedBalances('SUPPLIER', t.name, 'CUSTOMER') }}</td></tr>
+                         </tbody>
+                         <tfoot class="bg-[#C00000] font-black text-white">
+                            <tr class="text-[9px]"><td class="text-left px-2 uppercase">TOTAIS GERAIS</td><td *ngFor="let t of cylinderTypes" class="font-mono">{{ sumCategorizedBalances('ALL_REAVER', t.name, 'CUSTOMER') }}</td></tr>
+                         </tfoot>
+                      </table>
+                   </div>
+
+                   <div class="col-span-4 space-y-1">
+                      <div class="text-center font-black text-[10px] uppercase border-b-2 border-black pb-1 mb-2 italic">Garrafas Por Devolver</div>
+                      <table class="inventory-sheet-table w-full text-[8px]">
+                         <thead>
+                            <tr class="bg-gray-100"><th [attr.colspan]="cylinderTypes.length + 1" class="text-center font-bold p-1">Quantidades</th></tr>
+                             <tr class="bg-[#31353D] text-white border-t border-black">
+                                <th class="text-left px-2 w-32">NOMES</th>
+                                <th *ngFor="let t of cylinderTypes" class="w-8">{{ t.name }}</th>
+                             </tr>
+                          </thead>
+                          <tbody class="entities-body">
+                             <tr class="bg-blue-50 font-black"><td [attr.colspan]="cylinderTypes.length + 1" class="text-left px-2 border-b border-black text-blue-800 tracking-tighter">FORNECEDORES</td></tr>
+                             <ng-container *ngFor="let ent of getCategorizedEntities('SUPPLIER', 'SUPPLIER')">
+                                <tr>
+                                   <td class="text-left px-2 font-bold border-r border-black group">
+                                      <div class="flex items-center justify-between w-full">
+                                         <span class="truncate">{{ ent.name }}</span>
+                                         <button (click)="clearEntityEntries(ent.name, 'SUPPLIER')" class="text-red-500 opacity-0 group-hover:opacity-100" title="Remover"><span class="material-symbols-outlined text-[12px] font-bold">close</span></button>
+                                      </div>
+                                   </td>
+                                    <td *ngFor="let t of cylinderTypes" class="font-mono p-0 relative group/cell">
+                                       <input type="number" min="0" [value]="ent.balances[t.name]" (change)="updateInventoryValue(ent.name, t, $event, 'SUPPLIER')" class="w-full text-center bg-transparent outline-none font-bold text-[9px] py-1 text-orange-700 border border-transparent focus:bg-white focus:border-blue-400 hide-arrows">
                                     </td>
+                                </tr>
+                             </ng-container>
+                             <ng-container *ngTemplateOutlet="addInventoryRowTemplate; context: { cat: 'SUPPLIER', entRole: 'SUPPLIER', dbEntry: 'SUPPLIER' }"></ng-container>
+                             <tr class="bg-[#ED7D31] font-black text-white"><td class="text-left px-2 uppercase">Total</td><td *ngFor="let t of cylinderTypes" class="font-mono">{{ sumCategorizedBalances('SUPPLIER', t.name, 'SUPPLIER') }}</td></tr>
 
-
-                                 </tr>
-
-
-                                 <ng-container *ngTemplateOutlet="addInventoryRowTemplate; context: { cat: 'TRBLHDOR', type: 'CUSTOMER' }"></ng-container>
-
-
-                                 <tr class="bg-blue-100 font-black"><td [attr.colspan]="cylinderTypes.length + 1" class="p-1 text-left border-b border-black">Clientes/Instituições</td></tr>
-
-
-                                 <tr *ngFor="let ent of getCategorizedEntities('CLIENTE')" [class.highlight-entity]="highlightedEntityName === ent.name" class="divide-x divide-gray-300 border-b border-gray-100 group">
-
-
-                                    <td class="p-1 text-left font-bold flex items-center justify-between"><span>{{ ent.name }}</span><button (click)="clearEntityEntries(ent.name)" class="text-rose-400 opacity-0 group-hover:opacity-100 p-0.5"><app-icon name="delete" [size]="10"></app-icon></button></td>
-
-
-                                    <td *ngFor="let t of cylinderTypes" class="p-0 border-l border-gray-200">
-
-
-                                       <input type="number" [value]="ent.balances[t.name] || 0" (change)="updateInventoryValue(ent.name, t, $event, 'CLIENTE', 'CUSTOMER')" class="w-full text-center font-bold py-1 bg-transparent border-none text-[8px] text-blue-600 focus:bg-white focus:ring-0">
-
-
+                             <tr class="bg-blue-50 font-black"><td [attr.colspan]="cylinderTypes.length + 1" class="text-left px-2 border-b border-black text-blue-800 tracking-tighter mt-2">INSTITUIÇÕES</td></tr>
+                             <tr *ngFor="let ent of getCategorizedEntities('INSTITUICO', 'SUPPLIER')">
+                                <td class="text-left px-2 font-bold flex items-center justify-between group">
+                                   <span class="truncate w-full">{{ ent.name }}</span>
+                                   <button (click)="clearEntityEntries(ent.name, 'SUPPLIER')" class="text-red-500 opacity-0 group-hover:opacity-100" title="Remover"><span class="material-symbols-outlined text-[12px] font-bold">close</span></button>
+                                </td>
+                                <td *ngFor="let t of cylinderTypes" class="font-mono p-0">
+                                   <input type="number" [value]="ent.balances[t.name]" (change)="updateInventoryValue(ent.name, t, $event, 'SUPPLIER')" class="w-full text-center bg-transparent outline-none font-bold text-[9px] py-1 text-orange-700 border border-transparent focus:bg-white focus:border-blue-400 hide-arrows">
+                                </td>
+                             </tr>
+                             <ng-container *ngTemplateOutlet="addInventoryRowTemplate; context: { cat: 'INSTITUICO', entRole: 'CUSTOMER', dbEntry: 'SUPPLIER' }"></ng-container>
+                             <tr class="bg-[#ED7D31] font-black text-white"><td class="text-left px-2 uppercase border-b border-black">Total</td><td *ngFor="let t of cylinderTypes" class="font-mono border-b border-black">{{ sumCategorizedBalances('INSTITUICO', t.name, 'SUPPLIER') }}</td></tr>
+                             <tr class="bg-blue-50 font-black"><td [attr.colspan]="cylinderTypes.length + 1" class="text-left px-2 border-b border-black text-blue-800 tracking-tighter mt-2">CLIENTES</td></tr>
+                             <ng-container *ngFor="let ent of getCategorizedEntities('CLIENTE', 'SUPPLIER')">
+                                <tr>
+                                   <td class="text-left px-2 font-bold border-r border-black group">
+                                      <div class="flex items-center justify-between w-full">
+                                         <span class="truncate">{{ ent.name }}</span>
+                                         <button (click)="clearEntityEntries(ent.name, 'SUPPLIER')" class="text-red-500 opacity-0 group-hover:opacity-100" title="Remover"><span class="material-symbols-outlined text-[12px] font-bold">close</span></button>
+                                      </div>
+                                   </td>
+                                    <td *ngFor="let t of cylinderTypes" class="font-mono p-0 relative group/cell">
+                                       <input type="number" min="0" [value]="ent.balances[t.name]" (change)="updateInventoryValue(ent.name, t, $event, 'SUPPLIER')" class="w-full text-center bg-transparent outline-none font-bold text-[9px] py-1 text-orange-700 border border-transparent focus:bg-white focus:border-blue-400 hide-arrows">
                                     </td>
-
-
-                                 </tr>
-
-
-                                 <ng-container *ngTemplateOutlet="addInventoryRowTemplate; context: { cat: 'CLIENTE', type: 'CUSTOMER' }"></ng-container>
-
-
-                                 <tr class="bg-[#C6E0B4] font-black text-black">
-
-
-                                    <td class="p-1 text-left italic">Total por Reaver</td>
-
-
-                                    <td *ngFor="let t of cylinderTypes" class="p-1 font-mono">{{ sumTotalReaver(t.name) }}</td>
-
-
-                                 </tr>
-
-
-                              </tbody>
-
-
-                           </table>
-
-
-                        </div>
-
-
-                        <div class="border border-black">
-
-
-                           <div class="bg-gray-100 text-center font-bold p-1 italic border-b border-black text-[10px] uppercase">Garf. por Devolver (Fornecedores)</div>
-
-
-                           <table class="w-full text-center text-[8px] uppercase">
-
-
-                              <thead><tr class="bg-[#2E3137] text-white"><th class="p-1 text-left border-r border-black">NOMES</th><th *ngFor="let t of cylinderTypes" class="p-1 border-r border-black w-7">{{ t.name }}</th></tr></thead>
-
-
-                              <tbody>
-
-
-                                 <tr *ngFor="let ent of getCategorizedEntities('SUPPLIER')" class="divide-x divide-gray-300 border-b border-gray-100 group">
-
-
-                                    <td class="p-1 text-left font-bold flex items-center justify-between"><span>{{ ent.name }}</span><button (click)="clearEntityEntries(ent.name)" class="text-rose-400 opacity-0 group-hover:opacity-100 p-0.5"><app-icon name="delete" [size]="10"></app-icon></button></td>
-
-
-                                    <td *ngFor="let t of cylinderTypes" class="p-0 border-l border-gray-200">
-
-
-                                       <input type="number" [value]="ent.balances[t.name] || 0" (change)="updateInventoryValue(ent.name, t, $event, 'SUPPLIER', 'SUPPLIER')" class="w-full text-center font-bold py-1 bg-transparent border-none text-[8px] text-orange-600 focus:bg-white focus:ring-0">
-
-
-                                    </td>
-
-
-                                 </tr>
-
-
-                                 <ng-container *ngTemplateOutlet="addInventoryRowTemplate; context: { cat: 'SUPPLIER', type: 'SUPPLIER' }"></ng-container>
-
-
-                                 <tr class="bg-orange-100 font-black text-orange-900 border-t border-black">
-
-
-                                    <td class="p-1 text-left italic">Total por Devolver</td>
-
-
-                                    <td *ngFor="let t of cylinderTypes" class="p-1 font-mono">{{ getFinalStock(t.name, 'toReturn') }}</td>
-
-
-                                 </tr>
-
-
-                              </tbody>
-
-
-                           </table>
-
-
-                        </div>
-
-
-                     </div>
-
-
-                  </div>
-
-
-                  <div class="col-span-4 flex flex-col gap-4">
-
-
-                     <div class="bg-[#2E3137] text-white p-2 text-center font-black uppercase text-[10px] italic skew-x-[-12deg]">BLNÇO PTRIMONIL DO DI</div>
-
-
-                     <div *ngFor="let t of cylinderTypes" class="border border-black flex flex-col">
-
-
-                        <div class="bg-gray-200 p-1 flex justify-between items-center font-bold border-b border-black"><span class="text-[9px]">{{ t.name }}</span><span class="text-[8px] opacity-60">{{ t.brand }}</span></div>
-
-
-                        <div class="grid grid-cols-2 divide-x divide-black h-12">
-
-
-                           <div class="flex flex-col items-center justify-center bg-blue-50">
-
-
-                              <span class="text-[7px] font-bold text-blue-800 uppercase leading-none">Património</span>
-
-
-                              <span class="text-xs font-black">{{ t.inventoryTarget || 0 }}</span>
-
-
-                           </div>
-
-
-                           <div class="flex flex-col items-center justify-center" [class.bg-rose-100]="(getFinalTotal(t.name) + getFinalStock(t.name, 'toRecover') - getFinalStock(t.name, 'toReturn')) !== (t.inventoryTarget || 0)">
-
-
-                              <span class="text-[7px] font-bold text-gray-500 uppercase leading-none">Stock Real</span>
-
-
-                              <span class="text-xs font-black">{{ getFinalTotal(t.name) + getFinalStock(t.name, 'toRecover') - getFinalStock(t.name, 'toReturn') }}</span>
-
-
-                           </div>
-
-
-                        </div>
-
-
-                     </div>
-
-
-                  </div>
-
-
-               </div>
-
-
-            </div>
-
-
-        </ng-container>
-
-
+                                </tr>
+                             </ng-container>
+                             <ng-container *ngTemplateOutlet="addInventoryRowTemplate; context: { cat: 'CLIENTE', entRole: 'CUSTOMER', dbEntry: 'SUPPLIER' }"></ng-container>
+                             <tr class="bg-[#ED7D31] font-black text-white"><td class="text-left px-2 uppercase border-b border-black">Total</td><td *ngFor="let t of cylinderTypes" class="font-mono border-b border-black">{{ sumCategorizedBalances('CLIENTE', t.name, 'SUPPLIER') }}</td></tr>
+                          </tbody>
+                          <tfoot class="bg-[#C00000] font-black text-white">
+                             <tr class="text-[9px]"><td class="text-left px-2 uppercase">TOTAIS GERAIS</td><td *ngFor="let t of cylinderTypes" class="font-mono">{{ sumCategorizedBalances('ALL_DEVOLVER', t.name, 'SUPPLIER') }}</td></tr>
+                          </tfoot>
+                       </table>
+                    </div>
+
+                   <div class="col-span-4 space-y-3">
+                      <div class="text-center font-black text-[10px] uppercase border-b-2 border-black pb-1 mb-2 italic">Histórico de Movimento</div>
+                       <div *ngFor="let t of cylinderTypes" class="border border-black flex flex-col items-center bg-gray-50/30 p-1 mb-2">
+                          <div class="text-[9px] font-black uppercase italic text-blue-900 border-b border-gray-300 w-full text-center pb-0.5 mb-1">Total Caucionadas {{ t.name }}</div>
+                          <div class="flex items-center gap-1 mb-2">
+                             <!-- Left: Previous Total (Editable) -->
+                             <div class="border border-black bg-orange-100 flex flex-col min-w-[50px] shadow-sm group">
+                                <div class="text-[6px] font-black border-b border-black uppercase bg-gray-200 py-0.5 text-center px-1">Anterior</div>
+                                <input type="number" [(ngModel)]="cautionPrev[t.name]" (change)="saveStocks()" class="w-full text-[10px] font-black py-1 text-center bg-transparent border-none focus:ring-0 p-0 hover:bg-white focus:bg-white text-gray-700">
+                             </div>
+                             
+                             <div class="flex flex-col border border-black text-center min-w-[35px] bg-white">
+                                <div class="text-[7px] font-black border-b border-black uppercase bg-gray-200 py-0.5">Entradas</div>
+                                <input type="number" [(ngModel)]="cautionIn[t.name]" (change)="saveStocks()" class="text-[10px] font-black text-emerald-600 py-1 text-center border-none bg-transparent w-full focus:ring-0">
+                             </div>
+                             
+                             <div class="flex flex-col border border-black text-center min-w-[35px] bg-white">
+                                <div class="text-[7px] font-black border-b border-black uppercase bg-gray-200 py-0.5">Saídas</div>
+                                <input type="number" [(ngModel)]="cautionOut[t.name]" (change)="saveStocks()" class="text-[10px] font-black text-rose-600 py-1 text-center border-none bg-transparent w-full focus:ring-0">
+                             </div>
+
+                             <!-- Right: Final Total (Prev + In - Out) -->
+                             <div class="border border-black bg-orange-100 flex flex-col min-w-[50px] shadow-sm">
+                                <div class="text-[6px] font-black border-b border-black uppercase bg-gray-200 py-0.5 text-center px-1">{{ selectedDate | date:'dd.MM.yyyy' }}</div>
+                                <div class="text-[10px] font-black py-1 text-center">
+                                   {{ physicalManeio[t.name] || 0 }}
+                                   <div [hidden]="true">{{ externalEmpties[t.name] = physicalManeio[t.name] || 0 }}</div>
+                                </div>
+                             </div>
+                          </div>
+                          
+                          <div class="grid grid-cols-1 w-full text-[7px] italic px-2 space-y-0.5" *ngIf="cautionInfo[t.name] || (cautionInfo[t.name] = { caucao: '', entrega: '', rececao: '' })">
+                             <div class="flex items-center border-b border-gray-200">
+                                <span class="whitespace-nowrap">Caução:</span>
+                                <input type="text" [(ngModel)]="cautionInfo[t.name].caucao" (change)="saveStocks()" class="w-full bg-transparent border-none text-[8px] p-0 ml-1 font-bold focus:ring-0" placeholder="...">
+                             </div>
+                             <div class="flex items-center border-b border-gray-200">
+                                <span class="whitespace-nowrap">Entregues a:</span>
+                                <input type="text" [(ngModel)]="cautionInfo[t.name].entrega" (change)="saveStocks()" class="w-full bg-transparent border-none text-[8px] p-0 ml-1 font-bold focus:ring-0" placeholder="...">
+                             </div>
+                             <div class="flex items-center border-b border-gray-200">
+                                <span class="whitespace-nowrap">Recebida de:</span>
+                                <input type="text" [(ngModel)]="cautionInfo[t.name].rececao" (change)="saveStocks()" class="w-full bg-transparent border-none text-[8px] p-0 ml-1 font-bold focus:ring-0" placeholder="...">
+                             </div>
+                          </div>
+                       </div>
+                   </div>
+                </div>
+             </div>
+          </ng-container>
     <!-- REUSBLE TBLE TEMPLTE -->
 
 
@@ -949,18 +854,19 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
                    <th class="p-1 border-r border-white w-8">S/VAZ</th>
                    <th class="p-1 border-r border-white w-8">S/AV</th>
                    <th class="p-1 border-r border-white w-8">VZ-VEND</th>
-                   <th class="p-1 border-r border-white w-8">ADC/Caução</th>
+                   <th class="p-1 border-r border-white w-8">ADC/Caucao</th>
                    <th class="p-1 border-r border-white w-8 bg-blue-900">E./GPL</th>
-                   <th class="p-1 border-r border-white w-8 bg-blue-900">E./VAZ</th>
+                   <th class="p-1 border-r border-white w-8 bg-blue-900">E/VAZ</th>
                    <th class="p-1 border-r border-white w-8 bg-blue-900">E./AV</th>
-                   <th class="p-1 border-r border-white w-8">P.Dívida</th>
+                   <th class="p-1 border-r border-white w-8">P.Divida</th>
                    <th class="p-1 border-r border-white w-12">VD,s</th>
                    <th class="p-1 border-r border-white w-12">FACTURAS</th>
                    <th class="p-1 w-12">GUIAS</th>
                 </tr>
              </thead>
              <tbody>
-                <tr *ngFor="let e of entries" class="border-b border-gray-300 hover:bg-gray-50 group">
+                <tr *ngFor="let e of entries" class="border-b border-gray-300 hover:bg-gray-50 group"
+                     [class.bg-orange-row]="e.customerName && (e.customerName.includes('PALETA') || e.customerName.includes('Petrogas'))">
                    <td class="p-1 border-r border-black text-left font-bold relative group/name">
                       <input type="text" [(ngModel)]="e.customerName" 
                              (input)="onSearchInput(e, 'CUSTOMER')"
@@ -995,7 +901,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
                          <app-icon name="delete" [size]="10"></app-icon>
                       </button>
                    </td>
-                   <td *ngIf="!isSupplier" class="p-0 border-r border-black">
+                   <td *ngIf="!isSupplier" class="p-0 border-r border-black no-print">
                       <select [(ngModel)]="e.priceType" (change)="recalculateEntry(e, t)" class="w-full bg-transparent border-none text-[8px] font-black p-0 h-full text-center focus:ring-0">
                          <option value="CONSUMIDOR">Cons.</option>
                          <option value="REVENDEDOR">Rev.</option>
@@ -1017,35 +923,36 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
                    <td class="p-0 border-r border-black">
                       <input type="number" [(ngModel)]="e.adc_caucao" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 font-mono italic focus:bg-blue-50">
                    </td>
-                   <td class="p-0 border-r border-black bg-blue-50">
+                   <td class="p-0 border-r border-black print:bg-transparent bg-blue-50">
                       <input type="number" [(ngModel)]="e.e_gpl" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 font-bold text-blue-900 focus:bg-white">
                    </td>
-                   <td class="p-0 border-r border-black bg-blue-50">
+                   <td class="p-0 border-r border-black print:bg-transparent bg-blue-50">
                       <input type="number" [(ngModel)]="e.e_vaz" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 font-bold focus:bg-white">
                    </td>
-                   <td class="p-0 border-r border-black bg-blue-50">
+                   <td class="p-0 border-r border-black print:bg-transparent bg-blue-50">
                       <input type="number" [(ngModel)]="e.e_av" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 text-rose-600 focus:bg-white">
                    </td>
                    <td class="p-0 border-r border-black">
                       <input type="number" [(ngModel)]="e.p_divida" (change)="recalculateEntry(e, t)" class="w-full h-full bg-transparent text-center border-none p-1 text-emerald-600 font-bold font-mono focus:bg-blue-50">
                    </td>
                    <td class="p-1 border-r border-black font-mono font-black italic whitespace-nowrap text-right text-gray-400"
-                       [class.text-blue-800]="!e.invoice && !e.gr" [class.opacity-30]="e.invoice || e.gr">
-                      {{ (!e.invoice && !e.gr) ? (e.totalAmount | number:'1.2-2') : '0.00' }}
+                       [class.text-blue-800]="!e.invoice && !e.gr" [class.opacity-30]="(e.invoice || e.gr) && !isPrint">
+                      {{ e.totalAmount | number:'1.2-2' }}
                    </td>
-                   <td class="p-1 border-r border-black font-bold font-mono tabular-nums text-right cursor-pointer hover:bg-blue-50" 
+                   <td class="p-1 border-r border-black font-bold font-mono tabular-nums text-right cursor-pointer hover:bg-blue-50 no-print" 
                        (click)="e.invoice = !e.invoice; onInvoiceChange(e)">
                       {{ e.invoice ? (e.totalAmount | number:'1.2-2') : '' }}
                    </td>
-                   <td class="p-1 font-black text-center text-[10px] cursor-pointer hover:bg-blue-50" 
+                   <td class="p-1 font-black text-center text-[10px] cursor-pointer hover:bg-blue-50 no-print" 
                        (click)="e.gr = !e.gr; onGrChange(e)">
                       {{ e.gr ? 'X' : '' }}
                    </td>
                 </tr>
+                <!-- Blank spaces to match image spreadsheet style -->
              </tbody>
              <tfoot class="bg-[#C6E0B4] font-black">
                 <tr>
-                   <td class="p-1 border-r border-black text-left uppercase">TOTAIS</td>
+                   <td class="p-1 border-r border-black text-left uppercase">Totais</td>
                    <td *ngIf="!isSupplier" class="p-1 border-r border-black"></td>
                    <td class="p-1 border-r border-black">{{ sumEntries(entries, 's_gpl') }}</td>
                    <td class="p-1 border-r border-black">{{ sumEntries(entries, 's_vaz') }}</td>
@@ -1056,7 +963,7 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
                    <td class="p-1 border-r border-black">{{ sumEntries(entries, 'e_vaz') }}</td>
                    <td class="p-1 border-r border-black">{{ sumEntries(entries, 'e_av') }}</td>
                    <td class="p-1 border-r border-black font-mono">{{ sumEntries(entries, 'p_divida') | number:'1.2-2' }}</td>
-                   <td class="p-1 border-r border-black font-mono text-right">{{ sumVDs(entries) | number:'1.2-2' }}</td>
+                   <td class="p-1 border-r border-black font-mono text-right text-rose-600">{{ sumVDs(entries) | number:'1.2-2' }}</td>
                    <td class="p-1 border-r border-black font-mono tabular-nums text-right">{{ sumInvoices(entries) | number:'1.2-2' }}</td>
                    <td class="p-1"></td>
                 </tr>
@@ -1067,70 +974,28 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
 
 
 
-    <ng-template #addInventoryRowTemplate let-cat="cat" let-type="type">
-
-
-       <tr class="bg-gray-50 no-print border-b border-gray-200">
-
-
-          <td class="p-1 relative min-w-[120px]">
-
-
-             <input type="text" [(ngModel)]="inventorySearch[cat]" (input)="onInventorySearchInput(cat, type)" (blur)="clearSuggestions()" placeholder="Pesquisar/dicionar..." class="w-full bg-transparent border-none text-[8px] font-bold px-1 italic focus:outline-none">
-
-
-             <div *ngIf="suggestedInventoryEntities.length > 0 && inventorySearch[cat]" class="absolute left-0 top-full z-50 w-full bg-white shadow-2xl border border-gray-300 rounded-lg overflow-hidden translate-y-1">
-
-
-                <button *ngFor="let s of suggestedInventoryEntities" (mousedown)="selectInventorySuggestion(s, cat, type)" class="w-full p-2 text-left hover:bg-blue-50 flex flex-col border-b border-gray-100 last:border-none transition-colors">
-
-
+    <ng-template #addInventoryRowTemplate let-cat="cat" let-entRole="entRole" let-dbEntry="dbEntry">
+        <tr class="bg-white no-print border-b border-black">
+           <td class="p-1 relative min-w-[120px] border-r border-black">
+              <input type="text" [(ngModel)]="inventorySearch[cat + '_' + dbEntry]" (input)="onInventorySearchInput(cat + '_' + dbEntry, entRole)" (blur)="clearSuggestions()" placeholder="[+] Adicionar Novo..." class="w-full bg-transparent border-none text-[9px] font-black px-1 italic focus:outline-none placeholder:text-blue-300">
+             <div *ngIf="suggestedInventoryEntities.length > 0 && inventorySearch[cat + '_' + dbEntry] && activeSearchKey === (cat + '_' + dbEntry)" class="absolute left-0 top-full z-50 w-full bg-white shadow-2xl border border-gray-300 rounded-lg overflow-hidden translate-y-1">
+                <button *ngFor="let s of suggestedInventoryEntities" (mousedown)="selectInventorySuggestion(s, cat + '_' + dbEntry)" class="w-full p-2 text-left hover:bg-blue-50 flex flex-col border-b border-gray-100 last:border-none transition-colors">
                    <span class="text-[9px] font-black uppercase text-gray-800">{{ s.name }}</span>
-
-
                    <span class="text-[7px] text-gray-400 uppercase tracking-widest">{{ s.category }}</span>
-
-
                 </button>
-
-
              </div>
-
-
-             <div *ngIf="inventorySearch[cat] && suggestedInventoryEntities.length === 0" class="absolute left-0 top-full z-50 w-full bg-white shadow-2xl border border-gray-300 p-2 text-center translate-y-1">
-
-
+             <div *ngIf="inventorySearch[cat + '_' + dbEntry] && suggestedInventoryEntities.length === 0 && activeSearchKey === (cat + '_' + dbEntry)" class="absolute left-0 top-full z-50 w-full bg-white shadow-2xl border border-gray-300 p-2 text-center translate-y-1">
                 <span class="text-[7px] text-gray-500 block mb-1">Entidade não encontrada?</span>
-
-
-                <button (mousedown)="triggerQuickRegistrationFromMap(cat, type)" class="w-full py-1.5 bg-blue-600 text-white rounded text-[7px] font-black uppercase hover:bg-blue-700 transition-colors">Criar Nova</button>
-
-
+                <button (mousedown)="triggerQuickRegistrationFromMap(cat + '_' + dbEntry, entRole)" class="w-full py-1.5 bg-blue-600 text-white rounded text-[7px] font-black uppercase hover:bg-blue-700 transition-colors">Criar Nova</button>
              </div>
-
-
           </td>
-
-
-          <td *ngFor="let t of cylinderTypes" class="p-0 border-l border-gray-200">
-
-
-             <button (click)="inventorySearch[cat] = inventorySearch[cat] || ''; commitInventoryEntry(cat, t, type)" class="w-full h-full p-1 opacity-20 hover:opacity-100 transition-opacity flex items-center justify-center">
-
-
-                <app-icon name="add" [size]="10"></app-icon>
-
-
-             </button>
-
-
-          </td>
-
-
-       </tr>
-
-
-    </ng-template>
+          <td *ngFor="let t of cylinderTypes" class="p-0 border-r border-black">
+              <button (click)="inventorySearch[cat + '_' + dbEntry] = inventorySearch[cat + '_' + dbEntry] || ''; commitInventoryEntry(cat, cat + '_' + dbEntry, t, dbEntry)" class="w-full h-full p-1 opacity-10 hover:opacity-100 transition-opacity flex items-center justify-center bg-blue-50/50">
+                 <app-icon name="add" [size]="12" class="text-blue-600"></app-icon>
+              </button>
+           </td>
+        </tr>
+     </ng-template>
 
 
     <!-- QUICK REGISTRTION MODL -->
@@ -1166,10 +1031,10 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
 export class GasControlComponent implements OnInit, OnDestroy {
 
 
-   selectedDate = new Date().toISOString().split('T')[0];
-
-
+   selectedDate = new Date().toLocaleDateString('en-CA'); // Safer YYYY-MM-DD format
    currentYear = new Date().getFullYear();
+   private lastInitializedCompanyId: string | null = null;
+   private dataLoadSub: any = null;
 
 
    cylinderTypes: GasCylinderType[] = [];
@@ -1178,10 +1043,19 @@ export class GasControlComponent implements OnInit, OnDestroy {
    entries: GasDailyEntry[] = [];
 
 
+   activeSearchKey: string | null = null;
+
+
    control: any = null;
 
 
-   @Input() activeTab: 'MOVEMENT' | 'INVENTORY' = 'MOVEMENT';
+   @Input() activeTab: 'MOVEMENT' | 'INVENTORY' | 'STATS' = 'MOVEMENT';
+   statsData: any = null;
+   statsLoading = false;
+   statsRange: { from: string, to: string } = {
+      from: new Date(new Date().setDate(1)).toISOString().split('T')[0], // First day of current month
+      to: new Date().toISOString().split('T')[0]
+   };
 
 
    initialStock: any = {};
@@ -1200,6 +1074,10 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    inventoryEntryValues: any = {};
+
+
+   // Physical stock count for Fundo do Maneio (editable)
+   physicalManeio: { [key: string]: number } = {};
 
 
    // FOOTER DT
@@ -1235,7 +1113,14 @@ export class GasControlComponent implements OnInit, OnDestroy {
    kitMovements: { name: string, out: number, ing: number, sale: number }[] = [];
 
 
+   cautionPrev: { [typeName: string]: number } = {};
    externalEmpties: { [typeName: string]: number } = {};
+   cautionIn: { [typeName: string]: number } = {};
+   cautionOut: { [typeName: string]: number } = {};
+   cautionInfo: { [typeName: string]: { caucao: string, entrega: string, rececao: string } } = {};
+
+   customerDebts: { [key: string]: number } = {};
+   manualStockAdj: { [key: string]: number } = {};
 
 
    damagedLog: { typeName: string, fault: string, qty: number }[] = [];
@@ -1254,6 +1139,9 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    activeSuggestionEntry: GasDailyEntry | null = null;
+
+
+   forceShowMapEntities = new Set<string>();
 
 
    showQuickModal = false;
@@ -1307,22 +1195,13 @@ export class GasControlComponent implements OnInit, OnDestroy {
       this.sub.add(
 
 
-         this.dataService.activeCompany$.subscribe(company => {
-
-
-            if (company) {
-
-
-               this.initModule();
-
-
-               this.loadEntities();
-
-
-            }
-
-
-         })
+          this.dataService.activeCompany$.subscribe(company => {
+             if (company && company.id !== this.lastInitializedCompanyId) {
+                this.lastInitializedCompanyId = company.id;
+                this.initModule();
+                this.loadEntities();
+             }
+          })
 
 
       );
@@ -1399,7 +1278,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
       });
-
 
    }
 
@@ -1517,7 +1395,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
       });
 
-
    }
 
 
@@ -1550,7 +1427,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
       });
 
-
    }
 
 
@@ -1560,15 +1436,12 @@ export class GasControlComponent implements OnInit, OnDestroy {
       const cid = this.dataService.getCompanyId();
 
 
-      if (!cid) return;
-
+      if (this.dataLoadSub) {
+         this.dataLoadSub.unsubscribe();
+      }
 
       this.isLoading = true;
-
-
-      this.gasService.getDaily(this.selectedDate, cid).subscribe({
-
-
+      this.dataLoadSub = this.gasService.getDaily(this.selectedDate, cid).subscribe({
          next: (res) => {
 
 
@@ -1614,10 +1487,19 @@ export class GasControlComponent implements OnInit, OnDestroy {
             this.bankDeposits = footers.bankDeposits || [];
             this.dailyExpenses = footers.dailyExpenses || [];
             this.kitMovements = footers.kitMovements || [];
+            this.physicalManeio = footers.physicalManeio || {};
 
             // Vasilhame exterior assume o valor do dia anterior se não houver registo hoje
-            this.externalEmpties = footers.externalEmpties || this.control.initialStock?.footers?.externalEmpties || this.externalEmpties;
+            this.externalEmpties = (footers.externalEmpties && Object.keys(footers.externalEmpties).length > 0) ? footers.externalEmpties : (this.control?.initialStock?.footers?.externalEmpties || {});
+            this.cautionIn = footers.cautionIn || {};
+            this.cautionOut = footers.cautionOut || {};
+            this.cautionInfo = footers.cautionInfo || this.control?.initialStock?.footers?.cautionInfo || {};
+            this.cautionPrev = (footers.cautionPrev && Object.keys(footers.cautionPrev).length > 0) ? footers.cautionPrev : (this.control?.initialStock?.footers?.physicalManeio || {});
             this.damagedLog = footers.damagedLog || [];
+            
+            // Carry-over customer debts and editable stock configurations
+            this.customerDebts = this.control?.initialStock?.footers?.customerDebts || {};
+            this.manualStockAdj = (footers.manualStockAdj && Object.keys(footers.manualStockAdj).length > 0) ? footers.manualStockAdj : (this.control?.initialStock?.footers?.manualStockAdj || {});
 
 
             this.isLoading = false;
@@ -1642,7 +1524,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
       });
-
 
    }
 
@@ -1710,14 +1591,21 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
          kitMovements: this.kitMovements,
 
-         externalEmpties: this.externalEmpties,
+          externalEmpties: this.externalEmpties,
+          cautionIn: this.cautionIn,
+          cautionOut: this.cautionOut,
+          cautionInfo: this.cautionInfo,
+          cautionPrev: this.cautionPrev,
+          damagedLog: this.damagedLog,
+          customerDebts: this.computeEndOfDayCustomerDebts(),
+          manualStockAdj: this.manualStockAdj,
 
-         damagedLog: this.damagedLog,
+         physicalManeio: this.physicalManeio,
 
          openingCash: this.openingCash,
          extraIncome: this.extraIncome,
 
-         closingBalance: drawerCash // Saldo que herda para amanhã (penas Gaveta)
+         closingBalance: drawerCash // Saldo que herda para amanhã (gaveta)
 
       };
 
@@ -1729,14 +1617,15 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    saveStocks() {
-
-
       const cid = this.dataService.getCompanyId();
-
-
       if (!cid || !this.control) return;
 
+      // Auto-calculate 'physicalManeio' (A) based on B + IN - OUT (C)
+      this.cylinderTypes.forEach(t => {
+         this.physicalManeio[t.name] = (Number(this.cautionPrev[t.name]) || 0) + (Number(this.cautionIn[t.name]) || 0) - (Number(this.cautionOut[t.name]) || 0);
+      });
 
+      this.cdr.detectChanges();
       const fs = this.getFinalStockPayload();
 
 
@@ -1784,9 +1673,27 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
       });
 
-
    }
 
+
+   loadStatistics() {
+      const cid = this.dataService.getCompanyId();
+      if (!cid) return;
+
+      this.statsLoading = true;
+      this.gasService.getStatistics(this.statsRange.from, this.statsRange.to, cid).subscribe({
+         next: (data) => {
+            this.statsData = data;
+            this.statsLoading = false;
+            this.cdr.detectChanges();
+         },
+         error: () => {
+            this.statsLoading = false;
+            this.toaster.showError('Erro', 'Falha ao carregar estatísticas.');
+            this.cdr.detectChanges();
+         }
+      });
+   }
 
    openDay() {
 
@@ -1855,7 +1762,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
       });
-
 
    }
 
@@ -1954,7 +1860,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
       });
 
-
    }
 
 
@@ -2006,14 +1911,10 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    getGlobalSaidasCount(): number {
-
-
-      if (!this.control?.entries) return 0;
-
-
-      return this.control.entries.reduce((acc: number, e: any) => acc + (Number(e.s_gpl) || 0) + (Number(e.s_vaz) || 0) + (Number(e.s_av) || 0), 0);
-
-
+      if (!this.entries) return 0;
+      return this.entries
+         .filter(e => !(e as any).isAdj)
+         .reduce((acc: number, e: any) => acc + (Number(e.s_gpl) || 0) + (Number(e.s_vaz) || 0) + (Number(e.s_av) || 0), 0);
    }
 
 
@@ -2159,7 +2060,6 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
       });
 
-
    }
 
 
@@ -2182,17 +2082,12 @@ export class GasControlComponent implements OnInit, OnDestroy {
       if (cid) {
 
          this.gasService.saveEntry(entry, cid).subscribe(saved => {
-
             if (!entry.id && saved.id) {
-
                Object.assign(entry, saved);
-
                this.ensureBlankEntries();
-
             }
-
+            this.saveStocks(); // Keep control summary updated
             this.cdr.detectChanges();
-
          });
 
       }
@@ -2365,16 +2260,15 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
          });
 
-
    }
 
 
-   getEntriesForType(typeId: string, entryType?: 'CUSTOMER' | 'SUPPLIER') {
-
-
-      return this.entries.filter(e => e.cylinderTypeId === typeId && (entryType ? e.entryType === entryType : true));
-
-
+   getEntriesForType(typeId: string, entryType?: 'CUSTOMER' | 'SUPPLIER', includeAdjustments: boolean = true) {
+      return this.entries.filter(e => 
+         e.cylinderTypeId === typeId && 
+         (entryType ? e.entryType === entryType : true) &&
+         (includeAdjustments ? true : !(e as any).isAdj)
+      );
    }
 
 
@@ -2391,74 +2285,63 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
    getGlobalTotal() { 
       return this.entries
-         .filter(e => e.entryType === 'CUSTOMER' && !e.invoice && !e.gr)
+         .filter(e => e.entryType === 'CUSTOMER' && !e.invoice && !e.gr && !(e as any).isAdj)
          .reduce((acc, e) => acc + (Number(e.totalAmount) || 0), 0); 
    }
 
    getInvoicesTotal() {
       return this.entries
-         .filter(e => e.entryType === 'CUSTOMER' && e.invoice)
+         .filter(e => e.entryType === 'CUSTOMER' && e.invoice && !(e as any).isAdj)
          .reduce((acc, e) => acc + (Number(e.totalAmount) || 0), 0);
    }
 
 
-   getCollectionsTotal() { return this.entries.filter(e => e.entryType === 'CUSTOMER').reduce((acc, e) => acc + (Number(e.adc_caucao) || 0) + (Number(e.p_divida) || 0), 0); }
+   getCollectionsTotal() { 
+      return this.entries
+         .filter(e => e.entryType === 'CUSTOMER' && !(e as any).isAdj)
+         .reduce((acc, e) => acc + (Number(e.adc_caucao) || 0) + (Number(e.p_divida) || 0), 0); 
+   }
 
 
    getInitialTotal(tn: string) { const s = this.initialStock[tn]; return s ? (s.damaged || 0) + (s.empty || 0) + (s.gpl || 0) : 0; }
 
 
-   getFinalStock(tn: string, f: 'gpl' | 'empty' | 'damaged' | 'toRecover' | 'toReturn'): number {
+   updateEditableStock(tn: string, type: string, event: any) {
+       const val = event.target.value;
+       const key = type + '_' + tn;
+       if (val === '' || val === null) {
+           delete this.manualStockAdj[key];
+       } else {
+           this.manualStockAdj[key] = Number(val);
+       }
+       this.saveStocks();
+   }
 
+   getFinalStock(tn: string, f: 'gpl' | 'empty' | 'damaged' | 'toRecover' | 'toReturn'): number {
+      const manualKey = f + '_' + tn;
+      if (this.manualStockAdj && typeof this.manualStockAdj[manualKey] === 'number' && ['gpl', 'empty', 'damaged'].includes(f)) {
+         return this.manualStockAdj[manualKey];
+      }
 
       const type = this.cylinderTypes.find(t => t.name === tn);
-
-
       if (!type || !this.initialStock[tn]) return 0;
 
-
-      const ents = this.getEntriesForType(type.id!);
-
-
+      // For physical stock columns, we only count REAL movements (not map adjustments)
+      const ents = this.getEntriesForType(type.id!, undefined, false);
       const init = this.initialStock[tn];
 
-
       if (f === 'gpl') return Math.max(0, (init.gpl || 0) - this.sumEntries(ents, 's_gpl') + this.sumEntries(ents, 'e_gpl'));
-
-
       if (f === 'empty') return Math.max(0, (init.empty || 0) - this.sumEntries(ents, 's_vaz') + this.sumEntries(ents, 'e_vaz') - this.sumEntries(ents, 'vz_vend'));
-
-
       if (f === 'damaged') return Math.max(0, (init.damaged || 0) - this.sumEntries(ents, 's_av') + this.sumEntries(ents, 'e_av'));
 
-
       if (f === 'toRecover') {
-
-
-         // Vasilhames que saíram para clientes e não voltaram
-
-
+         // Debt DOES include map adjustments
          return (init.toRecover || 0) + this.getEntryDiff(type.id!, 'CUSTOMER');
-
-
       }
-
-
       if (f === 'toReturn') {
-
-
-         // Vasilhames que recebemos de fornecedores e não devolvemos
-
-
          return (init.toReturn || 0) + this.getEntryDiff(type.id!, 'SUPPLIER');
-
-
       }
-
-
       return 0;
-
-
    }
 
 
@@ -2471,8 +2354,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
       // Caução (vz_vend) também conta como saída de vasilhame
 
 
-      const out = this.sumEntries(ents, 's_gpl') + this.sumEntries(ents, 's_vaz') + this.sumEntries(ents, 's_av');
-
+      const out = (Number(ents.reduce((acc, e) => acc + (Number(e.s_gpl) || 0) + (Number(e.s_vaz) || 0) + (Number(e.s_av) || 0) + (entryType === 'CUSTOMER' ? (Number(e.vz_vend) || 0) : 0), 0)));
 
       const inc = this.sumEntries(ents, 'e_gpl') + this.sumEntries(ents, 'e_vaz') + this.sumEntries(ents, 'e_av');
 
@@ -2707,66 +2589,118 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-   getCategorizedEntities(category: 'TRBLHDOR' | 'CLIENTE' | 'INSTITUICO' | 'SUPPLIER') {
-
-
+   getCategorizedEntities(category: 'TRBLHDOR' | 'CLIENTE' | 'INSTITUICO' | 'SUPPLIER', entryType: 'CUSTOMER' | 'SUPPLIER') {
       const allEntities: any[] = [];
-
-
-      const entries = this.entries;
-
-
-      const uniqueNames = new Set(entries.map(e => e.customerName));
-
-
-      uniqueNames.forEach(name => {
-
-
-         const entityCat = this.resolveCategoryByName(name);
-
-
-         if ((category === 'SUPPLIER' && this.suppliers.some(s => s.name === name)) ||
-
-
-            (category !== 'SUPPLIER' && entityCat === category)) {
-
-
-            const entBalances: any = {};
-
-
-            this.cylinderTypes.forEach(t => {
-
-
-               const typeEntries = entries.filter(e => e.customerName === name && e.cylinderTypeId === t.id);
-
-
-               entBalances[t.name] = (entBalances[t.name] || 0) + this.sumEntries(typeEntries, 'e_gpl') + this.sumEntries(typeEntries, 'e_vaz') + this.sumEntries(typeEntries, 'e_av')
-
-
-                  - (this.sumEntries(typeEntries, 's_gpl') + this.sumEntries(typeEntries, 's_vaz') + this.sumEntries(typeEntries, 's_av'));
-
-
-            });
-
-
-            if (Object.values(entBalances).some(v => v !== 0)) {
-
-
-               allEntities.push({ name, balances: entBalances });
-
-
-            }
-
-
-         }
-
-
+      const entries = this.entries.filter(e => e.entryType === entryType);
+      
+      const namesSet = new Set<string>(entries.map(e => e.customerName).filter(n => n));
+      
+      // Use rolled over customerDebts as base for names and initial balances
+      const initDebts = this.customerDebts || {};
+      Object.keys(initDebts).forEach(k => {
+          if (k.includes('_' + entryType + '_')) {
+              const name = k.split('_' + entryType + '_')[0];
+              if (name) namesSet.add(name);
+          }
       });
 
+      const uniqueNames = Array.from(namesSet);
+      uniqueNames.forEach(name => {
+         const entityCat = this.resolveCategoryByName(name);
+         if ((category === 'SUPPLIER' && entityCat === 'SUPPLIER') ||
+             (category !== 'SUPPLIER' && entityCat === category)) {
+            const entBalances: any = {};
+            this.cylinderTypes.forEach(t => {
+               const typeEntries = entries.filter(e => e.customerName === name && e.cylinderTypeId === t.id);
+               
+               // Get initial debt from previous day's end map
+               const debtKey = name + '_' + entryType + '_' + t.name;
+               const initDebt = initDebts[debtKey] || 0;
 
+               if (entryType === 'CUSTOMER') {
+                  // Net variation today: (OUT + CAUTION) - IN
+                  const todayVar = (this.sumEntries(typeEntries, 's_gpl') + this.sumEntries(typeEntries, 's_vaz') + this.sumEntries(typeEntries, 's_av') + this.sumEntries(typeEntries, 'vz_vend'))
+                     - (this.sumEntries(typeEntries, 'e_gpl') + this.sumEntries(typeEntries, 'e_vaz') + this.sumEntries(typeEntries, 'e_av'));
+                  
+                  // Total debt displayed = Previous Debt + Today's Variation
+                  entBalances[t.name] = (entBalances[t.name] || 0) + initDebt + todayVar;
+               } else {
+                  // Devolver balance: In - Out
+                  const todayVar = (this.sumEntries(typeEntries, 'e_gpl') + this.sumEntries(typeEntries, 'e_vaz') + this.sumEntries(typeEntries, 'e_av'))
+                     - (this.sumEntries(typeEntries, 's_gpl') + this.sumEntries(typeEntries, 's_vaz') + this.sumEntries(typeEntries, 's_av'));
+                  
+                  entBalances[t.name] = (entBalances[t.name] || 0) + initDebt + todayVar;
+               }
+            });
+            if (Object.values(entBalances).some(v => v !== 0) || this.forceShowMapEntities.has(name + '_' + entryType)) {
+               allEntities.push({ name, balances: entBalances });
+            }
+         }
+      });
       return allEntities.sort((a, b) => a.name.localeCompare(b.name));
+   }
 
+   computeEndOfDayCustomerDebts(): { [key: string]: number } {
+       const debts: { [key: string]: number } = {};
+       const allCats: ('TRBLHDOR' | 'CLIENTE' | 'INSTITUICO' | 'SUPPLIER')[] = ['TRBLHDOR', 'CLIENTE', 'INSTITUICO', 'SUPPLIER'];
+       
+       allCats.forEach(cat => {
+           // For CUSTOMER side
+           if (cat !== 'SUPPLIER') {
+               const ents = this.getCategorizedEntities(cat as any, 'CUSTOMER');
+               ents.forEach(e => {
+                   this.cylinderTypes.forEach(t => {
+                       const val = e.balances[t.name] || 0;
+                       if (val !== 0) debts[e.name + '_CUSTOMER_' + t.name] = val;
+                   });
+               });
+           }
+           // For SUPPLIER side
+           if (cat === 'SUPPLIER' || cat === 'CLIENTE' || cat === 'INSTITUICO') {
+               const ents = this.getCategorizedEntities(cat as any, 'SUPPLIER');
+               ents.forEach(e => {
+                   this.cylinderTypes.forEach(t => {
+                       const val = e.balances[t.name] || 0;
+                       if (val !== 0) debts[e.name + '_SUPPLIER_' + t.name] = val;
+                   });
+               });
+           }
+       });
+       return debts;
+   }
 
+   sumCategorizedBalances(category: 'TRBLHDOR' | 'CLIENTE' | 'INSTITUICO' | 'SUPPLIER' | 'ALL_REAVER' | 'ALL_DEVOLVER', typeName: string, entryType: 'CUSTOMER' | 'SUPPLIER'): number {
+      if (category === 'ALL_REAVER') {
+         const catList: ('TRBLHDOR' | 'CLIENTE' | 'INSTITUICO' | 'SUPPLIER')[] = ['TRBLHDOR', 'CLIENTE', 'INSTITUICO', 'SUPPLIER'];
+         return catList.reduce((acc, cat) => acc + this.sumCategorizedBalances(cat, typeName, 'CUSTOMER'), 0);
+      }
+      if (category === 'ALL_DEVOLVER') {
+         const catList: ('SUPPLIER' | 'INSTITUICO' | 'CLIENTE')[] = ['SUPPLIER', 'INSTITUICO', 'CLIENTE'];
+         return catList.reduce((acc, cat) => acc + this.sumCategorizedBalances(cat, typeName, 'SUPPLIER'), 0);
+      }
+      const ents = this.getCategorizedEntities(category as any, entryType) || [];
+      return ents.reduce((acc, e) => acc + (Number((e.balances || {})[typeName]) || 0), 0);
+   }
+
+   getManeioCalculated(tn: string): number {
+      // CALCULADO = O que deve estar fisicamente no armazém
+      return this.getFinalTotal(tn); // total de cheias + vazias + avariadas
+   }
+
+   getManeioDifference(tn: string): number {
+      const fundo = Number(this.physicalManeio[tn]) || 0; // Físico contado hoje
+      const stock = this.getManeioCalculated(tn); // Stock teórico
+      const reaver = this.sumCategorizedBalances('ALL_REAVER', tn, 'CUSTOMER');
+      const devolver = this.sumCategorizedBalances('ALL_DEVOLVER', tn, 'SUPPLIER');
+      
+      // USER FORMULA: Físico - Calculado - Reaver + Devolver
+      return fundo - stock - reaver + devolver;
+   }
+
+   getKitDifference(): number {
+      const fisico = Number(this.physicalManeio['kit']) || 0;
+      const calculado = this.getKitSum('ing') - this.getKitSum('out');
+      return fisico - calculado;
    }
 
 
@@ -2794,139 +2728,88 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-   updateInventoryValue(name: string, type: GasCylinderType, event: any, currentCat: string, typeId: 'CUSTOMER' | 'SUPPLIER') {
+   updateInventoryValue(name: string, type: GasCylinderType, event: any, typeId: 'CUSTOMER' | 'SUPPLIER') {
+      const newVal = Math.max(0, parseInt((event.target as HTMLInputElement).value) || 0);
+      
+      // Calculate current account balance
+      const allEnts = this.entries.filter(e => e.customerName === name && e.cylinderTypeId === type.id && e.entryType === typeId);
+      const initDebt = typeId === 'CUSTOMER' 
+         ? (this.customerDebts[name + '_CUSTOMER_' + type.name] || 0)
+         : (this.customerDebts[name + '_SUPPLIER_' + type.name] || 0);
 
-
-      const newVal = parseInt((event.target as HTMLInputElement).value) || 0;
-
-
-      const correctCat = this.resolveCategoryByName(name);
-
-
-      if (correctCat !== currentCat && correctCat !== 'SUPPLIER') {
-
-
-         this.toaster.showInfo('Movimento Identificado', ` entidade ${name} foi identificada como ${correctCat} e movida para o respetivo lugar.`);
-
-
-         this.highlightedEntityName = name;
-
-
-         setTimeout(() => { this.highlightedEntityName = null; this.cdr.detectChanges(); }, 3000);
-
-
+      let currentAccountBalance = initDebt;
+      if (typeId === 'CUSTOMER') {
+         currentAccountBalance += allEnts.reduce((acc, e) => acc + (Number(e.s_gpl)||0) + (Number(e.s_vaz)||0) + (Number(e.s_av)||0) + (Number(e.vz_vend)||0) - ((Number(e.e_gpl)||0) + (Number(e.e_vaz)||0) + (Number(e.e_av)||0)), 0);
+      } else {
+         currentAccountBalance += allEnts.reduce((acc, e) => acc + (Number(e.e_gpl)||0) + (Number(e.e_vaz)||0) + (Number(e.e_av)||0) - ((Number(e.s_gpl)||0) + (Number(e.s_vaz)||0) + (Number(e.s_av)||0)), 0);
       }
 
+      const diff = newVal - currentAccountBalance;
+      if (diff === 0) return;
 
-      let entry = this.entries.find(e => e.customerName === name && e.cylinderTypeId === type.id && e.entryType === typeId);
-
+      // IMMEDIATE ADJUSTMENT
+      let entry = allEnts.find(e => 
+         (Number(e.totalAmount) || 0) === 0 && (Number(e.vz_vend) || 0) === 0 &&
+         (Number(e.adc_caucao) || 0) === 0 && (Number(e.p_divida) || 0) === 0
+      );
 
       if (!entry) {
-
-
-         const newEntry = {
-
-
-            customerName: name,
-
-
-            cylinderTypeId: type.id!,
-
-
-            entryType: typeId,
-
-
-            controlId: this.control?.id,
-
-
-            s_gpl: 0, s_vaz: 0, s_av: 0, e_gpl: 0, e_vaz: 0, e_av: 0,
-
-
-            vz_vend: 0, adc_caucao: 0, p_divida: 0, totalAmount: 0, gr: false, invoice: false,
-
-
-            priceType: 'CONSUMIDOR'
-
-
+         entry = {
+            customerName: name, cylinderTypeId: type.id!, entryType: typeId,
+            controlId: this.control?.id, s_gpl: 0, s_vaz: 0, s_av: 0, e_gpl: 0, e_vaz: 0, e_av: 0,
+            vz_vend: 0, adc_caucao: 0, p_divida: 0, totalAmount: 0, gr: false, invoice: false, 
+            priceType: 'REVENDEDOR'
          } as GasDailyEntry;
-
-
-         this.entries.push(newEntry);
-
-
-         entry = newEntry;
-
-
+         (entry as any).isAdj = true;
+         this.entries.push(entry);
+      } else {
+         (entry as any).isAdj = true;
       }
 
-
-      const currentBalance = (entry.e_gpl || 0) + (entry.e_vaz || 0) + (entry.e_av || 0)
-
-
-         - ((entry.s_gpl || 0) + (entry.s_vaz || 0) + (entry.s_av || 0));
-
-
-      const diff = newVal - currentBalance;
-
-
-      if (diff > 0) entry.e_gpl = (entry.e_gpl || 0) + diff;
-
-
-      else entry.s_gpl = (entry.s_gpl || 0) - diff;
-
+      if (typeId === 'CUSTOMER') {
+         if (diff > 0) entry.s_gpl = (Number(entry.s_gpl) || 0) + diff;
+         else entry.e_gpl = (Number(entry.e_gpl) || 0) - diff;
+      } else {
+         if (diff > 0) entry.e_gpl = (Number(entry.e_gpl) || 0) + diff;
+         else entry.s_gpl = (Number(entry.s_gpl) || 0) - diff;
+      }
 
       this.updateEntry(entry);
-
-
+      this.cdr.detectChanges();
    }
-
-
-   sumCategoryTotal(category: string, typeName: string): number {
-
-
-      const entities = this.getCategorizedEntities(category as any);
-
-
-      return entities.reduce((sum, ent) => sum + (ent.balances[typeName] || 0), 0);
-
-
-   }
-
-
-   sumTotalReaver(typeName: string): number {
-
-
-      return this.sumCategoryTotal('TRBLHDOR', typeName) + this.sumCategoryTotal('CLIENTE', typeName) + this.sumCategoryTotal('INSTITUICO', typeName);
-
-
-   }
-
-
-   clearEntityEntries(name: string) {
-
+   clearEntityEntries(name: string, entryType: 'CUSTOMER' | 'SUPPLIER') {
 
       if (confirm(`Remover todos os registos pendentes de ${name}?`)) {
+         
+         this.forceShowMapEntities.delete(name + '_' + entryType);
 
+         const cid = this.dataService.getCompanyId();
 
-         this.entries = this.entries.filter(e => e.customerName !== name);
+         // Delete from server ONLY for this specific table (entryType)
+         const toDelete = this.entries.filter(e => e.customerName === name && e.entryType === entryType && e.id && cid);
+         toDelete.forEach(e => {
+            if (cid && e.id) {
+               this.gasService.deleteEntry(e.id, cid).subscribe();
+            }
+         });
 
+         // Remove from UI only for this specific table
+         this.entries = this.entries.filter(e => !(e.customerName === name && e.entryType === entryType));
 
          this.toaster.showSuccess('Sucesso', `Registos de ${name} removidos.`);
-
-
+         this.saveStocks();
          this.cdr.detectChanges();
-
 
       }
 
-
    }
 
 
-   onInventorySearchInput(cat: string, entryType: 'CUSTOMER' | 'SUPPLIER') {
+   onInventorySearchInput(searchKey: string, entryType: 'CUSTOMER' | 'SUPPLIER') {
 
 
-      const query = this.inventorySearch[cat]?.toLowerCase() || '';
+      this.activeSearchKey = searchKey;
+      const query = this.inventorySearch[searchKey]?.toLowerCase() || '';
 
 
       if (query.length < 2) {
@@ -2971,114 +2854,77 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-   selectInventorySuggestion(s: any, cat: string, entryType: 'CUSTOMER' | 'SUPPLIER') {
+   selectInventorySuggestion(s: any, searchKey: string) {
 
 
-      this.inventorySearch[cat] = s.name;
+      this.inventorySearch[searchKey] = s.name;
 
 
       this.suggestedInventoryEntities = [];
 
 
-      this.commitInventoryEntry(cat, this.cylinderTypes[0], entryType);
-
+      this.activeSearchKey = null;
 
    }
 
 
-   triggerQuickRegistrationFromMap(cat: string, entryType: 'CUSTOMER' | 'SUPPLIER') {
-
-
-      const mockEntry = { customerName: this.inventorySearch[cat] } as unknown as GasDailyEntry;
-
-
+   triggerQuickRegistrationFromMap(searchKey: string, entryType: 'CUSTOMER' | 'SUPPLIER') {
+      const mockEntry = { customerName: this.inventorySearch[searchKey] } as unknown as GasDailyEntry;
       this.triggerQuickRegistration(mockEntry, entryType);
-
-
    }
 
 
-   commitInventoryEntry(cat: string, cylinderType: GasCylinderType, entryType: 'CUSTOMER' | 'SUPPLIER') {
-
-
-      const name = this.inventorySearch[cat];
-
-
+   commitInventoryEntry(cat: string, searchKey: string, cylinderType: GasCylinderType, entryType: 'CUSTOMER' | 'SUPPLIER') {
+      const name = this.inventorySearch[searchKey];
       if (!name) return;
 
+      this.forceShowMapEntities.add(name + '_' + entryType);
 
-      const correctCat = this.resolveCategoryByName(name);
+      const cid = this.dataService.getCompanyId();
 
-
-      if (correctCat !== cat && correctCat !== 'SUPPLIER') {
-
-
-         this.toaster.showInfo('Movimento Identificado', ` entidade ${name} foi identificada como ${correctCat} e redirecionada.`);
-
-
-         this.highlightedEntityName = name;
-
-
-         setTimeout(() => { this.highlightedEntityName = null; this.cdr.detectChanges(); }, 3000);
-
-
+      // Only update category logic (no migrating entries between types)
+      const cust: any = this.customers.find(c => c.name?.toLowerCase() === name.toLowerCase());
+      if (cust && cust.category !== cat && cat !== 'SUPPLIER') {
+         cust.category = cat;
+         this.customerService.updateCustomer(cust);
       }
 
+      // Check if entry already exists
+      const exists = this.entries.find(e => e.customerName === name && e.cylinderTypeId === cylinderType.id && e.entryType === entryType);
 
-      let entry = this.entries.find(e => e.customerName === name && e.cylinderTypeId === cylinderType.id && e.entryType === entryType);
-
-
-      if (!entry) {
-
-
-         const newEntry = {
-
-
+      if (!exists) {
+         const newEntry: GasDailyEntry = {
             customerName: name,
-
-
             cylinderTypeId: cylinderType.id!,
-
-
             entryType: entryType,
-
-
             controlId: this.control?.id,
-
-
             s_gpl: 0, s_vaz: 0, s_av: 0, e_gpl: 0, e_vaz: 0, e_av: 0,
-
-
             vz_vend: 0, adc_caucao: 0, p_divida: 0, totalAmount: 0, gr: false, invoice: false,
-
-
             priceType: 'CONSUMIDOR'
+         };
 
+         if (cid) {
+            // Optimistic update for UI responsiveness
+            const tempEntry = { ...newEntry };
+            this.entries.push(tempEntry);
+            this.inventorySearch[searchKey] = '';
+            this.cdr.detectChanges();
 
-         } as GasDailyEntry;
-
-
-         this.entries.push(newEntry);
-
-
-         entry = newEntry;
-
-
+            this.gasService.saveEntry(newEntry, cid).subscribe(saved => {
+               const idx = this.entries.indexOf(tempEntry);
+               if (idx > -1) this.entries[idx] = saved;
+               this.saveStocks(); // Trigger stock summary update
+               this.cdr.detectChanges();
+            });
+         } else {
+            this.entries.push(newEntry);
+            this.cdr.detectChanges();
+         }
       }
 
-
-      this.updateEntry(entry);
-
-
-      this.inventorySearch[cat] = '';
-
-
-      this.cdr.detectChanges();
-
-
+      this.inventorySearch[searchKey] = '';
+      this.clearSuggestions();
    }
 
 
 }
-
-

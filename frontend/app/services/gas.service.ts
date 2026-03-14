@@ -99,8 +99,7 @@ export interface GasDailyEntry {
 
 
     invoice: boolean;
-
-
+    isAdj?: boolean;
 }
 
 
@@ -216,14 +215,12 @@ export class GasService {
 
 
     updateStocks(controlId: string, initialStock: any, finalStock: any, user: string, companyId: string): Observable<any> {
-
-
         return this.http.patch(`${this.apiUrl}/daily/${controlId}/stocks?companyId=${companyId}`, { initialStock, finalStock, user });
-
-
     }
 
-
+    getStatistics(from: string, to: string, companyId: string): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/statistics?from=${from}&to=${to}&companyId=${companyId}`);
+    }
 }
 
 
