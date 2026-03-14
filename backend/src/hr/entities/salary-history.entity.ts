@@ -42,6 +42,22 @@ export class EmployeeSalaryHistory {
     @Column({ nullable: true })
     reason: string;
 
+    @Column({
+        type: 'simple-enum',
+        enum: ['DRAFT', 'APPROVED', 'APPLIED', 'CANCELLED'],
+        default: 'APPLIED',
+    })
+    status: string;
+
+    @Column({ type: 'date', nullable: true })
+    effectiveDate: string;
+
+    @Column({ nullable: true })
+    documentId: string;
+
+    @Column({ nullable: true })
+    approvedBy: string;
+
     @Column({ nullable: true })
     updatedBy: string;
 

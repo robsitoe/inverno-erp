@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, OnDestroy, Input } from '@angular/core';
+﻿import { Component, OnInit, ChangeDetectorRef, OnDestroy, Input } from '@angular/core';
 
 
 import { CommonModule } from '@angular/common';
@@ -38,9 +38,9 @@ import { QuickEntityModalComponent } from '../../shared/components/quick-entity-
 import { GasControlReportPrintComponent } from './gas-control-report-print.component';
 
 @Component({
-  selector: 'app-gas-control',
-  standalone: true,
-  imports: [CommonModule, FormsModule, AppIconComponent, QuickEntityModalComponent, GasControlReportPrintComponent],
+   selector: 'app-gas-control',
+   standalone: true,
+   imports: [CommonModule, FormsModule, AppIconComponent, QuickEntityModalComponent, GasControlReportPrintComponent],
 
 
    template: `
@@ -1195,13 +1195,13 @@ export class GasControlComponent implements OnInit, OnDestroy {
       this.sub.add(
 
 
-          this.dataService.activeCompany$.subscribe(company => {
-             if (company && company.id !== this.lastInitializedCompanyId) {
-                this.lastInitializedCompanyId = company.id;
-                this.initModule();
-                this.loadEntities();
-             }
-          })
+         this.dataService.activeCompany$.subscribe(company => {
+            if (company && company.id !== this.lastInitializedCompanyId) {
+               this.lastInitializedCompanyId = company.id;
+               this.initModule();
+               this.loadEntities();
+            }
+         })
 
 
       );
@@ -1496,7 +1496,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
             this.cautionInfo = footers.cautionInfo || this.control?.initialStock?.footers?.cautionInfo || {};
             this.cautionPrev = (footers.cautionPrev && Object.keys(footers.cautionPrev).length > 0) ? footers.cautionPrev : (this.control?.initialStock?.footers?.physicalManeio || {});
             this.damagedLog = footers.damagedLog || [];
-            
+
             // Carry-over customer debts and editable stock configurations
             this.customerDebts = this.control?.initialStock?.footers?.customerDebts || {};
             this.manualStockAdj = (footers.manualStockAdj && Object.keys(footers.manualStockAdj).length > 0) ? footers.manualStockAdj : (this.control?.initialStock?.footers?.manualStockAdj || {});
@@ -1591,14 +1591,14 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
          kitMovements: this.kitMovements,
 
-          externalEmpties: this.externalEmpties,
-          cautionIn: this.cautionIn,
-          cautionOut: this.cautionOut,
-          cautionInfo: this.cautionInfo,
-          cautionPrev: this.cautionPrev,
-          damagedLog: this.damagedLog,
-          customerDebts: this.computeEndOfDayCustomerDebts(),
-          manualStockAdj: this.manualStockAdj,
+         externalEmpties: this.externalEmpties,
+         cautionIn: this.cautionIn,
+         cautionOut: this.cautionOut,
+         cautionInfo: this.cautionInfo,
+         cautionPrev: this.cautionPrev,
+         damagedLog: this.damagedLog,
+         customerDebts: this.computeEndOfDayCustomerDebts(),
+         manualStockAdj: this.manualStockAdj,
 
          physicalManeio: this.physicalManeio,
 
@@ -1770,7 +1770,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
       const disc = this.getDiscrepancy();
-      
+
       if (disc < -1) {
          this.toaster.showWarning('Atenção', `O caixa tem um défice de ${Math.abs(disc).toFixed(2)} MT. Verifique os movimentos antes de fechar.`);
          return;
@@ -1980,7 +1980,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
    removeKit(i: number) { this.kitMovements.splice(i, 1); }
 
-   getKitSum(field: 'out' | 'ing'| 'sale') { return this.kitMovements.reduce((acc, k) => acc + (Number(k[field]) || 0), 0); }
+   getKitSum(field: 'out' | 'ing' | 'sale') { return this.kitMovements.reduce((acc, k) => acc + (Number(k[field]) || 0), 0); }
 
 
    addDamagedLog() { this.damagedLog.unshift({ typeName: this.cylinderTypes[0]?.name, fault: '', qty: 0 }); }
@@ -2065,13 +2065,13 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
    updateEntry(entry: GasDailyEntry) {
 
-      const isBlank = !entry.customerName && 
-                     (Number(entry.s_gpl) || 0) === 0 && 
-                     (Number(entry.s_vaz) || 0) === 0 && 
-                     (Number(entry.s_av) || 0) === 0 && 
-                     (Number(entry.e_gpl) || 0) === 0 &&
-                     (Number(entry.e_vaz) || 0) === 0 &&
-                     (Number(entry.adc_caucao) || 0) === 0;
+      const isBlank = !entry.customerName &&
+         (Number(entry.s_gpl) || 0) === 0 &&
+         (Number(entry.s_vaz) || 0) === 0 &&
+         (Number(entry.s_av) || 0) === 0 &&
+         (Number(entry.e_gpl) || 0) === 0 &&
+         (Number(entry.e_vaz) || 0) === 0 &&
+         (Number(entry.adc_caucao) || 0) === 0;
 
       if (isBlank && !entry.id) return;
 
@@ -2264,8 +2264,8 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    getEntriesForType(typeId: string, entryType?: 'CUSTOMER' | 'SUPPLIER', includeAdjustments: boolean = true) {
-      return this.entries.filter(e => 
-         e.cylinderTypeId === typeId && 
+      return this.entries.filter(e =>
+         e.cylinderTypeId === typeId &&
          (entryType ? e.entryType === entryType : true) &&
          (includeAdjustments ? true : !(e as any).isAdj)
       );
@@ -2283,10 +2283,10 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-   getGlobalTotal() { 
+   getGlobalTotal() {
       return this.entries
          .filter(e => e.entryType === 'CUSTOMER' && !e.invoice && !e.gr && !(e as any).isAdj)
-         .reduce((acc, e) => acc + (Number(e.totalAmount) || 0), 0); 
+         .reduce((acc, e) => acc + (Number(e.totalAmount) || 0), 0);
    }
 
    getInvoicesTotal() {
@@ -2296,10 +2296,10 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
 
-   getCollectionsTotal() { 
+   getCollectionsTotal() {
       return this.entries
          .filter(e => e.entryType === 'CUSTOMER' && !(e as any).isAdj)
-         .reduce((acc, e) => acc + (Number(e.adc_caucao) || 0) + (Number(e.p_divida) || 0), 0); 
+         .reduce((acc, e) => acc + (Number(e.adc_caucao) || 0) + (Number(e.p_divida) || 0), 0);
    }
 
 
@@ -2307,14 +2307,14 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    updateEditableStock(tn: string, type: string, event: any) {
-       const val = event.target.value;
-       const key = type + '_' + tn;
-       if (val === '' || val === null) {
-           delete this.manualStockAdj[key];
-       } else {
-           this.manualStockAdj[key] = Number(val);
-       }
-       this.saveStocks();
+      const val = event.target.value;
+      const key = type + '_' + tn;
+      if (val === '' || val === null) {
+         delete this.manualStockAdj[key];
+      } else {
+         this.manualStockAdj[key] = Number(val);
+      }
+      this.saveStocks();
    }
 
    getFinalStock(tn: string, f: 'gpl' | 'empty' | 'damaged' | 'toRecover' | 'toReturn'): number {
@@ -2474,20 +2474,20 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    selectSuggestion(suggestion: any, entry: GasDailyEntry) {
-
-
       entry.customerName = suggestion.name;
 
+      // Auto-set priceType based on customer type
+      if (suggestion.type) {
+         entry.priceType = suggestion.type;
+         const cylinderType = this.cylinderTypes.find(t => t.id === entry.cylinderTypeId);
+         if (cylinderType) {
+            this.recalculateEntry(entry, cylinderType);
+         }
+      }
 
       this.filteredSuggestions = [];
-
-
       this.activeSuggestionEntry = null;
-
-
       this.updateEntry(entry);
-
-
    }
 
 
@@ -2532,32 +2532,25 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    handleQuickSave(newEntity: any) {
-
-
       if (this.activeSuggestionEntry) {
-
-
          this.activeSuggestionEntry.customerName = newEntity.name;
 
+         // Auto-set priceType for the newly created entity
+         if (newEntity.type) {
+            this.activeSuggestionEntry.priceType = newEntity.type;
+            const cylinderType = this.cylinderTypes.find(t => t.id === this.activeSuggestionEntry.cylinderTypeId);
+            if (cylinderType) {
+               this.recalculateEntry(this.activeSuggestionEntry, cylinderType);
+            }
+         }
 
          this.updateEntry(this.activeSuggestionEntry);
-
-
          this.loadEntities(); // Refresh local list
-
-
       }
 
-
       this.showQuickModal = false;
-
-
       this.activeSuggestionEntry = null;
-
-
       this.filteredSuggestions = [];
-
-
    }
 
 
@@ -2592,27 +2585,27 @@ export class GasControlComponent implements OnInit, OnDestroy {
    getCategorizedEntities(category: 'TRBLHDOR' | 'CLIENTE' | 'INSTITUICO' | 'SUPPLIER', entryType: 'CUSTOMER' | 'SUPPLIER') {
       const allEntities: any[] = [];
       const entries = this.entries.filter(e => e.entryType === entryType);
-      
+
       const namesSet = new Set<string>(entries.map(e => e.customerName).filter(n => n));
-      
+
       // Use rolled over customerDebts as base for names and initial balances
       const initDebts = this.customerDebts || {};
       Object.keys(initDebts).forEach(k => {
-          if (k.includes('_' + entryType + '_')) {
-              const name = k.split('_' + entryType + '_')[0];
-              if (name) namesSet.add(name);
-          }
+         if (k.includes('_' + entryType + '_')) {
+            const name = k.split('_' + entryType + '_')[0];
+            if (name) namesSet.add(name);
+         }
       });
 
       const uniqueNames = Array.from(namesSet);
       uniqueNames.forEach(name => {
          const entityCat = this.resolveCategoryByName(name);
          if ((category === 'SUPPLIER' && entityCat === 'SUPPLIER') ||
-             (category !== 'SUPPLIER' && entityCat === category)) {
+            (category !== 'SUPPLIER' && entityCat === category)) {
             const entBalances: any = {};
             this.cylinderTypes.forEach(t => {
                const typeEntries = entries.filter(e => e.customerName === name && e.cylinderTypeId === t.id);
-               
+
                // Get initial debt from previous day's end map
                const debtKey = name + '_' + entryType + '_' + t.name;
                const initDebt = initDebts[debtKey] || 0;
@@ -2621,14 +2614,14 @@ export class GasControlComponent implements OnInit, OnDestroy {
                   // Net variation today: (OUT + CAUTION) - IN
                   const todayVar = (this.sumEntries(typeEntries, 's_gpl') + this.sumEntries(typeEntries, 's_vaz') + this.sumEntries(typeEntries, 's_av') + this.sumEntries(typeEntries, 'vz_vend'))
                      - (this.sumEntries(typeEntries, 'e_gpl') + this.sumEntries(typeEntries, 'e_vaz') + this.sumEntries(typeEntries, 'e_av'));
-                  
+
                   // Total debt displayed = Previous Debt + Today's Variation
                   entBalances[t.name] = (entBalances[t.name] || 0) + initDebt + todayVar;
                } else {
                   // Devolver balance: In - Out
                   const todayVar = (this.sumEntries(typeEntries, 'e_gpl') + this.sumEntries(typeEntries, 'e_vaz') + this.sumEntries(typeEntries, 'e_av'))
                      - (this.sumEntries(typeEntries, 's_gpl') + this.sumEntries(typeEntries, 's_vaz') + this.sumEntries(typeEntries, 's_av'));
-                  
+
                   entBalances[t.name] = (entBalances[t.name] || 0) + initDebt + todayVar;
                }
             });
@@ -2641,32 +2634,32 @@ export class GasControlComponent implements OnInit, OnDestroy {
    }
 
    computeEndOfDayCustomerDebts(): { [key: string]: number } {
-       const debts: { [key: string]: number } = {};
-       const allCats: ('TRBLHDOR' | 'CLIENTE' | 'INSTITUICO' | 'SUPPLIER')[] = ['TRBLHDOR', 'CLIENTE', 'INSTITUICO', 'SUPPLIER'];
-       
-       allCats.forEach(cat => {
-           // For CUSTOMER side
-           if (cat !== 'SUPPLIER') {
-               const ents = this.getCategorizedEntities(cat as any, 'CUSTOMER');
-               ents.forEach(e => {
-                   this.cylinderTypes.forEach(t => {
-                       const val = e.balances[t.name] || 0;
-                       if (val !== 0) debts[e.name + '_CUSTOMER_' + t.name] = val;
-                   });
+      const debts: { [key: string]: number } = {};
+      const allCats: ('TRBLHDOR' | 'CLIENTE' | 'INSTITUICO' | 'SUPPLIER')[] = ['TRBLHDOR', 'CLIENTE', 'INSTITUICO', 'SUPPLIER'];
+
+      allCats.forEach(cat => {
+         // For CUSTOMER side
+         if (cat !== 'SUPPLIER') {
+            const ents = this.getCategorizedEntities(cat as any, 'CUSTOMER');
+            ents.forEach(e => {
+               this.cylinderTypes.forEach(t => {
+                  const val = e.balances[t.name] || 0;
+                  if (val !== 0) debts[e.name + '_CUSTOMER_' + t.name] = val;
                });
-           }
-           // For SUPPLIER side
-           if (cat === 'SUPPLIER' || cat === 'CLIENTE' || cat === 'INSTITUICO') {
-               const ents = this.getCategorizedEntities(cat as any, 'SUPPLIER');
-               ents.forEach(e => {
-                   this.cylinderTypes.forEach(t => {
-                       const val = e.balances[t.name] || 0;
-                       if (val !== 0) debts[e.name + '_SUPPLIER_' + t.name] = val;
-                   });
+            });
+         }
+         // For SUPPLIER side
+         if (cat === 'SUPPLIER' || cat === 'CLIENTE' || cat === 'INSTITUICO') {
+            const ents = this.getCategorizedEntities(cat as any, 'SUPPLIER');
+            ents.forEach(e => {
+               this.cylinderTypes.forEach(t => {
+                  const val = e.balances[t.name] || 0;
+                  if (val !== 0) debts[e.name + '_SUPPLIER_' + t.name] = val;
                });
-           }
-       });
-       return debts;
+            });
+         }
+      });
+      return debts;
    }
 
    sumCategorizedBalances(category: 'TRBLHDOR' | 'CLIENTE' | 'INSTITUICO' | 'SUPPLIER' | 'ALL_REAVER' | 'ALL_DEVOLVER', typeName: string, entryType: 'CUSTOMER' | 'SUPPLIER'): number {
@@ -2692,7 +2685,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
       const stock = this.getManeioCalculated(tn); // Stock teórico
       const reaver = this.sumCategorizedBalances('ALL_REAVER', tn, 'CUSTOMER');
       const devolver = this.sumCategorizedBalances('ALL_DEVOLVER', tn, 'SUPPLIER');
-      
+
       // USER FORMULA: Físico - Calculado - Reaver + Devolver
       return fundo - stock - reaver + devolver;
    }
@@ -2730,25 +2723,25 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
    updateInventoryValue(name: string, type: GasCylinderType, event: any, typeId: 'CUSTOMER' | 'SUPPLIER') {
       const newVal = Math.max(0, parseInt((event.target as HTMLInputElement).value) || 0);
-      
+
       // Calculate current account balance
       const allEnts = this.entries.filter(e => e.customerName === name && e.cylinderTypeId === type.id && e.entryType === typeId);
-      const initDebt = typeId === 'CUSTOMER' 
+      const initDebt = typeId === 'CUSTOMER'
          ? (this.customerDebts[name + '_CUSTOMER_' + type.name] || 0)
          : (this.customerDebts[name + '_SUPPLIER_' + type.name] || 0);
 
       let currentAccountBalance = initDebt;
       if (typeId === 'CUSTOMER') {
-         currentAccountBalance += allEnts.reduce((acc, e) => acc + (Number(e.s_gpl)||0) + (Number(e.s_vaz)||0) + (Number(e.s_av)||0) + (Number(e.vz_vend)||0) - ((Number(e.e_gpl)||0) + (Number(e.e_vaz)||0) + (Number(e.e_av)||0)), 0);
+         currentAccountBalance += allEnts.reduce((acc, e) => acc + (Number(e.s_gpl) || 0) + (Number(e.s_vaz) || 0) + (Number(e.s_av) || 0) + (Number(e.vz_vend) || 0) - ((Number(e.e_gpl) || 0) + (Number(e.e_vaz) || 0) + (Number(e.e_av) || 0)), 0);
       } else {
-         currentAccountBalance += allEnts.reduce((acc, e) => acc + (Number(e.e_gpl)||0) + (Number(e.e_vaz)||0) + (Number(e.e_av)||0) - ((Number(e.s_gpl)||0) + (Number(e.s_vaz)||0) + (Number(e.s_av)||0)), 0);
+         currentAccountBalance += allEnts.reduce((acc, e) => acc + (Number(e.e_gpl) || 0) + (Number(e.e_vaz) || 0) + (Number(e.e_av) || 0) - ((Number(e.s_gpl) || 0) + (Number(e.s_vaz) || 0) + (Number(e.s_av) || 0)), 0);
       }
 
       const diff = newVal - currentAccountBalance;
       if (diff === 0) return;
 
       // IMMEDIATE ADJUSTMENT
-      let entry = allEnts.find(e => 
+      let entry = allEnts.find(e =>
          (Number(e.totalAmount) || 0) === 0 && (Number(e.vz_vend) || 0) === 0 &&
          (Number(e.adc_caucao) || 0) === 0 && (Number(e.p_divida) || 0) === 0
       );
@@ -2757,7 +2750,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
          entry = {
             customerName: name, cylinderTypeId: type.id!, entryType: typeId,
             controlId: this.control?.id, s_gpl: 0, s_vaz: 0, s_av: 0, e_gpl: 0, e_vaz: 0, e_av: 0,
-            vz_vend: 0, adc_caucao: 0, p_divida: 0, totalAmount: 0, gr: false, invoice: false, 
+            vz_vend: 0, adc_caucao: 0, p_divida: 0, totalAmount: 0, gr: false, invoice: false,
             priceType: 'REVENDEDOR'
          } as GasDailyEntry;
          (entry as any).isAdj = true;
@@ -2780,7 +2773,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
    clearEntityEntries(name: string, entryType: 'CUSTOMER' | 'SUPPLIER') {
 
       if (confirm(`Remover todos os registos pendentes de ${name}?`)) {
-         
+
          this.forceShowMapEntities.delete(name + '_' + entryType);
 
          const cid = this.dataService.getCompanyId();

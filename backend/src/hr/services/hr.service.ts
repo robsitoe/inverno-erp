@@ -135,13 +135,11 @@ export class HRService {
       (updateEmployeeDto.dependents !== undefined && Number(updateEmployeeDto.dependents) !== Number(employee.dependents));
 
     if (hasFinancialChanges) {
-      const historyRepo = await this.getSalaryHistoryRepo(companyId);
-      const historyId = `SH-${Date.now()}-${id}`;
-      await historyRepo.save({
-        id: historyId,
+      await this.createSalaryVariation({
         employeeId: id,
         companyId,
         changeDate: new Date().toISOString().split('T')[0],
+        effectiveDate: new Date().toISOString().split('T')[0], // Immediate by default from administrative edit
         oldSalary: employee.salaryBase,
         newSalary: updateEmployeeDto.salaryBase ?? employee.salaryBase,
         oldTransport: employee.subsidyTransport,
@@ -151,8 +149,9 @@ export class HRService {
         oldDependents: employee.dependents,
         newDependents: updateEmployeeDto.dependents ?? employee.dependents,
         reason: (updateEmployeeDto as any).changeReason || 'Alteração administrativa',
+        status: 'APPLIED',
         updatedBy: user?.name || user?.username || 'Sistema'
-      });
+      }, companyId);
     }
 
     // Validate NIB uniqueness on update
@@ -173,6 +172,48 @@ export class HRService {
       where: { employeeId, companyId: companyId || TenancyContext.getCompanyId() },
       order: { changeDate: 'DESC', createdAt: 'DESC' }
     });
+  }
+
+  async createSalaryVariation(data: any, companyId?: string) {
+    const cid = companyId || data.companyId || TenancyContext.getCompanyId();
+    const repo = await this.getSalaryHistoryRepo(cid);
+    const id = `SH-${Date.now()}-${data.employeeId}`;
+    const variation = repo.create({ ...data, id, companyId: cid }) as any;
+    const saved = await repo.save(variation) as any;
+
+    // If status is APPLIED, update the employee record immediately
+    if (saved.status === 'APPLIED') {
+      const empRepo = await this.getEmployeeRepo(cid);
+      await empRepo.update(saved.employeeId, {
+        salaryBase: saved.newSalary,
+        subsidyTransport: saved.newTransport,
+        subsidyFood: saved.newFood,
+        dependents: saved.newDependents
+      });
+    }
+
+    return saved;
+  }
+
+  async applySalaryVariation(id: string, companyId?: string) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getSalaryHistoryRepo(cid);
+    const variation = await repo.findOne({ where: { id } }) as any;
+    if (!variation) throw new NotFoundException('Variação salarial não encontrada.');
+
+    variation.status = 'APPLIED';
+    variation.changeDate = new Date().toISOString().split('T')[0];
+    const saved = await repo.save(variation) as any;
+
+    const empRepo = await this.getEmployeeRepo(cid);
+    await empRepo.update(saved.employeeId, {
+      salaryBase: saved.newSalary,
+      subsidyTransport: saved.newTransport,
+      subsidyFood: saved.newFood,
+      dependents: saved.newDependents
+    });
+
+    return saved;
   }
 
   async remove(id: string, companyId?: string) {

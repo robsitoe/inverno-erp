@@ -77,4 +77,9 @@ export class CreateCustomerDto {
 
     @IsOptional()
     isActive?: boolean;
+
+    @ApiProperty({ example: 'CONSUMIDOR', enum: ['REVENDEDOR', 'BOMBA', 'CONSUMIDOR'] })
+    @IsString()
+    @IsOptional()
+    type?: 'REVENDEDOR' | 'BOMBA' | 'CONSUMIDOR';
 }

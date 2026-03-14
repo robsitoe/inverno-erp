@@ -52,6 +52,9 @@ export class Customer {
     @Column({ default: true })
     isActive: boolean;
 
+    @Column({ type: 'varchar', length: 20, default: 'CONSUMIDOR' })
+    type: 'REVENDEDOR' | 'BOMBA' | 'CONSUMIDOR';
+
     @CreateDateColumn()
     createdAt: Date;
 

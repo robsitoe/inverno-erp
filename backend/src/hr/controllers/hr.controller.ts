@@ -108,6 +108,18 @@ export class HRController {
     return this.hrService.getSalaryHistory(id, companyId);
   }
 
+  @Post('salary-variations')
+  @ApiOperation({ summary: 'Create a new salary variation' })
+  createSalaryVariation(@Body() data: any, @Query('companyId') companyId?: string) {
+    return this.hrService.createSalaryVariation(data, companyId);
+  }
+
+  @Patch('salary-variations/:id/apply')
+  @ApiOperation({ summary: 'Apply a salary variation' })
+  applySalaryVariation(@Param('id') id: string, @Query('companyId') companyId?: string) {
+    return this.hrService.applySalaryVariation(id, companyId);
+  }
+
   @Delete('employees/:id')
   @ApiOperation({ summary: 'Delete an employee' })
   removeEmployee(@Param('id') id: string, @Query('companyId') companyId?: string) {
