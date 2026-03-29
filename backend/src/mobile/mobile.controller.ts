@@ -101,6 +101,13 @@ export class MobileController {
         return this.mobileService.deleteDeliveryPoint(id, customerId, companyId);
     }
 
+    @UseGuards(AuthGuard('jwt'))
+    @Post('route/optimize')
+    async getOptimizedRoute(@Request() req, @Body() data: { docIds: string[] }) {
+        const { companyId } = req.user;
+        return this.mobileService.getOptimizedSequence(data.docIds, companyId);
+    }
+
     // --- Driver Endpoints ---
 
     @UseGuards(AuthGuard('jwt'))

@@ -699,7 +699,6 @@ export class MobileService {
 
     async assignRoute(employeeId: string, docIds: string[], companyId: string) {
         const tenantSalesRepo = await this.getTenantRepo<SalesDocument>(SalesDocument, companyId);
-
         const docs = await tenantSalesRepo.find({
             where: { id: In(docIds) }
         });
@@ -707,22 +706,77 @@ export class MobileService {
         const driverUser = await this.userRepo.findOne({ where: { employeeId } });
         const driverName = driverUser?.name || 'Um motorista';
 
-        const updates = docs.map(async (doc, index) => {
+        // Update each document and notify customer
+        for (let i = 0; i < docs.length; i++) {
+            const doc = docs[i];
             doc.driverId = employeeId;
-            doc.routeSequence = index + 1;
-            doc.status = WorkflowStatus.POSTED;
-            const saved = await tenantSalesRepo.save(doc);
+            doc.routeSequence = i + 1;
+            doc.status = WorkflowStatus.APPROVED; // Keep as APPROVED (Pending Delivery)
+            await tenantSalesRepo.save(doc);
 
-            // Notify Customer
-            await this.notifyCustomerOfDeliveryStatus(
-                doc.customerId,
-                `Boa notícia! A sua entrega (${doc.documentNumber}) foi agendada para hoje com o motorista ${driverName}.`,
-                companyId
-            );
+            // Notify Customer via unified helper
+            await this.notifyCustomerOfDeliveryStatus(doc.id, companyId, 'SCHEDULED');
+        }
 
-            return saved;
+        return { success: true, count: docs.length };
+    }
+
+    /**
+     * ROUTE OPTIMIZATION (Nearest Neighbor)
+     */
+    async getOptimizedSequence(docIds: string[], companyId: string) {
+        const tenantSalesRepo = await this.getTenantRepo<SalesDocument>(SalesDocument, companyId);
+        const docs = await tenantSalesRepo.find({
+            where: { id: In(docIds) }
         });
 
-        return Promise.all(updates);
+        const company = await this.companyRepo.findOne({ where: { id: companyId } });
+        const startLat = company?.latitude ? Number(company.latitude) : -25.9655;
+        const startLng = company?.longitude ? Number(company.longitude) : 32.5833;
+
+        const optimized: SalesDocument[] = [];
+        const remaining = docs.filter(d => d.latitude && d.longitude);
+        const skipped = docs.filter(d => !d.latitude || !d.longitude);
+
+        let currentLat = startLat;
+        let currentLng = startLng;
+
+        while (remaining.length > 0) {
+            let nearestIdx = -1;
+            let minDistance = Infinity;
+
+            for (let i = 0; i < remaining.length; i++) {
+                const dist = this.calculateDistance(
+                    currentLat, currentLng,
+                    Number(remaining[i].latitude), Number(remaining[i].longitude)
+                );
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    nearestIdx = i;
+                }
+            }
+
+            if (nearestIdx !== -1) {
+                const next = remaining.splice(nearestIdx, 1)[0];
+                optimized.push(next);
+                currentLat = Number(next.latitude);
+                currentLng = Number(next.longitude);
+            } else {
+                break;
+            }
+        }
+
+        return [...optimized, ...skipped];
+    }
+
+    private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 }
