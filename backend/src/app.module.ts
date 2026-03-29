@@ -7,21 +7,34 @@ import { AccountingModule } from './accounting/accounting.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { SalesModule } from './sales/sales.module';
 import { Account } from './accounting/entities/account.entity';
-import { JournalEntry, JournalLine } from './accounting/entities/journal-entry.entity';
+import {
+  JournalEntry,
+  JournalLine,
+} from './accounting/entities/journal-entry.entity';
 import { Article } from './inventory/entities/article.entity';
 import { StockMovement } from './inventory/entities/stock-movement.entity';
-import { SalesDocument, SalesDocumentLine } from './sales/entities/sales-document.entity';
+import {
+  SalesDocument,
+  SalesDocumentLine,
+} from './sales/entities/sales-document.entity';
 import { User } from './users/entities/user.entity';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { TreasuryModule } from './treasury/treasury.module';
-import { PurchaseDocument, PurchaseDocumentLine } from './purchases/entities/purchase.entity';
-import { TreasuryDocument, TreasuryDocumentLine } from './treasury/entities/treasury.entity';
+import {
+  PurchaseDocument,
+  PurchaseDocumentLine,
+} from './purchases/entities/purchase.entity';
+import {
+  TreasuryDocument,
+  TreasuryDocumentLine,
+} from './treasury/entities/treasury.entity';
 import { Company } from './companies/entities/company.entity';
 import { FiscalYear } from './companies/entities/fiscal-year.entity';
 import { Journal } from './accounting/entities/journal.entity';
 import { Customer } from './customers/entities/customer.entity';
+import { DeliveryPoint } from './customers/entities/delivery-point.entity';
 import { Supplier } from './suppliers/entities/supplier.entity';
 import { Series } from './companies/entities/series.entity';
 import { GenericEntity } from './common-entities/generic-entity.entity';
@@ -44,8 +57,16 @@ import { Payroll } from './hr/entities/payroll.entity';
 import { Absence } from './hr/entities/absence.entity';
 import { TaxBracket, HRSettings } from './hr/entities/hr-settings.entity';
 import { HRModule } from './hr/hr.module';
-import { GasCylinderType, GasDailyControl, GasDailyEntry } from './gas-control/gas-control.entity';
+import {
+  GasCylinderType,
+  GasDailyControl,
+  GasDailyEntry,
+} from './gas-control/gas-control.entity';
+import { SalesCampaign } from './sales/entities/sales-campaign.entity';
+import { SalesCampaignItem } from './sales/entities/sales-campaign-item.entity';
 import { GasControlModule } from './gas-control/gas-control.module';
+import { MobileModule } from './mobile/mobile.module';
+import { TruckInventory } from './mobile/truck-inventory.entity';
 
 @Module({
   imports: [
@@ -60,14 +81,50 @@ import { GasControlModule } from './gas-control/gas-control.module';
         if (dbType === 'sqlite') {
           return {
             type: 'sqlite',
-            database: configService.get<string>('DB_DATABASE', 'inverno.sqlite'),
+            database: configService.get<string>(
+              'DB_DATABASE',
+              'inverno.sqlite',
+            ),
             entities: [
-              Account, JournalEntry, JournalLine, Article, StockMovement,
-              SalesDocument, SalesDocumentLine, User, PurchaseDocument,
-              PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-              Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-              DocumentType, PaymentMethod, PettyCashVoucher, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate, Employee, Payroll, Absence, TaxBracket, HRSettings,
-              GasCylinderType, GasDailyControl, GasDailyEntry
+              Account,
+              JournalEntry,
+              JournalLine,
+              Article,
+              StockMovement,
+              SalesDocument,
+              SalesDocumentLine,
+              User,
+              PurchaseDocument,
+              PurchaseDocumentLine,
+              TreasuryDocument,
+              TreasuryDocumentLine,
+              Company,
+              FiscalYear,
+              Journal,
+              Customer,
+              DeliveryPoint,
+              Supplier,
+              Series,
+              GenericEntity,
+              DocumentType,
+              PaymentMethod,
+              PettyCashVoucher,
+              WorkflowHistory,
+              PeriodAuditLog,
+              License,
+              LicenseRenewal,
+              TaxRate,
+              Employee,
+              Payroll,
+              Absence,
+              TaxBracket,
+              HRSettings,
+              GasCylinderType,
+              GasDailyControl,
+              GasDailyEntry,
+              SalesCampaign,
+              SalesCampaignItem,
+              TruckInventory,
             ],
             synchronize: true,
           };
@@ -81,12 +138,45 @@ import { GasControlModule } from './gas-control/gas-control.module';
           password: configService.get<string>('DB_PASSWORD', 'postgres'),
           database: configService.get<string>('DB_DATABASE', 'inverno_erp'),
           entities: [
-            Account, JournalEntry, JournalLine, Article, StockMovement,
-            SalesDocument, SalesDocumentLine, User, PurchaseDocument,
-            PurchaseDocumentLine, TreasuryDocument, TreasuryDocumentLine,
-            Company, FiscalYear, Journal, Customer, Supplier, Series, GenericEntity,
-            DocumentType, PaymentMethod, PettyCashVoucher, WorkflowHistory, PeriodAuditLog, License, LicenseRenewal, TaxRate, Employee, Payroll, Absence, TaxBracket, HRSettings,
-            GasCylinderType, GasDailyControl, GasDailyEntry
+            Account,
+            JournalEntry,
+            JournalLine,
+            Article,
+            StockMovement,
+            SalesDocument,
+            SalesDocumentLine,
+            User,
+            PurchaseDocument,
+            PurchaseDocumentLine,
+            TreasuryDocument,
+            TreasuryDocumentLine,
+            Company,
+            FiscalYear,
+            Journal,
+            Customer,
+            DeliveryPoint,
+            Supplier,
+            Series,
+            GenericEntity,
+            DocumentType,
+            PaymentMethod,
+            PettyCashVoucher,
+            WorkflowHistory,
+            PeriodAuditLog,
+            License,
+            LicenseRenewal,
+            TaxRate,
+            Employee,
+            Payroll,
+            Absence,
+            TaxBracket,
+            HRSettings,
+            GasCylinderType,
+            GasDailyControl,
+            GasDailyEntry,
+            SalesCampaign,
+            SalesCampaignItem,
+            TruckInventory,
           ],
           synchronize: true,
         };
@@ -107,14 +197,13 @@ import { GasControlModule } from './gas-control/gas-control.module';
     TaxesModule,
     HRModule,
     GasControlModule,
+    MobileModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TenancyMiddleware)
-      .forRoutes('*');
+    consumer.apply(TenancyMiddleware).forRoutes('*');
   }
 }
