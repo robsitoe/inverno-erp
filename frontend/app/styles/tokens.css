@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Shared Animation & Timing */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --trans-fast: 150ms var(--ease-out-expo);
+    --trans-normal: 250ms var(--ease-out-expo);
+}
+
+/*Theme: Sovereign Engineer (Dark Technical) */
+.theme-sovereign {
+    --brand-emerald: #00ffa3;
+    --brand-emerald-dim: rgba(0, 255, 163, 0.15);
+    --brand-emerald-glow: rgba(0, 255, 163, 0.4);
+    --brand-accent: #0ea5e9;
+
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --slate-950: #020617;
+
+    --bg-app: var(--slate-950);
+    --bg-side: var(--slate-900);
+    --bg-card: rgba(15, 23, 42, 0.8);
+    --bg-elevated: var(--slate-800);
+
+    --text-primary: var(--slate-50);
+    --text-secondary: var(--slate-400);
+    --text-muted: var(--slate-600);
+
+    --border-dim: rgba(255, 255, 255, 0.05);
+    --border-standard: rgba(255, 255, 255, 0.1);
+    --border-accent: var(--brand-emerald-dim);
+
+    --status-error: #f43f5e;
+    --status-warning: #f59e0b;
+    --status-info: #3b82f6;
+    --status-success: var(--brand-emerald);
+
+    --radius-none: 0px;
+    --radius-xs: 1px;
+    --radius-sm: 2px;
+    --radius-md: 4px;
+
+    --shadow-flat: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-raised: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --shadow-emerald: 0 0 15px -3px var(--brand-emerald-glow);
+}
+
+/* Theme: Classic Pro (Light Professional / Primavera-inspired) */
+.theme-classic {
+    --brand-emerald: #059669;
+    /* Emerald-600 */
+    --brand-emerald-dim: rgba(5, 150, 105, 0.1);
+    --brand-emerald-glow: rgba(5, 150, 105, 0.2);
+    --brand-accent: #2563eb;
+    /* Blue-600 */
+
+    --bg-app: #f1f5f9;
+    /* slate-100 */
+    --bg-side: #ffffff;
+    --bg-card: #ffffff;
+    --bg-elevated: #f8fafc;
+
+    --text-primary: #1e293b;
+    /* slate-800 */
+    --text-secondary: #475569;
+    /* slate-600 */
+    --text-muted: #94a3b8;
+    /* slate-400 */
+
+    --border-dim: #e2e8f0;
+    --border-standard: #cbd5e1;
+    --border-accent: var(--brand-accent);
+
+    --status-error: #dc2626;
+    --status-warning: #d97706;
+    --status-info: #2563eb;
+    --status-success: var(--brand-emerald);
+
+    --radius-none: 0px;
+    --radius-xs: 4px;
+    /* Classic utilizes slightly softer corners */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+
+    --shadow-flat: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    --shadow-raised: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-emerald: none;
+}

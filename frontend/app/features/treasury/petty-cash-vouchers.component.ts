@@ -193,7 +193,7 @@ export class PettyCashVouchersComponent implements OnInit {
 
   loadVouchers() {
     const cid = this.dataService.getCurrentCompany()?.id || '';
-    const baseUrl = 'http://localhost:3000'; // Standard for this project
+    const baseUrl = 'http://192.168.88.25:3000'; // Standard for this project
     const url = `${baseUrl}/treasury/vouchers?companyId=${cid}`;
 
     this.http.get<any[]>(url, {
@@ -213,7 +213,7 @@ export class PettyCashVouchersComponent implements OnInit {
 
   loadAllEntities() {
     const cid = this.dataService.getCurrentCompany()?.id || '';
-    const baseUrl = 'http://localhost:3000';
+    const baseUrl = 'http://192.168.88.25:3000';
     const headers = { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` };
 
     // Load Employees
@@ -317,7 +317,7 @@ export class PettyCashVouchersComponent implements OnInit {
 
   openAddModal() {
     const cid = this.dataService.getCurrentCompany()?.id || '';
-    const baseUrl = 'http://localhost:3000';
+    const baseUrl = 'http://192.168.88.25:3000';
 
     this.currentDoc = {
       companyId: cid,
@@ -378,7 +378,7 @@ export class PettyCashVouchersComponent implements OnInit {
 
     this.isSaving = true;
 
-    const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
+    const baseUrl = window.location.hostname === 'localhost' ? 'http://192.168.88.25:3000' : '';
     this.http.post(`${baseUrl}/treasury/vouchers`, this.currentDoc).subscribe({
       next: (data: any) => {
         this.toaster.showSuccess('Sucesso', 'Vale gravado e descontos programados (se aplicável).');
@@ -401,7 +401,7 @@ export class PettyCashVouchersComponent implements OnInit {
   deleteVoucher(id: string) {
     if (!confirm('Tem a certeza que deseja eliminar este vale? Se já foi descontado no salário não deve ser eliminado.')) return;
 
-    const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
+    const baseUrl = window.location.hostname === 'localhost' ? 'http://192.168.88.25:3000' : '';
     this.http.delete(`${baseUrl}/treasury/vouchers/${id}`).subscribe({
       next: () => {
         this.toaster.showSuccess('Eliminado', 'Vale eliminado com sucesso.');

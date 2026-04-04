@@ -293,6 +293,9 @@ export interface Article {
 
 
     salePrice: number;
+    priceReseller?: number;
+    pricePump?: number;
+    priceFinal?: number;
 
 
     ivaRate: number;
@@ -1323,8 +1326,39 @@ export interface Series {
 
 
     module?: 'GLOBAL' | 'SALES' | 'PURCHASES' | 'STOCK'; // Optional, if we want to scope series
+}
 
+export enum CampaignTargetType {
+    ALL = 'ALL',
+    CATEGORY = 'CATEGORY',
+    ARTICLE = 'ARTICLE'
+}
 
+export enum SalesCampaignType {
+    PERCENTAGE = 'PERCENTAGE',
+    FIXED_AMOUNT = 'FIXED_AMOUNT',
+    BUY_X_GET_Y = 'BUY_X_GET_Y'
+}
+
+export interface SalesCampaignItem {
+    id: string;
+    campaignId: string;
+    targetType: CampaignTargetType;
+    targetValue?: string;
+}
+
+export interface SalesCampaign {
+    id: string;
+    companyId?: string;
+    name: string;
+    description: string;
+    startDate: string;
+    endDate: string;
+    discountPercentage: number;
+    priority: number;
+    isActive: boolean;
+    status: WorkflowStatus;
+    items: SalesCampaignItem[];
 }
 
 

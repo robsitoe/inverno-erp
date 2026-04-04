@@ -170,6 +170,7 @@ export const MENU_ITEMS: MenuItem[] = [
       { label: "Férias e Ausências", icon: "event_busy", view: "absences-management" },
       { label: "Tabelas de IRPS/INSS", icon: "table_rows", view: "tax-tables" },
       { label: "Relatórios de RH", icon: "assessment", view: "hr-reports" },
+      { label: "Aprovações Mobile", icon: "how_to_reg", view: "mobile-approvals" },
       { label: "Utilitários", icon: "build", view: "hr-utilities" }
     ]
   },
@@ -179,7 +180,11 @@ export const MENU_ITEMS: MenuItem[] = [
     feature: "INVENTORY",
     children: [
       { label: "Movimento Geral Diário", icon: "edit_note", view: "gas-movement" },
-      { label: "Mapa de Inventário", icon: "inventory_2", view: "gas-inventory" }
+      { label: "Mapa de Inventário", icon: "inventory_2", view: "gas-inventory" },
+      { label: "Planeamento de Entregas", icon: "local_shipping", view: "delivery-planning" },
+      { label: "Carga & Descarga", icon: "forklift", view: "vehicle-load" },
+      { label: "Mapa de Rastreamento", icon: "map", view: "fleet-map" },
+      { label: "Aprovações Mobile", icon: "how_to_reg", view: "mobile-approvals" }
     ]
   },
   {

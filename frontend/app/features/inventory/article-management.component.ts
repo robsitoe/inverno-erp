@@ -160,15 +160,31 @@ import { IVA_RATES } from '../../shared/constants';
                   />
                 </div>
 
-                <!-- Preço de Venda -->
-                <div>
-                  <label class="block text-xs font-medium text-gray-700 mb-1">Preço de Venda</label>
-                  <input 
-                    type="number" 
-                    [(ngModel)]="selectedArticle.salePrice"
-                    step="0.01"
-                    class="w-full px-2 py-1 border border-gray-300 rounded text-xs text-right focus:outline-none focus:border-blue-500"
-                  />
+                <!-- Preço de Venda -->
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Preço de Venda (Base)</label>
+                  <input 
+                    type="number" 
+                    [(ngModel)]="selectedArticle.salePrice"
+                    step="0.01"
+                    class="w-full px-2 py-1 border border-gray-300 rounded text-xs text-right focus:outline-none focus:border-blue-500 font-bold"
+                  />
+                </div>
+
+                <!-- Preços Especiais -->
+                <div class="col-span-2 grid grid-cols-3 gap-4 bg-blue-50 p-3 rounded border border-blue-100 mb-2">
+                  <div>
+                    <label class="block text-[10px] font-bold text-blue-800 mb-1 text-blue-600">REVENDEDOR</label>
+                    <input type="number" [(ngModel)]="selectedArticle.priceReseller" step="0.01" class="w-full px-2 py-1 border border-blue-200 rounded text-xs text-right" />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-blue-800 mb-1 text-blue-600">BOMBA</label>
+                    <input type="number" [(ngModel)]="selectedArticle.pricePump" step="0.01" class="w-full px-2 py-1 border border-blue-200 rounded text-xs text-right" />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-blue-800 mb-1 text-blue-600">CONS. FINAL</label>
+                    <input type="number" [(ngModel)]="selectedArticle.priceFinal" step="0.01" class="w-full px-2 py-1 border border-blue-200 rounded text-xs text-right" />
+                  </div>
                 </div>
 
                 <!-- Taxa IVA -->
@@ -393,8 +409,11 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
       description: '',
       familyId: '',
       unit: 'UN',
-      purchasePrice: 0,
-      salePrice: 0,
+      purchasePrice: 0,
+      salePrice: 0,
+      priceReseller: 0,
+      pricePump: 0,
+      priceFinal: 0,
       ivaRate: 16,
       ivaCode: '16',
       stockControl: true,

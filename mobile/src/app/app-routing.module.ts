@@ -31,6 +31,10 @@ const routes: Routes = [
         loadComponent: () => import('./pages/home/home.page').then(m => m.HomePage)
       },
       {
+        path: 'tracking',
+        loadComponent: () => import('./pages/tracking/tracking.page').then(m => m.TrackingPage)
+      },
+      {
         path: 'order',
         loadComponent: () => import('./pages/reseller-order/reseller-order.page').then(m => m.ResellerOrderPage)
       },

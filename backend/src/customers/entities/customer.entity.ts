@@ -49,11 +49,17 @@ export class Customer {
     @Column({ nullable: true })
     receivableAccountId: string;
 
+    @Column({ nullable: true })
+    status: string;
+
+    @Column({ type: 'jsonb', nullable: true })
+    attachments: any;
+
     @Column({ default: true })
     isActive: boolean;
 
     @Column({ type: 'varchar', length: 20, default: 'CONSUMIDOR' })
-    type: 'REVENDEDOR' | 'BOMBA' | 'CONSUMIDOR';
+    type: 'REVENDEDOR' | 'BOMBA' | 'CONSUMIDOR' | 'NIVEL2';
 
     @CreateDateColumn()
     createdAt: Date;

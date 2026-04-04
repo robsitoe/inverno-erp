@@ -199,6 +199,15 @@ export class TenancyService implements OnModuleDestroy {
             );
           }
 
+          // Patch 3: priceReseller, pricePump, priceFinal
+          const columnsToPatch = ['priceReseller', 'pricePump', 'priceFinal'];
+          for (const col of columnsToPatch) {
+            if (articlesTable && !articlesTable.findColumnByName(col)) {
+              console.log(`[Tenancy] Patching 'articles' in ${targetDbName}: Adding ${col}`);
+              await queryRunner.query(`ALTER TABLE "articles" ADD COLUMN "${col}" numeric(14,2) DEFAULT 0`);
+            }
+          }
+
           // Patch 2: hr_tax_brackets.id
           // Check if it's a UUID by attempting a query or checking metadata
           const taxTable = await queryRunner.getTable('hr_tax_brackets');

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IonicModule, AlertController, LoadingController } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { Geolocation } from '@capacitor/geolocation';
 
 @Component({
     selector: 'app-delivery-points',
@@ -156,22 +157,74 @@ export class DeliveryPointsPage implements OnInit {
         } catch (err) {
             loader.dismiss();
             const alert = await this.alertCtrl.create({
-                header: 'Erro',
-                message: 'Não foi possível obter a sua localização GPS. Verifique se as permissões estão ativas.',
-                buttons: ['OK']
+                header: 'Erro de Localização',
+                message: 'Não foi possível obter a sua localização GPS automaticamente. Deseja inserir as coordenadas manualmente?',
+                buttons: [
+                    { text: 'Cancelar', role: 'cancel' },
+                    {
+                        text: 'Inserir Manualmente',
+                        handler: () => {
+                            this.promptManualLocation(header, point);
+                        }
+                    }
+                ]
             });
             await alert.present();
         }
     }
 
-    private getCurrentPosition(): Promise<any> {
-        return new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
+    private async promptManualLocation(header: string, point?: any) {
+        const alert = await this.alertCtrl.create({
+            header: 'Inserir Coordenadas',
+            message: 'Insira a latitude e longitude do posto.',
+            inputs: [
+                { name: 'name', type: 'text', placeholder: 'Nome do Posto', value: point?.name || '' },
+                { name: 'address', type: 'text', placeholder: 'Referência', value: point?.address || '' },
+                { name: 'latitude', type: 'number', placeholder: 'Latitude (Ex: -25.9)', value: point?.latitude || '' },
+                { name: 'longitude', type: 'number', placeholder: 'Longitude (Ex: 32.5)', value: point?.longitude || '' }
+            ],
+            buttons: [
+                { text: 'Cancelar', role: 'cancel' },
+                {
+                    text: 'Guardar',
+                    handler: (data) => {
+                        if (!data.name || !data.latitude || !data.longitude) return false;
+                        const payload = {
+                            ...data,
+                            latitude: parseFloat(data.latitude),
+                            longitude: parseFloat(data.longitude)
+                        };
+                        if (point) {
+                            this.authService.updateDeliveryPoint(point.id, payload).subscribe(() => this.loadPoints());
+                        } else {
+                            this.authService.createDeliveryPoint(payload).subscribe(() => this.loadPoints());
+                        }
+                        return true;
+                    }
+                }
+            ]
+        });
+        await alert.present();
+    }
+
+    private async getCurrentPosition(): Promise<any> {
+        try {
+            // Priority: Capacitor Geolocation for native bypass of HTTP restrictions
+            return await Geolocation.getCurrentPosition({
                 enableHighAccuracy: true,
                 timeout: 5000,
                 maximumAge: 0
             });
-        });
+        } catch (e) {
+            // Fallback to browser geolocation just in case it's a legacy environment
+            return new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                });
+            });
+        }
     }
 
     async deletePoint(point: any) {

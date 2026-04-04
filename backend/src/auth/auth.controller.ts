@@ -2,12 +2,16 @@ import { Controller, Post, UseGuards, Request, Body, Get } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) { }
+    constructor(
+        private authService: AuthService,
+        private usersService: UsersService
+    ) { }
 
     @UseGuards(AuthGuard('local'))
     @Post('login')
@@ -22,7 +26,9 @@ export class AuthController {
     @UseGuards(AuthGuard('jwt'))
     @Get('profile')
     @ApiOperation({ summary: 'Get user profile' })
-    getProfile(@Request() req) {
-        return req.user;
+    async getProfile(@Request() req) {
+        const user = await this.usersService.findOne(req.user.userId || req.user.sub);
+        console.log(`[AuthController] Profile requested for ${user.username}. Status: ${user.status}`);
+        return user;
     }
 }

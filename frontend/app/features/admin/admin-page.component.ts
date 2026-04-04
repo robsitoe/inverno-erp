@@ -639,7 +639,7 @@ export class AdminPageComponent implements OnInit {
   checkBackendStatus() {
     this.backendStatus = 'checking';
     // Try to reach the backend
-    fetch('http://localhost:3000')
+    fetch('http://192.168.88.25:3000')
       .then(response => {
         this.backendStatus = 'online';
       })
@@ -705,7 +705,7 @@ export class AdminPageComponent implements OnInit {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/test-db-connection', {
+      const response = await fetch('http://192.168.88.25:3000/test-db-connection', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -723,7 +723,7 @@ export class AdminPageComponent implements OnInit {
       }
     } catch (error: any) {
       this.checkBackendStatus(); // Refresh status
-      alert('❌ Erro ao contactar o servidor local (Backend).\n\nCertifique-se que o backend está a correr em http://localhost:3000.\n\nDetalhes: ' + error.message);
+      alert('❌ Erro ao contactar o servidor local (Backend).\n\nCertifique-se que o backend está a correr em http://192.168.88.25:3000.\n\nDetalhes: ' + error.message);
     }
   }
 }
