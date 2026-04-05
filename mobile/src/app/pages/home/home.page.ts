@@ -3,6 +3,12 @@ import { IonicModule } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
+import { addIcons } from 'ionicons';
+import { 
+  logOutOutline, timeOutline, checkmarkCircleOutline, 
+  locationOutline, chevronForward, cartOutline, 
+  personOutline, helpBuoyOutline 
+} from 'ionicons/icons';
 
 @Component({
   selector: 'app-home',
@@ -151,7 +157,13 @@ export class HomePage implements OnInit {
   hasPoints = true; // Assume true to avoid flicker
   userRole = '';
 
-  constructor(private authService: AuthService, private router: Router) { }
+  constructor(private authService: AuthService, private router: Router) {
+    addIcons({ 
+      logOutOutline, timeOutline, checkmarkCircleOutline, 
+      locationOutline, chevronForward, cartOutline, 
+      personOutline, helpBuoyOutline 
+    });
+  }
 
   ngOnInit() {
     this.authService.refreshProfile().subscribe();

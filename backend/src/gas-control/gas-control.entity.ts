@@ -11,6 +11,9 @@ export class GasCylinderType {
     @Column()
     name: string; // "9KG", "14KG", etc.
 
+    @Column({ type: 'int', default: 0 })
+    capacity: number;
+
     @Column({ default: 'PETROGAS' })
     brand: string; // 'PETROGAS' or 'GALP'
 

@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Company } from '../../companies/entities/company.entity';
 
 export enum UserRole {
     ADMIN = 'ADMIN',
@@ -45,6 +46,25 @@ export class User {
 
     @Column({ type: 'jsonb', nullable: true })
     permissions?: any[];
+
+    @Column({ nullable: true })
+    companyId?: string;
+
+    @Column({ nullable: true })
+    status?: string;
+
+    @ManyToOne(() => Company)
+    @JoinColumn({ name: 'companyId' })
+    company?: Company;
+
+    @Column({ nullable: true })
+    customerId?: string;
+
+    @Column({ nullable: true })
+    employeeId?: string;
+
+    @Column({ nullable: true })
+    userType?: string; // 'STAFF', 'MOBILE'
 
     @CreateDateColumn()
     createdAt: Date;

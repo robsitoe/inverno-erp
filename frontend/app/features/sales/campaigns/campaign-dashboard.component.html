@@ -1,0 +1,93 @@
+<div class="h-full w-full overflow-y-auto p-8 bg-[var(--bg-app)]">
+    <div class="flex items-center justify-between mb-12 border-b border-[var(--border-standard)] pb-8">
+        <div>
+            <h1 class="text-4xl font-bold text-[var(--text-primary)] tracking-tight mb-2 font-display uppercase">
+                Campanhas de Vendas</h1>
+            <p class="text-[var(--text-secondary)] font-medium">Gestão operacional de fluxos promocionais e algoritmos
+                de desconto.</p>
+        </div>
+        <button (click)="openConfigModal()"
+            class="bg-[var(--slate-800)] border border-[var(--brand-emerald)] px-6 py-3 rounded-[var(--radius-xs)] font-bold text-[var(--brand-emerald)] hover:bg-[var(--brand-emerald)] hover:text-[var(--bg-app)] transition-all flex items-center gap-2 uppercase tracking-widest text-xs">
+            <span class="material-symbols-outlined text-sm">add</span>
+            Configurar Campanha
+        </button>
+    </div>
+
+    <div *ngIf="isLoading" class="flex flex-col items-center justify-center h-64">
+        <div class="loader-precision mb-4"></div>
+        <span class="text-[var(--text-muted)] text-xs uppercase tracking-widest animate-pulse">Sincronizando...</span>
+    </div>
+
+    <div *ngIf="!isLoading && campaigns.length === 0"
+        class="flex flex-col items-center justify-center h-64 sharp-card p-12 text-center glass-surface">
+        <span class="material-symbols-outlined text-6xl text-[var(--text-muted)] mb-4">analytics</span>
+        <h3 class="text-xl font-bold text-[var(--text-primary)] mb-2 uppercase tracking-tight">Vazio Operacional</h3>
+        <p class="text-[var(--text-secondary)] max-w-sm mb-8 text-sm">Nenhuma campanha detectada no sistema. Inicie a
+            configuração de descontos para otimizar as vendas.</p>
+        <button (click)="retry()"
+            class="text-[var(--brand-accent)] font-bold hover:underline flex items-center gap-2 mx-auto text-xs uppercase tracking-widest">
+            <span class="material-symbols-outlined text-sm">refresh</span>
+            Reiniciar Sincronização
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" *ngIf="!isLoading && campaigns.length > 0">
+        <div *ngFor="let campaign of campaigns" class="campaign-card p-6 flex flex-col relative overflow-hidden">
+            <!-- Asymmetric accent -->
+            <div class="absolute top-0 right-0 w-16 h-16 bg-[var(--brand-emerald)] opacity-[0.05] pointer-events-none">
+            </div>
+
+            <div class="flex items-start justify-between mb-8">
+                <div
+                    class="p-3 bg-[var(--slate-800)] border border-[var(--border-standard)] rounded-[var(--radius-xs)]">
+                    <span class="material-symbols-outlined text-[var(--brand-emerald)] text-2xl">electric_bolt</span>
+                </div>
+                <div [class]="'status-badge ' + getStatusClass(campaign.status)">
+                    {{ campaign.status }}
+                </div>
+            </div>
+
+            <h3 (click)="openConfigModal(campaign)"
+                class="text-lg font-bold text-[var(--text-primary)] mb-2 font-display uppercase tracking-tight cursor-pointer hover:text-[var(--brand-emerald)] transition-colors">
+                {{
+                campaign.name }}</h3>
+            <p class="text-[var(--text-secondary)] text-xs mb-8 line-clamp-2 leading-relaxed">{{ campaign.description ||
+                'Infraestrutura de campanha sem metadados descritivos.' }}</p>
+
+            <div class="flex items-end justify-between mb-6">
+                <div class="flex flex-col">
+                    <span
+                        class="text-[9px] text-[var(--text-muted)] uppercase font-bold tracking-[0.15em] mb-1">Impacto</span>
+                    <span class="text-3xl font-black text-[var(--brand-emerald)]">{{ campaign.discountPercentage
+                        }}%</span>
+                </div>
+                <div class="flex flex-col text-right">
+                    <span
+                        class="text-[9px] text-[var(--text-muted)] uppercase font-bold tracking-[0.15em] mb-1">Deadline</span>
+                    <span class="text-sm font-bold text-[var(--text-primary)]">{{ campaign.endDate | date:'dd.MM.yyyy'
+                        }}</span>
+                </div>
+            </div>
+
+            <!-- Precision Progress Bar -->
+            <div
+                class="w-full h-1 bg-[var(--slate-800)] rounded-none overflow-hidden mb-8 border border-[var(--border-dim)]">
+                <div class="h-full bg-[var(--brand-emerald)] shadow-emerald"
+                    [style.width]="getProgressBarWidth(campaign)"></div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-6 mt-auto border-t border-[var(--border-standard)]">
+                <button
+                    class="flex-1 py-2 rounded-[var(--radius-xs)] bg-[var(--slate-800)] hover:bg-[var(--slate-700)] text-[var(--text-primary)] text-[10px] font-bold uppercase tracking-widest transition-colors border border-[var(--border-standard)]">Arquivos</button>
+                <button (click)="deleteCampaign(campaign.id)"
+                    class="p-2 rounded-[var(--radius-xs)] border border-rose-500/30 text-rose-500 hover:bg-rose-500/10 transition-colors">
+                    <span class="material-symbols-outlined text-[18px]">close</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <app-sales-campaign-modal *ngIf="showModal" [campaign]="selectedCampaign || {}" (close)="closeModal()"
+        (saved)="onCampaignSaved($event)">
+    </app-sales-campaign-modal>
+</div>

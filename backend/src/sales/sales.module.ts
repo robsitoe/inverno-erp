@@ -13,5 +13,6 @@ import { InventoryModule } from '../inventory/inventory.module';
   ],
   controllers: [SalesController],
   providers: [SalesService],
+  exports: [SalesService],
 })
 export class SalesModule { }

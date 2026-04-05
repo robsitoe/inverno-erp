@@ -1,263 +1,294 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
-import { ToasterService } from '../../services/toaster.service';
+import { AppIconComponent } from '../../shared/components/app-icon.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-delivery-planning',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, AppIconComponent, FormsModule],
     template: `
-    <div class="flex flex-col h-full bg-[var(--bg-app)]">
+    <div class="flex flex-col h-full bg-gray-50">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-[var(--border-standard)] bg-[var(--bg-side)] shrink-0 flex items-center justify-between">
-        <div>
-          <h2 class="text-xl font-black text-[var(--text-primary)] tracking-tight uppercase">Planeamento de Entregas</h2>
-          <p class="text-xs text-[var(--text-muted)] font-medium">Organize e atribua rotas para os motoristas do setor de gás.</p>
-        </div>
+      <div class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <button (click)="loadData()" class="p-2 hover:bg-[var(--slate-800)] rounded-lg text-[var(--text-secondary)] transition-colors" title="Atualizar">
-            <span class="material-symbols-outlined">refresh</span>
+          <div class="p-2 bg-blue-100 rounded-lg">
+            <app-icon name="local_shipping" [size]="24" color="#2563eb"></app-icon>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-gray-800">Planeamento de Entregas</h1>
+            <p class="text-sm text-gray-500">Gerir rotas e atribuição de motoristas</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <button 
+            (click)="optimizeRoute()"
+            [disabled]="selectedDocuments.length < 2 || optimizing"
+            class="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+          >
+            <app-icon *ngIf="!optimizing" name="auto_fix_high" [size]="20" color="#ffffff"></app-icon>
+            <span *ngIf="optimizing" class="animate-spin material-symbols-outlined text-[20px]">sync</span>
+            {{ optimizing ? 'Otimizando...' : 'Otimizar Rota' }}
+          </button>
+          
+          <button 
+            (click)="openAssignModal()"
+            [disabled]="selectedDocuments.length === 0"
+            class="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50 transition-all shadow-sm"
+          >
+            <app-icon name="person_add" [size]="20" color="#374151"></app-icon>
+            Atribuir Motorista
           </button>
         </div>
       </div>
 
-      <!-- Main Board -->
-      <div class="flex-1 p-6 overflow-hidden flex gap-6">
-        
-        <!-- Unassigned Column -->
-        <div class="w-80 flex flex-col bg-[var(--slate-900)] rounded-xl border border-[var(--border-standard)] shrink-0 overflow-hidden">
-          <div class="p-4 border-b border-[var(--border-standard)] bg-[var(--slate-800)] flex items-center justify-between">
-            <h3 class="font-bold text-xs uppercase tracking-widest text-[var(--text-secondary)] flex items-center gap-2">
-              <span class="material-symbols-outlined text-orange-500">pending_actions</span>
-              Pendentes ({{ pendingDeliveries.length }})
-            </h3>
+      <!-- Main Content -->
+      <div class="flex-1 overflow-hidden flex p-6 gap-6">
+        <!-- List of Pending Deliveries -->
+        <div class="w-2/3 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+          <div class="p-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+            <h2 class="font-bold text-gray-700">Entregas Pendentes (Aprovadas)</h2>
+            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full font-semibold">
+              {{ pendingDocuments.length }} Total
+            </span>
           </div>
           
-          <div class="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
-            <div *ngFor="let del of pendingDeliveries" 
-                 class="delivery-card shadow-sm border border-[var(--border-standard)] bg-[var(--bg-card)] rounded-[var(--radius-sm)] p-3 cursor-grab hover:border-[var(--brand-emerald)] transition-all relative group"
-                 [class.border-red-500]="del.statusNotes">
-              
-              <!-- Justification Banner -->
-              <div *ngIf="del.statusNotes" class="absolute -top-2 -right-2 bg-red-600 text-white text-[8px] px-1.5 py-0.5 rounded-full shadow-lg z-10 animate-pulse">
-                MOTIVO: {{ del.statusNotes }}
-              </div>
-
-              <div class="flex justify-between items-start mb-2">
-                <span class="text-[10px] font-bold text-[var(--brand-emerald)] tracking-wider">{{ del.documentNumber }}</span>
-                <span class="text-[10px] text-[var(--text-muted)]">{{ del.date | date:'HH:mm' }}</span>
-              </div>
-              <h4 class="font-bold text-sm text-white mb-1 truncate">{{ del.customerName || 'Cliente Mobile' }}</h4>
-              <p class="text-[11px] text-[var(--text-muted)] mb-3 line-clamp-1">{{ del.customerAddress || 'Sem morada' }}</p>
-              
-              <div class="flex flex-wrap gap-1 mb-3">
-                 <span *ngFor="let line of del.lines" class="px-1.5 py-0.5 bg-[var(--slate-700)] rounded text-[9px] font-bold text-white border border-white/10">
-                   {{ line.quantity }}x {{ line.articleCode }}
-                 </span>
-              </div>
-
-              <div class="pt-3 border-t border-white/5 flex gap-2 overflow-x-auto no-scrollbar">
-                <button *ngFor="let driver of drivers" 
-                        (click)="moveToDriver(del, driver)"
-                        class="px-2 py-1 bg-[var(--slate-700)] hover:bg-[var(--brand-emerald)] hover:text-white rounded text-[9px] font-black transition-colors shrink-0">
-                  + {{ getShortName(driver.name) }}
-                </button>
-              </div>
-            </div>
-
-            <div *ngIf="pendingDeliveries.length === 0" class="h-40 flex flex-col items-center justify-center text-center p-4">
-              <span class="material-symbols-outlined text-4xl text-[var(--text-muted)] mb-2 opacity-20">done_all</span>
-              <p class="text-xs text-[var(--text-muted)]">Nenhuma entrega pendente.</p>
-            </div>
+          <div class="flex-1 overflow-y-auto">
+            <table class="w-full text-left">
+              <thead class="bg-gray-50 text-gray-500 text-xs uppercase sticky top-0 z-10 border-b border-gray-100">
+                <tr>
+                  <th class="px-4 py-3 w-10">
+                    <input type="checkbox" (change)="toggleAll($event)" [checked]="allSelected" class="rounded border-gray-300">
+                  </th>
+                  <th class="px-4 py-3">Documento</th>
+                  <th class="px-4 py-3">Cliente</th>
+                  <th class="px-4 py-3">Localização</th>
+                  <th class="px-4 py-3">Total</th>
+                  <th class="px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 text-sm">
+                <tr *ngFor="let doc of pendingDocuments" 
+                    [class.bg-blue-50]="isSelected(doc.id)"
+                    class="hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-4">
+                    <input type="checkbox" [checked]="isSelected(doc.id)" (change)="toggleSelection(doc.id)" class="rounded border-gray-300 text-blue-600">
+                  </td>
+                  <td class="px-4 py-4">
+                    <div class="font-medium text-gray-900">{{ doc.documentType }} {{ doc.seriesNumber }}</div>
+                    <div class="text-xs text-gray-500">{{ doc.date | date:'dd/MM/yyyy' }}</div>
+                  </td>
+                  <td class="px-4 py-4">
+                    <div class="font-medium text-gray-800">{{ doc.entityName }}</div>
+                    <div class="text-xs text-gray-500">{{ doc.entityCode }}</div>
+                  </td>
+                  <td class="px-4 py-4">
+                    <div class="flex items-center gap-1 text-gray-600">
+                      <app-icon name="location_on" [size]="16" color="#9ca3af"></app-icon>
+                      <span class="truncate max-w-[150px]">{{ doc.address || 'Sem morada' }}</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-4 font-semibold text-gray-900">
+                    {{ doc.totalAmount | number:'1.2-2' }} MT
+                  </td>
+                  <td class="px-4 py-4">
+                    <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-blue-100 text-blue-700 border border-blue-200">
+                      {{ doc.status }}
+                    </span>
+                  </td>
+                </tr>
+                <tr *ngIf="pendingDocuments.length === 0">
+                  <td colspan="6" class="px-4 py-12 text-center text-gray-400">
+                    <div class="flex flex-col items-center gap-2">
+                      <app-icon name="inbox" [size]="48" color="#d1d5db"></app-icon>
+                      <p>Nenhuma entrega aprovada para planeamento.</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <!-- Driver Columns -->
-        <div class="flex-1 flex gap-6 overflow-x-auto pb-4 no-scrollbar">
-          <div *ngFor="let driver of drivers" class="w-80 flex flex-col bg-[var(--slate-900)] rounded-xl border border-[var(--border-standard)] shrink-0 overflow-hidden">
-            <div class="p-4 border-b border-[var(--border-standard)] bg-[var(--brand-emerald)]/10 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-[var(--brand-emerald)] flex items-center justify-center text-white font-bold text-xs">
-                  {{ driver.name.substring(0, 1) }}
-                </div>
-                <div>
-                  <h3 class="font-bold text-sm text-white">{{ driver.name }}</h3>
-                  <p class="text-[10px] text-[var(--brand-emerald)] font-bold">EM ROTA: {{ getDriverRoute(driver.id).length }}</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <button (click)="optimizeRoute(driver)" 
-                        [disabled]="getDriverRoute(driver.id).length < 2"
-                        class="w-8 h-8 flex items-center justify-center bg-[var(--slate-800)] hover:bg-[var(--brand-emerald)] hover:text-white rounded text-[var(--text-secondary)] transition-colors"
-                        title="Otimizar Sequência">
-                  <span class="material-symbols-outlined text-[18px]">auto_fix_high</span>
-                </button>
-                <button (click)="saveRoute(driver)" 
-                        [disabled]="getDriverRoute(driver.id).length === 0"
-                        class="px-3 py-1.5 bg-[var(--brand-emerald)] text-white rounded text-xs font-black shadow-lg shadow-emerald-500/20 hover:scale-105 transition-transform disabled:opacity-30 disabled:pointer-events-none">
-                  ENVIAR
-                </button>
-              </div>
+        <!-- Selected Route / Driver Sidebar -->
+        <div class="w-1/3 flex flex-col gap-6">
+          <!-- Route Panel -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden h-1/2">
+            <div class="p-4 border-b border-gray-200 bg-gray-50">
+              <h2 class="font-bold text-gray-700">Sequência da Rota</h2>
             </div>
-
-            <div class="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
-              <div *ngFor="let del of getDriverRoute(driver.id); let idx = index" 
-                   class="p-4 bg-[var(--slate-800)] border border-[var(--brand-emerald)]/30 rounded-lg group relative shadow-md">
-                <div class="absolute -left-2 top-4 w-5 h-5 bg-[var(--brand-emerald)] rounded-full border-2 border-[var(--slate-800)] flex items-center justify-center text-[10px] font-black text-white">
-                  {{ idx + 1 }}
-                </div>
-                
-                <div class="flex justify-between items-start mb-1 pl-2">
-                  <span class="text-[9px] font-bold text-[var(--brand-emerald)] tracking-wider">{{ del.documentNumber }}</span>
-                  <button (click)="returnToPending(del)" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 text-red-400 rounded transition-all">
-                    <span class="material-symbols-outlined text-[16px]">close</span>
+            <div class="flex-1 overflow-y-auto p-4">
+              <div *ngIf="selectedDocuments.length === 0" class="h-full flex flex-col items-center justify-center text-gray-400 text-sm text-center p-6">
+                <app-icon name="route" [size]="40" color="#e5e7eb" class="mb-2"></app-icon>
+                <p>Selecione documentos na lista ao lado para construir a rota.</p>
+              </div>
+              
+              <div class="space-y-3">
+                <div *ngFor="let docId of selectedDocuments; let i = index" 
+                     class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100 relative group">
+                  <div class="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
+                    {{ i + 1 }}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-bold text-gray-800 text-sm truncate">{{ getDoc(docId)?.entityName }}</div>
+                    <div class="text-xs text-gray-500">{{ getDoc(docId)?.documentType }} {{ getDoc(docId)?.seriesNumber }}</div>
+                    <div class="text-[10px] text-gray-400 flex items-center gap-0.5 mt-1">
+                      <app-icon name="place" [size]="10" color="#d1d5db"></app-icon>
+                      {{ getDoc(docId)?.address }}
+                    </div>
+                  </div>
+                  <button (click)="toggleSelection(docId)" class="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all">
+                    <app-icon name="close" [size]="16" color="currentColor"></app-icon>
                   </button>
+                  
+                  <!-- Connector line -->
+                  <div *ngIf="i < selectedDocuments.length - 1" class="absolute left-6 top-7 w-0.5 h-6 bg-blue-200 -z-10"></div>
                 </div>
-                
-                <h4 class="font-bold text-sm text-white mb-1 truncate pl-2">{{ del.customerName || 'Cliente Mobile' }}</h4>
-                <p class="text-[11px] text-[var(--text-muted)] mb-3 line-clamp-1 pl-2">{{ del.customerAddress || 'Sem morada' }}</p>
-
-                <div class="flex flex-wrap gap-1 mb-2 pl-2">
-                   <span *ngFor="let line of del.lines" class="px-1.5 py-0.5 bg-[var(--slate-700)] rounded text-[9px] font-bold text-white uppercase tracking-tighter">
-                     {{ line.quantity }}x {{ line.articleCode }}
-                   </span>
-                </div>
-
-                <!-- Sequence buttons -->
-                <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                   <button (click)="moveInRoute(driver.id, idx, -1)" class="p-1 hover:bg-white/10 rounded cursor-pointer" [disabled]="idx === 0">
-                     <span class="material-symbols-outlined text-[16px]">keyboard_arrow_up</span>
-                   </button>
-                   <button (click)="moveInRoute(driver.id, idx, 1)" class="p-1 hover:bg-white/10 rounded cursor-pointer" [disabled]="idx === getDriverRoute(driver.id).length - 1">
-                     <span class="material-symbols-outlined text-[16px]">keyboard_arrow_down</span>
-                   </button>
-                </div>
-              </div>
-
-              <div *ngIf="getDriverRoute(driver.id).length === 0" class="h-40 flex flex-col items-center justify-center text-center p-4">
-                <span class="material-symbols-outlined text-4xl text-[var(--text-muted)] mb-2 opacity-5">route</span>
-                <p class="text-xs text-[var(--text-muted)] italic">Nenhuma entrega atribuída.</p>
               </div>
             </div>
           </div>
-        </div>
 
+          <!-- Driver Assignment Panel -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden h-1/2">
+             <div class="p-4 border-b border-gray-200 bg-gray-50">
+              <h2 class="font-bold text-gray-700">Motoristas Disponíveis</h2>
+            </div>
+            <div class="flex-1 overflow-y-auto p-2">
+              <div *ngFor="let driver of drivers" 
+                   (click)="selectedDriverId = driver.id"
+                   [class.ring-2]="selectedDriverId === driver.id"
+                   [class.ring-blue-500]="selectedDriverId === driver.id"
+                   class="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-all border border-transparent">
+                <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold overflow-hidden">
+                    <img *ngIf="driver.photo" [src]="driver.photo" class="w-full h-full object-cover">
+                    <span *ngIf="!driver.photo">{{ driver.name.substring(0,2).toUpperCase() }}</span>
+                </div>
+                <div class="flex-1">
+                  <div class="font-bold text-gray-800 text-sm">{{ driver.name }}</div>
+                  <div class="text-xs text-gray-500">{{ driver.licenseNumber || 'Sem carta' }}</div>
+                </div>
+                <div *ngIf="driver.status === 'ON_TRIP'" class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-[10px] font-bold">
+                  EM VIAGEM
+                </div>
+                <div *ngIf="driver.status === 'AVAILABLE' || !driver.status" class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold">
+                  LIVRE
+                </div>
+              </div>
+            </div>
+            <div class="p-4 bg-gray-50 border-t border-gray-200">
+               <button 
+                  (click)="assignSelectedDriver()"
+                  [disabled]="!selectedDriverId || selectedDocuments.length === 0"
+                  class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50 transition-all"
+                >
+                  Confirmar Atribuição
+                </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `,
     styles: [`
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-standard); border-radius: 2px; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    :host { display: block; height: 100%; }
+    .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   `]
 })
 export class DeliveryPlanningComponent implements OnInit {
-    pendingDeliveries: any[] = [];
+    pendingDocuments: any[] = [];
+    selectedDocuments: string[] = []; // List of IDs in sequence
     drivers: any[] = [];
-    assignments: Map<string, any[]> = new Map(); // driverId -> Delivery[]
+    selectedDriverId: string | null = null;
+    optimizing = false;
 
-    constructor(
-        private dataService: DataService,
-        private toaster: ToasterService
-    ) { }
+    constructor(private dataService: DataService) { }
 
     ngOnInit() {
         this.loadData();
     }
 
     loadData() {
-        this.dataService.getPendingMobileDeliveries().subscribe({
-            next: (res) => {
-                this.pendingDeliveries = res;
-            },
-            error: (err) => this.toaster.showError('Erro', 'Erro ao carregar entregas: ' + err.message)
+        this.dataService.getSalesDocuments().subscribe(docs => {
+            // Filter only confirmed/approved docs that are not yet assigned
+            this.pendingDocuments = docs.filter(d =>
+                (d.status === 'CONFIRMED' || d.status === 'APPROVED') && !d.tripId
+            );
         });
 
-        this.dataService.getApprovedDrivers().subscribe({
-            next: (res) => {
-                this.drivers = res;
-                this.drivers.forEach(d => {
-                    if (!this.assignments.has(d.id)) this.assignments.set(d.id, []);
-                });
-            },
-            error: (err) => this.toaster.showError('Erro', 'Erro ao carregar motoristas: ' + err.message)
+        this.dataService.getDrivers(this.dataService.getCompanyId() || '001').subscribe(drivers => {
+            this.drivers = drivers;
         });
     }
 
-    getDriverRoute(driverId: string): any[] {
-        return this.assignments.get(driverId) || [];
+    toggleSelection(docId: string) {
+        const index = this.selectedDocuments.indexOf(docId);
+        if (index > -1) {
+            this.selectedDocuments.splice(index, 1);
+        } else {
+            this.selectedDocuments.push(docId);
+        }
     }
 
-    getShortName(name: string): string {
-        const parts = name.split(' ');
-        if (parts.length > 1) return parts[0] + ' ' + parts[parts.length - 1][0] + '.';
-        return name;
+    isSelected(docId: string): boolean {
+        return this.selectedDocuments.includes(docId);
     }
 
-    moveToDriver(delivery: any, driver: any) {
-        // Remove from pending
-        this.pendingDeliveries = this.pendingDeliveries.filter(d => d.id !== delivery.id);
-
-        // Add to driver assignments
-        const route = this.getDriverRoute(driver.id);
-        route.push(delivery);
-        this.assignments.set(driver.id, [...route]);
+    getDoc(docId: string) {
+        return this.pendingDocuments.find(d => d.id === docId);
     }
 
-    returnToPending(delivery: any) {
-        // Remove from any driver assignment
-        this.assignments.forEach((route, driverId) => {
-            const idx = route.findIndex(r => r.id === delivery.id);
-            if (idx !== -1) {
-                route.splice(idx, 1);
-                this.assignments.set(driverId, [...route]);
+    get allSelected(): boolean {
+        return this.pendingDocuments.length > 0 && this.selectedDocuments.length === this.pendingDocuments.length;
+    }
+
+    toggleAll(event: any) {
+        if (event.target.checked) {
+            this.selectedDocuments = this.pendingDocuments.map(d => d.id);
+        } else {
+            this.selectedDocuments = [];
+        }
+    }
+
+    optimizeRoute() {
+        this.optimizing = true;
+        const companyId = this.dataService.getCompanyId() || '001';
+
+        this.dataService.getOptimizedSequence(this.selectedDocuments, companyId).subscribe({
+            next: (optimizedIds) => {
+                this.selectedDocuments = optimizedIds;
+                this.optimizing = false;
+                alert('Rota otimizada com sucesso via algoritmo Nearest Neighbor! 🪄');
+            },
+            error: (err) => {
+                console.error('Optimization failed', err);
+                this.optimizing = false;
+                alert('Falha na otimização da rota. Verifique as coordenadas dos clientes.');
             }
         });
-
-        // Add back to pending
-        this.pendingDeliveries.push(delivery);
-        this.pendingDeliveries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }
 
-    moveInRoute(driverId: string, index: number, direction: number) {
-        const route = this.getDriverRoute(driverId);
-        const newIdx = index + direction;
-        if (newIdx < 0 || newIdx >= route.length) return;
+    assignSelectedDriver() {
+        if (!this.selectedDriverId) return;
 
-        const temp = route[index];
-        route[index] = route[newIdx];
-        route[newIdx] = temp;
-        this.assignments.set(driverId, [...route]);
-    }
-
-    optimizeRoute(driver: any) {
-        const route = this.getDriverRoute(driver.id);
-        const docIds = route.map(d => d.id);
-
-        this.dataService.optimizeMobileRoute(docIds).subscribe({
-            next: (optimized) => {
-                this.assignments.set(driver.id, optimized);
-                this.toaster.showSuccess('Sucesso', 'Sequência de entrega otimizada pela distância.');
-            },
-            error: (err) => this.toaster.showError('Erro', 'Não foi possível otimizar a rota: ' + err.message)
-        });
-    }
-
-    saveRoute(driver: any) {
-        const route = this.getDriverRoute(driver.id);
-        const docIds = route.map(d => d.id);
-
-        this.dataService.assignMobileRoute(driver.id, docIds).subscribe({
+        const companyId = this.dataService.getCompanyId() || '001';
+        this.dataService.assignRoute(this.selectedDriverId, this.selectedDocuments, companyId).subscribe({
             next: () => {
-                this.toaster.showSuccess('Sucesso', `Rota enviada com sucesso para ${driver.name}!`);
-                this.assignments.set(driver.id, []);
-                // Refresh pending just in case
+                alert('Rota atribuída com sucesso! Os documentos foram associados à nova viagem.');
+                this.selectedDocuments = [];
+                this.selectedDriverId = null;
                 this.loadData();
             },
-            error: (err) => this.toaster.showError('Erro', 'Erro ao atribuir rota: ' + err.message)
+            error: (err) => {
+                console.error('Assignment failed', err);
+                alert('Erro ao atribuir motorista.');
+            }
         });
+    }
+
+    openAssignModal() {
+        // Already have driver selection in sidebar for efficiency
     }
 }

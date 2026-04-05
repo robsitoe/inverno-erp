@@ -13,6 +13,7 @@ import { Series } from './companies/entities/series.entity';
 import { FiscalYear } from './companies/entities/fiscal-year.entity';
 import { Journal } from './accounting/entities/journal.entity';
 import { Customer } from './customers/entities/customer.entity';
+import { DeliveryPoint } from './customers/entities/delivery-point.entity';
 import { Supplier } from './suppliers/entities/supplier.entity';
 import { User } from './users/entities/user.entity';
 import { GenericEntity } from './common-entities/generic-entity.entity';
@@ -305,6 +306,29 @@ export class AppController {
       console.error('Error in saveCustomer:', error);
       throw new BadRequestException(`Erro ao guardar cliente: ${error.message}`);
     }
+  }
+
+  @Get('delivery-points')
+  async getDeliveryPoints(@Query('customerId') customerId: string, @Query('companyId') companyId?: string) {
+    const filterCompanyId = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getRepo(DeliveryPoint, filterCompanyId);
+    if (customerId) {
+      return await repo.find({ where: { customer: { id: customerId } }, order: { name: 'ASC' } });
+    }
+    return await repo.find({ order: { name: 'ASC' } });
+  }
+
+  @Post('delivery-points')
+  async saveDeliveryPoint(@Body() point: any) {
+    const companyId = point.companyId || TenancyContext.getCompanyId();
+    const repo = await this.getRepo(DeliveryPoint, companyId);
+    return await repo.save(point);
+  }
+
+  @Delete('delivery-points/:id')
+  async deleteDeliveryPoint(@Param('id') id: string) {
+    const repo = await this.getRepo(DeliveryPoint);
+    return await repo.delete(id);
   }
 
   // --- Suppliers Endpoints ---

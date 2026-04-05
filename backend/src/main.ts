@@ -14,7 +14,7 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: 'http://localhost:4200',
+    origin: '*', // Allow all origins for development and mobile access
     credentials: true,
   });
 
@@ -38,7 +38,7 @@ async function bootstrap() {
   const dataSource = app.get(DataSource);
   await seedDatabase(dataSource);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap();
 

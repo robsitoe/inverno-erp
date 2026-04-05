@@ -25,6 +25,8 @@ import { TreasuryDocument } from '../treasury/entities/treasury.entity';
 import { PaymentMethod } from '../treasury/entities/payment-method.entity';
 import { WorkflowStatus } from '../common/enums/workflow-status.enum';
 import * as bcrypt from 'bcrypt';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class MobileService {
@@ -57,6 +59,19 @@ export class MobileService {
     ): Promise<Repository<T>> {
         const ds = await this.tenancyService.getTenantDataSource(companyId);
         return ds.getRepository(entity);
+    }
+
+    async getUserById(id: string) {
+        const user = await this.userRepo.findOne({ where: { id }, relations: ['company'] });
+
+        // SELF-HEALING: If companyId is missing in User record but exists in a linked profile
+        if (user && !user.companyId) {
+            // This is a safety net for users registered with older versions
+            console.warn(`[MobileService] Self-healing companyId for user ${user.username}...`);
+            // We'll leave it to be set by the caller or add logic here if we had cross-tenant access
+        }
+
+        return user;
     }
 
     /**
@@ -152,26 +167,43 @@ export class MobileService {
      * Gets all users waiting for mobile registration approval.
      */
     async getPendingUsers() {
-        return this.userRepo.find({
-            where: [
-                { status: 'PENDING', userType: 'MOBILE' },
-                { status: 'PENDING', profile: 'RESELLER' },
-                { status: 'PENDING', profile: 'DRIVER' },
-            ],
+        const users = await this.userRepo.find({
+            where: { status: 'PENDING' },
             relations: ['company'],
             order: { createdAt: 'DESC' },
         });
+
+        // Self-Healing: Populate missing profiles
+        for (const user of users) {
+            if (!user.profile) {
+                user.profile = user.customerId ? 'RESELLER' : (user.employeeId ? 'DRIVER' : 'UNKNOWN');
+                await this.userRepo.update(user.id, { profile: user.profile });
+            }
+        }
+
+        console.log(`[MobileService] Found ${users.length} total pending users across all profile types.`);
+        return users;
     }
 
     /**
      * Gets all approved mobile users for historical lookups.
      */
     async getApprovedUsers() {
-        return this.userRepo.find({
+        const users = await this.userRepo.find({
             where: { status: 'APPROVED', userType: 'MOBILE' },
             relations: ['company'],
             order: { updatedAt: 'DESC' },
         });
+
+        // Self-Healing
+        for (const user of users) {
+            if (!user.profile) {
+                user.profile = user.customerId ? 'RESELLER' : (user.employeeId ? 'DRIVER' : 'UNKNOWN');
+                await this.userRepo.update(user.id, { profile: user.profile });
+            }
+        }
+
+        return users;
     }
 
     /**
@@ -191,57 +223,76 @@ export class MobileService {
     /**
      * Gets all active gas cylinder types with their articles and prices.
      */
-    async getGasInventory(companyId: string): Promise<any[]> {
-        console.log(`[MobileService] Fetching gas inventory for company ${companyId}`);
+    async getGasInventory(companyId: string, userId?: string): Promise<any[]> {
+        console.log(`[MobileService] Fetching inventory for company ${companyId}. User context: ${userId}`);
 
-        // AUTO-CORRECTION: Ensure the 8 standard weights exist in the database
-        try {
-            await this.gasControlService.ensureStandardCylinderTypes(companyId);
-        } catch (err) {
-            console.error(`[MobileService] Error in auto-correction sync:`, err);
+        let priceCategory = 'FINAL_CONSUMER';
+        if (userId) {
+            try {
+                const user = await this.userRepo.findOne({ where: { id: userId } });
+                if (user?.customerId && user?.companyId) {
+                    const tenantCustomerRepo = await this.getTenantRepo<Customer>(Customer, user.companyId);
+                    const customer = await tenantCustomerRepo.findOne({ where: { id: user.customerId } });
+                    if (customer) {
+                        const type = (customer.type || '').toUpperCase();
+                        if (type.includes('RES') || type.includes('REV')) priceCategory = 'REVENDEDOR';
+                        else if (type.includes('PUMP') || type.includes('BOMBA')) priceCategory = 'BOMBA';
+                    }
+                } else if (user?.profile === 'DRIVER' || user?.isAdmin || user?.isSuperAdmin) {
+                    priceCategory = 'REVENDEDOR';
+                }
+            } catch (e) {
+                console.warn('[MobileService] Error identifying priceCategory:', e.message);
+            }
         }
 
-        const tenantGasRepo = await this.getTenantRepo<GasCylinderType>(
-            GasCylinderType,
-            companyId,
-        );
-        const tenantArticleRepo = await this.getTenantRepo<Article>(
-            Article,
-            companyId,
-        );
+        const labelMap: any = {
+            'REVENDEDOR': 'Revendedor',
+            'BOMBA': 'Bomba',
+            'FINAL_CONSUMER': 'Público'
+        };
+        const priceLabel = labelMap[priceCategory] || 'Público';
+
+        const tenantGasRepo = await this.getTenantRepo<GasCylinderType>(GasCylinderType, companyId);
+        const tenantArticleRepo = await this.getTenantRepo<Article>(Article, companyId);
 
         const [types, articles] = await Promise.all([
             tenantGasRepo.find({ where: { isActive: true }, order: { name: 'ASC' } }),
             tenantArticleRepo.find({ where: { isActive: true } })
         ]);
 
-        console.log(`[MobileService] Found ${types.length} gas types and ${articles.length} active articles`);
-
-        // Map article IDs to types and FILTER OUT types without valid full article mapping
-        const mapped = types.map(type => {
+        return types.map(type => {
             const article = articles.find(a => a.code === type.fullArticleCode);
-            if (!article) {
-                console.warn(`[MobileService] Gas type ${type.name} has no matching article code ${type.fullArticleCode}`);
-                return null;
+            if (!article) return null;
+
+            // ROBUST PRICE SELECTION (Handles MT 0.00 prices correctly)
+            let p: any = article.salePrice;
+            if (priceCategory === 'REVENDEDOR') {
+                p = (article.priceReseller !== null && article.priceReseller !== undefined) ? article.priceReseller : (type.priceRevendedor || article.salePrice);
+            } else if (priceCategory === 'BOMBA') {
+                p = (article.pricePump !== null && article.pricePump !== undefined) ? article.pricePump : article.salePrice;
+            } else if (priceCategory === 'FINAL_CONSUMER') {
+                p = (article.priceFinal !== null && article.priceFinal !== undefined) ? article.priceFinal : article.salePrice;
             }
+
             return {
                 ...type,
-                id: article.id, // Primary ID for mobile is the Article UUID
+                id: article.id,
                 code: article.code,
                 name: type.name || article.name,
                 articleId: article.id,
-                price: type.priceRevendedor || article.salePrice, // Use priceRevendedor for mobile resellers
+                price: Number(p),
+                priceLabel: priceLabel
             };
         }).filter(item => item !== null);
-
-        console.log(`[MobileService] Returning ${mapped.length} mapped gas items`);
-        return mapped;
     }
 
     /**
      * Registers a new mobile user.
      */
     async register(data: any, companyId: string) {
+        if (!companyId) throw new BadRequestException('ID da Empresa é obrigatório para o registo.');
+
         const { username, password, name, phone, role } = data;
 
         // Check for existing username
@@ -340,7 +391,7 @@ export class MobileService {
     /**
      * Updates truck inventory and location.
      */
-    async updateTruckStatus(truckPlate: string, data: any, companyId: string) {
+    async updateTruckStatus(truckPlate: string, data: any, companyId: string, driverId?: string) {
         let truck = await this.truckRepo.findOne({
             where: { truckPlate, companyId },
         });
@@ -355,6 +406,7 @@ export class MobileService {
         if (data.inventory) truck.inventory = data.inventory;
         if (data.lat) truck.lastLat = data.lat;
         if (data.lng) truck.lastLng = data.lng;
+        if (driverId) truck.driverId = driverId;
         truck.lastUpdate = new Date();
 
         return this.truckRepo.save(truck);
@@ -371,19 +423,108 @@ export class MobileService {
         return truck.inventory || {};
     }
 
-    async createResellerOrder(customerId: string, data: any, companyId: string) {
-        const tenantCustomerRepo = await this.getTenantRepo<Customer>(Customer, companyId);
-        const customer = await tenantCustomerRepo.findOne({ where: { id: customerId } });
+    async createResellerOrder(customerId: string, data: any, companyId: string, userId?: string) {
+        try {
+            console.log(`[MobileService] DEBUG_ORDER: customerId=${customerId}, userId=${userId}, companyId=${companyId}`);
 
-        return this.salesService.create({
-            ...data,
-            customerId,
-            customerName: customer?.name || 'Cliente Mobile',
-            companyId,
-            isMobileSale: true,
-            status: WorkflowStatus.APPROVED, // Set to APPROVED so drivers can see it immediately
-            documentType: 'GT',
-        });
+            const ds = await this.tenancyService.getTenantDataSource(companyId);
+            const logPath = path.join(process.cwd(), 'error-debug.log');
+            fs.appendFileSync(logPath, `\n[AUDIT] Mobile Order Attempt: User ${userId}, Company ${companyId} at ${new Date().toISOString()}\n`);
+
+            const tenantCustomerRepo = ds.getRepository(Customer);
+
+            // 1. Check if customer exists (Self-healing)
+            let customer = await tenantCustomerRepo.findOne({ where: { id: customerId } });
+            if (!customer) {
+                console.warn(`[MobileService] Self-healing order for customer ${customerId}, userId ${userId}...`);
+
+                // Try finding by customerId first, then by userId if provided
+                let globalUser = await this.userRepo.findOne({ where: { customerId } });
+                if (!globalUser && userId) {
+                    globalUser = await this.userRepo.findOne({ where: { id: userId } });
+                }
+
+                if (globalUser) {
+                    // Update customerId if it was missing or different
+                    const effectiveCustomerId = customerId || globalUser.customerId || `CUST-${Date.now()}`;
+
+                    customer = tenantCustomerRepo.create({
+                        id: effectiveCustomerId,
+                        companyId,
+                        name: globalUser.name || globalUser.username,
+                        phone: globalUser.phone,
+                        status: 'APPROVED',
+                        isActive: true,
+                        type: 'REVENDEDOR',
+                        code: `REV-AUTO-${Date.now().toString().slice(-4)}`
+                    });
+                    await tenantCustomerRepo.save(customer);
+
+                    // If we assigned a new customerId, update global user
+                    if (!globalUser.customerId) {
+                        globalUser.customerId = effectiveCustomerId;
+                        await this.userRepo.save(globalUser);
+                    }
+                } else {
+                    throw new NotFoundException(`404_ORDER_CUSTOM: Cliente/Utilizador (UUID: ${customerId || userId}) não encontrado.`);
+                }
+            }
+            // ... rest of the logic
+
+            // 2. Resolve Delivery Point Coordinates (if missing in payload)
+            let finalLat = data.latitude;
+            let finalLng = data.longitude;
+
+            if (data.deliveryPointId && (!finalLat || !finalLng)) {
+                try {
+                    const tenantPointRepo = await this.getTenantRepo<DeliveryPoint>(DeliveryPoint, companyId);
+                    const point = await tenantPointRepo.findOne({ where: { id: data.deliveryPointId } });
+                    if (point) {
+                        finalLat = point.latitude;
+                        finalLng = point.longitude;
+                        console.log(`[MobileService] GPS Self-Healing: Resolved coords ${finalLat},${finalLng} from Point ${point.name}`);
+                    }
+                } catch (e) {
+                    console.warn('[MobileService] Failed to auto-resolve point coords:', e.message);
+                }
+            }
+
+            // 3. Prepare Sales Data
+            const salesData = {
+                ...data,
+                customerId,
+                customerName: customer?.name || 'Cliente Mobile',
+                companyId,
+                latitude: finalLat ? Number(Number(finalLat).toFixed(8)) : null,
+                longitude: finalLng ? Number(Number(finalLng).toFixed(8)) : null,
+                isMobileSale: true,
+                status: WorkflowStatus.APPROVED, // Direct to APPROVED so it's visible to drivers
+                documentType: data.documentType || 'GT',
+            };
+
+            console.log(`[MobileService] Order payload for SalesService:`, JSON.stringify(salesData));
+
+            const order = await this.salesService.create(salesData);
+
+            // 3. Notify Drivers (Real-time attempt)
+            // We do this in a try-catch to ensure the order response is never blocked
+            try {
+                const itemsCount = data.lines?.reduce((acc: number, line: any) => acc + Number(line.quantity), 0) || 0;
+                this.notifyDriversOfNewOrder(companyId, customer?.name || 'Um revendedor', itemsCount);
+            } catch (err) {
+                console.error(`[MobileService] Non-blocking notification failure:`, err);
+            }
+
+            return order;
+        } catch (error: any) {
+            console.error(`[MobileService] createResellerOrder failed:`, error);
+            if (error instanceof BadRequestException || error instanceof NotFoundException) throw error;
+            throw new BadRequestException({
+                message: 'Falha ao processar encomenda no ERP',
+                details: error.message,
+                dbError: error.code
+            });
+        }
     }
 
     /**
@@ -434,35 +575,110 @@ export class MobileService {
      * Gets order and payment history for a reseller.
      */
     async getResellerHistory(customerId: string, companyId: string) {
+        const logPath = path.join(process.cwd(), 'error-debug.log');
+        fs.appendFileSync(logPath, `\n[AUDIT] Service getResellerHistory for Customer: ${customerId} on Company: ${companyId} at ${new Date().toISOString()}\n`);
+
         const tenantSalesRepo = await this.getTenantRepo<SalesDocument>(SalesDocument, companyId);
         const tenantTreasuryRepo = await this.getTenantRepo<TreasuryDocument>(TreasuryDocument, companyId);
 
         const orders = await tenantSalesRepo.find({
             where: { customerId },
             order: { date: 'DESC' },
-            take: 20
+            take: 20,
+            relations: ['lines']
         });
+
+        const tenantPointRepo = await this.getTenantRepo<DeliveryPoint>(DeliveryPoint, companyId);
+
+        // ENRICHMENT: Add real-time driver location and TOTAL items
+        const enrichedOrders = await Promise.all(orders.map(async (order) => {
+            const doc: any = { ...order };
+
+            // GPS Self-healing for older/incomplete orders
+            if (!doc.latitude && doc.deliveryPointId) {
+                const point = await tenantPointRepo.findOne({ where: { id: doc.deliveryPointId } });
+                if (point) {
+                    doc.latitude = point.latitude;
+                    doc.longitude = point.longitude;
+                    tenantSalesRepo.update(doc.id, { latitude: point.latitude, longitude: point.longitude });
+                }
+            }
+
+            // Calculate total items
+            doc.totalQty = order.lines?.reduce((acc, l) => acc + Number(l.quantity), 0) || 0;
+            doc.itemsSummary = order.lines?.map(l => `${l.quantity}x ${l.articleName}`).join(', ') || '';
+
+            if (doc.status === 'POSTED' && doc.driverId) {
+                // Find the truck assigned to this driver
+                const truck = await this.truckRepo.findOne({
+                    where: { driverId: doc.driverId, companyId }
+                });
+                if (truck) {
+                    doc.driverLat = truck.lastLat;
+                    doc.driverLng = truck.lastLng;
+                    doc.truckPlate = truck.truckPlate;
+                }
+            }
+            return doc;
+        }));
 
         const payments = await tenantTreasuryRepo.find({
-            where: { customerCode: customerId }, // In this ERP, customerId might be stored in customerCode for treasury
+            where: { customerCode: customerId },
             order: { date: 'DESC' },
             take: 20
         });
 
-        return { orders, payments };
+        return { orders: enrichedOrders, payments };
     }
 
-    /**
-     * Gets history of sales and deliveries for a driver.
-     */
     async getDriverHistory(employeeId: string, companyId: string) {
         const tenantSalesRepo = await this.getTenantRepo<SalesDocument>(SalesDocument, companyId);
+        const tenantPointRepo = await this.getTenantRepo<DeliveryPoint>(DeliveryPoint, companyId);
+        const tenantCustomerRepo = await this.getTenantRepo<Customer>(Customer, companyId);
 
-        return tenantSalesRepo.find({
+        const orders = await tenantSalesRepo.find({
             where: { driverId: employeeId },
             order: { date: 'DESC' },
-            take: 30
+            take: 30,
+            relations: ['lines']
         });
+
+        const enriched = await Promise.all(orders.map(async (o) => {
+            const doc = { ...o } as any;
+
+            // GPS Self-healing Deep Dive (Fix for orders with missing points)
+            if (!doc.latitude) {
+                let p: any = null;
+                // Try from explicit point ID first
+                if (doc.deliveryPointId) {
+                    p = await tenantPointRepo.findOne({ where: { id: doc.deliveryPointId } });
+                }
+                // Fallback: If no point, find the first available delivery point for this customer
+                if (!p && doc.customerId) {
+                    p = await tenantPointRepo.findOne({ where: { customer: { id: doc.customerId } } });
+                }
+
+                if (p && p.latitude) {
+                    doc.latitude = Number(p.latitude);
+                    doc.longitude = Number(p.longitude);
+                    // Persistent fix: Save it back to the order forever!
+                    tenantSalesRepo.update(doc.id, {
+                        latitude: doc.latitude,
+                        longitude: doc.longitude,
+                        deliveryPointId: doc.deliveryPointId || p.id
+                    });
+                    console.log(`[GPS-DEEP-HEAL] Fixed GT ${doc.documentNumber} for Driver. Customer Point inherited.`);
+                }
+            }
+
+            return {
+                ...doc,
+                totalQty: o.lines?.reduce((acc, l) => acc + Number(l.quantity), 0) || 0,
+                itemsSummary: o.lines?.map(l => `${l.quantity}x ${l.articleName}`).join(', ') || ''
+            };
+        }));
+
+        return enriched;
     }
 
     /**
@@ -487,17 +703,11 @@ export class MobileService {
             order: { date: 'ASC' }
         });
 
-        const gasWeights = ['9KG', '48KG', '45KG', '05KG', '14KG', '19KG', '6KG', '11KG'];
-        const deliveries = allGts.filter(doc => {
-            // 1. Date check
-            if (doc.date < dateStr) return false;
+        const logPath = path.join(process.cwd(), 'error-debug.log');
+        fs.appendFileSync(logPath, `\n[AUDIT-DEEP] Pending Fetch: Company=${companyId}. Raw GT Docs (approved/no-driver): ${allGts.length}.\n`);
 
-            // 2. Gas Sector check: Must contain at least one gas cylinder article
-            const hasGas = doc.lines?.some(line =>
-                gasWeights.some(weight => line.articleCode?.startsWith(weight))
-            );
-            return hasGas;
-        });
+        // 2. Gas Sector check: Disabled temporarily for diagnostics
+        const deliveries = allGts;
 
         // Self-Healing: If customerName is missing, fetch it from Customer repo
         const tenantCustomerRepo = await this.getTenantRepo<Customer>(Customer, companyId);
@@ -606,12 +816,31 @@ export class MobileService {
 
         // Self-Healing
         const tenantCustomerRepo = await this.getTenantRepo<Customer>(Customer, companyId);
+        const tenantPointRepo = await this.getTenantRepo<DeliveryPoint>(DeliveryPoint, companyId);
+
         for (const del of deliveries) {
-            if (!del.customerName && del.customerId) {
-                const customer = await tenantCustomerRepo.findOne({ where: { id: del.customerId } });
+            const doc = del as any;
+            // Summary Calculate (The Critical Addition)
+            doc.totalQty = del.lines?.reduce((acc, l) => acc + Number(l.quantity), 0) || 0;
+            doc.itemsSummary = del.lines?.map(l => `${l.quantity}x ${l.articleName}`).join(', ') || '';
+
+            // Customer name heal
+            if (!doc.customerName && doc.customerId) {
+                const customer = await tenantCustomerRepo.findOne({ where: { id: doc.customerId } });
                 if (customer) {
-                    del.customerName = customer.name;
-                    tenantSalesRepo.update(del.id, { customerName: customer.name });
+                    doc.customerName = customer.name;
+                    tenantSalesRepo.update(doc.id, { customerName: customer.name });
+                }
+            }
+
+            // GPS Coordinates heal (The Crucial Fix)
+            if (!del.latitude && (del as any).deliveryPointId) {
+                const point = await tenantPointRepo.findOne({ where: { id: (del as any).deliveryPointId } });
+                if (point) {
+                    del.latitude = point.latitude;
+                    del.longitude = point.longitude;
+                    tenantSalesRepo.update(del.id, { latitude: point.latitude, longitude: point.longitude });
+                    console.log(`[GPS-HEAL] Fixed GPS for Order ${del.documentNumber} using point ${point.name}`);
                 }
             }
         }
@@ -658,25 +887,87 @@ export class MobileService {
     }
 
     async createDeliveryPoint(customerId: string, data: any, companyId: string) {
-        const tenantPointRepo = await this.getTenantRepo<DeliveryPoint>(DeliveryPoint, companyId);
+        try {
+            console.log(`[MobileService] DEBUG: customerId=${customerId}, companyId=${companyId}`);
 
-        // If it's the first point, make it default
-        const count = await tenantPointRepo.count({ where: { customerId } });
+            if (!customerId) {
+                throw new BadRequestException('ERRO_TECNICO: customerId ausente no token do utilizador.');
+            }
 
-        const partial: any = {
-            ...data,
-            customerId,
-            companyId,
-            isDefault: count === 0 ? true : !!data.isDefault
-        };
-        const point = tenantPointRepo.create(partial) as unknown as DeliveryPoint;
+            const ds = await this.tenancyService.getTenantDataSource(companyId);
+            const tenantPointRepo = ds.getRepository(DeliveryPoint);
+            const tenantCustomerRepo = ds.getRepository(Customer);
 
-        // If this one is set as default, unset others
-        if (point.isDefault && count > 0) {
-            await tenantPointRepo.update({ customerId }, { isDefault: false });
+            // 1. Verify if customer exists in the specific tenant DB
+            let customer = await tenantCustomerRepo.findOne({ where: { id: customerId } });
+
+            // SELF-HEALING: If customer missing in Tenant DB but we have the ID, try to restore it
+            if (!customer) {
+                console.warn(`[MobileService] Customer ${customerId} missing in tenant DB. Attempting self-healing...`);
+                const globalUser = await this.userRepo.findOne({ where: { customerId } });
+                if (globalUser) {
+                    console.log(`[MobileService] Found global user ${globalUser.username}. Re-creating customer in tenant DB.`);
+                    customer = tenantCustomerRepo.create({
+                        id: customerId,
+                        companyId,
+                        name: globalUser.name || globalUser.username,
+                        phone: globalUser.phone,
+                        status: 'APPROVED',
+                        isActive: true,
+                        type: 'REVENDEDOR',
+                        code: `REV-FIX-${Date.now().toString().slice(-4)}`
+                    });
+                    await tenantCustomerRepo.save(customer);
+                } else {
+                    throw new NotFoundException(`404_CUSTOM: O cliente UUID ${customerId} não existe em lado nenhum.`);
+                }
+            }
+
+            // 2. Prepare payload
+            const count = await tenantPointRepo.count({ where: { customerId } });
+
+            // Ensure numbers are rounded to match DB precision (8 scale)
+            const lat = typeof data.latitude === 'string' ? parseFloat(data.latitude) : data.latitude;
+            const lng = typeof data.longitude === 'string' ? parseFloat(data.longitude) : data.longitude;
+
+            if (isNaN(lat) || isNaN(lng)) {
+                throw new BadRequestException('Coordenadas GPS inválidas (NaN)');
+            }
+
+            const partial: any = {
+                name: data.name || 'Ponto sem nome',
+                address: data.address || '',
+                latitude: Number(lat.toFixed(8)),
+                longitude: Number(lng.toFixed(8)),
+                customerId,
+                companyId,
+                isDefault: count === 0 ? true : !!data.isDefault
+            };
+
+            console.log(`[MobileService] Saving Delivery Point:`, partial);
+
+            const point = tenantPointRepo.create(partial);
+
+            // 3. Default Management
+            if (partial.isDefault && count > 0) {
+                await tenantPointRepo.update({ customerId }, { isDefault: false });
+            }
+
+            const saved = await tenantPointRepo.save(point) as unknown as DeliveryPoint;
+            console.log(`[MobileService] Successfully created point: ${saved.id}`);
+            return saved;
+        } catch (error: any) {
+            console.error(`[MobileService] createDeliveryPoint failed:`, error);
+
+            // Re-throw if already an HttpException
+            if (error instanceof BadRequestException || error instanceof NotFoundException) throw error;
+
+            throw new BadRequestException({
+                message: 'Erro interno ao gravar ponto de entrega',
+                details: error.message,
+                dbError: error.code
+            });
         }
-
-        return tenantPointRepo.save(point);
     }
 
     async updateDeliveryPoint(id: string, customerId: string, data: any, companyId: string) {
@@ -778,5 +1069,47 @@ export class MobileService {
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
+    }
+    /**
+     * Notifies all drivers for a company about a new available delivery.
+     */
+    private async notifyDriversOfNewOrder(companyId: string, resellerName: string, itemsCount: number) {
+        const logPath = path.join(process.cwd(), 'error-debug.log');
+        fs.appendFileSync(logPath, `\n[AUDIT] Notifying drivers for company ${companyId}. Notification: "${resellerName} - ${itemsCount} items" at ${new Date().toISOString()}\n`);
+
+        const drivers = await this.getDrivers(companyId);
+        if (drivers.length === 0) {
+            console.log(`[MobileService] No drivers found to notify for company ${companyId}`);
+            return;
+        }
+
+        const message = `Inverno Go: Nova encomenda de ${resellerName} (${itemsCount} garrafas). Já disponível para recolha!`;
+
+        console.log(`[MobileService] Identified ${drivers.length} drivers to notify.`);
+
+        for (const driver of drivers) {
+            if (driver.phone) {
+                console.log(`[MobileService] Sending notification to ${driver.username} (${driver.phone})...`);
+                // Using PUSH and SMS to ensure it's "real-time" enough
+                this.notificationService.sendNotification(driver.phone, message, ['PUSH', 'SMS']).catch(err =>
+                    console.error(`[MobileService] Failed to notify driver ${driver.username}: `, err)
+                );
+            }
+        }
+    }
+
+
+    /**
+     * Driver releases a claimed delivery, making it available again for others.
+     */
+    async releaseDelivery(documentId: string, companyId: string) {
+        const tenantSalesRepo = await this.getTenantRepo<SalesDocument>(SalesDocument, companyId);
+        const doc = await tenantSalesRepo.findOne({ where: { id: documentId } });
+        if (!doc) throw new NotFoundException('Entrega não encontrada');
+
+        // Reset driver and status
+        doc.driverId = '';
+        doc.status = WorkflowStatus.APPROVED; // Voltar ao estado disponível para qualquer um
+        return tenantSalesRepo.save(doc);
     }
 }

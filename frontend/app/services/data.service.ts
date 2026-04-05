@@ -8,8 +8,8 @@ import { Observable, of, BehaviorSubject, map, catchError, throwError, tap } fro
 
 
 import { SALES_DOCUMENT_TYPES, PURCHASE_DOCUMENT_TYPES, TREASURY_DOCUMENT_TYPES, STOCK_DOCUMENT_TYPES } from '../shared/constants';
-import { SalesCampaign, SalesCampaignType, WorkflowStatus } from '../shared/models';
 
+import { environment } from '../shared/config';
 
 
 
@@ -99,7 +99,7 @@ export class DataService {
                 localStorageType: 'POSTGRES',
 
 
-                apiUrl: 'http://localhost:3000'
+                apiUrl: environment.apiUrl
 
 
             };
@@ -138,7 +138,7 @@ export class DataService {
         if (!this.config) this.loadConfig();
 
 
-        return this.config.deploymentMode === 'WEB' ? this.config.apiUrl : 'http://localhost:3000';
+        return this.config.deploymentMode === 'WEB' ? this.config.apiUrl : environment.apiUrl;
 
 
     }
@@ -910,11 +910,6 @@ export class DataService {
 
 
             }
-
-
-
-
-
             localStorage.setItem('erp_series_definitions', JSON.stringify(allSeries));
 
 
@@ -984,7 +979,7 @@ export class DataService {
         if (this.isLocalBrowser()) {
 
 
-            const companyId = this.activeCompanySubject.value?.id || 'company-001';
+            const companyId = this.activeCompanySubject.value?.id || '001';
 
 
             const stored = localStorage.getItem(`erp_articles_${companyId}`);
@@ -1020,7 +1015,7 @@ export class DataService {
         if (this.isLocalBrowser()) {
 
 
-            const companyId = this.activeCompanySubject.value?.id || 'company-001';
+            const companyId = this.activeCompanySubject.value?.id || '001';
 
 
             const stored = localStorage.getItem(`erp_articles_${companyId}`);
@@ -1101,7 +1096,7 @@ export class DataService {
         if (this.isLocalBrowser()) {
 
 
-            const companyId = this.activeCompanySubject.value?.id || 'company-001';
+            const companyId = this.activeCompanySubject.value?.id || '001';
 
 
             const stored = localStorage.getItem(`erp_articles_${companyId}`);
@@ -2367,7 +2362,7 @@ export class DataService {
         if (this.isLocalBrowser()) {
 
 
-            const companyId = this.activeCompanySubject.value?.id || 'company-001';
+            const companyId = this.activeCompanySubject.value?.id || '001';
 
 
             const stored = localStorage.getItem(`erp_customers_${companyId}`);
@@ -2403,7 +2398,7 @@ export class DataService {
         if (this.isLocalBrowser()) {
 
 
-            const companyId = this.activeCompanySubject.value?.id || 'company-001';
+            const companyId = this.activeCompanySubject.value?.id || '001';
 
 
             localStorage.setItem(`erp_customers_${companyId}`, JSON.stringify(customer));
@@ -2424,6 +2419,23 @@ export class DataService {
     }
 
 
+    getDeliveryPoints(customerId: string): Observable<any[]> {
+        if (this.isLocalBrowser()) return of([]);
+        return this.http.get<any[]>(`${this.baseUrl}/delivery-points?customerId=${customerId}`);
+    }
+
+    saveDeliveryPoint(point: any): Observable<any> {
+        if (this.isLocalBrowser()) return of(point);
+        const pid = this.getCompanyId();
+        return this.http.post(`${this.baseUrl}/delivery-points`, { ...point, companyId: point.companyId || pid });
+    }
+
+    deleteDeliveryPoint(id: string): Observable<any> {
+        if (this.isLocalBrowser()) return of(true);
+        return this.http.delete(`${this.baseUrl}/delivery-points/${id}`);
+    }
+
+
 
 
 
@@ -2439,7 +2451,7 @@ export class DataService {
         if (this.isLocalBrowser()) {
 
 
-            const companyId = this.activeCompanySubject.value?.id || 'company-001';
+            const companyId = this.activeCompanySubject.value?.id || '001';
 
 
             const stored = localStorage.getItem(`erp_suppliers_${companyId}`);
@@ -2475,7 +2487,7 @@ export class DataService {
         if (this.isLocalBrowser()) {
 
 
-            const companyId = this.activeCompanySubject.value?.id || 'company-001';
+            const companyId = this.activeCompanySubject.value?.id || '001';
 
 
             localStorage.setItem(`erp_suppliers_${companyId}`, JSON.stringify(supplier));
@@ -2701,27 +2713,26 @@ export class DataService {
 
 
     getUsers(): Observable<any[]> {
+
+
         if (this.isLocalBrowser()) {
+
+
             const stored = localStorage.getItem('erp_users');
+
+
             return of(stored ? JSON.parse(stored) : []);
+
+
         } else {
+
+
             return this.http.get<any[]>(`${this.baseUrl}/users`);
+
+
         }
-    }
 
-    getPendingMobileUsers(): Observable<any[]> {
-        if (this.isLocalBrowser()) return of([]);
-        return this.http.get<any[]>(`${this.baseUrl}/mobile/admin/pending`);
-    }
 
-    getApprovedMobileUsers(): Observable<any[]> {
-        if (this.isLocalBrowser()) return of([]);
-        return this.http.get<any[]>(`${this.baseUrl}/mobile/admin/approved`);
-    }
-
-    approveMobileUser(userId: string): Observable<any> {
-        if (this.isLocalBrowser()) return of(true);
-        return this.http.post(`${this.baseUrl}/mobile/admin/approve/${userId}`, {});
     }
 
 
@@ -2869,40 +2880,7 @@ export class DataService {
     }
 
 
-    // Fleet Management
 
-    getVehicles(companyId?: string): Observable<any[]> {
-        const url = `${this.baseUrl}/fleet/vehicles`;
-        const params = companyId ? new HttpParams().set('companyId', companyId) : new HttpParams();
-        return this.http.get<any[]>(url, { params });
-    }
-
-    saveVehicle(vehicle: any): Observable<any> {
-        const url = `${this.baseUrl}/fleet/vehicles`;
-        return this.http.post<any>(url, vehicle);
-    }
-
-    startTrip(tripData: any): Observable<any> {
-        const url = `${this.baseUrl}/fleet/trips/start`;
-        return this.http.post<any>(url, tripData);
-    }
-
-    getActiveTrips(companyId?: string): Observable<any[]> {
-        const url = `${this.baseUrl}/fleet/trips/active`;
-        const params = companyId ? new HttpParams().set('companyId', companyId) : new HttpParams();
-        return this.http.get<any[]>(url, { params });
-    }
-
-    getTripHistory(tripId: string, companyId?: string): Observable<any[]> {
-        const url = `${this.baseUrl}/fleet/trips/${tripId}/history`;
-        const params = companyId ? new HttpParams().set('companyId', companyId) : new HttpParams();
-        return this.http.get<any[]>(url, { params });
-    }
-
-    updateTripLocation(tripId: string, latitude: number, longitude: number, companyId?: string): Observable<any> {
-        const url = `${this.baseUrl}/fleet/trips/${tripId}/location`;
-        return this.http.post<any>(url, { latitude, longitude, companyId });
-    }
 
 
     // --- Document Types ---
@@ -2926,7 +2904,7 @@ export class DataService {
         if (this.isLocalBrowser()) {
 
 
-            const companyId = this.activeCompanySubject.value?.id || 'company-001';
+            const companyId = this.activeCompanySubject.value?.id || '001';
 
 
             let key = `erp_${normalizedModule.toLowerCase()}_document_types_${companyId}`;
@@ -3337,7 +3315,7 @@ export class DataService {
         if (this.isLocalBrowser()) {
 
 
-            const companyId = this.activeCompanySubject.value?.id || 'company-001';
+            const companyId = this.activeCompanySubject.value?.id || '001';
 
 
             const key = `erp_${normalizedModule.toLowerCase()}_document_types_${companyId}`;
@@ -3469,7 +3447,7 @@ export class DataService {
 
 
 
-        if (confirm(`Atenção: A aplicação será reiniciada para mudar para ${modeLabel}. Deseja fazer um backup dos dados locais antes de mudar?`)) {
+        if (confirm(`Aten├º├úo: A aplica├º├úo ser├í reiniciada para mudar para ${modeLabel}. Deseja fazer um backup dos dados locais antes de mudar?`)) {
 
 
             this.downloadBackup();
@@ -3481,7 +3459,7 @@ export class DataService {
 
 
 
-        if (confirm(`Confirmar mudança para ${modeLabel}?`)) {
+        if (confirm(`Confirmar mudan├ºa para ${modeLabel}?`)) {
 
 
             const newConfig = {
@@ -3730,4 +3708,37 @@ export class DataService {
     optimizeMobileRoute(docIds: string[]): Observable<any[]> {
         return this.http.post<any[]>(`${this.baseUrl}/mobile/route/optimize`, { docIds });
     }
+
+    getDeliveryPoints(customerId: string): Observable<any[]> {
+        if (this.isLocalBrowser()) return of([]);
+        return this.http.get<any[]>(`${this.baseUrl}/delivery-points?customerId=${customerId}`);
+    }
+
+
+    saveDeliveryPoint(point: any): Observable<any> {
+        if (this.isLocalBrowser()) return of(point);
+        const pid = this.getCompanyId();
+        return this.http.post(`${this.baseUrl}/delivery-points`, { ...point, companyId: point.companyId || pid });
+    }
+
+
+    deleteDeliveryPoint(id: string): Observable<any> {
+        if (this.isLocalBrowser()) return of(true);
+        return this.http.delete(`${this.baseUrl}/delivery-points/${id}`);
+    }
+
+    getOptimizedSequence(docIds: string[], companyId: string): Observable<any[]> {
+        return this.http.post<any[]>(`${this.baseUrl}/mobile/admin/optimize-route`, { docIds, companyId });
+    }
+
+
+    assignRoute(employeeId: string, docIds: string[], companyId: string): Observable<any> {
+        return this.http.post(`${this.baseUrl}/mobile/admin/assign-route`, { employeeId, docIds, companyId });
+    }
+
+
+    getDrivers(companyId: string): Observable<any[]> {
+        return this.http.get<any[]>(`${this.baseUrl}/mobile/admin/drivers?companyId=${companyId}`);
+    }
+
 }

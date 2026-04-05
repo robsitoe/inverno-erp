@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { addIcons } from 'ionicons';
+import { addCircleOutline, removeCircleOutline, alertCircleOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-reseller-order',
@@ -38,7 +40,7 @@ import { AuthService } from '../../services/auth.service';
         <ion-item *ngFor="let type of cylinderTypes" class="cylinder-card">
           <ion-label>
             <h2>{{ type.name }}</h2>
-            <p class="price">{{ type.priceRevendedor }} MT (Revenda)</p>
+            <p class="price">{{ type.price }} MT ({{ type.priceLabel || 'Revenda' }})</p>
           </ion-label>
           <div slot="end" class="counter-box" *ngIf="!isPending">
             <ion-button fill="clear" (click)="updateQty(type.id, -1)">
@@ -136,12 +138,24 @@ export class ResellerOrderPage implements OnInit {
   submitting = false;
   isPending = false;
 
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {
+    addIcons({ addCircleOutline, removeCircleOutline, alertCircleOutline });
+  }
 
   ngOnInit() {
-    this.authService.refreshProfile().subscribe(() => {
-      this.isPending = this.authService.user?.status !== 'APPROVED';
+    this.authService.user$.subscribe(user => {
+      this.isPending = user?.status !== 'APPROVED';
+      if (!this.isPending && this.cylinderTypes.length === 0) {
+        this.loadData();
+      }
     });
+  }
+
+  ionViewWillEnter() {
+    this.authService.refreshProfile().subscribe();
+  }
+
+  loadData() {
     this.loadGasTypes();
     this.loadPaymentMethods();
     this.loadDeliveryPoints();
@@ -177,7 +191,8 @@ export class ResellerOrderPage implements OnInit {
       error: (err) => {
         console.error('Erro ao carregar artigos:', err);
         this.loading = false;
-        alert('Erro ao carregar lista de artigos. Verifique a sua ligação.');
+        const msg = err.status === 0 ? 'Servidor inacessível. Verifique o URL ou VPN.' : `Erro ${err.status}: ${err.message}`;
+        alert(`Não foi possível carregar os artigos. ${msg}`);
       }
     });
   }
@@ -194,7 +209,7 @@ export class ResellerOrderPage implements OnInit {
   getTotalAmount() {
     return this.cylinderTypes.reduce((acc, type) => {
       const qty = this.order[type.id] || 0;
-      return acc + (qty * type.priceRevendedor);
+      return acc + (qty * (type.price || 0));
     }, 0);
   }
 
@@ -209,7 +224,7 @@ export class ResellerOrderPage implements OnInit {
           articleCode: type.articleCode || type.code || (id.includes('-') ? id : 'GAS-CYL'),
           articleName: type.name || 'Gás',
           quantity: this.order[id],
-          unitPrice: type.priceRevendedor || 0,
+          unitPrice: type.price || 0,
           ivaRate: 16
         };
       });
