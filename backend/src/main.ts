@@ -14,8 +14,10 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: 'http://localhost:4200',
+    origin: true, // Dynamically reflects origin back to client (required for credentials: true with various origins)
     credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Accept, Authorization, x-company-id',
   });
 
   // Global Validation Pipe
@@ -38,7 +40,7 @@ async function bootstrap() {
   const dataSource = app.get(DataSource);
   await seedDatabase(dataSource);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap();
 

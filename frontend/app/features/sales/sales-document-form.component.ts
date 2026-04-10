@@ -916,13 +916,25 @@ export class SalesDocumentFormComponent implements OnDestroy {
     this.showEntityModal = true;
   }
 
-  onEntitySelect(entity: any) {
-    this.selectedEntityCode = entity.code;
-    this.selectedEntityName = entity.name;
-    this.selectedEntityNif = entity.nif;
-    this.selectedEntityAddress = entity.address;
-    this.selectedCustomer = entity;
-    this.showEntityModal = false;
+  onEntitySelect(entity: any) {
+    this.selectedEntityCode = entity.code;
+    this.selectedEntityName = entity.name;
+    this.selectedEntityNif = entity.nif;
+    this.selectedEntityAddress = entity.address;
+    this.selectedCustomer = entity;
+    this.showEntityModal = false;
+
+    // AUTO-UPDATE PRICES: Se já houver linhas, pergunta se quer atualizar preços para este novo perfil
+    if (this.rows.some(r => r.articleCode)) {
+      if (confirm('Deseja atualizar os preços dos artigos para o perfil deste cliente?')) {
+        this.rows.forEach((row, idx) => {
+          if (row.articleCode) {
+            const article = (this.inventoryService.getArticles() || []).find(a => a.code === row.articleCode);
+            if (article) this.updateRowWithArticle(idx, article);
+          }
+        });
+      }
+    }
   }
 
   // Article Logic
@@ -978,7 +990,11 @@ export class SalesDocumentFormComponent implements OnDestroy {
       articleCode: article.code,
       description: article.name || article.description,
       unit: article.unit,
-      unitPrice: article.salePrice || 0,
+      unitPrice: 
+        (this.selectedCustomer?.type === 'REVENDEDOR' && article.priceReseller) ? article.priceReseller :
+        (this.selectedCustomer?.type === 'BOMBA' && article.pricePump) ? article.pricePump :
+        (this.selectedCustomer?.type === 'CONSUMIDOR' && article.priceFinal) ? article.priceFinal :
+        (article.salePrice || 0),
       iva: (article.ivaRate || 0) + '%',
       quantity: 1, // Default to 1
       warehouse: defaultWarehouse ? defaultWarehouse.code : '',

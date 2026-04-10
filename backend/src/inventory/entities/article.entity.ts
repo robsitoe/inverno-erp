@@ -43,6 +43,15 @@ export class Article {
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     salePrice: number;
 
+    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0, nullable: true })
+    priceReseller: number;
+
+    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0, nullable: true })
+    pricePump: number;
+
+    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0, nullable: true })
+    priceFinal: number;
+
     @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
     ivaRate: number;
 

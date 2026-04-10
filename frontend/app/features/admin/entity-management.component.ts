@@ -5,6 +5,7 @@ import { CustomerService } from '../../shared/customer.service';
 import { SupplierService } from '../../shared/supplier.service';
 import { AccountingService } from '../../shared/accounting.service';
 import { Customer, Supplier, Account } from '../../shared/models';
+import { lastValueFrom } from 'rxjs';
 
 type EntityType = 'CUSTOMER' | 'SUPPLIER';
 
@@ -235,6 +236,60 @@ type EntityType = 'CUSTOMER' | 'SUPPLIER';
                 </div>
               </div>
             </div>
+
+            <!-- Tab Content: Pontos de Recolha (GPS) -->
+            <div *ngIf="activeTab === 2" class="bg-white p-4 rounded shadow-sm space-y-4">
+              <div class="flex justify-between items-center mb-2">
+                <h3 class="text-sm font-semibold text-gray-700">Pontos de Recolha / Entrega</h3>
+                <button (click)="addPoint()" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-colors flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[16px]">add</span>
+                  Novo Ponto
+                </button>
+              </div>
+
+              <!-- List of Points -->
+              <div class="border rounded overflow-hidden">
+                <table class="w-full text-xs text-left">
+                  <thead class="bg-gray-50 border-b">
+                    <tr>
+                      <th class="px-3 py-2">Nome / Identificação</th>
+                      <th class="px-3 py-2 w-32">Lat</th>
+                      <th class="px-3 py-2 w-32">Lng</th>
+                      <th class="px-3 py-2 w-20 text-center">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let p of deliveryPoints" class="border-b last:border-b-0 hover:bg-gray-50">
+                      <td class="px-3 py-2">
+                        <input [(ngModel)]="p.name" class="w-full border-b border-transparent focus:border-blue-500 bg-transparent outline-none py-1" placeholder="Ex: Armazém A">
+                      </td>
+                      <td class="px-3 py-2">
+                        <input type="number" [(ngModel)]="p.latitude" step="0.000001" class="w-full border-b border-transparent focus:border-blue-500 bg-transparent outline-none py-1 text-right">
+                      </td>
+                      <td class="px-3 py-2">
+                        <input type="number" [(ngModel)]="p.longitude" step="0.000001" class="w-full border-b border-transparent focus:border-blue-500 bg-transparent outline-none py-1 text-right">
+                      </td>
+                      <td class="px-3 py-2 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                          <button (click)="savePoint(p)" [title]="'Gravar Posto'" class="text-blue-600 hover:text-blue-800">
+                            <span class="material-symbols-outlined text-[18px]">save</span>
+                          </button>
+                          <button (click)="deletePoint(p)" [title]="'Eliminar Posto'" class="text-red-500 hover:text-red-700">
+                            <span class="material-symbols-outlined text-[18px]">delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr *ngIf="deliveryPoints.length === 0">
+                      <td colspan="4" class="px-3 py-8 text-center text-gray-400 italic">
+                        Nenhum ponto de recolha registado. Clique em "Novo Ponto".
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="text-[10px] text-gray-500">Nota: Estas coordenadas serão usadas automaticamente no mapa GPS do motorista.</p>
+            </div>
           </div>
 
           <!-- Empty State -->
@@ -261,6 +316,7 @@ export class EntityManagementComponent implements OnInit, OnChanges {
   searchTerm = '';
   activeTab = 0;
   tabs = ['Geral', 'Financeiro'];
+  deliveryPoints: any[] = [];
   availableAccounts: Account[] = [];
 
   constructor(
@@ -287,6 +343,10 @@ export class EntityManagementComponent implements OnInit, OnChanges {
 
   updateType() {
     this.type = this.viewMode === 'customer-management' ? 'CUSTOMER' : 'SUPPLIER';
+    this.tabs = ['Geral', 'Financeiro'];
+    if (this.type === 'CUSTOMER') {
+      this.tabs.push('Pontos de Recolha');
+    }
   }
 
   async loadEntities() {
@@ -328,9 +388,65 @@ export class EntityManagementComponent implements OnInit, OnChanges {
     );
   }
 
-  selectEntity(entity: any) {
+  async selectEntity(entity: any) {
     this.selectedEntity = { ...entity };
     this.activeTab = 0;
+    if (this.type === 'CUSTOMER') {
+      this.loadDeliveryPoints();
+    }
+  }
+
+  async loadDeliveryPoints() {
+    if (!this.selectedEntity?.id) return;
+    try {
+      this.deliveryPoints = await lastValueFrom(this.customerService.getDeliveryPoints(this.selectedEntity.id));
+    } catch (e) {
+      console.error('Error loading points:', e);
+      this.deliveryPoints = [];
+    }
+  }
+
+  addPoint() {
+    this.deliveryPoints.push({
+      id: `NEW_POINT_${Date.now()}`,
+      name: 'Novo Ponto',
+      latitude: 0,
+      longitude: 0,
+      customerId: this.selectedEntity.id,
+      companyId: this.selectedEntity.companyId
+    });
+  }
+
+  async savePoint(point: any) {
+    try {
+      const toSave = { ...point };
+      if (typeof toSave.id === 'string' && toSave.id.startsWith('NEW_')) {
+        delete toSave.id;
+      }
+      // Ensure customer relation is set
+      toSave.customer = { id: this.selectedEntity.id };
+
+      await lastValueFrom(this.customerService.saveDeliveryPoint(toSave));
+      alert('Ponto de recolha gravado!');
+      this.loadDeliveryPoints();
+    } catch (e) {
+      alert('Erro ao gravar ponto.');
+    }
+  }
+
+  async deletePoint(point: any) {
+    if (confirm('Deseja eliminar este ponto de recolha?')) {
+      if (typeof point.id === 'string' && point.id.startsWith('NEW_')) {
+        this.deliveryPoints = this.deliveryPoints.filter(p => p.id !== point.id);
+        return;
+      }
+      try {
+        await lastValueFrom(this.customerService.deleteDeliveryPoint(point.id));
+        this.loadDeliveryPoints();
+      } catch (e) {
+        alert('Erro ao eliminar ponto.');
+      }
+    }
   }
 
   newEntity() {

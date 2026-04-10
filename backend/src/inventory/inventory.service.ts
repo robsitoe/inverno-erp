@@ -11,6 +11,9 @@ import { TenancyContext } from '../tenancy/tenancy.context';
 
 import { StockDocument } from './entities/stock-document.entity';
 import { CreateStockDocumentDto } from './dto/create-stock-document.dto';
+import { Vehicle } from './entities/vehicle.entity';
+import { VehicleTrip } from './entities/vehicle-trip.entity';
+import { Warehouse } from './entities/warehouse.entity';
 
 @Injectable()
 export class InventoryService {
@@ -22,6 +25,12 @@ export class InventoryService {
     private readonly defaultStockMovementRepo: Repository<StockMovement>,
     @InjectRepository(StockDocument)
     private readonly defaultStockDocumentRepo: Repository<StockDocument>,
+    @InjectRepository(Vehicle)
+    private readonly defaultVehicleRepo: Repository<Vehicle>,
+    @InjectRepository(VehicleTrip)
+    private readonly defaultVehicleTripRepo: Repository<VehicleTrip>,
+    @InjectRepository(Warehouse)
+    private readonly defaultWarehouseRepo: Repository<Warehouse>,
   ) { }
 
   private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>, companyId?: string): Promise<Repository<T>> {
@@ -235,7 +244,7 @@ export class InventoryService {
 
     const query = repo.createQueryBuilder('m')
       .where('m.articleCode = :articleCode AND m.date <= :date', { articleCode, date });
-    
+
     if (cid) {
       query.andWhere('m.companyId = :cid', { cid });
     }
@@ -260,5 +269,78 @@ export class InventoryService {
       }
       return balance;
     }, 0);
+  }
+
+  // Fleet / Vehicle Trips
+
+  async findAllVehicles(companyId?: string) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getRepo(Vehicle, this.defaultVehicleRepo, cid);
+    return repo.find({ where: { companyId: cid } });
+  }
+
+  async saveVehicle(data: any) {
+    const cid = data.companyId || TenancyContext.getCompanyId();
+    const repo = await this.getRepo(Vehicle, this.defaultVehicleRepo, cid);
+    return repo.save(data);
+  }
+
+  async findAllWarehouses(companyId?: string) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getRepo(Warehouse, this.defaultWarehouseRepo, cid);
+    return repo.find({ where: { companyId: cid } });
+  }
+
+  async startTrip(data: any, companyId?: string) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getRepo(VehicleTrip, this.defaultVehicleTripRepo, cid);
+    const trip = repo.create({
+      ...data,
+      companyId: cid,
+      status: 'ACTIVE',
+      startTime: new Date()
+    });
+    return repo.save(trip);
+  }
+
+  async getTripById(id: string, companyId?: string) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getRepo(VehicleTrip, this.defaultVehicleTripRepo, cid);
+    return repo.findOne({ where: { id } });
+  }
+
+  async updateTrip(id: string, data: any, companyId?: string) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getRepo(VehicleTrip, this.defaultVehicleTripRepo, cid);
+    await repo.update(id, data);
+    return this.getTripById(id, cid);
+  }
+
+  async updateLocation(tripId: string, lat: number, lng: number, companyId?: string) {
+    return this.updateTrip(tripId, { lastLat: lat, lastLng: lng }, companyId);
+  }
+
+  async endTrip(id: string, data: any) {
+    const cid = data.companyId || TenancyContext.getCompanyId();
+    return this.updateTrip(id, {
+      ...data,
+      status: 'COMPLETED',
+      endTime: new Date()
+    }, cid);
+  }
+
+  async getActiveTrips(companyId?: string) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getRepo(VehicleTrip, this.defaultVehicleTripRepo, cid);
+    return repo.find({ where: { status: 'ACTIVE', companyId: cid } });
+  }
+
+  async getTripHistory(vehicleId: string, companyId?: string) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getRepo(VehicleTrip, this.defaultVehicleTripRepo, cid);
+    return repo.find({
+      where: { vehicleId, companyId: cid },
+      order: { startTime: 'DESC' }
+    });
   }
 }

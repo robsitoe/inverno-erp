@@ -114,9 +114,9 @@ export class SalesService {
 
     // Trigger stock movements if doc is created with final status
     if (savedDoc.status === 'APPROVED' || savedDoc.status === 'POSTED') {
-      console.log(`[SalesService] Direct create trigger for ${savedDoc.documentNumber} (${savedDoc.status})`);
-      const fullDoc = await this.findOne(savedDoc.id);
-      await this.createStockMovementsForSales(fullDoc);
+      console.log(`[SalesService] Document saved in tenant database. ID: ${savedDoc.id}, Company: ${companyId || 'default'}. Triggering stock movements...`);
+      const fullDoc = await this.findOne(savedDoc.id, companyId);
+      await this.createStockMovementsForSales(fullDoc, companyId);
     }
 
     return savedDoc;
@@ -132,14 +132,14 @@ export class SalesService {
     });
   }
 
-  async findOne(id: string) {
-    const sdRepo = await this.getSalesDocRepo();
+  async findOne(id: string, companyId?: string) {
+    const sdRepo = await this.getSalesDocRepo(companyId);
     const document = await sdRepo.findOne({
       where: { id },
       relations: ['lines']
     });
     if (!document) {
-      throw new NotFoundException(`Sales Document with ID ${id} not found`);
+      throw new NotFoundException(`Sales Document with ID ${id} not found in database for Company: ${companyId || 'Global Context'}`);
     }
     return document;
   }
@@ -149,7 +149,7 @@ export class SalesService {
       await this.periodControlService.ensureDateInOpenPeriod(updateSalesDocumentDto.date, updateSalesDocumentDto.companyId);
     }
     const sdRepo = await this.getSalesDocRepo();
-    const document = await this.findOne(id);
+    const document = await this.findOne(id, updateSalesDocumentDto.companyId);
 
     if (user) {
       this.workflowService.checkEditLock(document.status, user);
@@ -162,8 +162,8 @@ export class SalesService {
     // Trigger stock movements if status just changed to final
     if ((savedDoc.status === 'APPROVED' || savedDoc.status === 'POSTED') && oldStatus !== savedDoc.status) {
       console.log(`[SalesService] Direct update trigger for ${savedDoc.documentNumber} (${savedDoc.status})`);
-      const fullDoc = await this.findOne(savedDoc.id);
-      await this.createStockMovementsForSales(fullDoc);
+      const fullDoc = await this.findOne(savedDoc.id, updateSalesDocumentDto.companyId);
+      await this.createStockMovementsForSales(fullDoc, updateSalesDocumentDto.companyId);
     }
 
     return savedDoc;
@@ -213,17 +213,18 @@ export class SalesService {
     // The create/update logic above handles Repository.save() calls.
     // Workflow transition calls Repository.save() inside it.
     // So let's re-verify document after transition.
-    const updatedDoc = await this.findOne(id);
+    const updatedDoc = await this.findOne(id, document.companyId);
     if (updatedDoc.status === 'POSTED' || updatedDoc.status === 'APPROVED') {
-      await this.createStockMovementsForSales(updatedDoc);
+      await this.createStockMovementsForSales(updatedDoc, document.companyId);
     }
 
     return result;
   }
 
-  private async createStockMovementsForSales(document: SalesDocument) {
+  private async createStockMovementsForSales(document: SalesDocument, companyId?: string) {
     // Check if movements already exist for this document to prevent doubles
-    const existing = await this.inventoryService.findAllStockMovements(document.companyId);
+    const targetId = companyId || document.companyId;
+    const existing = await this.inventoryService.findAllStockMovements(targetId);
     const alreadyProcessed = existing.some(m => m.sourceDocument === document.id);
     if (alreadyProcessed) {
       console.log(`[SalesService] Stock movements for doc ${document.documentNumber} already exist. Skipping.`);

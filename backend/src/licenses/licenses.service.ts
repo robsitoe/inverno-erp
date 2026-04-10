@@ -484,7 +484,7 @@ export class LicensesService {
             companyName: companyId,
             expiresAt: expires,
             daysRemaining: 30,
-            features: ['SALES', 'PURCHASES', 'BASIC'],
+            features: ['SALES', 'PURCHASES', 'BASIC', 'HR'],
             inGracePeriod: false,
             gracePeriodEndsAt: expires,
         };
@@ -493,7 +493,7 @@ export class LicensesService {
     private defaultFeaturesForPlan(plan: LicensePlan): string[] {
         switch (plan) {
             case LicensePlan.DEMO:
-                return ['SALES', 'PURCHASES', 'BASIC'];
+                return ['SALES', 'PURCHASES', 'BASIC', 'HR'];
             case LicensePlan.LITE:
                 return ['SALES', 'INVENTORY', 'BASIC'];
             case LicensePlan.STANDARD:

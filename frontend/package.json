@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "ng serve",
-    "dev:network": "ng serve --host 0.0.0.0",
+    "dev:network": "ng serve --host 0.0.0.0 --allowed-hosts",
     "build": "ng build",
     "preview": "ng serve --configuration=production"
   },
