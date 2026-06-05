@@ -22,6 +22,7 @@ import { TenancyModule } from '../tenancy/tenancy.module';
 import { TreasuryModule } from '../treasury/treasury.module';
 import { Trip } from './trip.entity';
 import { TripsService } from './trips.service';
+import { TripsWebController } from './trips.web.controller';
 
 @Module({
   imports: [
@@ -43,7 +44,7 @@ import { TripsService } from './trips.service';
     TenancyModule,
     TreasuryModule,
   ],
-  controllers: [MobileController],
+  controllers: [MobileController, TripsWebController],
   providers: [MobileService, MpesaService, NotificationService, TripsService],
   exports: [MobileService, MpesaService, NotificationService, TripsService],
 })

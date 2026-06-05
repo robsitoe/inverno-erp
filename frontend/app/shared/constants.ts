@@ -184,6 +184,7 @@ export const MENU_ITEMS: MenuItem[] = [
       { label: "Mapa de Inventário", icon: "inventory_2", view: "gas-inventory" },
       { label: "Planeamento de Entregas", icon: "local_shipping", view: "delivery-planning" },
       { label: "Carga & Descarga", icon: "forklift", view: "vehicle-load" },
+      { label: "Reconciliação de Viaturas", icon: "fact_check", view: "vehicle-reconciliation" },
       { label: "Mapa de Rastreamento", icon: "map", view: "fleet-map" },
       { label: "Aprovações Mobile", icon: "how_to_reg", view: "mobile-approvals" }
     ]
