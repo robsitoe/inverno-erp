@@ -1384,6 +1384,37 @@ export class DataService {
 
 
 
+    // ── Vehicle Trips (gas driver reconciliation) ───────────────────────────
+    private tripsCid(companyId?: string): string {
+        return companyId || this.getCompanyId() || '';
+    }
+
+    getTrips(status?: string, companyId?: string): Observable<any[]> {
+        let url = `${this.baseUrl}/trips?companyId=${this.tripsCid(companyId)}`;
+        if (status) url += `&status=${status}`;
+        return this.http.get<any[]>(url);
+    }
+
+    getTrip(id: string, companyId?: string): Observable<any> {
+        return this.http.get<any>(`${this.baseUrl}/trips/${id}?companyId=${this.tripsCid(companyId)}`);
+    }
+
+    openTrip(payload: any, companyId?: string): Observable<any> {
+        return this.http.post<any>(`${this.baseUrl}/trips/open?companyId=${this.tripsCid(companyId)}`, payload);
+    }
+
+    returnTrip(id: string, payload: any, companyId?: string): Observable<any> {
+        return this.http.post<any>(`${this.baseUrl}/trips/${id}/return?companyId=${this.tripsCid(companyId)}`, payload);
+    }
+
+    reconcileTripCash(id: string, payload: any, companyId?: string): Observable<any> {
+        return this.http.post<any>(`${this.baseUrl}/trips/${id}/reconcile-cash?companyId=${this.tripsCid(companyId)}`, payload);
+    }
+
+    depositTrip(id: string, amount: number, companyId?: string): Observable<any> {
+        return this.http.post<any>(`${this.baseUrl}/trips/${id}/deposit?companyId=${this.tripsCid(companyId)}`, { amount });
+    }
+
     /** GET /accounting/presets — list available preset plans */
     getAccountPresets(): Observable<any[]> {
         if (this.isLocalBrowser()) return of([]);

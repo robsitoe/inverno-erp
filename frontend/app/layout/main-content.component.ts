@@ -49,6 +49,7 @@ import { PettyCashVouchersComponent } from '../features/treasury/petty-cash-vouc
 import { DeliveryPlanningComponent } from '../features/inventory/delivery-planning.component';
 import { VehicleLoadFormComponent } from '../features/inventory/vehicle-load-form.component';
 import { FleetMapComponent } from '../features/inventory/fleet-map.component';
+import { VehicleReconciliationComponent } from '../features/inventory/vehicle-reconciliation.component';
 import { MobileApprovalsComponent } from '../features/admin/mobile-approvals.component';
 import { PaymentGatewaySettingsComponent } from '../features/admin/payment-gateway-settings.component';
 import { DashboardComponent } from '../features/dashboard/dashboard.component';
@@ -350,6 +351,11 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
     </ng-container>
 
 
+    <!-- Vehicle Trip Reconciliation -->
+    <ng-container *ngIf="activeView === 'vehicle-reconciliation'">
+      <app-vehicle-reconciliation class="w-full h-full block"></app-vehicle-reconciliation>
+    </ng-container>
+
     <!-- Payment Gateway Settings -->
     <ng-container *ngIf="activeView === 'payment-gateway-settings'">
       <app-payment-gateway-settings class="w-full h-full block"></app-payment-gateway-settings>
@@ -495,6 +501,7 @@ export class MainContentComponent {
       'fleet-map',
       'dashboard',
       'payment-gateway-settings',
+      'vehicle-reconciliation',
       'mobile-approvals'
     ];
     return knownViews.includes(this.activeView);
