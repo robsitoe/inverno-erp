@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AccountingService, AccountingIssue } from '../../shared/accounting.service';
 import { DataService } from '../../services/data.service';
@@ -194,10 +194,10 @@ import { forkJoin } from 'rxjs';
                                 </div>
                                 <div class="flex gap-4 text-xs font-mono w-40 justify-end shrink-0" *ngIf="!isEditingIssueEntry">
                                     <div class="text-right w-16" [class.text-slate-300]="!line.debit" [class.text-emerald-700]="line.debit > 0" [class.font-bold]="line.debit > 0">
-                                       {{ line.debit > 0 ? (line.debit | number:'1.2-2') : '0,00' }} <span class="text-[8px] opacity-50" *ngIf="line.debit>0">D</span>
+                                       {{ line.debit > 0 ? ((+line.debit || 0) | number:'1.2-2') : '0,00' }} <span class="text-[8px] opacity-50" *ngIf="line.debit>0">D</span>
                                     </div>
                                     <div class="text-right w-16" [class.text-slate-300]="!line.credit" [class.text-rose-600]="line.credit > 0" [class.font-bold]="line.credit > 0">
-                                       {{ line.credit > 0 ? (line.credit | number:'1.2-2') : '0,00' }} <span class="text-[8px] opacity-50" *ngIf="line.credit>0">C</span>
+                                       {{ line.credit > 0 ? ((+line.credit || 0) | number:'1.2-2') : '0,00' }} <span class="text-[8px] opacity-50" *ngIf="line.credit>0">C</span>
                                     </div>
                                 </div>
                             </div>
@@ -277,10 +277,10 @@ import { forkJoin } from 'rxjs';
                       </span>
                     </td>
                     <td class="p-4 text-right font-mono" [class.font-bold]="item.debit > 0" [class.text-slate-900]="item.debit > 0" [class.text-slate-300]="item.debit === 0">
-                      {{ item.debit > 0 ? (item.debit | number:'1.2-2') : '0,00' }}
+                      {{ item.debit > 0 ? ((+item.debit || 0) | number:'1.2-2') : '0,00' }}
                     </td>
                     <td class="p-4 text-right font-mono" [class.font-bold]="item.credit > 0" [class.text-slate-900]="item.credit > 0" [class.text-slate-300]="item.credit === 0">
-                      {{ item.credit > 0 ? (item.credit | number:'1.2-2') : '0,00' }}
+                      {{ item.credit > 0 ? ((+item.credit || 0) | number:'1.2-2') : '0,00' }}
                     </td>
                   </tr>
                 </tbody>
@@ -357,8 +357,8 @@ import { forkJoin } from 'rxjs';
                   </div>
                   <div class="text-right shrink-0">
                     <ng-container *ngIf="getLineForAccount(entry) as line">
-                      <p *ngIf="line.debit > 0" class="text-xs font-mono font-bold text-emerald-700">+{{ line.debit | number:'1.2-2' }}</p>
-                      <p *ngIf="line.credit > 0" class="text-xs font-mono font-bold text-rose-600">-{{ line.credit | number:'1.2-2' }}</p>
+                      <p *ngIf="line.debit > 0" class="text-xs font-mono font-bold text-emerald-700">+{{ (+line.debit || 0) | number:'1.2-2' }}</p>
+                      <p *ngIf="line.credit > 0" class="text-xs font-mono font-bold text-rose-600">-{{ (+line.credit || 0) | number:'1.2-2' }}</p>
                     </ng-container>
                   </div>
                 </div>

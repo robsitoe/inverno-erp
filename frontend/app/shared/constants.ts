@@ -1,4 +1,4 @@
-export interface MenuItem {
+﻿export interface MenuItem {
   label: string;
   icon: string;
   view?: string;
@@ -40,6 +40,7 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: "admin_panel_settings",
     children: [
       { label: "Painel Principal", icon: "dashboard", view: "admin-page" },
+      { label: "Configuração de Pagamentos", icon: "payments", view: "payment-gateway-settings" },
       { label: "Ferramentas", icon: "build", view: "admin-tools" }
     ]
   },
@@ -297,6 +298,7 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
     icon: "settings",
     children: [
       { label: "Geral", icon: "tune", view: "admin-companies" },
+      { label: "Pagamentos", icon: "payments", view: "payment-gateway-settings" },
       { label: "Parâmetros", icon: "settings_applications" }
     ]
   },

@@ -1,4 +1,4 @@
-import { Component, Input, ViewEncapsulation } from '@angular/core';
+﻿import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SalesDocument } from '../../shared/models';
 import { PrintSettings } from '../../shared/components/print-settings-modal.component';
@@ -144,7 +144,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
                  <tr *ngFor="let vat of getVatSummary()">
                    <td>{{ vat.rate | number:'1.2-2' }}</td>
                    <td>{{ vat.base | number:'1.2-2' }}</td>
-                   <td>{{ vat.amount | number:'1.2-2' }}</td>
+                   <td>{{ (+vat.amount || 0) | number:'1.2-2' }}</td>
                    <td>{{ vat.rate === 0 ? 'Isento Art. 9' : '' }}</td>
                  </tr>
                </tbody>

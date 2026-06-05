@@ -435,8 +435,30 @@ export const PGC_NIR_MOZ: Partial<Account>[] = [
     { id: '89', code: '8.9', name: 'DIVIDENDOS ANTECIPADOS', type: 'EQUITY', level: 1, balance: 0, allowPosting: true, isActive: true, description: 'Regista o valor dos lucros atribuídos durante o ano pelas sociedades.' },
 ];
 
-export const ACCOUNT_PRESETS = {
+export const ACCOUNT_PRESETS: Record<string, Partial<Account>[]> = {
     'PGC-NIR': PGC_NIR_MOZ,
     'PGCM': PGC_NIR_MOZ,
-    'PGC-PE': PGC_NIR_MOZ
+    'PGC-PE': PGC_NIR_MOZ,
 };
+
+export interface PresetMetadata {
+    key: string;
+    name: string;
+    description: string;
+    country: string;
+    standard: string;
+    accountCount: number;
+    isDefault: boolean;
+}
+
+export const PRESET_METADATA: PresetMetadata[] = [
+    {
+        key: 'PGC-NIR',
+        name: 'PGC Moçambique (NIR)',
+        description: 'Plano Geral de Contabilidade de Moçambique — Normas Internacionais de Relato. Cobre classes 1 a 8 com hierarquia completa.',
+        country: 'MZ',
+        standard: 'NIR / IFRS adaptado',
+        accountCount: PGC_NIR_MOZ.length,
+        isDefault: true,
+    },
+];

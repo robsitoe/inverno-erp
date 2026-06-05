@@ -43,6 +43,10 @@ const routes: Routes = [
         loadComponent: () => import('./pages/driver-delivery/driver-delivery.page').then(m => m.DriverDeliveryPage)
       },
       {
+        path: 'gas-sale',
+        loadComponent: () => import('./pages/driver-gas-sale/driver-gas-sale.page').then(m => m.DriverGasSalePage)
+      },
+      {
         path: 'notifications',
         loadComponent: () => import('./pages/notifications/notifications.page').then(m => m.NotificationsPage)
       },

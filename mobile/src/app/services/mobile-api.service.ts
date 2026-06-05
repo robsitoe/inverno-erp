@@ -28,6 +28,23 @@ export class MobileApiService {
         return this.http.get(`${this.apiUrl}/driver/inventory/${plate}`);
     }
 
+    loadTruck(plate: string, inventory: any, mode: 'SET' | 'ADD' = 'SET') {
+        return this.http.post(`${this.apiUrl}/driver/load-truck/${plate}`, { inventory, mode });
+    }
+
+    // Trips / Viagens
+    getActiveTrip() {
+        return this.http.get<any>(`${this.apiUrl}/trips/active`);
+    }
+
+    getTrip(id: string) {
+        return this.http.get<any>(`${this.apiUrl}/trips/${id}`);
+    }
+
+    listTrips(status?: string) {
+        return this.http.get<any[]>(`${this.apiUrl}/trips`, { params: status ? { status } : {} });
+    }
+
     createDirectSale(saleData: any) {
         return this.http.post(`${this.apiUrl}/driver/direct-sale`, saleData);
     }

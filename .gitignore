@@ -46,3 +46,4 @@ Thumbs.db
 # ─── Debug scripts (temporary) ───────────────────────────────────────────────
 check_*.js
 fix_*.js
+.claude/scheduled_tasks.lock

@@ -839,10 +839,139 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
                 </div>
              </div>
           </ng-container>
-    <!-- REUSBLE TBLE TEMPLTE -->
+
+    <!-- ===== TAB: ESTATÍSTICAS ===== -->
+    <ng-container *ngIf="activeTab === 'STATS'">
+      <div class="p-4 space-y-4">
+
+        <!-- Date Range Selector -->
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-wrap items-end gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">De</label>
+            <input type="date" [(ngModel)]="statsRange.from" class="h-8 px-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Até</label>
+            <input type="date" [(ngModel)]="statsRange.to" class="h-8 px-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <button (click)="loadStatistics()" [disabled]="statsLoading"
+                  class="flex items-center gap-1.5 h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors disabled:bg-blue-300">
+            <span class="material-symbols-outlined text-[15px]" [class.animate-spin]="statsLoading">{{ statsLoading ? 'refresh' : 'query_stats' }}</span>
+            {{ statsLoading ? 'A carregar...' : 'Actualizar' }}
+          </button>
+        </div>
+
+        <!-- Loading -->
+        <div *ngIf="statsLoading" class="flex items-center justify-center py-16 text-gray-400">
+          <div class="w-7 h-7 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+          A processar estatísticas...
+        </div>
+
+        <!-- Empty -->
+        <div *ngIf="!statsLoading && !statsData" class="text-center py-16 text-gray-400">
+          <span class="material-symbols-outlined text-5xl text-gray-300 block mb-2">bar_chart</span>
+          <p class="text-sm">Seleccione um período e clique em "Actualizar" para ver as estatísticas.</p>
+        </div>
+
+        <!-- Stats Content -->
+        <div *ngIf="!statsLoading && statsData" class="space-y-4">
+
+          <!-- Summary KPIs -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="material-symbols-outlined text-blue-600 text-[18px]">calendar_month</span>
+                <span class="text-[10px] font-bold text-gray-400 uppercase">Período</span>
+              </div>
+              <p class="text-xl font-black text-gray-900">{{ statsData.period?.days || 0 }} dias</p>
+              <p class="text-[10px] text-gray-400">{{ statsData.period?.from }} → {{ statsData.period?.to }}</p>
+            </div>
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="material-symbols-outlined text-green-600 text-[18px]">receipt_long</span>
+                <span class="text-[10px] font-bold text-gray-400 uppercase">Total VD's</span>
+              </div>
+              <p class="text-xl font-black text-green-700">{{ statsData.vdsTotal || 0 }}</p>
+              <p class="text-[10px] text-gray-400">Vendas a dinheiro</p>
+            </div>
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="material-symbols-outlined text-purple-600 text-[18px]">description</span>
+                <span class="text-[10px] font-bold text-gray-400 uppercase">Total Facturas</span>
+              </div>
+              <p class="text-xl font-black text-purple-700">{{ statsData.invoicesTotal || 0 }}</p>
+              <p class="text-[10px] text-gray-400">Documentos emitidos</p>
+            </div>
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="material-symbols-outlined text-orange-600 text-[18px]">payments</span>
+                <span class="text-[10px] font-bold text-gray-400 uppercase">Receita Total</span>
+              </div>
+              <p class="text-xl font-black text-orange-700">{{ getStatsTotalRevenue() | number:'1.0-0' }}</p>
+              <p class="text-[10px] text-gray-400">MZN no período</p>
+            </div>
+          </div>
+
+          <!-- Sales by Type Table -->
+          <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+              <span class="material-symbols-outlined text-blue-600 text-[18px]">propane_tank</span>
+              <h3 class="font-bold text-gray-800 text-sm">Vendas por Tipo de Cilindro</h3>
+            </div>
+            <table class="w-full text-xs">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-2 text-left text-gray-600 font-semibold">Tipo</th>
+                  <th class="px-4 py-2 text-right text-gray-600 font-semibold">Quantidade</th>
+                  <th class="px-4 py-2 text-right text-gray-600 font-semibold">Média/Dia</th>
+                  <th class="px-4 py-2 text-right text-gray-600 font-semibold">VD's</th>
+                  <th class="px-4 py-2 text-right text-gray-600 font-semibold">Facturas</th>
+                  <th class="px-4 py-2 text-right text-gray-600 font-semibold">Receita (MZN)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of getStatsSalesRows()" class="border-t border-gray-100 hover:bg-gray-50">
+                  <td class="px-4 py-2 font-bold text-gray-800">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full mr-2" [style.background]="getTypeColor(row.type)"></span>
+                    {{ row.type }}
+                  </td>
+                  <td class="px-4 py-2 text-right font-mono font-semibold text-blue-700">{{ row.quantity }}</td>
+                  <td class="px-4 py-2 text-right font-mono text-gray-500">{{ row.avg }}</td>
+                  <td class="px-4 py-2 text-right font-mono text-gray-600">{{ row.vds }}</td>
+                  <td class="px-4 py-2 text-right font-mono text-gray-600">{{ row.invoices }}</td>
+                  <td class="px-4 py-2 text-right font-mono font-semibold text-green-700">{{ row.total | number:'1.2-2' }}</td>
+                </tr>
+                <tr *ngIf="getStatsSalesRows().length === 0">
+                  <td colspan="6" class="px-4 py-6 text-center text-gray-400 italic">Sem vendas registadas no período.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Stock Trend (simple bar visualization) -->
+          <div *ngIf="statsData.stockTrend?.length" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="material-symbols-outlined text-blue-600 text-[18px]">trending_up</span>
+              <h3 class="font-bold text-gray-800 text-sm">Evolução de Stock (GPL)</h3>
+            </div>
+            <div class="flex items-end gap-1 h-32 overflow-x-auto pb-1">
+              <div *ngFor="let pt of statsData.stockTrend" class="flex flex-col items-center justify-end shrink-0" style="min-width: 24px;">
+                <div class="w-4 bg-blue-500 hover:bg-blue-600 rounded-t transition-all"
+                     [style.height.px]="getTrendBarHeight(pt.stock)"
+                     [title]="pt.date + ': ' + pt.stock"></div>
+                <span class="text-[7px] text-gray-400 mt-1 rotate-45 origin-left whitespace-nowrap">{{ pt.date | slice:5 }}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- REUSABLE TABLE TEMPLATE -->
 
 
-    
+
     <ng-template #movementTable let-entries="entries" let-t="type" let-isSupplier="isSupplier">
        <div class="overflow-x-auto">
           <table class="w-full text-[8px] border-collapse border border-black uppercase text-center">
@@ -1650,7 +1779,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
             if (this.control.status === 'CLOSED') {
 
 
-               this.toaster.showWarning('udit Log', 'lteração registada após fecho do mapa.');
+               this.toaster.showWarning('Auditoria', 'Alteração registada após fecho do mapa.');
 
 
             }
@@ -1693,6 +1822,36 @@ export class GasControlComponent implements OnInit, OnDestroy {
             this.cdr.detectChanges();
          }
       });
+   }
+
+   /** Build sales-by-type rows for the statistics table */
+   getStatsSalesRows(): Array<{ type: string; quantity: number; avg: string; vds: number; invoices: number; total: number }> {
+      if (!this.statsData?.salesByType) return [];
+      const averages = this.statsData.dailyAverages || {};
+      return Object.keys(this.statsData.salesByType).map(type => {
+         const s = this.statsData.salesByType[type] || {};
+         return {
+            type,
+            quantity: s.quantity || 0,
+            avg: averages[type] || '0.00',
+            vds: s.vds || 0,
+            invoices: s.invoices || 0,
+            total: parseFloat(String(s.total)) || 0,
+         };
+      }).sort((a, b) => b.quantity - a.quantity);
+   }
+
+   /** Total revenue across all cylinder types */
+   getStatsTotalRevenue(): number {
+      return this.getStatsSalesRows().reduce((sum, r) => sum + r.total, 0);
+   }
+
+   /** Scaled bar height (px) for stock trend chart, max 120px */
+   getTrendBarHeight(stock: number): number {
+      const trend = this.statsData?.stockTrend || [];
+      const max = Math.max(1, ...trend.map((p: any) => parseFloat(String(p.stock)) || 0));
+      const val = parseFloat(String(stock)) || 0;
+      return Math.max(2, Math.round((val / max) * 120));
    }
 
    openDay() {
@@ -2398,7 +2557,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
       const c: any = {
 
 
-         '9KG': '#70D47',  // Green
+         '9KG': '#70AD47',  // Green
 
 
          '14KG': '#4472C4', // Blue

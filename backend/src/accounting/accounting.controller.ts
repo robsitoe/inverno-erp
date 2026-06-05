@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, UseGuards, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AccountingService } from './accounting.service';
 import { CreateAccountDto } from './dto/create-account.dto';
@@ -97,6 +97,23 @@ export class AccountingController {
     return this.accountingService.recalculateAllBalances(companyId);
   }
 
+  @Get('presets')
+  @ApiOperation({ summary: 'List all available chart of accounts presets with metadata' })
+  getPresets() {
+    return this.accountingService.getAvailablePresets();
+  }
+
+  @Post('accounts/import-csv')
+  @ApiOperation({ summary: 'Import accounts from parsed CSV rows (batch upsert)' })
+  importCsv(
+    @Body() body: { rows: any[]; mergeMode?: 'REPLACE' | 'MERGE' },
+    @Query('companyId') companyId?: string,
+  ) {
+    if (!body.rows || !Array.isArray(body.rows)) {
+      throw new BadRequestException('O campo "rows" é obrigatório e deve ser um array.');
+    }
+    return this.accountingService.importAccountsFromCsv(body.rows, companyId, body.mergeMode || 'MERGE');
+  }
 
   @Get('cost-centers')
   @ApiOperation({ summary: 'List cost centers (MVP)' })

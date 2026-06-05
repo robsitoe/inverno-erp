@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
+﻿import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountingService } from '../../shared/accounting.service';
@@ -171,10 +171,10 @@ import { Subscription } from 'rxjs';
                     </td>
                     <td class="p-2 border">{{ line.description }}</td>
                     <td class="p-2 border text-right font-mono font-semibold text-green-700">
-                      {{ line.debit > 0 ? (line.debit | number:'1.2-2') : '-' }}
+                      {{ line.debit > 0 ? ((+line.debit || 0) | number:'1.2-2') : '-' }}
                     </td>
                     <td class="p-2 border text-right font-mono font-semibold text-red-700">
-                      {{ line.credit > 0 ? (line.credit | number:'1.2-2') : '-' }}
+                      {{ line.credit > 0 ? ((+line.credit || 0) | number:'1.2-2') : '-' }}
                     </td>
                   </tr>
                   <tr class="bg-gray-100 font-bold">

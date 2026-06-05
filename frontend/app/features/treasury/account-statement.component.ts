@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountingService } from '../../shared/accounting.service';
@@ -230,13 +230,13 @@ interface StatementMovement {
                                     <div class="text-[10px] text-gray-500 uppercase">{{ m.description }}</div>
                                 </td>
                                 <td class="px-3 py-2 text-right font-mono font-medium text-green-700">
-                                    {{ m.debit > 0 ? (m.debit | number:'1.2-2') : '-' }}
+                                    {{ m.debit > 0 ? ((+m.debit || 0) | number:'1.2-2') : '-' }}
                                 </td>
                                 <td class="px-3 py-2 text-right font-mono font-medium text-red-700">
-                                    {{ m.credit > 0 ? (m.credit | number:'1.2-2') : '-' }}
+                                    {{ m.credit > 0 ? ((+m.credit || 0) | number:'1.2-2') : '-' }}
                                 </td>
                                 <td class="px-3 py-2 text-right font-mono font-bold" [class.text-blue-700]="m.balance >= 0" [class.text-red-600]="m.balance < 0">
-                                    {{ m.balance | number:'1.2-2' }}
+                                    {{ (+m.balance || 0) | number:'1.2-2' }}
                                 </td>
                             </tr>
                         </tbody>

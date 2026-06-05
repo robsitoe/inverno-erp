@@ -1,4 +1,4 @@
-
+﻿
 import { Component, EventEmitter, Input, Output, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/constants';
@@ -15,13 +15,15 @@ import { Subscription } from 'rxjs';
     <aside [class]="'flex flex-col h-full bg-white border-r border-gray-300 shrink-0 transition-all duration-300 ' + (collapsed ? 'w-14' : 'w-64')">
       <!-- Sidebar Header -->
       <div class="flex items-center justify-between p-2 border-b border-gray-300 h-12">
-        <div *ngIf="!collapsed" class="flex items-center gap-2 animate-fade-in overflow-hidden whitespace-nowrap">
-            <div 
-                class="bg-center bg-no-repeat aspect-square bg-cover size-8 rounded-sm border border-gray-200" 
-                style='background-image: url("https://picsum.photos/64/64")'
-                title="Logo da Empresa"
-            ></div>
-            <h2 class="font-semibold text-gray-800 text-sm">{{ mode === 'ADMIN' ? 'Administrador' : 'Navegador' }}</h2>
+                <div *ngIf="!collapsed" class="flex items-center gap-2 animate-fade-in overflow-hidden whitespace-nowrap">
+            <div class="w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center shadow-sm shrink-0" title="Inverno ERP">
+              <svg width="15" height="15" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="11" y="2" width="4" height="26" rx="2" fill="white"/>
+                <rect x="5" y="2" width="20" height="5" rx="2" fill="white"/>
+                <rect x="5" y="23" width="20" height="5" rx="2" fill="white"/>
+              </svg>
+            </div>
+            <h2 class="font-bold text-gray-800 text-sm tracking-tight">{{ mode === 'ADMIN' ? 'Administração' : 'Menu Principal' }}</h2>
         </div>
         <button 
             (click)="toggleCollapsed()"

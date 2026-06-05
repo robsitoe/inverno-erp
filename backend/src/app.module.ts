@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+﻿import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -67,6 +67,9 @@ import { SalesCampaignItem } from './sales/entities/sales-campaign-item.entity';
 import { GasControlModule } from './gas-control/gas-control.module';
 import { MobileModule } from './mobile/mobile.module';
 import { TruckInventory } from './mobile/truck-inventory.entity';
+import { Trip } from './mobile/trip.entity';
+import { PaymentGatewayConfig } from './payment-gateways/entities/payment-gateway-config.entity';
+import { PaymentGatewaysModule } from './payment-gateways/payment-gateways.module';
 
 @Module({
   imports: [
@@ -125,6 +128,7 @@ import { TruckInventory } from './mobile/truck-inventory.entity';
               SalesCampaign,
               SalesCampaignItem,
               TruckInventory,
+              Trip,
             ],
             synchronize: true,
           };
@@ -177,6 +181,7 @@ import { TruckInventory } from './mobile/truck-inventory.entity';
             SalesCampaign,
             SalesCampaignItem,
             TruckInventory,
+            Trip,
           ],
           synchronize: true,
         };
@@ -198,6 +203,7 @@ import { TruckInventory } from './mobile/truck-inventory.entity';
     HRModule,
     GasControlModule,
     MobileModule,
+    PaymentGatewaysModule,
   ],
   controllers: [AppController],
   providers: [AppService],

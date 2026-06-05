@@ -4,10 +4,10 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { 
-  logOutOutline, timeOutline, checkmarkCircleOutline, 
-  locationOutline, chevronForward, cartOutline, 
-  personOutline, helpBuoyOutline 
+import {
+  logOutOutline, timeOutline, checkmarkCircleOutline,
+  locationOutline, chevronForward, cartOutline,
+  personOutline, helpBuoyOutline, flameOutline
 } from 'ionicons/icons';
 
 @Component({
@@ -79,6 +79,13 @@ import {
           <span>{{ user?.employeeId ? 'Entregas' : 'Encomendas' }}</span>
         </div>
 
+        <div class="action-item" *ngIf="user?.employeeId" (click)="goToGasSale()">
+          <div class="action-icon gas">
+            <ion-icon name="flame-outline"></ion-icon>
+          </div>
+          <span>Venda de Gás</span>
+        </div>
+
         <div class="action-item" (click)="goToHistory()">
           <div class="action-icon history">
             <ion-icon name="time-outline"></ion-icon>
@@ -145,6 +152,7 @@ import {
       display: flex; align-items: center; justify-content: center; font-size: 22px;
     }
     .action-icon.orders { background: rgba(0, 209, 255, 0.1); color: #00D1FF; }
+    .action-icon.gas { background: rgba(249, 115, 22, 0.12); color: #f97316; }
     .action-icon.history { background: rgba(46, 204, 113, 0.1); color: #2ECC71; }
     .action-icon.profile { background: rgba(160, 160, 160, 0.1); color: #A0A0A0; }
     .action-icon.support { background: rgba(255, 255, 255, 0.05); color: #eee; }
@@ -158,10 +166,10 @@ export class HomePage implements OnInit {
   userRole = '';
 
   constructor(private authService: AuthService, private router: Router) {
-    addIcons({ 
-      logOutOutline, timeOutline, checkmarkCircleOutline, 
-      locationOutline, chevronForward, cartOutline, 
-      personOutline, helpBuoyOutline 
+    addIcons({
+      logOutOutline, timeOutline, checkmarkCircleOutline,
+      locationOutline, chevronForward, cartOutline,
+      personOutline, helpBuoyOutline, flameOutline
     });
   }
 
@@ -197,6 +205,10 @@ export class HomePage implements OnInit {
   goToOrders() {
     const tab = this.user?.employeeId ? 'delivery' : 'order';
     this.router.navigate([`/tabs/${tab}`]);
+  }
+
+  goToGasSale() {
+    this.router.navigate(['/tabs/gas-sale']);
   }
 
   goToHistory() {

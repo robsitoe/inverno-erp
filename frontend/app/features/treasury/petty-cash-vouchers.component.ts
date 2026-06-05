@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -60,7 +60,7 @@ import { valorPorExtenso } from '../../shared/utils';
                     <span *ngIf="v.isPersonalAdvance && !v.isDeducted" class="text-gray-400 material-symbols-outlined text-[16px]">pending</span>
                     <span *ngIf="!v.isPersonalAdvance">-</span>
                   </td>
-                  <td class="px-3 py-2 text-right font-bold text-gray-800">{{ v.amount | number:'1.2-2' }} MT</td>
+                  <td class="px-3 py-2 text-right font-bold text-gray-800">{{ (+v.amount || 0) | number:'1.2-2' }} MT</td>
                   <td class="px-3 py-2 text-center">
                     <div class="flex justify-center gap-2">
                        <button (click)="printVoucher(v)" class="text-gray-500 hover:text-blue-600 transition-colors" title="Imprimir">
