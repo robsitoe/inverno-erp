@@ -14,10 +14,83 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { MobileService } from './mobile.service';
+import { TripsService } from './trips.service';
 
 @Controller('mobile')
 export class MobileController {
-    constructor(private readonly mobileService: MobileService) { }
+    constructor(
+        private readonly mobileService: MobileService,
+        private readonly tripsService: TripsService,
+    ) { }
+
+    // ── Trips / Viagens (reconciliation) ──────────────────────────────────────
+
+    @UseGuards(AuthGuard('jwt'))
+    @Get('trips')
+    @ApiOperation({ summary: 'List trips (optionally filter by status)' })
+    async listTrips(@Request() req, @Query('status') status?: any) {
+        return this.tripsService.listTrips(req.user.companyId, status);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Get('trips/active')
+    @ApiOperation({ summary: 'Get the driver active trip' })
+    async getActiveTrip(@Request() req) {
+        const { employeeId, companyId } = req.user;
+        return this.tripsService.getActiveTrip(employeeId, companyId);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Get('trips/:id')
+    async getTrip(@Request() req, @Param('id') id: string) {
+        return this.tripsService.getTrip(req.user.companyId, id);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('trips/open')
+    @ApiOperation({ summary: 'Warehouse keeper loads truck and opens a trip' })
+    async openTrip(@Request() req, @Body() body: any) {
+        const { companyId, name } = req.user;
+        return this.tripsService.openTrip(companyId, {
+            truckPlate: body.truckPlate,
+            driverId: body.driverId,
+            driverName: body.driverName,
+            loadedOut: body.loadedOut,
+            openedBy: body.openedBy || name,
+            notes: body.notes,
+        });
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('trips/:id/return')
+    @ApiOperation({ summary: 'Warehouse keeper registers returned stock (cylinder reconciliation)' })
+    async returnTrip(@Request() req, @Param('id') id: string, @Body() body: any) {
+        const { companyId, name } = req.user;
+        return this.tripsService.closeTripReturn(companyId, id, {
+            returnedStock: body.returnedStock,
+            declaredCash: body.declaredCash,
+            closedBy: body.closedBy || name,
+            notes: body.notes,
+        });
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('trips/:id/reconcile-cash')
+    @ApiOperation({ summary: 'Cashier confirms cash received from driver' })
+    async reconcileCash(@Request() req, @Param('id') id: string, @Body() body: any) {
+        const { companyId, name } = req.user;
+        return this.tripsService.reconcileCash(companyId, id, {
+            declaredCash: body.declaredCash,
+            cashReceivedBy: body.cashReceivedBy || name,
+        });
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('trips/:id/deposit')
+    @ApiOperation({ summary: 'Deposits team registers a bank deposit against the trip' })
+    async depositTrip(@Request() req, @Param('id') id: string, @Body() body: any) {
+        return this.tripsService.registerDeposit(req.user.companyId, id, Number(body.amount) || 0);
+    }
 
     // --- Reseller Endpoints ---
 
@@ -205,6 +278,21 @@ export class MobileController {
     async getTruckInventory(@Request() req, @Param('plate') plate: string) {
         const companyId = req.user.companyId;
         return this.mobileService.getTruckInventory(plate, companyId);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
+    @Post('driver/load-truck/:plate')
+    @ApiOperation({ summary: 'Load or adjust truck cylinder inventory (driver carga/descarga)' })
+    async loadTruck(@Request() req, @Param('plate') plate: string, @Body() body: any) {
+        const { employeeId, companyId } = req.user;
+        if (!body?.inventory) throw new BadRequestException('O campo "inventory" é obrigatório.');
+        return this.mobileService.loadTruckInventory(
+            plate,
+            companyId,
+            body.inventory,
+            employeeId,
+            body.mode === 'ADD' ? 'ADD' : 'SET',
+        );
     }
 
     @UseGuards(AuthGuard('jwt'))

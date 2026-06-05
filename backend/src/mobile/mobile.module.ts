@@ -20,6 +20,8 @@ import { License } from '../licenses/entities/license.entity';
 import { NotificationService } from './notification.service';
 import { TenancyModule } from '../tenancy/tenancy.module';
 import { TreasuryModule } from '../treasury/treasury.module';
+import { Trip } from './trip.entity';
+import { TripsService } from './trips.service';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { TreasuryModule } from '../treasury/treasury.module';
       Company,
       License,
       Account,
+      Trip,
     ]),
     GasControlModule,
     SalesModule,
@@ -41,7 +44,7 @@ import { TreasuryModule } from '../treasury/treasury.module';
     TreasuryModule,
   ],
   controllers: [MobileController],
-  providers: [MobileService, MpesaService, NotificationService],
-  exports: [MobileService, MpesaService, NotificationService],
+  providers: [MobileService, MpesaService, NotificationService, TripsService],
+  exports: [MobileService, MpesaService, NotificationService, TripsService],
 })
 export class MobileModule { }

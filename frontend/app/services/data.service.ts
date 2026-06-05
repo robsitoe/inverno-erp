@@ -1384,6 +1384,24 @@ export class DataService {
 
 
 
+    /** GET /accounting/presets — list available preset plans */
+    getAccountPresets(): Observable<any[]> {
+        if (this.isLocalBrowser()) return of([]);
+        return this.http.get<any[]>(`${this.baseUrl}/accounting/presets`);
+    }
+
+    /** POST /accounting/accounts/import-csv — batch upsert from CSV rows */
+    importAccountsCsv(rows: any[], companyId?: string, mergeMode: 'REPLACE' | 'MERGE' = 'MERGE'): Observable<{ imported: number; mode: string }> {
+        if (this.isLocalBrowser()) {
+            return of({ imported: rows.length, mode: mergeMode });
+        }
+        const cid = companyId || this.activeCompanySubject.value?.id || '';
+        return this.http.post<{ imported: number; mode: string }>(
+            `${this.baseUrl}/accounting/accounts/import-csv?companyId=${cid}`,
+            { rows, mergeMode },
+        );
+    }
+
     clearAccounts(companyId?: string): Observable<any> {
 
 

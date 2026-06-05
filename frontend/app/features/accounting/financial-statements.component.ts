@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountingService } from '../../shared/accounting.service';
@@ -108,7 +108,7 @@ interface ReportSectionData {
                                         </span>
                                         <div class="flex items-center gap-4">
                                             <span [class]="'font-mono transition-all ' + (line.isTotal ? 'text-sm font-black text-slate-900' : 'text-xs text-slate-600')">
-                                                {{ line.balance | number:'1.2-2' }}
+                                                {{ (+line.balance || 0) | number:'1.2-2' }}
                                             </span>
                                         </div>
                                     </div>
@@ -135,7 +135,7 @@ interface ReportSectionData {
                                         </span>
                                         <div class="flex items-center gap-4">
                                             <span [class]="'font-mono transition-all ' + (line.isTotal ? 'text-sm font-black text-slate-900' : 'text-xs text-slate-600')">
-                                                {{ line.balance | number:'1.2-2' }}
+                                                {{ (+line.balance || 0) | number:'1.2-2' }}
                                             </span>
                                         </div>
                                     </div>

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+﻿import { Component, Input } from '@angular/core';
 import { DataService } from '../services/data.service';
 import { LicenseService } from '../services/license.service';
 import { CommonModule } from '@angular/common';
@@ -50,6 +50,9 @@ import { DeliveryPlanningComponent } from '../features/inventory/delivery-planni
 import { VehicleLoadFormComponent } from '../features/inventory/vehicle-load-form.component';
 import { FleetMapComponent } from '../features/inventory/fleet-map.component';
 import { MobileApprovalsComponent } from '../features/admin/mobile-approvals.component';
+import { PaymentGatewaySettingsComponent } from '../features/admin/payment-gateway-settings.component';
+import { DashboardComponent } from '../features/dashboard/dashboard.component';
+
 
 @Component({
   selector: 'app-main-content',
@@ -102,7 +105,9 @@ import { MobileApprovalsComponent } from '../features/admin/mobile-approvals.com
     DeliveryPlanningComponent,
     VehicleLoadFormComponent,
     FleetMapComponent,
-    MobileApprovalsComponent
+    MobileApprovalsComponent,
+    DashboardComponent,
+    PaymentGatewaySettingsComponent
   ],
   template: `
     <!-- Sales Forms -->
@@ -344,11 +349,21 @@ import { MobileApprovalsComponent } from '../features/admin/mobile-approvals.com
       <app-admin-tools class="w-full h-full block"></app-admin-tools>
     </ng-container>
 
+
+    <!-- Payment Gateway Settings -->
+    <ng-container *ngIf="activeView === 'payment-gateway-settings'">
+      <app-payment-gateway-settings class="w-full h-full block"></app-payment-gateway-settings>
+    </ng-container>
     <!-- License Manager (Direct Access) -->
     <ng-container *ngIf="activeView === 'license-manager'">
       <app-license-manager class="w-full h-full block p-6 bg-gray-50"></app-license-manager>
     </ng-container>
 
+
+    <!-- Dashboard Home -->
+    <ng-container *ngIf="activeView === 'dashboard'">
+      <app-dashboard (onNavigate)="activeView = $event" class="w-full h-full block"></app-dashboard>
+    </ng-container>
     <!-- Default Dashboard -->
     <ng-container *ngIf="!isKnownView()">
       <main class="flex-1 bg-[#F0F0F0] relative overflow-hidden"
@@ -478,6 +493,8 @@ export class MainContentComponent {
       'delivery-planning',
       'vehicle-load',
       'fleet-map',
+      'dashboard',
+      'payment-gateway-settings',
       'mobile-approvals'
     ];
     return knownViews.includes(this.activeView);

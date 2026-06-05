@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, OnInit } from '@angular/core';
+﻿import { Component, EventEmitter, Output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountingService } from '../../shared/accounting.service';
@@ -41,7 +41,7 @@ interface BankMovement {
               >
                 <option value="">Selecione a conta...</option>
                 <option *ngFor="let acc of bankAccounts" [value]="acc.id">
-                  {{ acc.code }} - {{ acc.name }} (Saldo: {{ acc.balance | number:'1.2-2' }})
+                  {{ acc.code }} - {{ acc.name }} (Saldo: {{ (+acc.balance || 0) | number:'1.2-2' }})
                 </option>
               </select>
             </div>
@@ -112,10 +112,10 @@ interface BankMovement {
                       <td class="px-2 py-1">{{ mov.date | date:'dd/MM/yy' }}</td>
                       <td class="px-2 py-1 text-[11px]">{{ mov.description }}</td>
                       <td class="px-2 py-1 text-right font-mono text-green-600">
-                        {{ mov.debit > 0 ? (mov.debit | number:'1.2-2') : '' }}
+                        {{ mov.debit > 0 ? ((+mov.debit || 0) | number:'1.2-2') : '' }}
                       </td>
                       <td class="px-2 py-1 text-right font-mono text-red-600">
-                        {{ mov.credit > 0 ? (mov.credit | number:'1.2-2') : '' }}
+                        {{ mov.credit > 0 ? ((+mov.credit || 0) | number:'1.2-2') : '' }}
                       </td>
                     </tr>
                   </tbody>
@@ -173,10 +173,10 @@ interface BankMovement {
                       <td class="px-2 py-1">{{ mov.date | date:'dd/MM/yy' }}</td>
                       <td class="px-2 py-1 text-[11px]">{{ mov.description }}</td>
                       <td class="px-2 py-1 text-right font-mono text-green-600">
-                        {{ mov.debit > 0 ? (mov.debit | number:'1.2-2') : '' }}
+                        {{ mov.debit > 0 ? ((+mov.debit || 0) | number:'1.2-2') : '' }}
                       </td>
                       <td class="px-2 py-1 text-right font-mono text-red-600">
-                        {{ mov.credit > 0 ? (mov.credit | number:'1.2-2') : '' }}
+                        {{ mov.credit > 0 ? ((+mov.credit || 0) | number:'1.2-2') : '' }}
                       </td>
                     </tr>
                   </tbody>

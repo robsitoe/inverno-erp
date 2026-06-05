@@ -1,4 +1,4 @@
-import {
+﻿import {
   Injectable,
   OnModuleDestroy,
   BadRequestException,
@@ -6,6 +6,7 @@ import {
 import { DataSource } from 'typeorm';
 import { Company } from '../companies/entities/company.entity';
 import { Account } from '../accounting/entities/account.entity';
+import { PGC_NIR_MOZ } from '../accounting/accounting-presets';
 import {
   JournalEntry,
   JournalLine,
@@ -665,6 +666,24 @@ export class TenancyService implements OnModuleDestroy {
           inssEmployerRate: 4,
           currency: 'MT',
         });
+      }
+
+
+      // 6. Chart of Accounts (PGC - Plano Geral de Contabilidade de Mocambique)
+      console.log('[Tenancy] Checking Chart of Accounts...');
+      const accountRepo = ds.getRepository(Account);
+      const accountCount = await accountRepo.count();
+      if (accountCount === 0) {
+        console.log('[Tenancy] Seeding PGC (Plano Geral de Contabilidade) for ' + companyId + '...');
+        const accounts = PGC_NIR_MOZ.map(a => ({
+          ...a,
+          id: a.id + '-' + companyId,
+          companyId,
+          parentId: a.parentId ? a.parentId + '-' + companyId : null,
+          balance: 0,
+        }));
+        await accountRepo.save(accounts as any[]);
+        console.log('[Tenancy] PGC seeded: ' + accounts.length + ' accounts created for ' + companyId);
       }
 
       console.log(`[Tenancy] Seeding completed for ${companyId}`);

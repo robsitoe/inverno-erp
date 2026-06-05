@@ -151,6 +151,46 @@ export class CreateSalesDocumentDto {
     @IsOptional()
     notes?: string;
 
+    @ApiProperty({ example: 'MZN', description: 'Currency code' })
+    @IsString()
+    @IsOptional()
+    currency?: string;
+
+    @ApiProperty({ example: 1.0, description: 'Exchange rate' })
+    @IsNumber()
+    @IsOptional()
+    exchangeRate?: number;
+
+    @ApiProperty({ example: 'PRONTO', description: 'Payment condition' })
+    @IsString()
+    @IsOptional()
+    paymentCondition?: string;
+
+    @ApiProperty({ example: 0, description: 'Client discount percentage' })
+    @IsNumber()
+    @IsOptional()
+    clientDiscount?: number;
+
+    @ApiProperty({ example: 0, description: 'Financial discount percentage' })
+    @IsNumber()
+    @IsOptional()
+    financialDiscount?: number;
+
+    @ApiProperty({ example: 'treasury-account-id', description: 'Treasury account ID for payment' })
+    @IsString()
+    @IsOptional()
+    treasuryAccountId?: string;
+
+    @ApiProperty({ example: 'customer-city', description: 'Customer city' })
+    @IsString()
+    @IsOptional()
+    customerCity?: string;
+
+    @ApiProperty({ example: 'REF-001', description: 'Customer reference' })
+    @IsString()
+    @IsOptional()
+    customerReference?: string;
+
     @ApiProperty({ enum: WorkflowStatus, default: WorkflowStatus.DRAFT })
     @IsEnum(WorkflowStatus)
     @IsOptional()

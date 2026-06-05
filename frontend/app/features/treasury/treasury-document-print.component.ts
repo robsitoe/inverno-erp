@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+﻿import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TreasuryDocument, WorkflowStatus } from '../../shared/models';
 import { PrintSettings } from '../../shared/components/print-settings-modal.component';
@@ -78,7 +78,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
         <!-- Narrative Section -->
         <div class="narrative-section">
           <p>
-            Recebemos de V. Exas. a quantia de {{ document.amount | number:'1.2-2' }} 
+            Recebemos de V. Exas. a quantia de {{ (+document.amount || 0) | number:'1.2-2' }} 
             ({{ getAmountInWords(document.amount) }}).
             Pago em {{ getPaymentMethodDisplay() }} no dia {{ document.date | date:'dd.MM.yyyy' }}
           </p>
@@ -105,7 +105,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
                 <td>{{ line.docNumber }}</td>
                 <td>1</td>
                 <td class="text-right">{{ (line.originalAmount || line.amount) | number:'1.2-2' }}</td>
-                <td class="text-right">{{ line.amount | number:'1.2-2' }}</td>
+                <td class="text-right">{{ (+line.amount || 0) | number:'1.2-2' }}</td>
                 <td class="text-right">{{ (line.discount || 0) | number:'1.2-2' }}</td>
                 <td class="text-right">{{ (line.pendingAfter || 0) | number:'1.2-2' }}</td>
               </tr>
@@ -131,7 +131,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
              <div class="processed-by">Documento Processado por Computador</div>
              <div class="grand-total-receiving">
                 <span class="label">Total Recebido ({{ getCurrencySymbol() }})</span>
-                <div class="value-box">{{ document.amount | number:'1.2-2' }}</div>
+                <div class="value-box">{{ (+document.amount || 0) | number:'1.2-2' }}</div>
              </div>
           </div>
         </div>

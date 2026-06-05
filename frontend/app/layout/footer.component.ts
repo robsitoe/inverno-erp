@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+﻿import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../services/data.service';
 import { LicenseService, LicenseInfo } from '../services/license.service';
@@ -11,7 +11,7 @@ import { LicenseService, LicenseInfo } from '../services/license.service';
     <footer class="flex items-center justify-between bg-[#0078D7] text-white text-[11px] px-4 py-1 shrink-0 shadow-inner select-none z-20">
       <div class="flex items-center gap-4 overflow-hidden whitespace-nowrap">
         <div class="flex items-center flex-col leading-tight mr-2 border-r border-white/20 pr-4">
-          <span class="font-bold tracking-tight">ERP INVERNO v1.1</span>
+          <span class="font-bold tracking-tight">INVERNO ERP v1.1.0</span>
           <div class="flex items-center gap-1 opacity-80">
             <div class="size-1.5 rounded-full animate-pulse" [ngClass]="isLocal ? 'bg-orange-400' : 'bg-green-400'"></div>
             <span class="text-[8px] font-bold uppercase tracking-widest">{{ dataSourceLabel }}</span>

@@ -73,6 +73,9 @@ export class SalesDocument {
   @Column({ nullable: true })
   driverId: string;
 
+  @Column({ nullable: true })
+  tripId: string;
+
   @Column({ nullable: true, type: 'int' })
   routeSequence: number;
 

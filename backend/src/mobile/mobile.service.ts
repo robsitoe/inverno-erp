@@ -14,6 +14,7 @@ import { User } from '../users/entities/user.entity';
 import { Employee } from '../hr/entities/employee.entity';
 import { GasCylinderType } from '../gas-control/gas-control.entity';
 import { NotificationService } from './notification.service';
+import { TripsService } from './trips.service';
 import { Company } from '../companies/entities/company.entity';
 import { License, LicenseStatus } from '../licenses/entities/license.entity';
 import { Account } from '../accounting/entities/account.entity';
@@ -51,6 +52,7 @@ export class MobileService {
         @InjectRepository(Account)
         private readonly accountRepo: Repository<Account>,
         private readonly notificationService: NotificationService,
+        private readonly tripsService: TripsService,
     ) { }
 
     private async getTenantRepo<T extends ObjectLiteral>(
@@ -536,13 +538,125 @@ export class MobileService {
         data: any,
         companyId: string,
     ) {
+        // 1. Validate truck stock BEFORE creating the sale (if truck is provided)
+        if (truckPlate) {
+            const truck = await this.truckRepo.findOne({ where: { truckPlate, companyId } });
+            const inv = (truck?.inventory || {}) as Record<string, { full?: number; empty?: number; damaged?: number }>;
+            const shortages: string[] = [];
+
+            for (const line of (data.lines || [])) {
+                const typeKey = this.extractCylinderType(line.articleCode || line.articleName || '');
+                if (!typeKey) continue; // not a gas cylinder line
+                const available = inv[typeKey]?.full || 0;
+                const qty = Number(line.quantity) || 0;
+                if (qty > available) {
+                    shortages.push(`${typeKey}: pedido ${qty}, disponível ${available}`);
+                }
+            }
+
+            if (shortages.length > 0) {
+                throw new BadRequestException(
+                    `Stock insuficiente na viatura ${truckPlate}. ${shortages.join('; ')}.`,
+                );
+            }
+        }
+
+        // 2. Resolve the driver's active trip so the sale is linked to it
+        let tripId = data.tripId;
+        if (!tripId && driverId) {
+            const active = await this.tripsService.getActiveTrip(driverId, companyId);
+            tripId = active?.id;
+        }
+
+        // 3. Create the sale document (truckPlate is derived from driverId, not a column)
         const sale = await this.salesService.create({
             ...data,
             companyId,
+            driverId,
+            tripId,
             status: 'POSTED',
             documentType: 'VD',
         });
+
+        // 4. Refresh trip aggregates (sold count + expected cash)
+        if (tripId) {
+            try { await this.tripsService.refreshTripSales(tripId, companyId); } catch { /* non-blocking */ }
+        }
+
+        // 3. Decrement truck inventory (full cylinders sold; empties returned increment empty)
+        if (truckPlate) {
+            await this.deductTruckInventoryFromSale(truckPlate, companyId, data.lines || []);
+        }
+
         return sale;
+    }
+
+    /** Extracts a cylinder type key (e.g. "9KG") from a gas article code/name */
+    private extractCylinderType(codeOrName: string): string | null {
+        const match = String(codeOrName).toUpperCase().match(/(\d{1,2})\s*KG/);
+        return match ? `${match[1]}KG` : null;
+    }
+
+    /** Decrement full cylinders and increment returned empties on the truck inventory */
+    private async deductTruckInventoryFromSale(
+        truckPlate: string,
+        companyId: string,
+        lines: any[],
+    ) {
+        const truck = await this.truckRepo.findOne({ where: { truckPlate, companyId } });
+        if (!truck) return;
+
+        const inv = (truck.inventory || {}) as Record<string, { full?: number; empty?: number; damaged?: number }>;
+
+        for (const line of lines) {
+            const typeKey = this.extractCylinderType(line.articleCode || line.articleName || '');
+            if (!typeKey) continue;
+            const qty = Number(line.quantity) || 0;
+            if (!inv[typeKey]) inv[typeKey] = { full: 0, empty: 0, damaged: 0 };
+            // Sold full cylinder leaves the truck; customer typically returns an empty
+            inv[typeKey].full = Math.max(0, (inv[typeKey].full || 0) - qty);
+            inv[typeKey].empty = (inv[typeKey].empty || 0) + qty;
+        }
+
+        truck.inventory = inv;
+        truck.lastUpdate = new Date();
+        await this.truckRepo.save(truck);
+    }
+
+    /** Driver-managed truck load: set or adjust truck inventory directly */
+    async loadTruckInventory(
+        truckPlate: string,
+        companyId: string,
+        inventory: Record<string, { full?: number; empty?: number; damaged?: number }>,
+        driverId?: string,
+        mode: 'SET' | 'ADD' = 'SET',
+    ) {
+        let truck = await this.truckRepo.findOne({ where: { truckPlate, companyId } });
+        if (!truck) {
+            truck = this.truckRepo.create({
+                id: `TRUCK-${truckPlate}-${companyId}`,
+                truckPlate,
+                companyId,
+                inventory: {},
+            });
+        }
+
+        if (mode === 'SET') {
+            truck.inventory = inventory;
+        } else {
+            const inv = (truck.inventory || {}) as Record<string, any>;
+            for (const key of Object.keys(inventory)) {
+                if (!inv[key]) inv[key] = { full: 0, empty: 0, damaged: 0 };
+                inv[key].full = (inv[key].full || 0) + (inventory[key].full || 0);
+                inv[key].empty = (inv[key].empty || 0) + (inventory[key].empty || 0);
+                inv[key].damaged = (inv[key].damaged || 0) + (inventory[key].damaged || 0);
+            }
+            truck.inventory = inv;
+        }
+
+        if (driverId) truck.driverId = driverId;
+        truck.lastUpdate = new Date();
+        return this.truckRepo.save(truck);
     }
 
     async getCompanies() {

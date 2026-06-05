@@ -11,7 +11,7 @@ import { JournalEntry, JournalLine } from './entities/journal-entry.entity';
 import { EntityTarget, ObjectLiteral } from 'typeorm';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
-import { ACCOUNT_PRESETS } from './accounting-presets';
+import { ACCOUNT_PRESETS, PRESET_METADATA } from './accounting-presets';
 import { PeriodControlService } from '../periods/period-control.service';
 
 interface AccountingMvpRecord {
@@ -438,6 +438,57 @@ export class AccountingService {
 
     console.log(`[AccountingService] Loading ${accountsToSave.length} accounts from preset "${presetName}" for company ${targetId}`);
     return await repo.save(accountsToSave);
+  }
+
+  /** List all available preset plans with metadata */
+  getAvailablePresets() {
+    return PRESET_METADATA;
+  }
+
+  /** Import accounts from parsed CSV rows — upsert by code+companyId */
+  async importAccountsFromCsv(
+    rows: Array<{ code: string; name: string; type?: string; allowPosting?: boolean; level?: number; parentCode?: string; description?: string }>,
+    companyId?: string,
+    mergeMode: 'REPLACE' | 'MERGE' = 'MERGE',
+  ) {
+    const targetId = companyId || TenancyContext.getCompanyId();
+    const repo = await this.getAccountRepo(targetId);
+
+    // Safety: block replace if journal entries exist
+    if (mergeMode === 'REPLACE') {
+      const dsForCheck = await this.getAccountRepo(targetId);
+      const jlRepo = (dsForCheck as any).manager?.getRepository?.('journal_lines') || null;
+      if (jlRepo) {
+        const count = await jlRepo.count();
+        if (count > 0) {
+          throw new BadRequestException('Não é possível substituir o plano de contas porque já existem lançamentos contabilísticos registados.');
+        }
+      }
+      await repo.delete({ companyId: targetId });
+    }
+
+    const accounts = rows
+      .filter(r => r.code?.trim() && r.name?.trim())
+      .map(r => ({
+        id: `${r.code.trim()}-${targetId}`,
+        companyId: targetId,
+        code: r.code.trim(),
+        name: r.name.trim(),
+        type: (r.type || 'ASSET').toUpperCase(),
+        allowPosting: r.allowPosting !== undefined ? Boolean(r.allowPosting) : true,
+        level: r.level || 1,
+        parentId: r.parentCode ? `${r.parentCode.trim()}-${targetId}` : null,
+        description: r.description || '',
+        balance: 0,
+        isActive: true,
+      }));
+
+    if (accounts.length === 0) {
+      throw new BadRequestException('Nenhuma conta válida encontrada no ficheiro CSV.');
+    }
+
+    await repo.save(accounts as any[]);
+    return { imported: accounts.length, mode: mergeMode };
   }
 
   // MVP endpoints for placeholder accounting modules
