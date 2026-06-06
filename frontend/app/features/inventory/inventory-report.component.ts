@@ -436,7 +436,7 @@ export class InventoryReportComponent implements OnInit {
   }
 
   exportToPDF() {
-    alert('Exportação para PDF será implementada em breve.');
+    window.print();
   }
 
   exportToExcel() {
