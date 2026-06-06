@@ -1389,6 +1389,24 @@ export class DataService {
         return companyId || this.getCompanyId() || '';
     }
 
+    /** Live GPS of all truck phones (from TruckInventory reports) */
+    getLiveFleet(companyId?: string): Observable<any[]> {
+        return this.http.get<any[]>(`${this.baseUrl}/trips/fleet/live?companyId=${this.tripsCid(companyId)}`);
+    }
+
+    /** Days with recorded route data for a truck */
+    getRouteDays(truckPlate: string, companyId?: string): Observable<string[]> {
+        return this.http.get<string[]>(`${this.baseUrl}/trips/fleet/route-days?companyId=${this.tripsCid(companyId)}&truckPlate=${encodeURIComponent(truckPlate)}`);
+    }
+
+    /** Historical route trail for a truck within a date range */
+    getRouteHistory(truckPlate: string, from?: string, to?: string, companyId?: string): Observable<any> {
+        let url = `${this.baseUrl}/trips/fleet/route?companyId=${this.tripsCid(companyId)}&truckPlate=${encodeURIComponent(truckPlate)}`;
+        if (from) url += `&from=${from}`;
+        if (to) url += `&to=${to}`;
+        return this.http.get<any>(url);
+    }
+
     getTrips(status?: string, companyId?: string): Observable<any[]> {
         let url = `${this.baseUrl}/trips?companyId=${this.tripsCid(companyId)}`;
         if (status) url += `&status=${status}`;

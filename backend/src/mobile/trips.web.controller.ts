@@ -21,6 +21,29 @@ export class TripsWebController {
         return this.tripsService.listTrips(companyId, status);
     }
 
+    @Get('fleet/live')
+    @ApiOperation({ summary: 'Live GPS positions of all truck phones for the company' })
+    liveFleet(@Query('companyId') companyId: string) {
+        return this.tripsService.getLiveFleet(companyId);
+    }
+
+    @Get('fleet/route-days')
+    @ApiOperation({ summary: 'Days that have recorded route data for a truck' })
+    routeDays(@Query('companyId') companyId: string, @Query('truckPlate') truckPlate: string) {
+        return this.tripsService.getRouteDays(companyId, truckPlate);
+    }
+
+    @Get('fleet/route')
+    @ApiOperation({ summary: 'Historical route trail for a truck (with distance/duration)' })
+    routeHistory(
+        @Query('companyId') companyId: string,
+        @Query('truckPlate') truckPlate: string,
+        @Query('from') from?: string,
+        @Query('to') to?: string,
+    ) {
+        return this.tripsService.getRouteHistory(companyId, truckPlate, from, to);
+    }
+
     @Get(':id')
     @ApiOperation({ summary: 'Get a trip with its reconciliation' })
     get(@Param('id') id: string, @Query('companyId') companyId: string) {

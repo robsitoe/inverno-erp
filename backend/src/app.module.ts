@@ -68,6 +68,7 @@ import { GasControlModule } from './gas-control/gas-control.module';
 import { MobileModule } from './mobile/mobile.module';
 import { TruckInventory } from './mobile/truck-inventory.entity';
 import { Trip } from './mobile/trip.entity';
+import { RoutePoint } from './mobile/route-point.entity';
 import { PaymentGatewayConfig } from './payment-gateways/entities/payment-gateway-config.entity';
 import { PaymentGatewaysModule } from './payment-gateways/payment-gateways.module';
 
@@ -129,6 +130,7 @@ import { PaymentGatewaysModule } from './payment-gateways/payment-gateways.modul
               SalesCampaignItem,
               TruckInventory,
               Trip,
+              RoutePoint,
             ],
             synchronize: true,
           };
@@ -182,6 +184,7 @@ import { PaymentGatewaysModule } from './payment-gateways/payment-gateways.modul
             SalesCampaignItem,
             TruckInventory,
             Trip,
+            RoutePoint,
           ],
           synchronize: true,
         };

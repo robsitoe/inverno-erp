@@ -5,6 +5,7 @@ import { IonicModule, ToastController, AlertController, LoadingController } from
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { MobileApiService } from '../../services/mobile-api.service';
+import { LocationService } from '../../services/location.service';
 import { addIcons } from 'ionicons';
 import {
   flame, add, remove, cart, checkmark, close, refresh,
@@ -218,6 +219,7 @@ export class DriverGasSalePage implements OnInit, OnDestroy {
     private alertCtrl: AlertController,
     private loadingCtrl: LoadingController,
     private router: Router,
+    private locationService: LocationService,
   ) {
     addIcons({
       flame, add, remove, cart, checkmark, close, refresh,
@@ -227,7 +229,7 @@ export class DriverGasSalePage implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.truckPlate = localStorage.getItem('truck_plate') || 'T-REGO-001';
+    this.truckPlate = this.locationService.getTruckPlate();
     this.loadAll();
     this.requestLocation();
   }

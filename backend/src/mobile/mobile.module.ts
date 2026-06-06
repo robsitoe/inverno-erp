@@ -21,6 +21,7 @@ import { NotificationService } from './notification.service';
 import { TenancyModule } from '../tenancy/tenancy.module';
 import { TreasuryModule } from '../treasury/treasury.module';
 import { Trip } from './trip.entity';
+import { RoutePoint } from './route-point.entity';
 import { TripsService } from './trips.service';
 import { TripsWebController } from './trips.web.controller';
 
@@ -38,6 +39,7 @@ import { TripsWebController } from './trips.web.controller';
       License,
       Account,
       Trip,
+      RoutePoint,
     ]),
     GasControlModule,
     SalesModule,

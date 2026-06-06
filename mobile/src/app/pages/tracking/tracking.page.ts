@@ -1,10 +1,12 @@
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, AlertController } from '@ionic/angular';
+import { Subscription } from 'rxjs';
 import { MobileApiService } from '../../services/mobile-api.service';
 import { AuthService } from '../../services/auth.service';
+import { LocationService, LiveStatus } from '../../services/location.service';
 import { addIcons } from 'ionicons';
-import { mapOutline, bicycleOutline, locationOutline, navigateOutline, locate, refreshOutline, refresh, barcodeOutline, cubeOutline } from 'ionicons/icons';
+import { mapOutline, bicycleOutline, locationOutline, navigateOutline, locate, refreshOutline, refresh, barcodeOutline, cubeOutline, createOutline, radioButtonOnOutline, carSportOutline } from 'ionicons/icons';
 import { Geolocation } from '@capacitor/geolocation';
 
 declare let L: any;
@@ -32,7 +34,25 @@ declare let L: any;
     </ion-header>
 
     <ion-content class="content-dark">
-      <div id="map" style="height: 55%; width: 100%; border-bottom: 2px solid #2A3043;"></div>
+      <!-- Driver live-tracking status card -->
+      <div *ngIf="!isReseller" class="live-card" [class.on]="live.active && !live.error">
+        <div class="live-left">
+          <div class="pulse-dot" [class.on]="live.active && !live.error"></div>
+          <div>
+            <p class="live-title">{{ live.error ? 'GPS Indisponível' : (live.active ? 'Rastreamento Activo' : 'Rastreamento Parado') }}</p>
+            <p class="live-sub">{{ live.error || (live.lastSent ? 'Última posição enviada ' + ageText() : 'A obter localização...') }}</p>
+          </div>
+        </div>
+        <div class="live-right">
+          <div class="plate-chip" (click)="editPlate()">
+            <ion-icon name="car-sport-outline"></ion-icon>
+            <span>{{ live.truckPlate || '—' }}</span>
+            <ion-icon name="create-outline" class="edit-ic"></ion-icon>
+          </div>
+        </div>
+      </div>
+
+      <div id="map" style="height: 50%; width: 100%; border-bottom: 2px solid #2A3043;"></div>
 
       <div class="info-panel ion-padding">
         <div class="section-title">
@@ -71,6 +91,26 @@ declare let L: any;
   styles: [`
     .content-dark { --background: #0A0E1A; }
     #map { background: #0A0E1A; transition: 0.3s; }
+
+    .live-card {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 12px; padding: 14px 16px; border-radius: 18px;
+      background: #161B2E; border: 1px solid #2A3043;
+    }
+    .live-card.on { border-color: rgba(46,204,113,0.4); background: linear-gradient(135deg, #16271f, #161B2E); }
+    .live-left { display: flex; align-items: center; gap: 12px; }
+    .pulse-dot { width: 12px; height: 12px; border-radius: 50%; background: #555A6F; flex-shrink: 0; }
+    .pulse-dot.on { background: #2ECC71; box-shadow: 0 0 0 rgba(46,204,113,0.6); animation: pulse 1.8s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46,204,113,0.5); } 70% { box-shadow: 0 0 0 12px rgba(46,204,113,0); } 100% { box-shadow: 0 0 0 0 rgba(46,204,113,0); } }
+    .live-title { color: white; font-weight: 800; font-size: 14px; margin: 0; }
+    .live-sub { color: #94a3b8; font-size: 11px; margin: 2px 0 0; }
+    .plate-chip {
+      display: flex; align-items: center; gap: 6px; cursor: pointer;
+      background: #0A0E1A; border: 1px solid #2A3043; border-radius: 12px;
+      padding: 8px 12px; color: #00D1FF; font-weight: 800; font-size: 13px;
+    }
+    .plate-chip .edit-ic { color: #555A6F; font-size: 14px; }
+    .plate-chip ion-icon { font-size: 16px; }
     .info-panel { height: 45%; overflow-y: auto; }
     .section-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
     .section-title h3 { color: white; margin: 0; font-weight: 800; font-size: 18px; }
@@ -105,17 +145,44 @@ export class TrackingPage implements OnInit, OnDestroy, AfterViewInit {
   activeDeliveries: any[] = [];
   isReseller = false;
   private timer: any;
+  live: LiveStatus = { active: false, lat: null, lng: null, lastSent: null, truckPlate: '', error: null };
+  private liveSub?: Subscription;
 
   constructor(
     private mobileApi: MobileApiService,
-    private authService: AuthService
+    private authService: AuthService,
+    private locationService: LocationService,
+    private alertCtrl: AlertController,
   ) {
-    addIcons({ mapOutline, bicycleOutline, locationOutline, navigateOutline, locate, refreshOutline, refresh, barcodeOutline, cubeOutline });
+    addIcons({ mapOutline, bicycleOutline, locationOutline, navigateOutline, locate, refreshOutline, refresh, barcodeOutline, cubeOutline, createOutline, radioButtonOnOutline, carSportOutline });
   }
 
   ngOnInit() {
     this.isReseller = !!this.authService.user?.customerId;
     this.timer = setInterval(() => this.refresh(true), 15000);
+    this.liveSub = this.locationService.status$.subscribe(s => this.live = s);
+    // Ensure reporting is running for drivers viewing this page
+    if (!this.isReseller) this.locationService.start();
+  }
+
+  ageText(): string {
+    if (!this.live.lastSent) return '';
+    const sec = Math.round((Date.now() - new Date(this.live.lastSent).getTime()) / 1000);
+    if (sec < 60) return 'há ' + sec + 's';
+    return 'há ' + Math.round(sec / 60) + ' min';
+  }
+
+  async editPlate() {
+    const alert = await this.alertCtrl.create({
+      header: 'Matrícula da Viatura',
+      message: 'Defina a matrícula do camião que conduz.',
+      inputs: [{ name: 'plate', type: 'text', placeholder: 'AAA-000-MP', value: this.live.truckPlate }],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        { text: 'Guardar', handler: (d) => { if (d.plate) this.locationService.setTruckPlate(d.plate); } },
+      ],
+    });
+    await alert.present();
   }
 
   ngAfterViewInit() {
@@ -124,6 +191,7 @@ export class TrackingPage implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnDestroy() {
     if (this.timer) clearInterval(this.timer);
+    if (this.liveSub) this.liveSub.unsubscribe();
     if (this.map) this.map.remove();
   }
 
@@ -135,26 +203,17 @@ export class TrackingPage implements OnInit, OnDestroy, AfterViewInit {
 
   async forceRadar() {
     this.loading = true;
-    try {
-      // 1. Force Local GPS reading
-      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
-      // 2. Report it to backend so everyone else sees us
-      await this.mobileApi.updateStatus({
-        truckPlate: localStorage.getItem('truck_plate') || 'T-REGO-001',
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude
-      }).toPromise();
-      // 3. Refresh our own map
-      this.refresh();
-      alert('Radar Atualizado! A sua localização foi enviada e o mapa refrescado.');
-    } catch (err) {
-      console.warn('Radar fail, using mock:', err);
-      // Mock for dev
-      const mockLat = -25.968 + (Math.random() * 0.005);
-      const mockLng = 32.573 + (Math.random() * 0.005);
-      await this.mobileApi.updateStatus({ truckPlate: 'T-MOCK', lat: mockLat, lng: mockLng }).toPromise();
-      this.refresh();
-    }
+    const ok = await this.locationService.pingNow();
+    this.loading = false;
+    this.refresh();
+    const alert = await this.alertCtrl.create({
+      header: ok ? 'Localização Enviada' : 'Falha no GPS',
+      message: ok
+        ? 'A sua posição foi actualizada e já é visível no mapa de rastreamento.'
+        : 'Não foi possível obter a localização. Verifique as permissões de GPS.',
+      buttons: ['OK'],
+    });
+    await alert.present();
   }
 
   refresh(isSilent = false) {
