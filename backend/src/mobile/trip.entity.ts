@@ -70,10 +70,10 @@ export class Trip {
     @Column({ nullable: true })
     cashReceivedBy?: string; // cashier who reconciled cash
 
-    @Column({ type: 'datetime', nullable: true })
+    @Column({ type: 'timestamp', nullable: true })
     openedAt: Date;
 
-    @Column({ type: 'datetime', nullable: true })
+    @Column({ type: 'timestamp', nullable: true })
     returnedAt: Date;
 
     @Column({ nullable: true })

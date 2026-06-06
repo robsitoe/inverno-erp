@@ -10,6 +10,7 @@ import { Customer } from '../customers/entities/customer.entity';
 import { DeliveryPoint } from '../customers/entities/delivery-point.entity';
 import { SalesService } from '../sales/sales.service';
 import { TruckInventory } from './truck-inventory.entity';
+import { RoutePoint } from './route-point.entity';
 import { User } from '../users/entities/user.entity';
 import { Employee } from '../hr/entities/employee.entity';
 import { GasCylinderType } from '../gas-control/gas-control.entity';
@@ -43,6 +44,8 @@ export class MobileService {
         private readonly employeeRepo: Repository<Employee>,
         @InjectRepository(TruckInventory)
         private readonly truckRepo: Repository<TruckInventory>,
+        @InjectRepository(RoutePoint)
+        private readonly routeRepo: Repository<RoutePoint>,
         @InjectRepository(GasCylinderType)
         private readonly gasCylinderTypeRepo: Repository<GasCylinderType>,
         @InjectRepository(Company)
@@ -394,15 +397,30 @@ export class MobileService {
      * Updates truck inventory and location.
      */
     async updateTruckStatus(truckPlate: string, data: any, companyId: string, driverId?: string) {
-        let truck = await this.truckRepo.findOne({
-            where: { truckPlate, companyId },
-        });
+        // ONE DRIVER = ONE TRUCK. Locate the driver's existing record first so that
+        // changing the plate RENAMES the same truck instead of spawning a second marker.
+        let truck: TruckInventory | null = null;
+        if (driverId) {
+            truck = await this.truckRepo.findOne({ where: { driverId, companyId } });
+        }
+        if (!truck) {
+            truck = await this.truckRepo.findOne({ where: { truckPlate, companyId } });
+        }
+
         if (!truck) {
             truck = this.truckRepo.create({
                 id: `TRUCK-${truckPlate}-${companyId}`,
                 truckPlate,
                 companyId,
             });
+        } else if (driverId && truck.truckPlate !== truckPlate) {
+            // Driver changed plate → remove any other row already using the new plate,
+            // then rename this driver's truck (no duplicate markers).
+            const conflict = await this.truckRepo.findOne({ where: { truckPlate, companyId } });
+            if (conflict && conflict.id !== truck.id) {
+                await this.truckRepo.remove(conflict);
+            }
+            truck.truckPlate = truckPlate;
         }
 
         if (data.inventory) truck.inventory = data.inventory;
@@ -411,7 +429,31 @@ export class MobileService {
         if (driverId) truck.driverId = driverId;
         truck.lastUpdate = new Date();
 
-        return this.truckRepo.save(truck);
+        const saved = await this.truckRepo.save(truck);
+
+        // Safety cleanup: drop any other stray rows for this driver (legacy duplicates)
+        if (driverId) {
+            const dups = await this.truckRepo.find({ where: { driverId, companyId } });
+            const stray = dups.filter(d => d.id !== saved.id);
+            if (stray.length) await this.truckRepo.remove(stray);
+        }
+
+        // Record a breadcrumb in the permanent route history (for analysis/investigations)
+        if (data.lat != null && data.lng != null) {
+            try {
+                await this.routeRepo.save(this.routeRepo.create({
+                    companyId,
+                    truckPlate,
+                    driverId,
+                    tripId: data.tripId,
+                    lat: data.lat,
+                    lng: data.lng,
+                    speed: data.speed != null ? Number(data.speed) : undefined,
+                }));
+            } catch { /* breadcrumb is best-effort, never block status */ }
+        }
+
+        return saved;
     }
 
     /**
@@ -669,10 +711,13 @@ export class MobileService {
             select: ['companyId', 'features'],
         });
 
-        // Filter for relevant mobile features
+        // Filter for relevant mobile features ('ALL' = ENTERPRISE grants everything)
         const relevantCompanyIds = licensedCompanies
             .filter(
-                (l) => l.features?.includes('INVENTORY') || l.features?.includes('GAS'),
+                (l) =>
+                    l.features?.includes('ALL') ||
+                    l.features?.includes('INVENTORY') ||
+                    l.features?.includes('GAS'),
             )
             .map((l) => l.companyId);
 

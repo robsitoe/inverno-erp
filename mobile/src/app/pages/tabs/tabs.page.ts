@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
-import { IonicModule } from '@ionic/angular';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { IonicModule, AlertController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { LocationService } from '../../services/location.service';
 import { addIcons } from 'ionicons';
 import { homeOutline, cartOutline, notificationsOutline, timeOutline, bicycleOutline, mapOutline } from 'ionicons/icons';
 
@@ -55,20 +56,67 @@ import { homeOutline, cartOutline, notificationsOutline, timeOutline, bicycleOut
     ion-label { font-size: 11px; font-weight: 600; }
   `]
 })
-export class TabsPage {
+export class TabsPage implements OnInit, OnDestroy {
   middleTab = 'order';
   middleLabel = 'Encomendas';
   middleIcon = 'cart-outline';
   unreadCount = 0;
+  isDriver = false;
 
-  constructor(private authService: AuthService) {
+  constructor(
+    private authService: AuthService,
+    private locationService: LocationService,
+    private alertCtrl: AlertController,
+  ) {
     addIcons({ homeOutline, cartOutline, notificationsOutline, timeOutline, bicycleOutline, mapOutline });
 
     const user = this.authService.user;
     if (user?.employeeId) {
+      this.isDriver = true;
       this.middleTab = 'delivery';
       this.middleLabel = 'Entregas';
       this.middleIcon = 'bicycle-outline';
     }
+  }
+
+  async ngOnInit() {
+    if (!this.isDriver) return;
+    // Drivers confirm their truck plate ONCE per session before tracking starts.
+    // This guarantees a single, correct vehicle on the radar.
+    const confirmed = sessionStorage.getItem('truck_plate_confirmed') === 'yes';
+    if (!confirmed) {
+      await this.confirmPlate();
+    }
+    this.locationService.start();
+  }
+
+  private async confirmPlate(): Promise<void> {
+    const current = this.locationService.getTruckPlate();
+    return new Promise<void>(async (resolve) => {
+      const alert = await this.alertCtrl.create({
+        header: 'Confirmar Viatura',
+        message: 'Confirme a matrícula do camião que vai conduzir hoje. O rastreamento usará esta viatura.',
+        backdropDismiss: false,
+        inputs: [{ name: 'plate', type: 'text', placeholder: 'AAA-000-MP', value: current }],
+        buttons: [
+          {
+            text: 'Confirmar',
+            handler: (d) => {
+              const plate = (d.plate || current || '').trim();
+              if (!plate) return false; // keep dialog open
+              this.locationService.setTruckPlate(plate);
+              sessionStorage.setItem('truck_plate_confirmed', 'yes');
+              resolve();
+              return true;
+            },
+          },
+        ],
+      });
+      await alert.present();
+    });
+  }
+
+  ngOnDestroy() {
+    this.locationService.stop();
   }
 }

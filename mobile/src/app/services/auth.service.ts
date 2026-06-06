@@ -102,6 +102,7 @@ export class AuthService {
 
     logout() {
         localStorage.removeItem('mobile_user');
+        sessionStorage.removeItem('truck_plate_confirmed');
         this.currentUserSubject.next(null);
         this.router.navigate(['/login']);
     }
