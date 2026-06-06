@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 
 
 import { Account, JournalEntry, JournalLine, SalesDocument, Article, AuditLog, Journal, FinancialReportConfig } from './models';
@@ -1573,7 +1573,7 @@ export class AccountingService {
         const docConfig = this.salesDocumentTypes.find(t => t.code === salesDoc.documentType) || {};
 
 
-        const isPayNature = docConfig.nature === 'PAY'; // SE PAY, é uma devolução/regularização (Nota de Crédito)
+        const isPayNature = (salesDoc.documentType === 'NC' || docConfig.nature === 'IN' || docConfig.nature === 'PAY'); // Sales credit note reverses the sale
 
 
         const integratesAccounting = docConfig.currentAccounts !== false; // DEFAULT true
@@ -1603,7 +1603,7 @@ export class AccountingService {
         // 1. Débito no Cliente ou Conta de Disponibilidade
 
 
-const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivableAccountId || '21.1.1', '21.1');
+const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivableAccountId || '4.1.1', '4.1');
 
 
 
@@ -1863,6 +1863,8 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
 
                 this.saveEntryResiliently(existing);
 
+                this.neutralizeDuplicateSaleEntries(salesDoc.id, existing.id);
+
 
             } else {
 
@@ -1874,6 +1876,8 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
 
 
                 this.saveEntryResiliently(entry);
+
+                this.neutralizeDuplicateSaleEntries(salesDoc.id, entry.id);
 
 
 
@@ -1917,6 +1921,94 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
 
 
 
+
+    /** Creates the accounting journal entry for a treasury document (receipt/payment). */
+    /** Neutralize duplicate non-CMV SALE journal entries for a document (keep one). */
+    private neutralizeDuplicateSaleEntries(docId: string, keepId: string): void {
+        const dups = this.allJournalEntries.filter(e =>
+            e.sourceDocument === docId && e.sourceType === 'SALE' &&
+            !e.description?.includes('CMV') && e.id !== keepId && (e.lines && e.lines.length > 0)
+        );
+        dups.forEach(d => {
+            d.lines = [];
+            d.description = (d.description || '') + ' [DUPLICADO ANULADO]';
+            this.saveEntryResiliently(d);
+        });
+    }
+
+    createTreasuryJournalEntry(doc: any, isPreview: boolean = false, forceRecreate: boolean = false): JournalEntry | null {
+        const existing = this.allJournalEntries.find(e => e.sourceDocument === doc.id && (e.sourceType === 'RECEIPT' || e.sourceType === 'PAYMENT'));
+        if (existing && !isPreview && !forceRecreate) return existing;
+
+        const amount = parseFloat(String(doc.amount ?? doc.total ?? doc.value ?? 0)) || 0;
+        if (amount <= 0) return null;
+
+        const type = (doc.type || doc.documentType || '').toString().toUpperCase();
+        const isReceipt = type.indexOf('RECEI') >= 0 || type === 'RE' || type === 'RC';
+
+        const entryId = `JE${this.nextJournalId++}`;
+        const journal = this.journals.find(j => j.type === 'CASH' || j.type === 'BANK')
+            || this.journals.find(j => j.type === 'GENERAL') || this.journals[0];
+
+        const ref = doc.number || doc.documentNumber || doc.id;
+        const treasuryAcc = this.findLeafAccount(doc.treasuryAccountId || '1.1', '1');
+        const counterpart = isReceipt
+            ? this.findLeafAccount(doc.entityAccountId || doc.customerAccountId || '4.1.1', '4.1')
+            : this.findLeafAccount(doc.entityAccountId || doc.supplierAccountId || '4.2.1', '4.2');
+
+        const label = isReceipt ? 'Recebimento' : 'Pagamento';
+        const lines: JournalLine[] = [];
+        if (isReceipt) {
+            lines.push({ id: `${entryId}-1`, accountId: treasuryAcc.id, accountCode: treasuryAcc.code, accountName: treasuryAcc.name, debit: amount, credit: 0, description: `${label} ${ref}` });
+            lines.push({ id: `${entryId}-2`, accountId: counterpart.id, accountCode: counterpart.code, accountName: counterpart.name, debit: 0, credit: amount, description: `${label} ${ref}` });
+        } else {
+            lines.push({ id: `${entryId}-1`, accountId: counterpart.id, accountCode: counterpart.code, accountName: counterpart.name, debit: amount, credit: 0, description: `${label} ${ref}` });
+            lines.push({ id: `${entryId}-2`, accountId: treasuryAcc.id, accountCode: treasuryAcc.code, accountName: treasuryAcc.name, debit: 0, credit: amount, description: `${label} ${ref}` });
+        }
+
+        const entry: JournalEntry = {
+            id: entryId,
+            companyId: this.activeCompanyId || undefined,
+            journalId: journal ? journal.id : 'GENERAL',
+            date: doc.date,
+            description: `${label} ${ref}`,
+            reference: ref,
+            sourceDocument: doc.id,
+            sourceType: (isReceipt ? 'RECEIPT' : 'PAYMENT') as any,
+            lines: lines,
+            status: 'POSTED',
+            createdBy: 'Sistema',
+            createdAt: new Date()
+        };
+
+        if (!isPreview) {
+            const syntheticLines = lines.filter(l => {
+                const acc = this.accounts.find(a => a.id === l.accountId || a.code === l.accountCode);
+                return acc && !acc.allowPosting;
+            });
+            if (syntheticLines.length > 0) {
+                const codes = syntheticLines.map(l => l.accountCode).join(', ');
+                this.toasterService.showError('Erro de Integração', `Contas sintéticas (${codes}). Verifique o Plano de Contas.`);
+                return entry;
+            }
+            if (existing && forceRecreate) {
+                existing.lines = lines;
+                existing.status = 'POSTED';
+                existing.description = entry.description;
+                existing.reference = ref;
+                this.saveEntryResiliently(existing);
+                this.logAudit('UPDATE', 'JOURNAL_ENTRY', existing.id, 'Treasury journal entry rebuilt');
+                return existing;
+            }
+            this.allJournalEntries.push(entry);
+            this.journalEntries = this.filterByCompany(this.allJournalEntries);
+            this.saveEntryResiliently(entry);
+            this.updateAccountBalances(entry.lines);
+            this.toasterService.showSuccess('Integração Contabilística', `Lançamento ${entry.id} criado para ${ref}.`);
+            this.logAudit('CREATE', 'JOURNAL_ENTRY', entry.id, 'Automatic treasury journal entry created');
+        }
+        return entry;
+    }
 
     saveConfirmedJournalEntry(entry: JournalEntry): void {
 
@@ -2320,7 +2412,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
 
 
 
-    createCOGSEntry(salesDoc: SalesDocument, articles: Article[]): void {
+    createCOGSEntry(salesDoc: SalesDocument, articles: Article[], forceRecreate: boolean = false): void {
 
 
         const docConfig = this.salesDocumentTypes.find(t => t.code === salesDoc.documentType) || {};
@@ -2335,7 +2427,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
         }
 
 
-        const isPayNature = docConfig.nature === 'PAY'; // Devoluções de Vendas
+        const isPayNature = (salesDoc.documentType === 'NC' || docConfig.nature === 'IN' || docConfig.nature === 'PAY'); // Devoluções de Vendas (Nota de Crédito)
 
 
 
@@ -2431,7 +2523,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
                 const cogsAccountId = article.cogsAccountId || '61'; // 61 = CMV (Default)
 
 
-                const inventoryAccountId = article.inventoryAccountId || '31'; // Using 3.1 as per user's current data if 22 fails
+                const inventoryAccountId = article.inventoryAccountId || '2.1.1'; // Mercadorias (inventory asset)
 
 
 
@@ -2595,6 +2687,14 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
 
 
 
+
+        if (existing && forceRecreate) {
+            existing.lines = lines;
+            existing.status = entry.status;
+            existing.description = entry.description;
+            this.saveEntryResiliently(existing);
+            return;
+        }
 
         this.allJournalEntries.push(entry);
 
@@ -4944,10 +5044,17 @@ if (missingAccounts.length > 0) {
         // 4. Sum Reconciliation (Inteligência Modular)
 
 
-        const totalSalesDocs = finalSales.reduce((s, d) => s + (Number(d.total) || 0), 0);
+        // Credit notes / returns (nature 'PAY') subtract on both sides
+        const creditNoteTypes = new Set((this.salesDocumentTypes || []).filter((t: any) => t.code === 'NC' || t.nature === 'IN' || t.nature === 'PAY').map((t: any) => t.code));
+        const purchaseReturnTypes = new Set((this.purchaseDocumentTypes || []).filter((t: any) => t.code === 'NCC' || t.nature === 'OUT').map((t: any) => t.code));
+        const docTypeById = new Map<string, string>((salesDocs || []).map((d: any) => [d.id, d.documentType]));
+        const purchaseTypeById = new Map<string, string>((purchaseDocs || []).map((d: any) => [d.id, d.documentType]));
+        const saleSign = (dt: string) => creditNoteTypes.has(dt) ? -1 : 1;
+        const purchaseSign = (dt: string) => purchaseReturnTypes.has(dt) ? -1 : 1;
+        const totalSalesDocs = finalSales.reduce((s, d: any) => s + saleSign(d.documentType) * (Number(d.total) || 0), 0);
 
 
-        const totalPurchaseDocs = finalPurchases.reduce((s, d) => s + (Number(d.totalValue) || 0), 0);
+        const totalPurchaseDocs = finalPurchases.reduce((s, d: any) => s + purchaseSign(d.documentType) * (Number(d.totalValue) || 0), 0);
 
 
         const totalTreasuryDocs = finalTreasury.reduce((s, d) => s + (Number(d.amount) || 0), 0);
@@ -4960,11 +5067,18 @@ if (missingAccounts.length > 0) {
 
 
         const totalSalesInAccounting = salesEntries.reduce((sum, e) => {
-
-
-            return sum + e.lines.reduce((ls, l) => ls + (Number(l.debit) || 0), 0);
-
-
+            const dt = docTypeById.get(e.sourceDocument as string) || '';
+            const entryTotal = e.lines.reduce((ls, l) => ls + (Number(l.debit) || 0), 0);
+            // Sign: prefer doc-type mapping; fall back to entry structure
+            // (a reversal/credit note debits a revenue account 7.x).
+            let sign: number;
+            if (dt) {
+                sign = saleSign(dt);
+            } else {
+                const revenueDebited = e.lines.some(l => (l.accountCode || '').startsWith('7') && (Number(l.debit) || 0) > 0);
+                sign = revenueDebited ? -1 : 1;
+            }
+            return sum + sign * entryTotal;
         }, 0);
 
 
@@ -4972,11 +5086,9 @@ if (missingAccounts.length > 0) {
 
 
         const totalPurchaseInAccounting = postedEntries.filter(e => e.sourceType === 'PURCHASE').reduce((sum, e) => {
-
-
-            return sum + e.lines.reduce((ls, l) => ls + (Number(l.debit) || 0), 0);
-
-
+            const dt = purchaseTypeById.get(e.sourceDocument as string) || '';
+            const entryTotal = e.lines.reduce((ls, l) => ls + (Number(l.debit) || 0), 0);
+            return sum + purchaseSign(dt) * entryTotal;
         }, 0);
 
 
@@ -5325,10 +5437,20 @@ if (missingAccounts.length > 0) {
 
 
 
-        console.log(`[Diagnostic] END --- Total Issues Found: ${issues.length}`);
+        // Smart de-duplication: drop global module-divergence alerts already explained by per-document MISSING_POSTING
+        const hasMissing = (m: string) => issues.some(i => i.type === 'MISSING_POSTING' && i.details && i.details['docType'] === m);
+        const deduped = issues.filter(i => {
+            const d = i.description || '';
+            if (hasMissing('TREASURY') && d.indexOf('Tesouraria') >= 0 && (d.indexOf('Divergência Global') >= 0 || d.indexOf('sem lançamentos') >= 0)) return false;
+            if (hasMissing('PURCHASES') && d.indexOf('Compras') >= 0 && (d.indexOf('Divergência Global') >= 0 || d.indexOf('nenhuma na contabilidade') >= 0)) return false;
+            if (hasMissing('SALES') && (d.indexOf('Divergência Global (Vendas)') >= 0 || d.indexOf('Aviso: Existem faturas') >= 0)) return false;
+            return true;
+        });
+        console.log(`[Diagnostic] END --- Total Issues Found: ${deduped.length} (raw ${issues.length})`);
+        return deduped;
 
 
-        return issues;
+        
 
 
     }
@@ -6024,7 +6146,7 @@ if (missingAccounts.length > 0) {
                             this.dataService.getArticles().subscribe(articles => {
 
 
-                                this.createCOGSEntry(doc, articles);
+                                this.createCOGSEntry(doc, articles, forceRecreate);
 
 
                             });
@@ -6108,7 +6230,8 @@ if (missingAccounts.length > 0) {
 
 
 
-                if (isFinal) {
+                const entryExists = this.allJournalEntries.some(e => e.sourceDocument === doc.id && (e.sourceType === 'RECEIPT' || e.sourceType === 'PAYMENT'));
+                if (isFinal || (forceRecreate && entryExists)) {
 
 
                     const isMissing = !postedEntries.some(e => e.sourceDocument === doc.id);
@@ -6123,7 +6246,8 @@ if (missingAccounts.length > 0) {
                             console.log(`[AutoFix] Treasury document ${doc.id} check: missing=${isMissing}`);
 
 
-                            // Logic for treasury auto-post could go here if implemented
+                            const tEntry = this.createTreasuryJournalEntry(doc, false, forceRecreate);
+                            if (tEntry) fixedCount++;
 
 
                         } catch (e) { console.warn('[AutoFix] Treasury entry failed:', e); }
