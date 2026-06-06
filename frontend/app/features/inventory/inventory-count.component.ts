@@ -312,6 +312,12 @@ export class InventoryCountComponent implements OnInit {
   }
 
   exportToExcel() {
-    alert('Funcionalidade de exportação será implementada em breve.');
+    const lines = (this.currentInventory && this.currentInventory.lines) ? this.currentInventory.lines : [];
+        const header = 'codigo,artigo,localizacao,lote,qtd_sistema,qtd_contada,diferenca,unidade,contado';
+        const rows = lines.map((l: any) => [l.articleCode, l.articleName, l.location, l.batch, l.systemQuantity, l.countedQuantity, l.difference, l.unit, l.counted ? 'Sim' : 'Nao'].map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(','));
+        const blob = new Blob(['﻿' + [header, ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'contagem_inventario.csv'; a.click();
+        URL.revokeObjectURL(url);
   }
 }

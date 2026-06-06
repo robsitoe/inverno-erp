@@ -289,7 +289,12 @@ export class StockExplorationComponent implements OnInit {
   }
 
   exportToExcel() {
-    alert('Funcionalidade de exportação será implementada em breve.');
+    const header = 'codigo,descricao,armazem,localizacao,lote,unidade,stock_actual,minimo,maximo,custo_medio,valor_total';
+        const rows = this.filteredResults.map((r: any) => [r.code, r.description, r.warehouse, r.location, r.batch, r.unit, r.currentStock, r.minimumStock, r.maximumStock, r.averageCost, r.totalValue].map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(','));
+        const blob = new Blob(['﻿' + [header, ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'exploracao_stock.csv'; a.click();
+        URL.revokeObjectURL(url);
   }
 
   print() {

@@ -67,7 +67,10 @@ import { IVA_RATES } from '../../shared/constants';
             >
               <div class="font-medium text-xs text-gray-800">{{ article.code }}</div>
               <div class="text-xs text-gray-600 truncate">{{ article.name }}</div>
-              <div class="text-xs text-gray-500 mt-1">Stock: {{ article.currentStock }} {{ article.unit }}</div>
+              <div class="flex items-center justify-between mt-1">
+                <div class="text-xs text-gray-500">Stock: {{ (+article.currentStock || 0) | number:'1.0-2' }} {{ article.unit }}</div>
+                <span *ngIf="isLowStock(article)" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full" [class.bg-rose-100]="(+article.currentStock || 0) <= 0" [class.text-rose-700]="(+article.currentStock || 0) <= 0" [class.bg-amber-100]="(+article.currentStock || 0) > 0" [class.text-amber-700]="(+article.currentStock || 0) > 0">{{ (+article.currentStock || 0) <= 0 ? 'Ruptura' : 'Baixo' }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -262,7 +265,7 @@ import { IVA_RATES } from '../../shared/constants';
               </div>
 
               <!-- Stock Alert -->
-              <div *ngIf="selectedArticle.currentStock < selectedArticle.minStock" class="bg-yellow-50 border-l-4 border-yellow-400 p-3">
+              <div *ngIf="(+selectedArticle.currentStock || 0) < (+selectedArticle.minStock || 0)" class="bg-yellow-50 border-l-4 border-yellow-400 p-3">
                 <div class="flex items-center">
                   <app-icon name="warning" [size]="20" color="#ca8a04" class="mr-2"></app-icon>
                   <span class="text-xs text-yellow-700">
@@ -320,7 +323,13 @@ import { IVA_RATES } from '../../shared/constants';
     </div>
   `
 })
-export class ArticleManagementComponent implements OnInit, OnDestroy {
+export class ArticleManagementComponent implements OnInit, OnDestroy {
+  isLowStock(a: any): boolean {
+    const s = parseFloat(String(a?.currentStock)) || 0;
+    const min = parseFloat(String(a?.minStock)) || 0;
+    if (a?.stockControl === false) return false;
+    return s <= 0 || (min > 0 && s <= min);
+  }
   articles: Article[] = [];
   filteredArticles: Article[] = [];
   selectedArticle: Article | null = null;
