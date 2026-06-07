@@ -37,7 +37,7 @@ export class JournalEntry {
 
     @Column({
         type: 'simple-enum',
-        enum: ['SALE', 'PURCHASE', 'PAYMENT', 'RECEIPT', 'MANUAL', 'REVERSAL', 'CORRECTION'],
+        enum: ['SALE', 'PURCHASE', 'PAYMENT', 'RECEIPT', 'MANUAL', 'REVERSAL', 'CORRECTION', 'REGULARIZATION'],
         nullable: true
     })
     sourceType: string;
