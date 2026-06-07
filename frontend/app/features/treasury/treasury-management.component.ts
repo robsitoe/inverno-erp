@@ -5337,7 +5337,7 @@ export class TreasuryManagementComponent implements OnInit {
       paymentMethod: 'REGULARIZATION',
       description: `Regularizacao de conta corrente - ${this.entityName}`,
       relatedDocument: rows[0]?.docNumber,
-      lines: rows.map(r => ({ docType: r.docType, docNumber: r.docNumber, originalAmount: r.total, amount: r.toPay, discount: 0, pendingAfter: r.pending - r.toPay }))
+      lines: rows.map((r, index) => ({ id: `${docId}-L${index + 1}`, docType: r.docType, docNumber: r.docNumber, originalAmount: r.total, amount: r.toPay, discount: 0, pendingAfter: r.pending - r.toPay }))
     };
     this.isSaving = true;
     this.dataService.saveReceipt(document).subscribe({
