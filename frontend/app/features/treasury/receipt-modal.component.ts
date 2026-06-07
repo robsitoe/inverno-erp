@@ -742,13 +742,13 @@ export class ReceiptModalComponent implements OnInit {
     ];
 
     rows.forEach((row, index) => {
-      const customerAccountId = this.selectedEntity?.receivableAccountId || '18';
+      const customerAccountId = this.selectedEntity?.receivableAccountId || this.accountingService.getAccounts().find(a => a.code === '4.1.1')?.id || '';
       const customerAccount = this.accountingService.getAccount(customerAccountId);
 
       lines.push({
         id: `${entryId}-${index + 1}`,
         accountId: customerAccountId,
-        accountCode: customerAccount?.code || '18',
+        accountCode: customerAccount?.code || '4.1.1',
         accountName: customerAccount?.name || 'Clientes',
         debit: 0,
         credit: row.toPay,
@@ -880,7 +880,7 @@ export class ReceiptModalComponent implements OnInit {
     lines.push({
       id: `${entryId}-1`,
       accountId: advanceAccountId,
-      accountCode: advanceAccount?.code || '21.9',
+      accountCode: advanceAccount?.code || '4.1.9',
       accountName: advanceAccount?.name || 'Adiantamentos de Clientes',
       debit: 0,
       credit: doc.amount,

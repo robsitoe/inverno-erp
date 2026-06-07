@@ -587,12 +587,12 @@ export class AccountStatementComponent implements OnInit {
             const findId = (code: string) => this.accountingService.getAccounts().find(a => a.code === code)?.id;
 
             if (this.entityType === 'CUSTOMER') {
-                ['21.1.1', '21.1.2', '21.9'].forEach(code => {
+                ['4.1.1', '4.1.2', '4.1.8', '4.1.9'].forEach(code => {
                     const id = findId(code);
                     if (id && !targetAccountIds.includes(id)) targetAccountIds.push(id);
                 });
             } else if (this.entityType === 'SUPPLIER') {
-                ['22.1', '22.9'].forEach(code => {
+                ['4.2.1', '4.2.2', '4.2.9'].forEach(code => {
                     const id = findId(code);
                     if (id && !targetAccountIds.includes(id)) targetAccountIds.push(id);
                 });
