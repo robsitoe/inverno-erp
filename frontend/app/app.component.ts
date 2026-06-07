@@ -747,6 +747,10 @@ export class AppComponent {
 
     }
 
+    // Re-fetch the real license now that the company/token are set, so the
+    // sidebar modules & badge reflect the actual plan (avoids first-login DEMO).
+    setTimeout(() => this.licenseService.refreshFromServer(), 300);
+
 
   }
 
