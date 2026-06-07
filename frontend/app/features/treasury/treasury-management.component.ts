@@ -160,7 +160,7 @@ interface PendingDocRow {
       <!-- Window Header (Title Bar) -->
 
 
-      <div class="bg-gradient-to-r from-blue-700 to-blue-600 text-white px-2 py-1 flex justify-between items-center shrink-0 select-none"
+      <div class="bg-gradient-to-r from-blue-700 to-blue-600 text-white px-4 py-2 flex justify-between items-center shrink-0 select-none shadow"
 
 
            [ngClass]="{'from-red-700 to-red-600': entityType === 'SUPPLIER'}">
@@ -187,10 +187,10 @@ interface PendingDocRow {
       <!-- Toolbar -->
 
 
-      <div class="flex items-center gap-1 px-2 py-1 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0">
+      <div class="flex items-center gap-1.5 px-3 py-2 border-b border-gray-200 bg-white shrink-0">
 
 
-        <button (click)="confirmSave()" *ngIf="!isLocked && status === 'DRAFT'" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 disabled:opacity-50" [disabled]="isSaving || (isRegularization && !canRegularize())">
+        <button (click)="confirmSave()" *ngIf="!isLocked && status === 'DRAFT'" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium disabled:opacity-50" [disabled]="isSaving || (isRegularization && !canRegularize())">
 
 
           <span class="material-symbols-outlined text-[18px] text-blue-600" [class.spinner]="isSaving">{{ isSaving ? 'sync' : 'save' }}</span>
@@ -211,7 +211,7 @@ interface PendingDocRow {
         <ng-container *ngIf="currentDocId">
 
 
-          <button (click)="onWorkflowAction('SUBMIT')" *ngIf="status === 'DRAFT' || status === 'REJECTED'" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+          <button (click)="onWorkflowAction('SUBMIT')" *ngIf="status === 'DRAFT' || status === 'REJECTED'" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
 
 
             <span class="material-symbols-outlined text-[18px] text-orange-500">send</span>
@@ -223,7 +223,7 @@ interface PendingDocRow {
           </button>
 
 
-          <button (click)="onWorkflowAction('APPROVE')" *ngIf="status === 'SUBMITTED'" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+          <button (click)="onWorkflowAction('APPROVE')" *ngIf="status === 'SUBMITTED'" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
 
 
             <span class="material-symbols-outlined text-[18px] text-green-600">how_to_reg</span>
@@ -235,7 +235,7 @@ interface PendingDocRow {
           </button>
 
 
-          <button (click)="onWorkflowAction('REJECT')" *ngIf="status === 'SUBMITTED'" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+          <button (click)="onWorkflowAction('REJECT')" *ngIf="status === 'SUBMITTED'" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
 
 
             <span class="material-symbols-outlined text-[18px] text-red-600">block</span>
@@ -247,7 +247,7 @@ interface PendingDocRow {
           </button>
 
 
-          <button (click)="onWorkflowAction('POST')" *ngIf="status === 'APPROVED'" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+          <button (click)="onWorkflowAction('POST')" *ngIf="status === 'APPROVED'" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
 
 
             <span class="material-symbols-outlined text-[18px] text-purple-600">account_balance</span>
@@ -262,7 +262,7 @@ interface PendingDocRow {
         </ng-container>
 
 
-        <button (click)="resetForm()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+        <button (click)="resetForm()" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
 
 
           <span class="material-symbols-outlined text-[18px] text-green-600">add_circle</span>
@@ -274,7 +274,7 @@ interface PendingDocRow {
         </button>
 
 
-        <button (click)="openPrintSettings()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+        <button (click)="openPrintSettings()" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
 
 
           <span class="material-symbols-outlined text-[18px] text-blue-600">print</span>
@@ -289,7 +289,7 @@ interface PendingDocRow {
         <div class="w-px h-4 bg-gray-300 mx-1"></div>
 
 
-        <button (click)="loadPendingDocuments()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 disabled:opacity-50" [disabled]="isSaving">
+        <button (click)="loadPendingDocuments()" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium disabled:opacity-50" [disabled]="isSaving">
 
 
           <span class="material-symbols-outlined text-[18px] text-green-600" [class.spinner]="isSaving">{{ isSaving ? 'sync' : 'refresh' }}</span>
@@ -301,7 +301,7 @@ interface PendingDocRow {
         </button>
 
 
-        <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+        <button class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
 
 
           <span class="material-symbols-outlined text-[18px]">search</span>
@@ -316,7 +316,7 @@ interface PendingDocRow {
         <div class="w-px h-4 bg-gray-300 mx-1"></div>
 
 
-        <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+        <button class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
 
 
           <span class="material-symbols-outlined text-[18px] text-blue-400">help</span>
@@ -337,7 +337,7 @@ interface PendingDocRow {
       <!-- Tabs -->
 
 
-      <div class="flex items-end px-1 pt-2 border-b border-gray-300 bg-[#E0E0E0] shrink-0 gap-1">
+      <div class="flex items-end px-2 pt-1 border-b border-gray-200 bg-white shrink-0 gap-1">
 
 
         <button *ngFor="let tab of tabs; let i = index"
@@ -346,10 +346,10 @@ interface PendingDocRow {
           (click)="activeTab = i"
 
 
-          [class]="'px-3 py-1 border-t-2 border-x border-b-0 rounded-t-sm text-[11px] font-medium transition-colors relative -mb-px cursor-pointer ' + 
+          [class]="'px-4 py-2 text-[11px] font-semibold transition-colors relative cursor-pointer border-b-2 -mb-px ' + 
 
 
-            (i === activeTab ? 'bg-[#F0F0F0] border-t-blue-600 border-x-gray-300 text-black pb-1.5 z-10' : 'bg-[#D4D4D4] border-t-transparent border-x-transparent hover:bg-[#E8E8E8] text-gray-600')"
+            (i === activeTab ? 'text-blue-700 border-blue-600' : 'text-gray-500 border-transparent hover:text-blue-600 hover:border-blue-200')"
 
 
         >
@@ -520,7 +520,7 @@ interface PendingDocRow {
             <!-- Right: Totals Panel -->
 
 
-            <div class="bg-white border border-gray-300 p-2 shadow-sm text-right flex flex-col justify-between">
+            <div class="bg-gradient-to-br from-slate-50 to-white border border-gray-200 rounded-lg p-3 shadow-sm text-right flex flex-col justify-between">
 
 
               <div class="grid grid-cols-[1fr_100px] gap-y-1 text-gray-700">
@@ -787,7 +787,7 @@ interface PendingDocRow {
             <table class="w-full border-collapse table-fixed">
 
 
-              <thead class="bg-gray-50 sticky top-0 z-10 text-[10px] text-gray-600 font-bold border-b border-gray-300">
+              <thead class="bg-slate-100 sticky top-0 z-10 text-[10px] text-gray-500 font-semibold uppercase tracking-wide border-b border-gray-200">
 
 
                 <tr>
@@ -844,7 +844,7 @@ interface PendingDocRow {
               <tbody class="text-[11px]">
 
 
-                <tr *ngFor="let row of pendingRows; trackBy: trackByFn" class="border-b border-gray-100 hover:bg-blue-50">
+                <tr *ngFor="let row of pendingRows; trackBy: trackByFn" class="border-b border-gray-100 hover:bg-blue-50 even:bg-slate-50/50 transition-colors">
 
 
                   <td class="text-center border-r border-gray-100">
