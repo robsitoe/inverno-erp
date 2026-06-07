@@ -47,9 +47,9 @@ interface PendingDocRow {
 
         <!-- Toolbar -->
         <div class="flex items-center gap-1 px-2 py-1 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0">
-          <button (click)="saveReceipt()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+          <button (click)="confirmAction()" [disabled]="isRegularization && !canRegularize()" [class.opacity-40]="isRegularization && !canRegularize()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
             <span class="material-symbols-outlined text-[18px] text-blue-600">save</span>
-            <span>Confirmar</span>
+            <span>{{ isRegularization ? 'Regularizar' : 'Confirmar' }}</span>
           </button>
           <button (click)="resetForm()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
             <span class="material-symbols-outlined text-[18px] text-green-600">add_circle</span>
@@ -152,7 +152,13 @@ interface PendingDocRow {
                   <div class="col-span-2 h-px bg-gray-200 my-1"></div>
                   
                   <span class="font-bold text-black">Total:</span>
-                  <span class="font-mono font-bold text-black">{{ totalSelected | number:'1.2-2' }}</span>
+                  <span class="font-mono font-bold text-black">{{ totalSelected | number:'1.2-2' }}</span>
+
+                  <ng-container *ngIf="isRegularization">
+                    <div class="col-span-2 h-px bg-gray-200 my-1"></div>
+                    <span class="font-bold" [class.text-green-600]="canRegularize()" [class.text-red-600]="!canRegularize()">Net Reg.:</span>
+                    <span class="font-mono font-bold" [class.text-green-600]="canRegularize()" [class.text-red-600]="!canRegularize()">{{ regNet | number:'1.2-2' }}</span>
+                  </ng-container>
                 </div>
                 
                 <div class="grid grid-cols-[1fr_100px] gap-y-1 text-gray-500 mt-2 text-[10px]">
@@ -341,7 +347,9 @@ export class ReceiptModalComponent implements OnInit {
 
   // Grid
   pendingRows: PendingDocRow[] = [];
-  totalSelected = 0;
+  totalSelected = 0;
+  regNet = 0;
+  regSelectedCount = 0;
   totalExcess = 0;
 
   // Liquidation Data
@@ -586,11 +594,15 @@ export class ReceiptModalComponent implements OnInit {
 
   calculateTotals() {
     this.totalSelected = 0;
-    this.totalExcess = 0;
+    this.totalExcess = 0;
+    this.regNet = 0;
+    this.regSelectedCount = 0;
 
     this.pendingRows.forEach(row => {
       if (row.selected) {
-        this.totalSelected += row.toPay;
+        this.totalSelected += row.toPay;
+        this.regNet += this.rowSign(row) * (Number(row.toPay) || 0);
+        this.regSelectedCount++;
         if (row.toPay > row.pending) {
           this.totalExcess += (row.toPay - row.pending);
         }
@@ -598,6 +610,85 @@ export class ReceiptModalComponent implements OnInit {
     });
   }
 
+  // RGC (Regularizacao de Clientes) ---------------------------------------
+  get isRegularization(): boolean { return this.selectedDocType === 'RGC'; }
+  isCreditDoc(row: PendingDocRow): boolean {
+    return ['NC', 'ADC', 'NCC'].includes((row.docType || '').toString().toUpperCase());
+  }
+  rowSign(row: PendingDocRow): number { return this.isCreditDoc(row) ? -1 : 1; }
+  canRegularize(): boolean { return this.regSelectedCount >= 2 && Math.abs(this.regNet) < 0.01; }
+  confirmAction() { if (this.isRegularization) { this.saveRegularization(); } else { this.saveReceipt(); } }
+
+  saveRegularization() {
+    if (!this.canRegularize()) {
+      alert('Para regularizar, selecione documentos cujo somatorio liquido seja ZERO (debitos = creditos).');
+      return;
+    }
+    if (!this.periodService.isPeriodOpen(this.receiptDate)) {
+      alert('O periodo para esta data esta fechado.');
+      return;
+    }
+    const selectedRows = this.pendingRows.filter(r => r.selected && Number(r.toPay) > 0);
+    const rgc: any = {
+      id: `RGC${Date.now()}`,
+      number: this.receiptNumberString,
+      docType: this.selectedDocType,
+      series: this.selectedSeries,
+      seriesNumber: this.currentSeriesNumber,
+      date: new Date(this.receiptDate),
+      type: 'RECEIPT',
+      amount: selectedRows.filter(r => !this.isCreditDoc(r)).reduce((s2, r) => s2 + Number(r.toPay), 0),
+      customerCode: this.customerCode,
+      customerName: this.customerName,
+      paymentMethod: 'REGULARIZATION',
+      description: `Regularizacao de conta corrente - ${this.customerName}`,
+      relatedDocument: selectedRows[0]?.docNumber,
+      lines: selectedRows.map(r => ({ docType: r.docType, docNumber: r.docNumber, originalAmount: r.total, amount: r.toPay, discount: 0, pendingAfter: r.pending - r.toPay }))
+    };
+    this.dataService.saveReceipt(rgc).subscribe({
+      next: () => {
+        this.createRegularizationEntry(rgc, selectedRows);
+        alert(`Regularizacao ${this.receiptNumberString} gravada com sucesso!`);
+        this.saved.emit(rgc);
+        this.close.emit();
+      },
+      error: (err) => { console.error('Erro ao gravar regularizacao:', err); alert('Erro ao gravar regularizacao.'); }
+    });
+  }
+
+  createRegularizationEntry(rgc: any, rows: PendingDocRow[]) {
+    const entryId = `JE${Date.now()}`;
+    const customerAccountId = this.selectedEntity?.receivableAccountId || this.accountingService.getAccounts().find(a => a.code === '4.1.1')?.id || '';
+    const customerAccount = this.accountingService.getAccount(customerAccountId);
+    const lines = rows.map((row, i) => {
+      const credit = this.isCreditDoc(row); // NC -> debit the receivable to clear the credit
+      return {
+        id: `${entryId}-${i}`,
+        accountId: customerAccountId,
+        accountCode: customerAccount?.code || '4.1.1',
+        accountName: customerAccount?.name || 'Clientes',
+        debit: credit ? Number(row.toPay) : 0,
+        credit: credit ? 0 : Number(row.toPay),
+        description: `Reg. ${row.docNumber}`
+      };
+    });
+    const entry: any = {
+      id: entryId,
+      companyId: this.activeCompanyId || undefined,
+      journalId: 'TREASURY',
+      date: rgc.date,
+      description: `Regularizacao ${rgc.number} - ${rgc.customerName}`,
+      reference: rgc.number,
+      sourceDocument: rgc.id,
+      sourceType: 'REGULARIZATION',
+      lines,
+      status: 'POSTED',
+      createdBy: 'user',
+      createdAt: new Date()
+    };
+    this.accountingService.createJournalEntry(entry);
+  }
+
   resetForm() {
     this.customerCode = '';
     this.customerName = '';

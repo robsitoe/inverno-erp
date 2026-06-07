@@ -21,6 +21,7 @@ export const PURCHASE_DOCUMENT_TYPES = [
 
 export const TREASURY_DOCUMENT_TYPES = [
     { code: 'RE', name: 'Recibo', description: 'Recibo de Cliente', isStandard: true, nature: 'RECEIVE', type: 'TREASURY' },
+    { code: 'RGC', name: 'Regularização de Clientes', description: 'Regularização/Compensação de Conta Corrente de Cliente', isStandard: true, nature: 'RECEIVE', type: 'TREASURY' },
     { code: 'PA', name: 'Pagamento', description: 'Pagamento a Fornecedor', isStandard: true, nature: 'PAY', type: 'TREASURY' },
     { code: 'TR', name: 'Transferência', description: 'Transferência entre Contas', isStandard: true, nature: 'TRANSFER', type: 'TREASURY' },
     { code: 'DP', name: 'Depósito', description: 'Depósito Bancário', isStandard: true, nature: 'RECEIVE', type: 'TREASURY' },
