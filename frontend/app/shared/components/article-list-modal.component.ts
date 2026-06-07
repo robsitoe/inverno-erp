@@ -90,7 +90,8 @@ export class ArticleListModalComponent implements OnInit {
 
   loadArticles() {
     this.articles = this.inventoryService.getArticles();
-    this.filteredArticles = [...this.articles];
+    this.filteredArticles = [...this.articles];
+    if (!this.articles.length) { this.inventoryService.loadData().then(() => { this.articles = this.inventoryService.getArticles(); this.filteredArticles = [...this.articles]; }); }
   }
 
   onSearchChange(event: Event) {

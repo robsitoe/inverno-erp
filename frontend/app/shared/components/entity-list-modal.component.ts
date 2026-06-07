@@ -119,12 +119,13 @@ export class EntityListModalComponent implements OnInit {
 
   ngOnInit() {
     this.entities = this.customerService.getCustomers();
-    this.filteredEntities = this.entities;
+    this.filteredEntities = this.entities;
+    if (!this.entities.length) { this.customerService.loadCustomers().then(() => { this.entities = this.customerService.getCustomers(); this.filteredEntities = this.entities; }); }
 
     // Load accounts that are Assets (Receivable) - usually class 21
     // For simplicity, loading all analytic accounts or filtering by code starts with '21'
     this.availableAccounts = this.accountingService.getAccounts()
-      .filter(a => a.allowPosting && (a.code.startsWith('21') || a.type === 'ASSET'))
+      .filter(a => a.allowPosting && (a.code.startsWith('4.1') || a.type === 'ASSET'))
       .sort((a, b) => a.code.localeCompare(b.code));
   }
 
