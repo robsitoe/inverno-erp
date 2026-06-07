@@ -190,13 +190,13 @@ interface PendingDocRow {
       <div class="flex items-center gap-1 px-2 py-1 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0">
 
 
-        <button (click)="confirmSave()" *ngIf="!isLocked && status === 'DRAFT'" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 disabled:opacity-50" [disabled]="isSaving">
+        <button (click)="confirmSave()" *ngIf="!isLocked && status === 'DRAFT'" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 disabled:opacity-50" [disabled]="isSaving || (isRegularization && !canRegularize())">
 
 
           <span class="material-symbols-outlined text-[18px] text-blue-600" [class.spinner]="isSaving">{{ isSaving ? 'sync' : 'save' }}</span>
 
 
-          <span>Confirmar</span>
+          <span>{{ isRegularization ? 'Regularizar' : 'Confirmar' }}</span>
 
 
         </button>
@@ -572,6 +572,12 @@ interface PendingDocRow {
 
 
                 <span class="font-mono font-bold text-black">{{ totalSelected | number:'1.2-2' }}</span>
+
+                <ng-container *ngIf="isRegularization">
+                  <div class="col-span-2 h-px bg-gray-200 my-1"></div>
+                  <span class="font-bold" [class.text-green-600]="canRegularize()" [class.text-red-600]="!canRegularize()">Net Reg.:</span>
+                  <span class="font-mono font-bold" [class.text-green-600]="canRegularize()" [class.text-red-600]="!canRegularize()">{{ regNet | number:'1.2-2' }}</span>
+                </ng-container>
 
 
               </div>
@@ -5143,10 +5149,15 @@ export class TreasuryManagementComponent implements OnInit {
 
 
 
+      let __paid = 0;
+      existingPayments.forEach((p: any) => {
+        if (p.lines && p.lines.length > 0) { const ln = p.lines.find((l: any) => l.docNumber === docNum); if (ln) __paid += Number(ln.amount) || 0; }
+        else if (p.relatedDocument === docNum) { __paid += Number(p.amount) || 0; }
+      });
       const relatedDocs = existingPayments.filter((p: any) => p.relatedDocument === docNum);
 
 
-      const paidAmount = relatedDocs.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+      const paidAmount = __paid;
 
 
 
@@ -5295,6 +5306,84 @@ export class TreasuryManagementComponent implements OnInit {
 
 
 
+
+  // RGC (Regularizacao de Clientes) -----------------------------------------
+  get isRegularization(): boolean { return this.selectedDocType === 'RGC'; }
+  isCreditDoc(row: PendingDocRow): boolean { return ['NC', 'ADC', 'NCC'].includes((row.docType || '').toString().toUpperCase()); }
+  rowSign(row: PendingDocRow): number { return this.isCreditDoc(row) ? -1 : 1; }
+  get regSelectedCount(): number { return this.pendingRows.filter(r => r.selected && Number(r.toPay) > 0).length; }
+  get regNet(): number { let n = 0; this.pendingRows.forEach(r => { if (r.selected) n += this.rowSign(r) * (Number(r.toPay) || 0); }); return Math.round(n * 100) / 100; }
+  canRegularize(): boolean { return this.regSelectedCount >= 2 && Math.abs(this.regNet) < 0.01; }
+
+  saveRegularization(selectedRows: PendingDocRow[]) {
+    if (!this.canRegularize()) { alert('Para regularizar, selecione documentos cujo somatorio liquido seja ZERO (debitos = creditos).'); return; }
+    const rows = selectedRows.filter(r => r.selected && Number(r.toPay) > 0);
+    const docId = `RGC${Date.now()}`;
+    const rgcNumber = this.docNumberString || `${this.selectedDocType} ${this.selectedSeries}/${this.currentSeriesNumber}`;
+    const document: any = {
+      id: docId,
+      companyId: this.activeCompanyId || undefined,
+      number: rgcNumber,
+      docType: this.selectedDocType,
+      series: this.selectedSeries,
+      seriesNumber: this.currentSeriesNumber,
+      date: new Date(this.docDate),
+      type: 'RECEIPT',
+      amount: rows.filter(r => !this.isCreditDoc(r)).reduce((s2, r) => s2 + Number(r.toPay), 0),
+      customerCode: this.entityCode,
+      customerName: this.entityName,
+      entityCode: this.entityCode,
+      entityName: this.entityName,
+      paymentMethod: 'REGULARIZATION',
+      description: `Regularizacao de conta corrente - ${this.entityName}`,
+      relatedDocument: rows[0]?.docNumber,
+      lines: rows.map(r => ({ docType: r.docType, docNumber: r.docNumber, originalAmount: r.total, amount: r.toPay, discount: 0, pendingAfter: r.pending - r.toPay }))
+    };
+    this.isSaving = true;
+    this.dataService.saveReceipt(document).subscribe({
+      next: () => { this.ngZone.run(() => {
+        this.createRegularizationEntry(document, rows);
+        this.isSaving = false;
+        alert(`Regularizacao ${rgcNumber} gravada com sucesso!`);
+        this.resetForm();
+        this.cdr.detectChanges();
+      }); },
+      error: (err) => { this.ngZone.run(() => { console.error('Erro ao gravar regularizacao:', err); this.isSaving = false; alert('Erro ao gravar regularizacao.'); this.cdr.detectChanges(); }); }
+    });
+  }
+
+  createRegularizationEntry(doc: any, rows: PendingDocRow[]) {
+    const entryId = `JE${Date.now()}`;
+    const customerAccountId = this.selectedEntity?.receivableAccountId || this.accountingService.getAccounts().find((a: any) => a.code === '4.1.1')?.id || '';
+    const customerAccount = this.accountingService.getAccount(customerAccountId);
+    const lines = rows.map((row, i) => {
+      const credit = this.isCreditDoc(row);
+      return {
+        id: `${entryId}-${i}`,
+        accountId: customerAccountId,
+        accountCode: customerAccount?.code || '4.1.1',
+        accountName: customerAccount?.name || 'Clientes',
+        debit: credit ? Number(row.toPay) : 0,
+        credit: credit ? 0 : Number(row.toPay),
+        description: `Reg. ${row.docNumber}`
+      };
+    });
+    const entry: any = {
+      id: entryId,
+      companyId: this.activeCompanyId || undefined,
+      journalId: 'TREASURY',
+      date: doc.date,
+      description: `Regularizacao ${doc.number} - ${doc.entityName || doc.customerName}`,
+      reference: doc.number,
+      sourceDocument: doc.id,
+      sourceType: 'REGULARIZATION',
+      lines,
+      status: 'POSTED',
+      createdBy: 'user',
+      createdAt: new Date()
+    };
+    this.accountingService.createJournalEntry(entry);
+  }
 
   calculateTotals() {
 
@@ -5709,6 +5798,8 @@ export class TreasuryManagementComponent implements OnInit {
 
 
 
+
+    if (this.isRegularization) { this.saveRegularization(selectedRows); return; }
 
     if (!this.selectedTreasuryAccount) {
 
