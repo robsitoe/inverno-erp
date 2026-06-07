@@ -6091,7 +6091,7 @@ export class TreasuryManagementComponent implements OnInit {
       reference: doc.number,
 
 
-      sourceDocument: doc.number,
+      sourceDocument: doc.id || doc.number,
 
 
       sourceType: isReceipt ? 'RECEIPT' : 'PAYMENT',
@@ -6667,7 +6667,7 @@ export class TreasuryManagementComponent implements OnInit {
       reference: doc.number,
 
 
-      sourceDocument: doc.number,
+      sourceDocument: doc.id || doc.number,
 
 
       sourceType: isReceipt ? 'RECEIPT' : 'PAYMENT',

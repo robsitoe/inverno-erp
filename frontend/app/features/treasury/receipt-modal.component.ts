@@ -763,7 +763,7 @@ export class ReceiptModalComponent implements OnInit {
       date: receipt.date,
       description: `Recibo ${receipt.number} - ${receipt.customerName}`,
       reference: receipt.number,
-      sourceDocument: receipt.number,
+      sourceDocument: receipt.id,
       sourceType: 'RECEIPT',
       lines: lines,
       status: 'POSTED',
@@ -860,8 +860,8 @@ export class ReceiptModalComponent implements OnInit {
   createAdvanceAccountingEntry(doc: any) {
     const entryId = `JE${Date.now()}`;
     const treasuryAccount = this.accountingService.getAccount(doc.treasuryAccountId);
-    const advanceAccountId = '63'; // Adiantamentos de Clientes
-    const advanceAccount = this.accountingService.getAccount(advanceAccountId);
+    const advanceAccount = this.accountingService.getAccounts().find(a => a.code === '4.1.9'); // PGC-NIR
+    const advanceAccountId = advanceAccount?.id || '4.1.9';
 
     const lines = [];
 
@@ -898,7 +898,7 @@ export class ReceiptModalComponent implements OnInit {
       date: doc.date,
       description: `Adiantamento ${doc.number} - ${doc.entityName}`,
       reference: doc.number,
-      sourceDocument: doc.number,
+      sourceDocument: doc.id,
       sourceType: 'ADVANCE_RECEIPT',
       lines: lines,
       status: 'POSTED',

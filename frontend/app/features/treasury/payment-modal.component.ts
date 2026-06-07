@@ -704,6 +704,7 @@ export class PaymentModalComponent implements OnInit {
   }
 
   createAccountingEntry(payment: any, rows: PendingDocRow[]) {
+    const supplierCtrlAccount = this.accountingService.getAccounts().find(a => a.code === '4.2.1');
     const entryId = `JE${Date.now()}`;
 
     // Debit: Supplier Account (22)
@@ -727,9 +728,9 @@ export class PaymentModalComponent implements OnInit {
     rows.forEach((row, index) => {
       lines.push({
         id: `${entryId}-${index + 1}`,
-        accountId: '22', // Generic Supplier Account
-        accountCode: '22',
-        accountName: 'Fornecedores',
+        accountId: supplierCtrlAccount?.id || '4.2.1',
+        accountCode: supplierCtrlAccount?.code || '4.2.1',
+        accountName: supplierCtrlAccount?.name || 'Fornecedores',
         debit: row.toPay,
         credit: 0,
         description: `Liq. ${row.docNumber}`
@@ -742,7 +743,7 @@ export class PaymentModalComponent implements OnInit {
       date: payment.date,
       description: `Pagamento ${payment.number} - ${payment.beneficiaryName}`,
       reference: payment.number,
-      sourceDocument: payment.number,
+      sourceDocument: payment.id,
       sourceType: 'PAYMENT',
       lines: lines,
       status: 'POSTED',
@@ -840,8 +841,8 @@ export class PaymentModalComponent implements OnInit {
   createAdvanceAccountingEntry(doc: any) {
     const entryId = `JE${Date.now()}`;
     const treasuryAccount = this.accountingService.getAccount(doc.treasuryAccountId);
-    const advanceAccountId = '64'; // Adiantamentos a Fornecedores
-    const advanceAccount = this.accountingService.getAccount(advanceAccountId);
+    const advanceAccount = this.accountingService.getAccounts().find(a => a.code === '4.2.9'); // PGC-NIR
+    const advanceAccountId = advanceAccount?.id || '4.2.9';
 
     const lines = [];
 
@@ -878,7 +879,7 @@ export class PaymentModalComponent implements OnInit {
       date: doc.date,
       description: `Adiantamento ${doc.number} - ${doc.entityName}`,
       reference: doc.number,
-      sourceDocument: doc.number,
+      sourceDocument: doc.id,
       sourceType: 'ADVANCE_PAYMENT',
       lines: lines,
       status: 'POSTED',
