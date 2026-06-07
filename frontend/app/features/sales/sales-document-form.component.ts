@@ -3832,7 +3832,14 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
           this.accountingService.createCOGSEntry(salesDoc, articles);
 
-          this.toaster.showSuccess('Gravado', `Documento ${documentNumber} gravado com sucesso.`);
+          // Hardening: if the accounting posting was silently halted, warn clearly instead of
+          // showing a misleading success - the document is saved but NOT in the ledger.
+          const postingError = this.accountingService.consumePostingError();
+          if (postingError) {
+            this.toaster.showError('Documento gravado SEM contabilidade', `${documentNumber}: ${postingError} Use Contabilidade > Balancetes > Reparar Dados.`);
+          } else {
+            this.toaster.showSuccess('Gravado', `Documento ${documentNumber} gravado com sucesso.`);
+          }
 
         } else {
 

@@ -1339,6 +1339,11 @@ export class AccountingService {
 
 
 
+    /** Tracks the last accounting-posting failure so callers can detect a silent halt. */
+    private lastPostingError: string | null = null;
+    /** Returns and clears the last posting error recorded by saveEntryResiliently. */
+    public consumePostingError(): string | null { const e = this.lastPostingError; this.lastPostingError = null; return e; }
+
     getAccount(id: string): Account | undefined {
 
 
@@ -2520,7 +2525,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
                 const cogs = (article.purchasePrice || 0) * line.quantity;
 
 
-                const cogsAccountId = article.cogsAccountId || '61'; // 61 = CMV (Default)
+                const cogsAccountId = article.cogsAccountId || '6.1.1.2'; // PGC-NIR: Custo das mercadorias vendidas
 
 
                 const inventoryAccountId = article.inventoryAccountId || '2.1.1'; // Mercadorias (inventory asset)
@@ -3202,6 +3207,8 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
 
             console.error(`[AccountingService] HALTED SAVE: Entry ${entry.id} uses synthetic accounts: ${codes}`);
 
+            this.lastPostingError = `Contas de soma/indice (${codes}) nao permitem lancamentos.`;
+
 
             return;
 
@@ -3282,6 +3289,7 @@ const missingAccounts = (dto.lines || []).filter((l: any) => {
 });
 if (missingAccounts.length > 0) {
   const codes = missingAccounts.map((l: any) => l.accountCode || l.accountId).join(', ');
+  this.lastPostingError = `Contas [${codes}] nao encontradas no Plano de Contas.`;
   this.toasterService.showWarning('Integração Contabilística', `Lançamento nao gravado: contas [`+codes+`] nao encontradas no Plano de Contas.`);
   return;
 }
@@ -3314,6 +3322,8 @@ if (missingAccounts.length > 0) {
 
 
                 console.error(`[AccountingService] Failed to save entry ${entry.id}:`, err);
+
+                this.lastPostingError = (err && (err.error?.message || err.message)) || 'Falha ao gravar lancamento no servidor.';
 
 
                 const apiError = err.error?.message || err.message || 'Error';
