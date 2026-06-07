@@ -1,4 +1,4 @@
-﻿import { Component, Input, HostListener, ViewChild, ChangeDetectorRef, NgZone, OnDestroy } from '@angular/core';
+import { Component, Input, HostListener, ViewChild, ChangeDetectorRef, NgZone, OnDestroy } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
 
@@ -659,13 +659,14 @@ interface GridRow {
 
 
 
-       <!-- Outras abas (placeholder) -->
 
-       <div *ngIf="activeTab > 1" class="flex items-center justify-center p-8 text-gray-400">
-
-         <p class="text-sm">Conteúdo da aba "{{ tabs[activeTab] }}" em desenvolvimento...</p>
-
+       <div *ngIf="activeTab === 2" class="flex flex-col gap-2 p-4">
+         <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Observações do Documento</label>
+         <textarea [(ngModel)]="documentNotes" [disabled]="isLocked" rows="8" placeholder="Notas internas ou a imprimir no documento..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
        </div>
+
+         
+
 
      </div>
 
@@ -1685,12 +1686,6 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
         { label: "Procurar", icon: "search" },
 
-        { label: "Enviar", icon: "send" },
-
-        { label: "CRM", icon: "contacts" },
-
-        { label: "Contexto", icon: "settings" },
-
         { label: "Ajuda", icon: "help_outline" },
 
         { label: "Cancelar", icon: "logout" },
@@ -1715,12 +1710,6 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
         { label: "Procurar", icon: "search" },
 
-        { label: "Enviar", icon: "send" },
-
-        { label: "CRM", icon: "contacts" },
-
-        { label: "Contexto", icon: "settings" },
-
         { label: "Ajuda", icon: "help_outline" },
 
         { label: "Cancelar", icon: "logout" },
@@ -1736,7 +1725,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
 
   tabs = [
-    "Geral", "Condições", "Observações", "Workflow / Estado", "Transacção", "Impressão", "Carga/Descarga", "Anexos"
+    "Geral", "Condições", "Observações"
   ];
 
 
@@ -3067,6 +3056,8 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
     this.status = doc.status || WorkflowStatus.DRAFT;
 
+    this.documentNotes = (doc as any).notes || '';
+
     this.currentId = doc.id;
 
     this.loadWorkflowHistory();
@@ -3303,7 +3294,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
       status: this.status,
 
-      notes: '',
+      notes: this.documentNotes || '',
       currency: this.currentCurrency,
       paymentCondition: this.paymentCondition,
       clientDiscount: this.clientDiscount,
@@ -3676,7 +3667,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
       status: newStatus,
 
-      notes: '',
+      notes: this.documentNotes || '',
       currency: this.currentCurrency,
       paymentCondition: this.paymentCondition,
       clientDiscount: this.clientDiscount,
