@@ -14,7 +14,11 @@ export async function seedDatabase(dataSource: DataSource) {
     // Check if companies already exist
     const existingCompanies = await companyRepo.count();
 
-    if (existingCompanies === 0) {
+    // Demo company is only seeded when SEED_DEMO is enabled (default true for dev).
+    // Production installs should set SEED_DEMO=false for a clean start.
+    const seedDemo = process.env.SEED_DEMO !== 'false';
+
+    if (existingCompanies === 0 && seedDemo) {
         console.log('📦 Creating default company...');
 
         const defaultCompany: Company = {

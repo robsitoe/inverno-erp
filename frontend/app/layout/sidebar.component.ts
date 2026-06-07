@@ -1,4 +1,4 @@
-﻿
+
 import { Component, EventEmitter, Input, Output, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/constants';
@@ -116,7 +116,8 @@ import { Subscription } from 'rxjs';
                       ></app-icon>
                       <app-icon [name]="child.icon" [size]="16" color="#374151"></app-icon>
                       <span>{{ child.label }}</span>
-                      <span *ngIf="child.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
+                      <span *ngIf="child.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
+                      <span *ngIf="coming(child)" class="ml-auto text-[9px] uppercase bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">Brevemente</span>
                     </button>
                     
                     <!-- Submenu Level 2 -->
@@ -137,7 +138,8 @@ import { Subscription } from 'rxjs';
                             ></app-icon>
                             <app-icon [name]="subChild.icon" [size]="12" color="#374151"></app-icon>
                             <span class="text-xs">{{ subChild.label }}</span>
-                            <span *ngIf="subChild.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
+                            <span *ngIf="subChild.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
+                            <span *ngIf="coming(subChild)" class="ml-auto text-[9px] uppercase bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">Brevemente</span>
                           </button>
                           
                           <!-- Submenu Level 3 -->
@@ -146,11 +148,12 @@ import { Subscription } from 'rxjs';
                                href="#" 
                                (click)="handleMenuItemClick($event, subSubChild)"
                                [class]="'flex items-center gap-2 text-gray-600 hover:text-primary hover:underline py-0.5 transition-colors text-xs ' + 
-                                  (subSubChild.view === currentView ? 'text-primary font-semibold' : '')"
+                                  (subSubChild.view === currentView ? 'text-primary font-semibold' : '') + (coming(subSubChild) ? ' opacity-50' : '')"
                             >
                               <span class="material-symbols-outlined text-[12px]">{{ subSubChild.icon }}</span>
                               <span>{{ subSubChild.label }}</span>
-                              <span *ngIf="subSubChild.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
+                              <span *ngIf="subSubChild.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
+                              <span *ngIf="coming(subSubChild)" class="ml-auto text-[9px] uppercase bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">Brevemente</span>
                             </a>
                           </div>
                         </div>
@@ -159,11 +162,12 @@ import { Subscription } from 'rxjs';
                           <a href="#" 
                              (click)="handleMenuItemClick($event, subChild)"
                              [class]="'flex items-center gap-2 text-gray-600 hover:text-primary hover:underline py-0.5 transition-colors ' + 
-                                (subChild.view === currentView ? 'text-primary font-semibold' : '')"
+                                (subChild.view === currentView ? 'text-primary font-semibold' : '') + (coming(subChild) ? ' opacity-50' : '')"
                           >
                             <span class="material-symbols-outlined text-[14px]">{{ subChild.icon }}</span>
                             <span>{{ subChild.label }}</span>
-                            <span *ngIf="subChild.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
+                            <span *ngIf="subChild.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
+                            <span *ngIf="coming(subChild)" class="ml-auto text-[9px] uppercase bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">Brevemente</span>
                           </a>
                         </ng-template>
                       </div>
@@ -174,11 +178,12 @@ import { Subscription } from 'rxjs';
                     <a href="#" 
                        (click)="handleMenuItemClick($event, child)"
                        [class]="'flex items-center gap-2 text-gray-600 hover:text-primary hover:underline py-0.5 transition-colors ' + 
-                          (child.view === currentView ? 'text-primary font-semibold' : '')"
+                          (child.view === currentView ? 'text-primary font-semibold' : '') + (coming(child) ? ' opacity-50' : '')"
                     >
                       <app-icon [name]="child.icon" [size]="16" color="#374151"></app-icon>
                       <span>{{ child.label }}</span>
-                      <span *ngIf="child.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
+                      <span *ngIf="child.beta" class="ml-auto text-[10px] uppercase bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">beta</span>
+                      <span *ngIf="coming(child)" class="ml-auto text-[9px] uppercase bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">Brevemente</span>
                     </a>
                   </ng-template>
                 </div>
@@ -371,6 +376,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
     return colors[label] || '#374151';
   }
 
+  /** Leaf menu item not yet implemented (no view, no children) -> show as 'Brevemente'. */
+  coming(item: MenuItem): boolean {
+    return !item.view && (!item.children || item.children.length === 0);
+  }
+
   handleMenuItemClick(e: Event, item: MenuItem) {
     e.preventDefault();
     if (item.view) {

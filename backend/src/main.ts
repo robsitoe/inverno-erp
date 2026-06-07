@@ -12,9 +12,13 @@ async function bootstrap() {
 
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Enable CORS
+  // Enable CORS — restrict to configured origins in production.
+  // Set ALLOWED_ORIGINS as a comma-separated list (e.g. "https://erp.cliente.co.mz").
+  // If unset, reflects the request origin (convenient for self-hosted LAN/dev).
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+    .split(',').map(o => o.trim()).filter(Boolean);
   app.enableCors({
-    origin: true, // Dynamically reflects origin back to client (required for credentials: true with various origins)
+    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Accept, Authorization, x-company-id',
