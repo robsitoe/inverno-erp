@@ -364,6 +364,8 @@ export class AccountStatementComponent implements OnInit {
     // Statement Data
     initialBalance: number = 0;
     movements: StatementMovement[] = [];
+    /** ref(documentNumber) -> source document createdAt, for reliable chronological ordering. */
+    private docOrderMap: Map<string, number> = new Map();
     totalDebit: number = 0;
     totalCredit: number = 0;
     finalBalance: number = 0;
@@ -642,6 +644,7 @@ export class AccountStatementComponent implements OnInit {
         // 2. Fetch Movements from Journal Entries
         const periodMovements: any[] = [];
         const processedDocNumbers = new Set<string>();
+        this.docOrderMap = new Map<string, number>();
 
         journalEntries.forEach(entry => {
             if (entry.status !== 'POSTED' && !this.includeDrafts) return;
@@ -699,6 +702,7 @@ export class AccountStatementComponent implements OnInit {
                         if (!isMatch) return;
 
                         const docNum = doc.documentNumber || doc.number;
+                        if (docNum) this.docOrderMap.set(docNum.toString(), new Date(doc.createdAt || doc.date).getTime());
                         const foundInProcessed = Array.from(processedDocNumbers).some(ref => ref && docNum && (ref.toString().includes(docNum.toString()) || docNum.toString().includes(ref.toString())));
 
                         if (foundInProcessed) return;
@@ -781,6 +785,7 @@ export class AccountStatementComponent implements OnInit {
                                 if (!isMatch) return;
 
                                 const docNum = doc.docNumber || doc.number || doc.id;
+                                if (doc.number) this.docOrderMap.set(doc.number.toString(), new Date(doc.createdAt || doc.date).getTime());
                                 const foundInProcessed = Array.from(processedDocNumbers).some(ref => ref && docNum && (ref.toString().includes(docNum.toString()) || docNum.toString().includes(ref.toString())));
                                 if (foundInProcessed) return;
 
@@ -789,7 +794,7 @@ export class AccountStatementComponent implements OnInit {
 
                                 // Treasury uses 'amount' or 'total'
                                 const amount = Number(doc.amount || doc.total || doc.totalValue) || 0;
-                                const fullDocRefT = `${docTypeT || ''} ${docNum}`; // Treasury usually just Type and Number
+                                const fullDocRefT = docNum.toString().toUpperCase().startsWith((docTypeT||'').toString().toUpperCase()) ? docNum.toString() : `${docTypeT || ''} ${docNum}`; // Treasury usually just Type and Number
 
                                 if (this.entityType === 'CUSTOMER') {
                                     // Receipt = CREDIT (Reduces debt)
@@ -828,6 +833,13 @@ export class AccountStatementComponent implements OnInit {
     }
 
     finalizeLocallyGeneratedStatement(periodMovements: any[], isAssetSide: boolean) {
+        if (this.docOrderMap && this.docOrderMap.size) {
+            periodMovements.forEach((m: any) => {
+                const dn = (m.docNumber || '').toString();
+                if (this.docOrderMap.has(dn)) { m._order = this.docOrderMap.get(dn); return; }
+                for (const [k, ts] of this.docOrderMap) { if (k && dn.includes(k)) { m._order = ts; break; } }
+            });
+        }
         periodMovements.sort((a, b) => (a.date.getTime() - b.date.getTime()) || (((a as any)._order || 0) - ((b as any)._order || 0)));
 
         let running = this.initialBalance;
