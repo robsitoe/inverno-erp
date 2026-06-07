@@ -56,6 +56,7 @@ import { NavigationService } from './services/navigation.service';
 
 
 import { ToasterComponent } from './shared/toaster.component';
+import { ToasterService } from './services/toaster.service';
 
 
 
@@ -392,6 +393,9 @@ export class AppComponent {
     private navigationService: NavigationService,
 
 
+    private toaster: ToasterService,
+
+
     private cdr: ChangeDetectorRef
 
 
@@ -404,6 +408,20 @@ export class AppComponent {
   ngOnInit() {
     localStorage.removeItem('erp_initial_view');
 
+    // Route legacy native alert() calls to professional toast notifications app-wide.
+    try {
+      (window as any).alert = (msg?: any) => {
+        const text = msg === undefined || msg === null ? '' : String(msg);
+        const lower = text.toLowerCase();
+        if (lower.includes('erro') || lower.includes('falha') || lower.includes('inválid') || lower.includes('invalid')) {
+          this.toaster.showError('Aviso', text);
+        } else if (lower.includes('sucesso') || lower.includes('guardad') || lower.includes('criado') || lower.includes('conclu')) {
+          this.toaster.showSuccess('Sucesso', text);
+        } else {
+          this.toaster.showInfo('Aviso', text);
+        }
+      };
+    } catch { /* ignore */ }
 
     this.validateStoredSession();
 
