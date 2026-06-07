@@ -1,4 +1,4 @@
-﻿import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountingService } from '../../shared/accounting.service';
@@ -394,7 +394,9 @@ export class AccountStatementComponent implements OnInit {
         this.dataService.activeCompany$.subscribe(company => {
             if (company) {
                 this.resetSelection();
-                this.loadAccounts();
+                this.loadAccounts();
+                this.customerService.loadCustomers();
+                this.supplierService.loadSuppliers();
                 this.movements = [];
                 this.initialBalance = 0;
                 this.finalBalance = 0;
@@ -445,7 +447,7 @@ export class AccountStatementComponent implements OnInit {
 
         // Use dedicated account if available, otherwise fallback to generic (code 21.1.2 - Clientes a Crédito)
         // '21.1.1' is usually for Cash Customers (no balance), so we use '21.1.2' for statements.
-        this.selectedAccountId = entity.receivableAccountId || this.findAccountByCode('21.1.2');
+        this.selectedAccountId = entity.receivableAccountId || this.findAccountByCode('4.1.1') || this.findAccountByCode('4.1');
     }
 
     onSupplierSelect(supplier: any) {
@@ -455,7 +457,7 @@ export class AccountStatementComponent implements OnInit {
         this.entityName = supplier.name;
 
         // Use dedicated account if available, otherwise fallback to generic (code 22.1)
-        this.selectedAccountId = supplier.payableAccountId || this.findAccountByCode('22.1');
+        this.selectedAccountId = supplier.payableAccountId || this.findAccountByCode('4.2.1') || this.findAccountByCode('4.2');
     }
 
     onAccountSelect(acc: Account) {
@@ -487,15 +489,15 @@ export class AccountStatementComponent implements OnInit {
 
     private resolveCode(code: string, showAlert: boolean) {
         if (this.entityType === 'CUSTOMER') {
-            const customer = this.customerService.getCustomers().find(c => c.code === code);
+            const norm = (code || '').trim().toLowerCase(); const eqv = (v) => (v == null ? '' : v.toString()).trim().toLowerCase() === norm; const _cl = this.customerService.getCustomers(); const customer = _cl.find(c => eqv(c.code)) || _cl.find(c => eqv(c.name));
             if (customer) this.onEntitySelect(customer);
             else if (showAlert) this.entityName = 'Não encontrado';
         } else if (this.entityType === 'SUPPLIER') {
-            const supplier = this.supplierService.getSuppliers().find(s => s.code === code);
+            const norm = (code || '').trim().toLowerCase(); const eqv = (v) => (v == null ? '' : v.toString()).trim().toLowerCase() === norm; const _sl = this.supplierService.getSuppliers(); const supplier = _sl.find(s => eqv(s.code)) || _sl.find(s => eqv(s.name));
             if (supplier) this.onSupplierSelect(supplier);
             else if (showAlert) this.entityName = 'Não encontrado';
         } else {
-            const acc = this.accountingService.getAccounts().find(a => a.code === code);
+            const norm = (code || '').trim().toLowerCase(); const acc = this.accountingService.getAccounts().find(a => (a.code == null ? '' : a.code.toString()).trim().toLowerCase() === norm);
             if (acc) this.onAccountSelect(acc);
             else if (showAlert) this.entityName = 'Não encontrado';
         }
@@ -867,7 +869,7 @@ export class AccountStatementComponent implements OnInit {
     }
 
     private findAccountByCode(code: string): string {
-        const acc = this.accountingService.getAccounts().find(a => a.code === code);
+        const norm = (code || '').trim().toLowerCase(); const acc = this.accountingService.getAccounts().find(a => (a.code == null ? '' : a.code.toString()).trim().toLowerCase() === norm);
         return acc ? acc.id : '';
     }
 
