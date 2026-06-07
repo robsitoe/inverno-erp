@@ -851,7 +851,7 @@ export class PaymentModalComponent implements OnInit {
     lines.push({
       id: `${entryId}-0`,
       accountId: advanceAccountId,
-      accountCode: advanceAccount?.code || '22.9',
+      accountCode: advanceAccount?.code || '4.2.9',
       accountName: advanceAccount?.name || 'Adiantamentos a Fornecedores',
       debit: doc.amount,
       credit: 0,

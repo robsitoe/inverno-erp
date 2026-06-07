@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 
 
 import { CommonModule } from '@angular/common';
@@ -5911,7 +5911,7 @@ export class TreasuryManagementComponent implements OnInit {
       // Use '18' (21.1.2 - Clientes a Crédito) as default for receipts to match Credit Sales and Statement
 
 
-      const customerAccountId = this.selectedEntity?.receivableAccountId || '18';
+      const customerAccountId = this.selectedEntity?.receivableAccountId || this.accountingService.getAccounts().find(a => a.code === '4.1.1')?.id || '';
 
 
       const customerAccount = this.accountingService.getAccount(customerAccountId);
@@ -5932,7 +5932,7 @@ export class TreasuryManagementComponent implements OnInit {
           accountId: customerAccountId,
 
 
-          accountCode: customerAccount?.code || '21.1.2',
+          accountCode: customerAccount?.code || '4.1.1',
 
 
           accountName: customerAccount?.name || 'Clientes a Crédito',
@@ -5959,7 +5959,7 @@ export class TreasuryManagementComponent implements OnInit {
       // Debit: Supplier (one line per document)
 
 
-      const supplierAccountId = this.selectedEntity?.payableAccountId || '49';
+      const supplierAccountId = this.selectedEntity?.payableAccountId || this.accountingService.getAccounts().find(a => a.code === '4.2.1')?.id || '';
 
 
       const supplierAccount = this.accountingService.getAccount(supplierAccountId);
@@ -5980,7 +5980,7 @@ export class TreasuryManagementComponent implements OnInit {
           accountId: supplierAccountId,
 
 
-          accountCode: supplierAccount?.code || '22.1',
+          accountCode: supplierAccount?.code || '4.2.1',
 
 
           accountName: supplierAccount?.name || 'Fornecedores',
@@ -6460,7 +6460,7 @@ export class TreasuryManagementComponent implements OnInit {
     // Supplier Advances: 22.9 (Adiantamentos a Fornecedores)
 
 
-    const targetCode = isReceipt ? '21.9' : '22.9';
+    const targetCode = isReceipt ? '4.1.9' : '4.2.9';
 
 
     const fallbackName = isReceipt ? 'Adiantamentos de Clientes' : 'Adiantamentos a Fornecedores';
