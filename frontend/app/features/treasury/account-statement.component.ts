@@ -629,7 +629,7 @@ export class AccountStatementComponent implements OnInit {
         // 1. Calculate Initial Balance from Journal Entries
         this.initialBalance = 0;
         journalEntries.forEach(entry => {
-            if (entry.status !== 'POSTED' && !this.includeDrafts) return;
+            if (entry.status !== 'POSTED' && entry.status !== 'CORRECTED' && !this.includeDrafts) return; // CORRECTED stays visible: estorno model keeps original + reversal
             const entryDate = new Date(entry.date);
             if (entryDate < startDate) {
                 entry.lines.filter(l => targetAccountIds.includes(l.accountId)).forEach(line => {
@@ -647,7 +647,7 @@ export class AccountStatementComponent implements OnInit {
         this.docOrderMap = new Map<string, number>();
 
         journalEntries.forEach(entry => {
-            if (entry.status !== 'POSTED' && !this.includeDrafts) return;
+            if (entry.status !== 'POSTED' && entry.status !== 'CORRECTED' && !this.includeDrafts) return; // CORRECTED stays visible: estorno model keeps original + reversal
             const entryDate = new Date(entry.date);
             if (entryDate >= startDate && entryDate <= endDate) {
                 entry.lines.filter(l => targetAccountIds.includes(l.accountId)).forEach(line => {
