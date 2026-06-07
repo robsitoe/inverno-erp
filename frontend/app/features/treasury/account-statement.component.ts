@@ -655,7 +655,7 @@ export class AccountStatementComponent implements OnInit {
                         // But if split lines exist (e.g. partial payment), we want them.
 
                         periodMovements.push({
-                            date: entryDate,
+                            date: entryDate, _order: new Date(entry.createdAt || entry.date).getTime(),
                             docType: entry.sourceType || 'JE',
                             docNumber: ref,
                             description: entry.description || line.description,
@@ -724,7 +724,7 @@ export class AccountStatementComponent implements OnInit {
                             const fullDocRef = series ? `${docType} ${series}/${docNum}` : `${docType} ${docNum}`;
 
                             periodMovements.push({
-                                date: docDate,
+                                date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(),
                                 docType: doc.documentType,
                                 docNumber: fullDocRef,
                                 description: `Doc. Comercial${statusSuffix} ${fullDocRef} - ${doc.customerName || ''}`,
@@ -747,7 +747,7 @@ export class AccountStatementComponent implements OnInit {
                             const fullDocRef = series ? `${docType} ${series}/${docNum}` : `${docType} ${docNum}`;
 
                             periodMovements.push({
-                                date: docDate,
+                                date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(),
                                 docType: doc.documentType,
                                 docNumber: fullDocRef,
                                 description: `Doc. Comercial${statusSuffix} ${fullDocRef} - ${doc.supplierName || ''}`,
@@ -797,7 +797,7 @@ export class AccountStatementComponent implements OnInit {
                                 if (this.entityType === 'CUSTOMER') {
                                     // Receipt = CREDIT (Reduces debt)
                                     periodMovements.push({
-                                        date: docDate,
+                                        date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(),
                                         docType: doc.documentType || 'RE',
                                         docNumber: fullDocRefT,
                                         description: `Tesouraria${statusSuffixT} ${fullDocRefT} - ${entityName || ''}`,
@@ -807,7 +807,7 @@ export class AccountStatementComponent implements OnInit {
                                 } else {
                                     // Payment = DEBIT (Reduces debt to supplier)
                                     periodMovements.push({
-                                        date: docDate,
+                                        date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(),
                                         docType: doc.documentType || 'PAG',
                                         docNumber: fullDocRefT,
                                         description: `Tesouraria${statusSuffixT} ${fullDocRefT} - ${entityName || ''}`,
@@ -831,7 +831,7 @@ export class AccountStatementComponent implements OnInit {
     }
 
     finalizeLocallyGeneratedStatement(periodMovements: any[], isAssetSide: boolean) {
-        periodMovements.sort((a, b) => a.date.getTime() - b.date.getTime());
+        periodMovements.sort((a, b) => (a.date.getTime() - b.date.getTime()) || (((a as any)._order || 0) - ((b as any)._order || 0)));
 
         let running = this.initialBalance;
         this.totalDebit = 0;
