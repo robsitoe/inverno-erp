@@ -766,19 +766,16 @@ export class AccountStatementComponent implements OnInit {
 
                                 // Entity Match
                                 let isMatch = false;
-                                let entityId = this.entityType === 'CUSTOMER' ? (doc.customerId || doc.entityId) : (doc.supplierId || doc.entityId);
-                                let entityName = this.entityType === 'CUSTOMER' ? (doc.customerName || doc.entityName) : (doc.supplierName || doc.entityName);
-
+                                // Treasury_documents real fields: docType, type, customerCode/Name, entityCode/Name.
+                                const docTypeT = doc.docType || doc.documentType || doc.type || '';
+                                const eCode = this.entityType === 'CUSTOMER' ? (doc.customerCode || doc.entityCode) : (doc.beneficiaryCode || doc.entityCode);
+                                const entityName = this.entityType === 'CUSTOMER' ? (doc.customerName || doc.entityName) : (doc.beneficiaryName || doc.supplierName || doc.entityName);
+                                const codeMatch = !!(eCode && this.selectedEntity.code && eCode.toString().trim().toLowerCase() === this.selectedEntity.code.toString().trim().toLowerCase());
+                                const nameMatch = !!(entityName && this.selectedEntity.name && entityName.toLowerCase().includes(this.selectedEntity.name.toLowerCase()));
                                 if (this.entityType === 'CUSTOMER') {
-                                    if (doc.entityType === 'CUSTOMER' || doc.documentType === 'RE' || doc.documentType === 'ADC') {
-                                        if (entityId && this.selectedEntity.id && entityId === this.selectedEntity.id) isMatch = true;
-                                        else if (entityName && this.selectedEntity.name && entityName.toLowerCase().includes(this.selectedEntity.name.toLowerCase())) isMatch = true;
-                                    }
+                                    if (doc.type === 'RECEIPT' || docTypeT === 'RE' || docTypeT === 'ADC') { if (codeMatch || nameMatch) isMatch = true; }
                                 } else if (this.entityType === 'SUPPLIER') {
-                                    if (doc.entityType === 'SUPPLIER' || doc.documentType === 'PAG' || doc.documentType === 'ADF') {
-                                        if (entityId && this.selectedEntity.id && entityId === this.selectedEntity.id) isMatch = true;
-                                        else if (entityName && this.selectedEntity.name && entityName.toLowerCase().includes(this.selectedEntity.name.toLowerCase())) isMatch = true;
-                                    }
+                                    if (doc.type === 'PAYMENT' || docTypeT === 'PAG' || docTypeT === 'ADF') { if (codeMatch || nameMatch) isMatch = true; }
                                 }
 
                                 if (!isMatch) return;
@@ -792,13 +789,13 @@ export class AccountStatementComponent implements OnInit {
 
                                 // Treasury uses 'amount' or 'total'
                                 const amount = Number(doc.amount || doc.total || doc.totalValue) || 0;
-                                const fullDocRefT = `${doc.documentType || ''} ${docNum}`; // Treasury usually just Type and Number
+                                const fullDocRefT = `${docTypeT || ''} ${docNum}`; // Treasury usually just Type and Number
 
                                 if (this.entityType === 'CUSTOMER') {
                                     // Receipt = CREDIT (Reduces debt)
                                     periodMovements.push({
                                         date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(),
-                                        docType: doc.documentType || 'RE',
+                                        docType: docTypeT || 'RE',
                                         docNumber: fullDocRefT,
                                         description: `Tesouraria${statusSuffixT} ${fullDocRefT} - ${entityName || ''}`,
                                         debit: 0,
@@ -808,7 +805,7 @@ export class AccountStatementComponent implements OnInit {
                                     // Payment = DEBIT (Reduces debt to supplier)
                                     periodMovements.push({
                                         date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(),
-                                        docType: doc.documentType || 'PAG',
+                                        docType: docTypeT || 'PAG',
                                         docNumber: fullDocRefT,
                                         description: `Tesouraria${statusSuffixT} ${fullDocRefT} - ${entityName || ''}`,
                                         debit: amount,
