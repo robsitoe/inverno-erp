@@ -94,7 +94,10 @@ export class SupplierSearchModalComponent implements OnInit {
 
   ngOnInit() {
     this.suppliers = this.supplierService.getSuppliers();
-    this.filteredSuppliers = [...this.suppliers];
+    this.filteredSuppliers = [...this.suppliers];
+    if (!this.suppliers.length) {
+      this.supplierService.loadSuppliers().then(() => { this.suppliers = this.supplierService.getSuppliers(); this.filterSuppliers(); });
+    }
   }
 
   filterSuppliers() {
