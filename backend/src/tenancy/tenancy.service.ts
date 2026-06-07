@@ -465,6 +465,31 @@ export class TenancyService implements OnModuleDestroy {
 
         await docTypeRepo.save(entities);
         console.log(`[Tenancy] ✅ Created ${entities.length} document types.`);
+      } else {
+        // Upsert: ensure newly-added standard document types (e.g. RGC) also reach
+        // existing tenants that were seeded before the type existed.
+        const existing = await docTypeRepo.find();
+        const existingKeys = new Set(existing.map((d: any) => `${d.module || d.type}-${d.code}`));
+        const standardDefaults = [
+          ...SALES_DOCUMENT_TYPES.map((t) => ({ ...t, module: t.type || 'SALES' })),
+          ...PURCHASE_DOCUMENT_TYPES.map((t) => ({ ...t, module: t.type || 'PURCHASES' })),
+          ...TREASURY_DOCUMENT_TYPES.map((t) => ({ ...t, module: t.type || 'TREASURY' })),
+          ...STOCK_DOCUMENT_TYPES.map((t) => ({ ...t, module: t.type || 'STOCK' })),
+        ];
+        const sampleSeries = (existing[0] as any)?.series || [];
+        const missing = standardDefaults
+          .filter((t) => !existingKeys.has(`${t.module}-${t.code}`))
+          .map((t) => ({
+            ...t,
+            id: `${t.module}-${t.code}-${companyId}`,
+            companyId,
+            series: sampleSeries,
+            isActive: true,
+          }));
+        if (missing.length > 0) {
+          await docTypeRepo.save(missing);
+          console.log(`[Tenancy] ✅ Added ${missing.length} missing standard document type(s): ${missing.map((m: any) => m.code).join(', ')}`);
+        }
       }
 
       // 3. Payment Methods
