@@ -4,6 +4,7 @@
   view?: string;
   beta?: boolean;
   productionReady?: boolean;
+  comingSoon?: boolean;
   feature?: string;
   children?: MenuItem[];
 }
@@ -48,6 +49,7 @@ export const MENU_ITEMS: MenuItem[] = [
     label: "Equipamentos e Ativos",
     icon: "construction",
     feature: "ASSETS",
+    comingSoon: true,
     children: [
       { label: "Ficha do Ativo", icon: "inventory" },
       { label: "Manutenções", icon: "build_circle" },
@@ -193,6 +195,7 @@ export const MENU_ITEMS: MenuItem[] = [
     label: "Projetos e Serviços",
     icon: "work",
     feature: "PROJECTS",
+    comingSoon: true,
     children: [
       { label: "Projetos", icon: "folder_special" },
       { label: "Fases do Projeto", icon: "timeline" },
