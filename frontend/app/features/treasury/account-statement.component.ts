@@ -626,213 +626,148 @@ export class AccountStatementComponent implements OnInit {
         const account = this.accountingService.getAccount(this.selectedAccountId);
         const isAssetSide = account ? ['ASSET', 'EXPENSE'].includes(account.type) : true;
 
-        // 1. Calculate Initial Balance from Journal Entries
-        this.initialBalance = 0;
-        journalEntries.forEach(entry => {
-            if (entry.status !== 'POSTED' && entry.status !== 'CORRECTED' && !this.includeDrafts) return; // CORRECTED stays visible: estorno model keeps original + reversal
-            const entryDate = new Date(entry.date);
-            if (entryDate < startDate) {
-                entry.lines.filter(l => targetAccountIds.includes(l.accountId)).forEach(line => {
-                    if (belongsToEntity(entry, line.description)) {
-                        const amount = isAssetSide ? (line.debit - line.credit) : (line.credit - line.debit);
-                        this.initialBalance += amount;
+                // Robust per-entity statement: prefer journal entries (accounting truth incl.
+        // reversals/corrections) and attach them to the entity by DOCUMENT REFERENCE
+        // (not only description). Commercial/treasury documents are added only when no
+        // journal entry covers that reference.
+        const startMs = startDate.getTime();
+        const endMs = endDate.getTime();
+
+        const buildStatement = (entityRefs: Set<string>, salesList: any[], treasuryList: any[]) => {
+            const refMatches = (ref) => {
+                if (!ref) return false;
+                const r = ref.toString().trim();
+                if (entityRefs.has(r)) return true;
+                for (const er of Array.from(entityRefs)) { const e = (er||'').toString(); if (e && (r.includes(e) || e.includes(r))) return true; }
+                return false;
+            };
+            const entryBelongs = (entry, lineDesc) => belongsToEntity(entry, lineDesc) || refMatches(entry.reference || '');
+
+            // 1. Initial balance (entries before the period)
+            this.initialBalance = 0;
+            journalEntries.forEach(entry => {
+                if (entry.status !== 'POSTED' && entry.status !== 'CORRECTED' && !this.includeDrafts) return;
+                if (new Date(entry.date).getTime() >= startMs) return;
+                (entry.lines || []).filter(l => targetAccountIds.includes(l.accountId)).forEach(line => {
+                    if (entryBelongs(entry, line.description)) {
+                        this.initialBalance += isAssetSide ? (line.debit - line.credit) : (line.credit - line.debit);
                     }
                 });
-            }
-        });
+            });
 
-        // 2. Fetch Movements from Journal Entries
-        const periodMovements: any[] = [];
-        const processedDocNumbers = new Set<string>();
-        this.docOrderMap = new Map<string, number>();
-
-        journalEntries.forEach(entry => {
-            if (entry.status !== 'POSTED' && entry.status !== 'CORRECTED' && !this.includeDrafts) return; // CORRECTED stays visible: estorno model keeps original + reversal
-            const entryDate = new Date(entry.date);
-            if (entryDate >= startDate && entryDate <= endDate) {
-                entry.lines.filter(l => targetAccountIds.includes(l.accountId)).forEach(line => {
-                    if (belongsToEntity(entry, line.description)) {
-                        const ref = entry.reference || entry.id;
-                        // Prevent duplicates if multiple lines match same document (e.g. split payment) - actually we want all lines?
-                        // Usually Account Statement shows one line per JE unless detail is needed.
-                        // But if split lines exist (e.g. partial payment), we want them.
-
-                        periodMovements.push({
-                            date: entryDate, _order: new Date(entry.createdAt || entry.date).getTime(),
-                            docType: entry.sourceType || 'JE',
-                            docNumber: ref,
-                            description: entry.description || line.description,
-                            debit: line.debit || 0,
-                            credit: line.credit || 0
-                        });
-                        processedDocNumbers.add(ref);
-                    }
+            // 2. Period movements from journal entries
+            const periodMovements = [];
+            this.docOrderMap = new Map();
+            const refsWithJE = new Set<string>();
+            journalEntries.forEach(entry => {
+                if (entry.status !== 'POSTED' && entry.status !== 'CORRECTED' && !this.includeDrafts) return;
+                const t = new Date(entry.date).getTime();
+                if (t < startMs || t > endMs) return;
+                (entry.lines || []).filter(l => targetAccountIds.includes(l.accountId)).forEach(line => {
+                    if (!entryBelongs(entry, line.description)) return;
+                    const ref = (entry.reference || entry.id).toString();
+                    refsWithJE.add(ref);
+                    periodMovements.push({
+                        date: new Date(entry.date), _order: new Date(entry.createdAt || entry.date).getTime(),
+                        docType: entry.sourceType || 'JE', docNumber: ref,
+                        description: entry.description || line.description,
+                        debit: line.debit || 0, credit: line.credit || 0
+                    });
                 });
-            }
-        });
+            });
 
-        // 3. FALLBACK: Fetch Documents directly if they are missing from JEs
-        // This handles cases where JEs were not created or lost
+            const hasJE = (ref) => { const r = (ref || '').toString(); for (const jr of Array.from(refsWithJE)) { const j = (jr||'').toString(); if (j && (j.includes(r) || r.includes(j))) return true; } return false; };
+
+            // 3. Commercial documents with NO journal entry (truly missing from accounting)
+            (salesList || []).forEach(doc => {
+                const docDate = new Date(doc.date);
+                if (docDate.getTime() < startMs || docDate.getTime() > endMs) return;
+                const docNum = doc.documentNumber || doc.number;
+                if (docNum) this.docOrderMap.set(docNum.toString(), new Date(doc.createdAt || doc.date).getTime());
+                if (hasJE(docNum)) return;
+                const statusSuffix = doc.status === 'DRAFT' ? ' (Rascunho)' : '';
+                const amount = Number(doc.total || doc.totalValue || doc.amount) || 0;
+                const docType = doc.documentType || doc.type || doc.docType || '';
+                const series = doc.series || '';
+                const fullDocRef = series ? `${docType} ${series}/${docNum}` : `${docType} ${docNum}`;
+                if (this.entityType === 'CUSTOMER') {
+                    const isCreditNote = ['NC', 'RE', 'ADC'].includes(doc.documentType);
+                    const isCashSale = ['VD', 'FR'].includes(doc.documentType);
+                    const isDebit = !isCreditNote && !isCashSale;
+                    periodMovements.push({ date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(), docType: doc.documentType,
+                        docNumber: fullDocRef, description: `Doc. Comercial${statusSuffix} ${fullDocRef} - ${doc.customerName || ''}`,
+                        debit: isDebit ? amount : 0, credit: isCreditNote ? amount : 0 });
+                } else {
+                    const isDebit = ['NC', 'ADF'].includes(doc.documentType);
+                    const isCashPurchase = ['VD', 'FR'].includes(doc.documentType);
+                    const isCredit = !isDebit && !isCashPurchase;
+                    periodMovements.push({ date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(), docType: doc.documentType,
+                        docNumber: fullDocRef, description: `Doc. Comercial${statusSuffix} ${fullDocRef} - ${doc.supplierName || ''}`,
+                        debit: isDebit ? amount : 0, credit: isCredit ? amount : 0 });
+                }
+            });
+
+            // 4. Treasury documents with NO journal entry
+            (treasuryList || []).forEach(doc => {
+                const docDate = new Date(doc.date);
+                if (docDate.getTime() < startMs || docDate.getTime() > endMs) return;
+                const docTypeT = doc.docType || doc.documentType || doc.type || '';
+                const entityName = this.entityType === 'CUSTOMER' ? (doc.customerName || doc.entityName) : (doc.beneficiaryName || doc.supplierName || doc.entityName);
+                const docNum = doc.number || doc.docNumber || doc.id;
+                if (doc.number) this.docOrderMap.set(doc.number.toString(), new Date(doc.createdAt || doc.date).getTime());
+                if (hasJE(docNum)) return;
+                const statusSuffixT = doc.status === 'DRAFT' ? ' (Rascunho)' : '';
+                const amount = Number(doc.amount || doc.total || doc.totalValue) || 0;
+                const fullDocRefT = docNum.toString().toUpperCase().startsWith((docTypeT || '').toString().toUpperCase()) ? docNum.toString() : `${docTypeT || ''} ${docNum}`;
+                if (this.entityType === 'CUSTOMER') {
+                    periodMovements.push({ date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(), docType: docTypeT || 'RE',
+                        docNumber: fullDocRefT, description: `Tesouraria${statusSuffixT} ${fullDocRefT} - ${entityName || ''}`, debit: 0, credit: amount });
+                } else {
+                    periodMovements.push({ date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(), docType: docTypeT || 'PAG',
+                        docNumber: fullDocRefT, description: `Tesouraria${statusSuffixT} ${fullDocRefT} - ${entityName || ''}`, debit: amount, credit: 0 });
+                }
+            });
+
+            this.finalizeLocallyGeneratedStatement(periodMovements, isAssetSide);
+        };
+
         if (this.selectedEntity) {
             const companyId = JSON.parse(localStorage.getItem('erp_company_info') || '{}').id;
-            let docsObservable;
-
-            if (this.entityType === 'CUSTOMER') {
-                docsObservable = this.dataService.getSalesDocuments(companyId);
-            } else if (this.entityType === 'SUPPLIER') {
-                docsObservable = this.dataService.getPurchaseDocuments(companyId);
-            }
-
-            if (docsObservable) {
-                docsObservable.subscribe(docs => {
-                    // 1. Process Sales/Purchase Documents
-                    docs.forEach((doc: any) => {
-                        const docDate = new Date(doc.date);
-                        if (docDate < startDate || docDate > endDate) return;
-
-                        let isMatch = false;
-                        if (this.entityType === 'CUSTOMER') {
-                            if (doc.customerId && this.selectedEntity.id && doc.customerId === this.selectedEntity.id) isMatch = true;
-                            else if (doc.customerName && this.selectedEntity.name && doc.customerName.toLowerCase().includes(this.selectedEntity.name.toLowerCase())) isMatch = true;
-                        } else if (this.entityType === 'SUPPLIER') {
-                            if (doc.supplierId && this.selectedEntity.id && doc.supplierId === this.selectedEntity.id) isMatch = true;
-                            else if (doc.supplierName && this.selectedEntity.name && doc.supplierName.toLowerCase().includes(this.selectedEntity.name.toLowerCase())) isMatch = true;
-                        }
-
-                        if (!isMatch) return;
-
-                        const docNum = doc.documentNumber || doc.number;
-                        if (docNum) this.docOrderMap.set(docNum.toString(), new Date(doc.createdAt || doc.date).getTime());
-                        const foundInProcessed = Array.from(processedDocNumbers).some(ref => ref && docNum && (ref.toString().includes(docNum.toString()) || docNum.toString().includes(ref.toString())));
-
-                        if (foundInProcessed) return;
-
-                        const isDraft = doc.status === 'DRAFT';
-                        // if (isDraft && !this.includeDrafts) return; // User requested to see all documents
-
-                        const statusSuffix = isDraft ? ' (Rascunho)' : '';
-
-                        if (this.entityType === 'CUSTOMER') {
-                            // Sales Invoice, VD, etc = DEBIT
-                            // Credit Note = CREDIT
-                            const isCreditNote = ['NC', 'RE', 'ADC'].includes(doc.documentType);
-                            // VD (Venda Dinheiro) and FR (Fatura Recibo) are Cash Sales, so they don't generate Debt (Debit).
-                            // User Request: "VD should not be in debits".
-                            const isCashSale = ['VD', 'FR'].includes(doc.documentType);
-                            const isDebit = !isCreditNote && !isCashSale;
-
-                            // Check for different total field names (Sales uses total/totalValue, Purchases uses totalValue)
-                            const amount = Number(doc.total || doc.totalValue || doc.amount) || 0;
-                            const docType = doc.documentType || doc.type || doc.docType || '';
-                            const series = doc.series || '';
-                            const fullDocRef = series ? `${docType} ${series}/${docNum}` : `${docType} ${docNum}`;
-
-                            periodMovements.push({
-                                date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(),
-                                docType: doc.documentType,
-                                docNumber: fullDocRef,
-                                description: `Doc. Comercial${statusSuffix} ${fullDocRef} - ${doc.customerName || ''}`,
-                                debit: isDebit ? amount : 0,
-                                credit: isCreditNote ? amount : 0
-                            });
-                        } else {
-                            // Supplier Invoice = CREDIT (Increases Debt)
-                            // Credit Note, Advance = DEBIT (Decreases Debt)
-                            const isDebit = ['NC', 'ADF'].includes(doc.documentType);
-                            // VD (Venda Dinheiro / Compra a Pronto) and FR (Fatura Recibo) are Cash Purchases.
-                            // User Request: "Supplier statement equal to customer statement" -> Exclude Cash Purchases from Debt.
-                            const isCashPurchase = ['VD', 'FR'].includes(doc.documentType);
-                            const isCredit = !isDebit && !isCashPurchase;
-
-                            // Purchase Docs use 'totalValue'
-                            const amount = Number(doc.total || doc.totalValue || doc.amount) || 0;
-                            const docType = doc.documentType || doc.type || doc.docType || '';
-                            const series = doc.series || '';
-                            const fullDocRef = series ? `${docType} ${series}/${docNum}` : `${docType} ${docNum}`;
-
-                            periodMovements.push({
-                                date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(),
-                                docType: doc.documentType,
-                                docNumber: fullDocRef,
-                                description: `Doc. Comercial${statusSuffix} ${fullDocRef} - ${doc.supplierName || ''}`,
-                                debit: isDebit ? amount : 0,
-                                credit: isCredit ? amount : 0
-                            });
-                        }
-                    });
-
-                    // 2. Process Treasury Documents (Receipts, Payments)
-                    this.dataService.getTreasuryDocuments().subscribe(treasuryDocs => {
-                        if (treasuryDocs) {
-                            treasuryDocs.forEach((doc: any) => {
-                                const docDate = new Date(doc.date);
-                                if (docDate < startDate || docDate > endDate) return;
-
-                                // Entity Match
-                                let isMatch = false;
-                                // Treasury_documents real fields: docType, type, customerCode/Name, entityCode/Name.
-                                const docTypeT = doc.docType || doc.documentType || doc.type || '';
-                                const eCode = this.entityType === 'CUSTOMER' ? (doc.customerCode || doc.entityCode) : (doc.beneficiaryCode || doc.entityCode);
-                                const entityName = this.entityType === 'CUSTOMER' ? (doc.customerName || doc.entityName) : (doc.beneficiaryName || doc.supplierName || doc.entityName);
-                                const codeMatch = !!(eCode && this.selectedEntity.code && eCode.toString().trim().toLowerCase() === this.selectedEntity.code.toString().trim().toLowerCase());
-                                const nameMatch = !!(entityName && this.selectedEntity.name && entityName.toLowerCase().includes(this.selectedEntity.name.toLowerCase()));
-                                if (this.entityType === 'CUSTOMER') {
-                                    if (doc.type === 'RECEIPT' || docTypeT === 'RE' || docTypeT === 'ADC') { if (codeMatch || nameMatch) isMatch = true; }
-                                } else if (this.entityType === 'SUPPLIER') {
-                                    if (doc.type === 'PAYMENT' || docTypeT === 'PAG' || docTypeT === 'ADF') { if (codeMatch || nameMatch) isMatch = true; }
-                                }
-
-                                if (!isMatch) return;
-
-                                const docNum = doc.docNumber || doc.number || doc.id;
-                                if (doc.number) this.docOrderMap.set(doc.number.toString(), new Date(doc.createdAt || doc.date).getTime());
-                                const foundInProcessed = Array.from(processedDocNumbers).some(ref => ref && docNum && (ref.toString().includes(docNum.toString()) || docNum.toString().includes(ref.toString())));
-                                if (foundInProcessed) return;
-
-                                const isDraftT = doc.status === 'DRAFT';
-                                const statusSuffixT = isDraftT ? ' (Rascunho)' : '';
-
-                                // Treasury uses 'amount' or 'total'
-                                const amount = Number(doc.amount || doc.total || doc.totalValue) || 0;
-                                const fullDocRefT = docNum.toString().toUpperCase().startsWith((docTypeT||'').toString().toUpperCase()) ? docNum.toString() : `${docTypeT || ''} ${docNum}`; // Treasury usually just Type and Number
-
-                                if (this.entityType === 'CUSTOMER') {
-                                    // Receipt = CREDIT (Reduces debt)
-                                    periodMovements.push({
-                                        date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(),
-                                        docType: docTypeT || 'RE',
-                                        docNumber: fullDocRefT,
-                                        description: `Tesouraria${statusSuffixT} ${fullDocRefT} - ${entityName || ''}`,
-                                        debit: 0,
-                                        credit: amount
-                                    });
-                                } else {
-                                    // Payment = DEBIT (Reduces debt to supplier)
-                                    periodMovements.push({
-                                        date: docDate, _order: new Date(doc.createdAt || doc.date).getTime(),
-                                        docType: docTypeT || 'PAG',
-                                        docNumber: fullDocRefT,
-                                        description: `Tesouraria${statusSuffixT} ${fullDocRefT} - ${entityName || ''}`,
-                                        debit: amount,
-                                        credit: 0
-                                    });
-                                }
-                            });
-                        }
-
-                        // Finalize after BOTH
-                        this.finalizeLocallyGeneratedStatement(periodMovements, isAssetSide);
-                    });
+            const salesObs = this.entityType === 'CUSTOMER' ? this.dataService.getSalesDocuments(companyId) : this.dataService.getPurchaseDocuments(companyId);
+            salesObs.subscribe(docs => {
+                const myDocs = (docs || []).filter(doc => {
+                    if (this.entityType === 'CUSTOMER') {
+                        return (doc.customerId && this.selectedEntity.id && doc.customerId === this.selectedEntity.id) ||
+                            (doc.customerName && this.selectedEntity.name && doc.customerName.toLowerCase().includes(this.selectedEntity.name.toLowerCase()));
+                    }
+                    return (doc.supplierId && this.selectedEntity.id && doc.supplierId === this.selectedEntity.id) ||
+                        (doc.supplierName && this.selectedEntity.name && doc.supplierName.toLowerCase().includes(this.selectedEntity.name.toLowerCase()));
                 });
-                return;
-            }
+                this.dataService.getTreasuryDocuments().subscribe(tdocs => {
+                    const myTreas = (tdocs || []).filter(doc => {
+                        const docTypeT = doc.docType || doc.documentType || doc.type || '';
+                        const eCode = this.entityType === 'CUSTOMER' ? (doc.customerCode || doc.entityCode) : (doc.beneficiaryCode || doc.entityCode);
+                        const entityName = this.entityType === 'CUSTOMER' ? (doc.customerName || doc.entityName) : (doc.beneficiaryName || doc.supplierName || doc.entityName);
+                        const codeMatch = !!(eCode && this.selectedEntity.code && eCode.toString().trim().toLowerCase() === this.selectedEntity.code.toString().trim().toLowerCase());
+                        const nameMatch = !!(entityName && this.selectedEntity.name && entityName.toLowerCase().includes(this.selectedEntity.name.toLowerCase()));
+                        if (this.entityType === 'CUSTOMER') return (doc.type === 'RECEIPT' || docTypeT === 'RE' || docTypeT === 'ADC') && (codeMatch || nameMatch);
+                        return (doc.type === 'PAYMENT' || docTypeT === 'PAG' || docTypeT === 'ADF') && (codeMatch || nameMatch);
+                    });
+                    const entityRefs = new Set<string>();
+                    myDocs.forEach(d => { const r = (d.documentNumber || d.number || '').toString(); if (r) entityRefs.add(r); });
+                    myTreas.forEach(d => { const r = (d.number || d.docNumber || '').toString(); if (r) entityRefs.add(r); });
+                    buildStatement(entityRefs, myDocs, myTreas);
+                });
+            });
+            return;
         }
 
-        // Finalize if no docs fetching done
-        this.finalizeLocallyGeneratedStatement(periodMovements, isAssetSide);
+        // Account mode (no specific entity): show all movements on the account
+        buildStatement(new Set<string>(), [], []);
+
     }
 
-    finalizeLocallyGeneratedStatement(periodMovements: any[], isAssetSide: boolean) {
+        finalizeLocallyGeneratedStatement(periodMovements: any[], isAssetSide: boolean) {
         if (this.docOrderMap && this.docOrderMap.size) {
             periodMovements.forEach((m: any) => {
                 const dn = (m.docNumber || '').toString();
