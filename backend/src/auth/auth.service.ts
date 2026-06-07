@@ -12,29 +12,22 @@ export class AuthService {
     ) { }
 
     async validateUser(username: string, pass: string): Promise<any> {
-        console.log(`Attempting login for user: ${username}`);
         let user;
         try {
             user = await this.usersService.findOneByUsername(username);
         } catch (err) {
-            console.error(`Database error during login attempt for ${username}:`, err.message);
+            console.error(`Database error during login for ${username}:`, err.message);
         }
 
         if (!user) {
-            console.log(`User not found in database: ${username}`);
-            // Hardcoded fallback for initial setup to ensure the user can always get in
-            if (username === 'admin' && pass === 'admin') {
-                console.log('Using hardcoded fallback for admin user (admin/admin)');
+            // Emergency bootstrap fallback — DISABLED by default. Only enabled when
+            // ALLOW_ADMIN_FALLBACK=true (e.g. first-run recovery when the DB has no users).
+            if (process.env.ALLOW_ADMIN_FALLBACK === 'true' && username === 'admin' && pass === 'admin') {
+                console.warn('[Auth] Emergency admin fallback used — set ALLOW_ADMIN_FALLBACK=false after recovery.');
                 return {
-                    id: 'admin',
-                    username: 'admin',
-                    name: 'Administrator (System Fallback)',
-                    isAdmin: true,
-                    isSuperAdmin: true,
-                    isTechnical: true,
-                    isActive: true,
-                    language: 'pt',
-                    permissions: []
+                    id: 'admin', username: 'admin', name: 'Administrator',
+                    isAdmin: true, isSuperAdmin: true, isTechnical: true,
+                    isActive: true, language: 'pt', permissions: [],
                 };
             }
             return null;
@@ -42,17 +35,10 @@ export class AuthService {
 
         const isMatch = await bcrypt.compare(pass, user.password);
         if (isMatch) {
-            console.log(`Login successful for user: ${username}`);
             const { password, ...result } = user;
             return result;
-        } else {
-            console.log(`Invalid password for user: ${username}`);
-            // Even if password fails in DB, if it's admin/admin, we could allow it as fallback?
-            // No, that's risky if the user changed the password. 
-            // But if they are locked out, they might want this.
-            // Let's stick to the fallback only if user is NOT found.
-            return null;
         }
+        return null;
     }
 
     async login(loginDto: LoginDto) {
