@@ -304,6 +304,7 @@ export class FinancialStatementsComponent implements OnInit {
       { name: 'Resultado Liquido do Periodo', level: 3, balance: netIncome },
       { name: 'Passivo', level: 1, balance: liabTotal },
       { name: 'Fornecedores', level: 3, balance: n(liabCur.suppliers) },
+      { name: 'Outros Credores (Salarios a Pagar, etc.)', level: 3, balance: n(liabCur.otherCreditors) },
       { name: 'Estado e Outros Entes Publicos', level: 3, balance: n(liabCur.taxes) },
       { name: 'Financiamentos Obtidos', level: 3, balance: n(liabCur.loans) },
       { name: 'Provisoes', level: 3, balance: n(liabNc.provisions) },

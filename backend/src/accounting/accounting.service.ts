@@ -604,18 +604,12 @@ export class AccountingService {
   async getBalanceSheet(companyId?: string) {
     const accounts = await this.findAll(companyId);
 
-    const getSum = (codes: string[]) => {
-      return accounts
-        .filter(acc => acc.allowPosting && codes.some(code => acc.code === code || acc.code.startsWith(code + '.')))
-        .filter(acc => true) // We only want root level balances or direct sum
-        // Wait, balance in root accounts should already be the sum of children if recalculateAllBalances was run.
-        // If not, we should sum only the leaf accounts.
-        // Current implementation of updateAccountBalances updates parents, so root balance is sum.
-        .reduce((sum, acc) => {
-          return sum + Number(acc.balance || 0);
-          return sum;
-        }, 0);
-    };
+    const getSum = (codes: string[]) =>
+      // Parent balances are maintained hierarchically, so summing the exact
+      // requested nodes (any level) is correct and avoids double counting.
+      accounts
+        .filter(acc => codes.includes(acc.code))
+        .reduce((sum, acc) => sum + (parseFloat(String(acc.balance)) || 0), 0);
 
     const assets = {
       nonCurrent: {
@@ -657,12 +651,13 @@ export class AccountingService {
         suppliers: getSum(['4.2']),
         loans: getSum(['4.3']),
         taxes: getSum(['4.4']),
+        otherCreditors: getSum(['4.5', '4.6', '4.7', '4.9']),
         total: 0
       },
       total: 0
     };
     liabilities.nonCurrent.total = liabilities.nonCurrent.provisions;
-    liabilities.current.total = liabilities.current.suppliers + liabilities.current.loans + liabilities.current.taxes;
+    liabilities.current.total = liabilities.current.suppliers + liabilities.current.loans + liabilities.current.taxes + liabilities.current.otherCreditors;
     liabilities.total = liabilities.nonCurrent.total + liabilities.current.total;
 
     return {
@@ -682,14 +677,12 @@ export class AccountingService {
   async getIncomeStatement(companyId?: string) {
     const accounts = await this.findAll(companyId);
 
-    const getSum = (codes: string[]) => {
-      return accounts
-        .filter(acc => acc.allowPosting && codes.some(code => acc.code === code || acc.code.startsWith(code + '.')))
-        .reduce((sum, acc) => {
-          return sum + Number(acc.balance || 0);
-          return sum;
-        }, 0);
-    };
+    const getSum = (codes: string[]) =>
+      // Parent balances are maintained hierarchically, so summing the exact
+      // requested nodes (any level) is correct and avoids double counting.
+      accounts
+        .filter(acc => codes.includes(acc.code))
+        .reduce((sum, acc) => sum + (parseFloat(String(acc.balance)) || 0), 0);
 
     const revenue = getSum(['7.1', '7.2']);
     const varProduction = getSum(['6.1.2']); // Variation - class 6 but can be negative
