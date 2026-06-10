@@ -3792,7 +3792,8 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
         // ALWAYS process stock movements
 
-        this.inventoryService.processSalesStockMovements(
+        try {
+          this.inventoryService.processSalesStockMovements(
 
           id,
 
@@ -3801,6 +3802,10 @@ export class SalesDocumentFormComponent implements OnDestroy {
           documentNumber
 
         );
+        } catch (stockErr) {
+          console.error('Erro nos movimentos de stock (contabilidade continua):', stockErr);
+          this.toaster.showWarning('Aviso Stock', 'Erro ao processar movimentos de stock; a contabilidade foi lancada na mesma.');
+        }
 
 
 

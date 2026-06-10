@@ -1776,7 +1776,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
             companyId: this.activeCompanyId || undefined,
 
 
-            journalId: salesJournal.id,
+            journalId: salesJournal?.id || 'JNL-VENDAS',
 
 
             date: salesDoc.date,
