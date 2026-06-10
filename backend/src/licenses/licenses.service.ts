@@ -114,7 +114,7 @@ const LICENSE_PLANS_CONFIG: LicensePlanDefinition[] = [
         description: 'Contabilidade Completa',
         price: 15000,
         billing: 'Anual por Empresa',
-        features: ['ACCOUNTING', 'INVENTORY', 'SALES', 'PURCHASES', 'TREASURY'],
+        features: ['ACCOUNTING', 'INVENTORY', 'SALES', 'PURCHASES', 'TREASURY', 'HR'],
         benefitSummary: ['Contabilidade e Fiscal', 'Tesouraria Avançada', '5 Utilizadores'],
         icon: 'business',
         color: 'purple',
@@ -499,7 +499,7 @@ export class LicensesService {
             case LicensePlan.STANDARD:
                 return ['SALES', 'INVENTORY', 'PURCHASES', 'TREASURY', 'BASIC'];
             case LicensePlan.PRO:
-                return ['ACCOUNTING', 'INVENTORY', 'SALES', 'PURCHASES', 'TREASURY'];
+                return ['ACCOUNTING', 'INVENTORY', 'SALES', 'PURCHASES', 'TREASURY', 'HR'];
             case LicensePlan.ENTERPRISE:
                 return ['ALL'];
             default:
