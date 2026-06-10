@@ -171,6 +171,13 @@ export class PayrollService {
 
           if (abs.type === 'VACATION' as any) {
             vacationDays += diffDays;
+            // Excess vacation days the manager chose to charge on salary:
+            // reason carries the marker [EXCESSO:N|SALARIO]; deducted in the
+            // month where the vacation ENDS (the overstayed days).
+            const exMatch = /\[EXCESSO:(\d+)\|SALARIO\]/.exec(abs.reason || '');
+            if (exMatch && end >= firstDayOfMonth && end <= lastDayOfMonth) {
+              absenceDays += Math.min(parseInt(exMatch[1], 10) || 0, diffDays);
+            }
           } else if (abs.type === 'UNJUSTIFIED' as any) {
             absenceDays += diffDays;
           }

@@ -188,12 +188,12 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
               <tr *ngFor="let e of activeEmployees; let i = index" class="hover:bg-orange-50" [class.bg-orange-50]="i % 2 === 1">
                 <td class="p-2 font-bold sticky left-0 bg-inherit cursor-pointer hover:text-indigo-600" (click)="openHistory(e)" title="Ver histórico de férias">{{ e.name }}</td>
                 <td class="p-1 text-center text-gray-500">{{ i + 1 }}</td>
-                <td class="p-1 text-center text-gray-500">{{ entitledDays(e) }}</td>
-                <td *ngFor="let m of monthIdx" class="p-0.5 text-center align-middle border-l border-gray-100">
+                <td class="p-1 text-center text-gray-500" [title]="carryPrev(e) > 0 ? (entitledDays(e) + ' - ' + carryPrev(e) + ' descontados de férias anteriores') : ''">{{ entitledAdj(e) }}<span *ngIf="carryPrev(e) > 0" class="text-red-500 text-[8px]">*</span></td>
+                <td *ngFor="let m of monthIdx" (click)="openVacEditor(e, m)" class="p-0.5 text-center align-middle border-l border-gray-100 cursor-pointer hover:bg-indigo-50" title="Clique para marcar férias neste mês">
                   <div *ngFor="let c of cellChips(e, m)"
                     [class]="'rounded px-1 py-0.5 my-0.5 text-[9px] font-bold leading-tight ' + (c.state === 'APPROVED' ? 'bg-sky-300 text-sky-900' : c.state === 'PENDING' ? 'bg-yellow-300 text-yellow-900' : 'bg-blue-100 text-blue-800 border border-dashed border-blue-500 cursor-pointer hover:bg-red-100')"
                     [title]="c.state === 'SUGGESTED' ? 'Clique para remover esta sugestão' : c.label"
-                    (click)="c.state === 'SUGGESTED' ? removeSuggestion(c.ref) : null">
+                    (click)="onChipClick(c, $event)">
                     {{ c.label }}
                   </div>
                 </td>
@@ -240,7 +240,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
               <tbody class="divide-y">
                 <tr *ngFor="let h of historyList">
                   <td class="p-2 font-bold">{{ h.year }}</td>
-                  <td class="p-2">{{ h.range }}</td>
+                  <td class="p-2">{{ h.range }}<div *ngIf="h.excess" class="text-[9px] font-bold text-red-600 mt-0.5">+{{ h.excess.n }} dias excedentes · {{ h.excess.mode === 'SALARIO' ? 'desconto no salário' : 'desconto nas próximas férias' }}</div></td>
                   <td class="p-2 text-center">{{ h.days }}</td>
                   <td class="p-2 text-center"><span [class]="'px-2 py-0.5 rounded-full text-[10px] font-bold ' + statusMap[h.status]?.color">{{ statusMap[h.status]?.label }}</span></td>
                 </tr>
@@ -253,6 +253,73 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
           </div>
         </div>
       </div>
+      <!-- Vacation Editor Modal -->
+      <div *ngIf="vacEd" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" (click)="vacEd = null">
+        <div class="bg-white rounded-xl shadow-2xl w-[600px] max-h-[90vh] overflow-auto" (click)="$event.stopPropagation()">
+          <div class="bg-gradient-to-r from-indigo-600 to-blue-500 text-white p-4 rounded-t-xl">
+            <h3 class="font-bold text-sm">Marcar Férias — {{ vacEd.emp.name }}</h3>
+            <p class="text-[10px] opacity-80">Ano {{ planYear }} · Direito: {{ entitledAdj(vacEd.emp) }} dias<span *ngIf="carryPrev(vacEd.emp) > 0"> ({{ entitledDays(vacEd.emp) }} − {{ carryPrev(vacEd.emp) }} de férias anteriores)</span></p>
+          </div>
+          <div class="p-5 space-y-4">
+            <!-- Balance meter -->
+            <div>
+              <div class="flex justify-between text-[10px] font-bold text-gray-500 mb-1">
+                <span>SALDO DE FÉRIAS</span>
+                <span [class.text-red-600]="vacEdExcess > 0">{{ availableAfter }} dias disponíveis após esta marcação</span>
+              </div>
+              <div class="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex">
+                <div class="bg-sky-400 h-full" [style.width.%]="meter.booked" title="Já marcado"></div>
+                <div class="bg-blue-300 h-full" [style.width.%]="meter.sug" title="Sugestões"></div>
+                <div class="bg-indigo-500 h-full" [style.width.%]="meter.novo" title="Esta marcação"></div>
+                <div class="bg-red-500 h-full" [style.width.%]="meter.over" title="Excesso"></div>
+              </div>
+              <div class="flex gap-3 mt-1 text-[9px] text-gray-500">
+                <span><span class="inline-block w-2 h-2 bg-sky-400 rounded-full"></span> Marcado: {{ bookedDays(vacEd.emp) }}d</span>
+                <span><span class="inline-block w-2 h-2 bg-blue-300 rounded-full"></span> Sugerido: {{ suggestedDaysOf(vacEd.emp) }}d</span>
+                <span><span class="inline-block w-2 h-2 bg-indigo-500 rounded-full"></span> Esta marcação: {{ vacEdDays }}d</span>
+                <span *ngIf="vacEdExcess > 0" class="text-red-600 font-bold"><span class="inline-block w-2 h-2 bg-red-500 rounded-full"></span> Excesso: {{ vacEdExcess }}d</span>
+              </div>
+            </div>
+            <!-- Dates -->
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Início</label>
+                <input type="date" [(ngModel)]="vacEd.start" class="w-full border rounded px-2 py-1.5 text-xs">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Fim</label>
+                <input type="date" [(ngModel)]="vacEd.end" class="w-full border rounded px-2 py-1.5 text-xs">
+              </div>
+              <div class="flex flex-col justify-end">
+                <div class="text-center bg-indigo-50 border border-indigo-200 rounded px-2 py-1.5">
+                  <span class="text-lg font-black text-indigo-700">{{ vacEdDays }}</span>
+                  <span class="text-[9px] text-indigo-400 font-bold uppercase block -mt-1">dias</span>
+                </div>
+              </div>
+            </div>
+            <!-- Excess policy -->
+            <div *ngIf="vacEdExcess > 0" class="border-2 border-red-200 bg-red-50 rounded-lg p-3 space-y-2">
+              <p class="text-xs font-bold text-red-700">⚠ Excede o direito em {{ vacEdExcess }} dia(s). Decisão do gestor:</p>
+              <label class="flex items-start gap-2 p-2 rounded-lg cursor-pointer border-2 transition-all" [class.border-indigo-500]="vacEd.policy === 'PROXIMAS'" [class.bg-white]="vacEd.policy === 'PROXIMAS'" [class.border-transparent]="vacEd.policy !== 'PROXIMAS'">
+                <input type="radio" name="expolicy" value="PROXIMAS" [(ngModel)]="vacEd.policy" class="mt-0.5">
+                <span class="text-xs"><b>Descontar nas próximas férias</b><br><span class="text-gray-500 text-[10px]">No próximo ano o direito será reduzido em {{ vacEdExcess }} dia(s) automaticamente.</span></span>
+              </label>
+              <label class="flex items-start gap-2 p-2 rounded-lg cursor-pointer border-2 transition-all" [class.border-indigo-500]="vacEd.policy === 'SALARIO'" [class.bg-white]="vacEd.policy === 'SALARIO'" [class.border-transparent]="vacEd.policy !== 'SALARIO'">
+                <input type="radio" name="expolicy" value="SALARIO" [(ngModel)]="vacEd.policy" class="mt-0.5">
+                <span class="text-xs"><b>Descontar no salário</b><br><span class="text-gray-500 text-[10px]">{{ vacEdExcess }} dia(s) não pagos, deduzidos automaticamente na folha do mês em que as férias terminam.</span></span>
+              </label>
+            </div>
+            <div *ngIf="vacEdExcess === 0 && vacEdDays > 0" class="text-[10px] text-emerald-600 font-bold">✓ Dentro do direito de férias.</div>
+          </div>
+          <div class="flex justify-end gap-2 p-4 border-t bg-gray-50 rounded-b-xl">
+            <button (click)="vacEd = null" class="px-4 py-1.5 text-xs border rounded hover:bg-gray-100">Cancelar</button>
+            <button (click)="saveVacEdit()" [disabled]="vacEdDays <= 0 || savingVac" class="px-4 py-1.5 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-400 font-bold shadow">
+              {{ savingVac ? 'A gravar...' : ('Criar Pedido (' + vacEdDays + ' dias)') }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Table -->
 
       <div *ngIf="viewMode === 'LIST'" class="bg-white rounded shadow-sm overflow-hidden flex-1">
@@ -665,7 +732,8 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
     this.vacationsOf(e).forEach((a: any) => {
       const sd = new Date(a.startDate);
       if (sd.getFullYear() === +this.planYear && sd.getMonth() === m) {
-        chips.push({ label: this.fmtRange(a.startDate, a.endDate), state: a.status, ref: a });
+        const ex = (a.reason || '').includes('[EXCESSO:') ? ' ⚠' : '';
+        chips.push({ label: this.fmtRange(a.startDate, a.endDate) + ex, state: a.status, ref: a });
       }
     });
     this.suggestions.forEach(sg => {
@@ -751,7 +819,10 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
     if (!this.historyEmp) return [];
     return (this.absences || [])
       .filter((a: any) => a.employeeId === this.historyEmp.id && a.type === 'VACATION')
-      .map((a: any) => ({ year: new Date(a.startDate).getFullYear(), range: this.fmtRange(a.startDate, a.endDate) + '/' + new Date(a.endDate).getFullYear(), days: a.days, status: a.status }))
+      .map((a: any) => {
+        const exm = /\[EXCESSO:(\d+)\|(PROXIMAS|SALARIO)\]/.exec(a.reason || '');
+        return { year: new Date(a.startDate).getFullYear(), range: this.fmtRange(a.startDate, a.endDate) + '/' + new Date(a.endDate).getFullYear(), days: a.days, status: a.status, excess: exm ? { n: +exm[1], mode: exm[2] } : null };
+      })
       .sort((a: any, b: any) => b.year - a.year);
   }
 
@@ -759,6 +830,95 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
     return this.historyList.filter(h => h.status === 'APPROVED').reduce((s2, h) => s2 + (Number(h.days) || 0), 0);
   }
 
+  // ── Editor de Férias (clique no mês) ──────────────────────────────────────
+  vacEd: any = null;
+  savingVac = false;
+
+  /** Excesso do ano anterior marcado para descontar nas próximas férias. */
+  carryPrev(e: any): number {
+    return (this.absences || []).filter((a: any) =>
+      a.employeeId === e.id && a.type === 'VACATION' && a.status !== 'REJECTED' &&
+      new Date(a.startDate).getFullYear() === +this.planYear - 1)
+      .reduce((s2: number, a: any) => {
+        const m = /\[EXCESSO:(\d+)\|PROXIMAS\]/.exec(a.reason || '');
+        return s2 + (m ? parseInt(m[1], 10) || 0 : 0);
+      }, 0);
+  }
+
+  entitledAdj(e: any): number { return Math.max(0, this.entitledDays(e) - this.carryPrev(e)); }
+  bookedDays(e: any): number { return this.vacationsOf(e).reduce((s2: number, a: any) => s2 + (Number(a.days) || 0), 0); }
+  suggestedDaysOf(e: any): number { return this.suggestions.filter(sg => sg.employeeId === e.id).reduce((s2, sg) => s2 + (Number(sg.days) || 0), 0); }
+  availableDays(e: any): number { return this.entitledAdj(e) - this.bookedDays(e) - this.suggestedDaysOf(e); }
+
+  get vacEdDays(): number {
+    if (!this.vacEd || !this.vacEd.start || !this.vacEd.end) return 0;
+    const d = Math.round((new Date(this.vacEd.end).getTime() - new Date(this.vacEd.start).getTime()) / 86400000) + 1;
+    return d > 0 ? d : 0;
+  }
+
+  get vacEdExcess(): number {
+    if (!this.vacEd) return 0;
+    return Math.max(0, this.vacEdDays - Math.max(0, this.availableDays(this.vacEd.emp)));
+  }
+
+  get availableAfter(): number {
+    if (!this.vacEd) return 0;
+    return Math.max(0, this.availableDays(this.vacEd.emp) - this.vacEdDays);
+  }
+
+  /** Segmentos da barra de saldo (percentagens do direito ajustado). */
+  get meter(): any {
+    if (!this.vacEd) return { booked: 0, sug: 0, novo: 0, over: 0 };
+    const ent = Math.max(1, this.entitledAdj(this.vacEd.emp));
+    const total = Math.max(ent, this.bookedDays(this.vacEd.emp) + this.suggestedDaysOf(this.vacEd.emp) + this.vacEdDays);
+    const pct = (v: number) => Math.min(100, Math.round((v / total) * 100));
+    const within = Math.min(this.vacEdDays, Math.max(0, this.availableDays(this.vacEd.emp)));
+    return {
+      booked: pct(this.bookedDays(this.vacEd.emp)),
+      sug: pct(this.suggestedDaysOf(this.vacEd.emp)),
+      novo: pct(within),
+      over: pct(this.vacEdExcess)
+    };
+  }
+
+  onChipClick(c: any, ev: Event) {
+    ev.stopPropagation();
+    if (c.state === 'SUGGESTED') this.removeSuggestion(c.ref);
+  }
+
+  openVacEditor(e: any, m: number) {
+    const iso = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const start = new Date(+this.planYear, m, 2);
+    const avail = Math.max(0, this.availableDays(e));
+    const defDays = Math.min(15, avail > 0 ? avail : 15);
+    const end = new Date(start.getTime() + (defDays - 1) * 86400000);
+    this.vacEd = { emp: e, start: iso(start), end: iso(end), policy: 'PROXIMAS' };
+  }
+
+  saveVacEdit() {
+    if (!this.vacEd || this.vacEdDays <= 0 || this.savingVac) return;
+    if (new Date(this.vacEd.end) < new Date(this.vacEd.start)) { alert('A data de fim deve ser posterior ao início.'); return; }
+    const company = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
+    if (!company.id) return;
+    let reason = 'Férias ' + this.planYear;
+    if (this.vacEdExcess > 0) {
+      reason += ' [EXCESSO:' + this.vacEdExcess + '|' + this.vacEd.policy + ']';
+    }
+    this.savingVac = true;
+    const payload = {
+      id: 'ABS' + Date.now() + '-' + Math.floor(Math.random() * 10000),
+      companyId: company.id, employeeId: this.vacEd.emp.id, type: 'VACATION',
+      startDate: this.vacEd.start, endDate: this.vacEd.end, days: this.vacEdDays,
+      reason, status: 'PENDING'
+    };
+    this.sub.add(this.http.post(this.apiUrl + '/absences', payload).subscribe({
+      next: () => {
+        this.savingVac = false; this.vacEd = null;
+        this.loadAbsences(company.id);
+      },
+      error: () => { this.savingVac = false; alert('Erro ao gravar o pedido de férias.'); }
+    }));
+  }
   /** Impressão no formato clássico do mapa anual (cabeçalho da empresa + grelha). */
   printPlan() {
     const company = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
