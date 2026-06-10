@@ -166,7 +166,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
             <table class="totals-table">
               <tr>
                 <td>Mercadoria/Serviços</td>
-                <td class="val">{{ document.subtotal + document.discounts | number:'1.2-2' }}</td>
+                <td class="val">{{ (+document.subtotal || 0) + (+document.discounts || 0) | number:'1.2-2' }}</td>
               </tr>
               <tr>
                 <td>Descontos</td>
