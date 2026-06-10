@@ -1561,6 +1561,8 @@ export class AccountingService {
 
 
         const lines: JournalLine[] = [];
+        const docTotalNum = parseFloat(String(salesDoc.total)) || 0;
+        const docIvaNum = parseFloat(String(salesDoc.totalIva)) || 0;
 
 
         const entryId = `JE${this.nextJournalId++}`;
@@ -1629,10 +1631,10 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
             accountName: customerAcc.name,
 
 
-            debit: isPayNature ? 0 : salesDoc.total,
+            debit: isPayNature ? 0 : docTotalNum,
 
 
-            credit: isPayNature ? salesDoc.total : 0,
+            credit: isPayNature ? docTotalNum : 0,
 
 
             description: `Venda a ${salesDoc.customerName} (${customer?.code || ''}) - ${salesDoc.documentNumber}`
@@ -1668,7 +1670,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
             const currentAmount = revenueMap.get(revenueAccountId) || 0;
 
 
-            revenueMap.set(revenueAccountId, currentAmount + line.subtotal);
+            revenueMap.set(revenueAccountId, currentAmount + (parseFloat(String(line.subtotal)) || 0));
 
 
         });
@@ -1722,7 +1724,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
 
 
 
-        if (salesDoc.totalIva > 0) {
+        if (docIvaNum > 0) {
 
 
             // Lookup VAT account: 4.4.3.3 (Liquidado)
@@ -1749,10 +1751,10 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
                 accountName: ivaAcc.name,
 
 
-                debit: isPayNature ? salesDoc.totalIva : 0,
+                debit: isPayNature ? docIvaNum : 0,
 
 
-                credit: isPayNature ? 0 : salesDoc.totalIva,
+                credit: isPayNature ? 0 : docIvaNum,
 
 
                 description: `IVA - ${salesDoc.documentNumber}`
@@ -2321,7 +2323,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
             companyId: this.activeCompanyId || undefined,
 
 
-            journalId: journal.id,
+            journalId: journal?.id || 'GENERAL',
 
 
             date: purchaseDoc.date,
@@ -2657,7 +2659,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
             companyId: this.activeCompanyId || undefined,
 
 
-            journalId: journal.id,
+            journalId: journal?.id || 'GENERAL',
 
 
             date: salesDoc.date,
