@@ -3,10 +3,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
 import { Observable, BehaviorSubject, tap, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
+import { environment } from './config';
 
 
 
-const API_BASE = 'http://192.168.88.25:3000';
+const API_BASE = environment.apiUrl;
 
 
 

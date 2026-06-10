@@ -7,6 +7,7 @@ import { AdminSeriesComponent } from './admin-series.component';
 import { LicenseManagerComponent } from './license-manager.component';
 import { PeriodService } from '../../shared/period.service';
 import { DataService } from '../../services/data.service';
+import { environment } from '../../shared/config';
 
 interface CompanyInfo {
   name: string;
@@ -639,7 +640,7 @@ export class AdminPageComponent implements OnInit {
   checkBackendStatus() {
     this.backendStatus = 'checking';
     // Try to reach the backend
-    fetch('http://192.168.88.25:3000')
+    fetch(environment.apiUrl)
       .then(response => {
         this.backendStatus = 'online';
       })
@@ -705,7 +706,7 @@ export class AdminPageComponent implements OnInit {
     }
 
     try {
-      const response = await fetch('http://192.168.88.25:3000/test-db-connection', {
+      const response = await fetch('' + environment.apiUrl + '/test-db-connection', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -723,7 +724,7 @@ export class AdminPageComponent implements OnInit {
       }
     } catch (error: any) {
       this.checkBackendStatus(); // Refresh status
-      alert('❌ Erro ao contactar o servidor local (Backend).\n\nCertifique-se que o backend está a correr em http://192.168.88.25:3000.\n\nDetalhes: ' + error.message);
+      alert('❌ Erro ao contactar o servidor local (Backend).\n\nCertifique-se que o backend está a correr em ' + environment.apiUrl + '.\n\nDetalhes: ' + error.message);
     }
   }
 }
