@@ -307,7 +307,9 @@ export class PayrollService {
 
     try {
       const entry = await this.accountingService.createJournalEntry({
-        date: new Date(year, month - 1, 1).toISOString().split('T')[0],
+        // Last day of the payroll month, built as a plain string to avoid the
+        // UTC rollback bug (local midnight Jan 1 UTC+2 -> "2025-12-31" in ISO).
+        date: `${year}-${String(month).padStart(2, '0')}-${String(new Date(year, month, 0).getDate()).padStart(2, '0')}`,
         description: `Processamento de Salários - Período ${month}/${year}`,
         reference: `FOLHA-${String(month).padStart(2, '0')}-${year}`,
         status: JournalEntryStatus.POSTED,
