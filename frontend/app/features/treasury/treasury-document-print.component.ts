@@ -104,7 +104,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
                 <td>{{ line.docType || 'FA' }}</td>
                 <td>{{ line.docNumber }}</td>
                 <td>1</td>
-                <td class="text-right">{{ (line.originalAmount || line.amount) | number:'1.2-2' }}</td>
+                <td class="text-right">{{ (+line.originalAmount || +line.amount || 0) | number:'1.2-2' }}</td>
                 <td class="text-right">{{ (+line.amount || 0) | number:'1.2-2' }}</td>
                 <td class="text-right">{{ (line.discount || 0) | number:'1.2-2' }}</td>
                 <td class="text-right">{{ (line.pendingAfter || 0) | number:'1.2-2' }}</td>
@@ -409,21 +409,21 @@ export class TreasuryDocumentPrintComponent implements OnInit {
 
   getTotalOriginal(): number {
     if (!this.document || !this.document.lines) return 0;
-    return this.document.lines.reduce((sum, line) => sum + (line.originalAmount || line.amount || 0), 0);
+    return this.document.lines.reduce((sum, line) => sum + (parseFloat(String(line.originalAmount ?? line.amount)) || 0), 0);
   }
 
   getTotalAllocated(): number {
     if (!this.document || !this.document.lines) return 0;
-    return this.document.lines.reduce((sum, line) => sum + (line.amount || 0), 0);
+    return this.document.lines.reduce((sum, line) => sum + (parseFloat(String(line.amount)) || 0), 0);
   }
 
   getTotalDiscount(): number {
     if (!this.document || !this.document.lines) return 0;
-    return this.document.lines.reduce((sum, line) => sum + (line.discount || 0), 0);
+    return this.document.lines.reduce((sum, line) => sum + (parseFloat(String(line.discount)) || 0), 0);
   }
 
   getTotalPending(): number {
     if (!this.document || !this.document.lines) return 0;
-    return this.document.lines.reduce((sum, line) => sum + (line.pendingAfter || 0), 0);
+    return this.document.lines.reduce((sum, line) => sum + (parseFloat(String(line.pendingAfter)) || 0), 0);
   }
 }

@@ -1819,7 +1819,7 @@ export class JournalEntriesReviewComponent implements OnInit {
     get editingTotalDebit(): number {
 
 
-        return this.editingEntry.lines.reduce((sum, line) => sum + (line.debit || 0), 0);
+        return this.editingEntry.lines.reduce((sum, line) => sum + (parseFloat(String(line.debit)) || 0), 0);
 
 
     }
@@ -1831,7 +1831,7 @@ export class JournalEntriesReviewComponent implements OnInit {
     get editingTotalCredit(): number {
 
 
-        return this.editingEntry.lines.reduce((sum, line) => sum + (line.credit || 0), 0);
+        return this.editingEntry.lines.reduce((sum, line) => sum + (parseFloat(String(line.credit)) || 0), 0);
 
 
     }
