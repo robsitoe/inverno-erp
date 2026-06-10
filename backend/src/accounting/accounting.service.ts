@@ -197,6 +197,12 @@ export class AccountingService {
       lines: preparedLines,
     });
 
+    // id is a PrimaryColumn without auto-generation; server-side callers
+    // (e.g. payroll posting) may not provide one.
+    if (!journalEntry.id) {
+      journalEntry.id = `JE-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    }
+
     try {
       console.log(`[AccountingService] Saving Journal Entry ${journalEntry.id} with ${journalEntry.lines?.length} lines`);
       const savedEntry = await jeRepo.save(journalEntry);
