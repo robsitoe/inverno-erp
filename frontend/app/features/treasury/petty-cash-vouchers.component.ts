@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { DataService } from '../../services/data.service';
 import { ToasterService } from '../../services/toaster.service';
 import { valorPorExtenso } from '../../shared/utils';
+import { environment } from '../../shared/config';
 
 @Component({
   selector: 'app-petty-cash-vouchers',
@@ -193,7 +194,7 @@ export class PettyCashVouchersComponent implements OnInit {
 
   loadVouchers() {
     const cid = this.dataService.getCurrentCompany()?.id || '';
-    const baseUrl = 'http://192.168.88.25:3000'; // Standard for this project
+    const baseUrl = environment.apiUrl;
     const url = `${baseUrl}/treasury/vouchers?companyId=${cid}`;
 
     this.http.get<any[]>(url, {
@@ -213,7 +214,7 @@ export class PettyCashVouchersComponent implements OnInit {
 
   loadAllEntities() {
     const cid = this.dataService.getCurrentCompany()?.id || '';
-    const baseUrl = 'http://192.168.88.25:3000';
+    const baseUrl = environment.apiUrl;
     const headers = { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` };
 
     // Load Employees
@@ -317,7 +318,7 @@ export class PettyCashVouchersComponent implements OnInit {
 
   openAddModal() {
     const cid = this.dataService.getCurrentCompany()?.id || '';
-    const baseUrl = 'http://192.168.88.25:3000';
+    const baseUrl = environment.apiUrl;
 
     this.currentDoc = {
       companyId: cid,
@@ -378,7 +379,7 @@ export class PettyCashVouchersComponent implements OnInit {
 
     this.isSaving = true;
 
-    const baseUrl = window.location.hostname === 'localhost' ? 'http://192.168.88.25:3000' : '';
+    const baseUrl = environment.apiUrl;
     this.http.post(`${baseUrl}/treasury/vouchers`, this.currentDoc).subscribe({
       next: (data: any) => {
         this.toaster.showSuccess('Sucesso', 'Vale gravado e descontos programados (se aplicável).');
@@ -401,7 +402,7 @@ export class PettyCashVouchersComponent implements OnInit {
   deleteVoucher(id: string) {
     if (!confirm('Tem a certeza que deseja eliminar este vale? Se já foi descontado no salário não deve ser eliminado.')) return;
 
-    const baseUrl = window.location.hostname === 'localhost' ? 'http://192.168.88.25:3000' : '';
+    const baseUrl = environment.apiUrl;
     this.http.delete(`${baseUrl}/treasury/vouchers/${id}`).subscribe({
       next: () => {
         this.toaster.showSuccess('Eliminado', 'Vale eliminado com sucesso.');

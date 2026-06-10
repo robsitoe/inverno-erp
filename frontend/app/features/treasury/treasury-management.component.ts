@@ -47,6 +47,7 @@ import { TreasuryDocumentPrintComponent } from './treasury-document-print.compon
 
 
 import { WorkflowStatus, WorkflowHistory, TreasuryDocument, TreasuryDocumentLine } from '../../shared/models';
+import { environment } from '../../shared/config';
 
 
 
@@ -2131,7 +2132,7 @@ export class TreasuryManagementComponent implements OnInit {
     this.isLoadingEmployees = true;
 
 
-    fetch(`http://192.168.88.25:3000/hr/employees?companyId=${cid}`, {
+    fetch(`${environment.apiUrl}/hr/employees?companyId=${cid}`, {
 
 
       headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
@@ -4927,7 +4928,7 @@ export class TreasuryManagementComponent implements OnInit {
         const cid = this.activeCompanyId || '';
 
 
-        fetch(`http://192.168.88.25:3000/hr/payroll?companyId=${cid}&employeeId=${this.entityCode}`, {
+        fetch(`${environment.apiUrl}/hr/payroll?companyId=${cid}&employeeId=${this.entityCode}`, {
 
 
           headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }

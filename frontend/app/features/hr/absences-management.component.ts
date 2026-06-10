@@ -11,10 +11,11 @@ import { AppIconComponent } from '../../shared/components/app-icon.component';
 import { Subscription } from 'rxjs';
 
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../shared/config';
 
 
 
-const API_BASE = 'http://192.168.88.25:3000';
+const API_BASE = environment.apiUrl;
 
 
 
