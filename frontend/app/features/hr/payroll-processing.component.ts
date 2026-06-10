@@ -5,6 +5,7 @@ import { HRService, PayrollRecord } from '../../shared/hr.service';
 import { AppIconComponent } from '../../shared/components/app-icon.component';
 import { ToasterService } from '../../services/toaster.service';
 import { DataService } from '../../services/data.service';
+import { AccountingService } from '../../shared/accounting.service';
 import { Subscription, firstValueFrom } from 'rxjs';
 
 @Component({
@@ -51,6 +52,17 @@ import { Subscription, firstValueFrom } from 'rxjs';
                 <app-icon name="account_balance" [size]="18"></app-icon>
                 <span>{{ posting ? 'A LANÇAR...' : 'LANÇAR NA CONTABILIDADE' }}</span>
               </button>
+              <div *ngIf="payrollData.length > 0 && !hasDraftRecords" class="flex items-center gap-2">
+                <select [(ngModel)]="paymentAccountCode" class="px-2 py-2 border rounded text-xs">
+                  <option value="1.2">Banco (1.2)</option>
+                  <option value="1.1">Caixa (1.1)</option>
+                </select>
+                <button (click)="paySalaries()" [disabled]="paying || salariesPaid"
+                  class="bg-indigo-600 text-white px-5 py-2 rounded text-xs font-bold hover:bg-indigo-700 shadow-lg flex items-center gap-2 disabled:bg-gray-400 font-black">
+                  <app-icon name="payments" [size]="18"></app-icon>
+                  <span>{{ salariesPaid ? 'SALÁRIOS PAGOS ✓' : (paying ? 'A PAGAR...' : 'PAGAR SALÁRIOS') }}</span>
+                </button>
+              </div>
            </div>
         </div>
 
@@ -81,6 +93,15 @@ import { Subscription, firstValueFrom } from 'rxjs';
            </div>
         </div>
 
+        <!-- Contract alerts -->
+        <div *ngIf="contractAlerts.length > 0" class="bg-amber-50 border border-amber-300 rounded p-3 flex items-start gap-2">
+          <app-icon name="warning" [size]="18" class="text-amber-600 shrink-0"></app-icon>
+          <div class="text-xs text-amber-800">
+            <p class="font-bold uppercase mb-1">Contratos a Terminar (próximos 60 dias)</p>
+            <p *ngFor="let a of contractAlerts">{{ a.code }} - {{ a.name }} · termina em {{ a.endDate | date:'dd/MM/yyyy' }} ({{ a.days }} dias)</p>
+          </div>
+        </div>
+
         <!-- Table -->
         <div class="bg-white rounded shadow-sm overflow-hidden flex-1 border border-gray-200">
            <div class="bg-gray-50 border-b p-3 flex justify-between items-center">
@@ -88,6 +109,12 @@ import { Subscription, firstValueFrom } from 'rxjs';
               <div class="flex gap-4" *ngIf="payrollData.length > 0">
                  <button (click)="exportToExcel()" class="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 transition-colors">
                    <app-icon name="description" [size]="14"></app-icon> Excel
+                 </button>
+                 <button (click)="exportBankFile()" class="text-xs text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1 transition-colors">
+                   <app-icon name="account_balance" [size]="14"></app-icon> Ficheiro Bancário
+                 </button>
+                 <button (click)="printGuiaINSS()" class="text-xs text-orange-600 hover:text-orange-800 font-bold flex items-center gap-1 transition-colors">
+                   <app-icon name="receipt_long" [size]="14"></app-icon> Guia INSS
                  </button>
                  <button (click)="printMapa()" [disabled]="printing" class="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 transition-colors">
                    <app-icon name="format_list_bulleted" [size]="14"></app-icon> Imprimir Mapa (A4 Folha Única)
@@ -172,6 +199,9 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   posting = false;
   printing = false;
   totals = { gross: 0, inssTotal: 0, inssEmployee: 0, inssEmployer: 0, irps: 0, net: 0, subsidies: 0, employerCost: 0 };
+  employees: any[] = [];
+  paymentAccountCode: '1.1' | '1.2' = '1.2';
+  paying = false;
 
   get hasDraftRecords() {
     return this.payrollData.some(r => r.status !== 'POSTED');
@@ -182,6 +212,7 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   constructor(
     private hrService: HRService,
     private dataService: DataService,
+    private accountingService: AccountingService,
     private toaster: ToasterService,
     private cdr: ChangeDetectorRef
   ) { }
@@ -208,6 +239,7 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
     this.sub.add(this.hrService.processPayroll(this.selectedYear, this.selectedMonth, cid).subscribe({
       next: (data) => {
         this.payrollData = data;
+        this.loadEmployeesList();
         this.calculateTotals();
         this.processing = false;
         this.cdr.detectChanges();
@@ -264,6 +296,127 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     }));
+  }
+
+  loadEmployeesList() {
+    const cid = this.dataService.getCompanyId();
+    if (!cid) return;
+    this.sub.add(this.hrService.loadEmployees(cid).subscribe({
+      next: (emps) => { this.employees = emps || []; this.cdr.detectChanges(); },
+      error: () => { this.employees = []; }
+    }));
+  }
+
+  get contractAlerts(): any[] {
+    const now = new Date(); const limit = new Date(); limit.setDate(now.getDate() + 60);
+    return (this.employees || [])
+      .filter((e: any) => e.endDate && e.status !== 'INACTIVE')
+      .map((e: any) => ({ code: e.code, name: e.name, endDate: e.endDate, days: Math.ceil((new Date(e.endDate).getTime() - now.getTime()) / 86400000) }))
+      .filter(a => a.days >= 0 && new Date(a.endDate) <= limit)
+      .sort((a, b) => a.days - b.days);
+  }
+
+  get salariesPaid(): boolean {
+    const ref = `FOLHA-PAG-${String(this.selectedMonth).padStart(2, '0')}-${this.selectedYear}`;
+    return this.accountingService.getJournalEntries().some((e: any) => e.reference === ref && e.status === 'POSTED');
+  }
+
+  /** Bank transfer file: CSV with net salary per employee (NIB/bank from the employee record). */
+  exportBankFile() {
+    if (this.payrollData.length === 0) return;
+    const empByCode = new Map((this.employees || []).map((e: any) => [e.code, e]));
+    const missing: string[] = [];
+    const rows = this.payrollData.map(r => {
+      const e: any = empByCode.get(r.employeeCode) || {};
+      if (!e.nib) missing.push(r.employeeCode);
+      return [r.employeeCode, r.employeeName, e.nib || '', e.bankName || '', (Number(r.netSalary) || 0).toFixed(2)];
+    });
+    const header = ['Codigo', 'Nome', 'NIB', 'Banco', 'Valor_MT'];
+    const csv = '\uFEFF' + [header, ...rows].map(l => l.join(';')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `salarios_${String(this.selectedMonth).padStart(2, '0')}_${this.selectedYear}.csv`;
+    a.click(); URL.revokeObjectURL(a.href);
+    if (missing.length) this.toaster.showWarning('NIB em falta', `Funcionários sem NIB: ${missing.join(', ')}. Complete a ficha antes de enviar ao banco.`);
+    else this.toaster.showSuccess('Ficheiro gerado', 'Ficheiro bancário de salários exportado.');
+  }
+
+  /** Monthly INSS guide (employee 3% + employer 4% per worker). */
+  printGuiaINSS() {
+    if (this.payrollData.length === 0) return;
+    const company = this.dataService.getCurrentCompany() || { name: 'Empresa', nif: '' } as any;
+    const monthName = this.months[this.selectedMonth - 1];
+    const fmt = (v: number) => (Number(v) || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
+    let rows = ''; let tg = 0, te = 0, tr = 0;
+    this.payrollData.forEach(r => {
+      const gross = Number(r.grossSalary) || 0, ee = Number(r.inssEmployee) || 0, er = Number(r.inssEmployer) || 0;
+      tg += gross; te += ee; tr += er;
+      rows += `<tr><td>${r.employeeCode}</td><td>${r.employeeName}</td><td class="r">${fmt(gross)}</td><td class="r">${fmt(ee)}</td><td class="r">${fmt(er)}</td><td class="r">${fmt(ee + er)}</td></tr>`;
+    });
+    const html = `<html><head><title>Guia INSS</title><style>
+      body{font-family:Arial,sans-serif;font-size:11px;margin:24px}
+      h1{font-size:16px;margin:0} h2{font-size:12px;color:#555;margin:2px 0 14px;font-weight:normal}
+      table{width:100%;border-collapse:collapse;margin-top:10px} th,td{border:1px solid #333;padding:4px 6px}
+      th{background:#eee;text-transform:uppercase;font-size:10px} .r{text-align:right}
+      tfoot td{font-weight:bold;background:#f5f5f5}
+      .sig{margin-top:50px;display:flex;justify-content:space-between}
+      .sig div{width:40%;border-top:1px solid #333;text-align:center;padding-top:4px;font-size:10px}
+    </style></head><body>
+      <h1>GUIA DE CONTRIBUIÇÕES — INSS</h1>
+      <h2>${company.name} · NUIT: ${company.nif || '—'} · Período: ${monthName} / ${this.selectedYear}</h2>
+      <table><thead><tr><th>Código</th><th>Funcionário</th><th>Salário Bruto</th><th>Trabalhador (3%)</th><th>Entidade (4%)</th><th>Total (7%)</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="2">TOTAIS</td><td class="r">${fmt(tg)}</td><td class="r">${fmt(te)}</td><td class="r">${fmt(tr)}</td><td class="r">${fmt(te + tr)}</td></tr></tfoot></table>
+      <p style="margin-top:14px">Total a entregar ao INSS: <b>${fmt(te + tr)} MT</b></p>
+      <div class="sig"><div>O Responsável</div><div>Data e Carimbo</div></div>
+    </body></html>`;
+    this.printDirectly(html);
+  }
+
+  /** Pays posted net salaries: debit 4.6.2.2, credit the selected treasury account. */
+  paySalaries() {
+    if (this.paying || this.salariesPaid) return;
+    const net = this.totals.net;
+    if (net <= 0) { this.toaster.showWarning('Nada a pagar', 'Não há líquidos apurados.'); return; }
+    const accLabel = this.paymentAccountCode === '1.1' ? 'Caixa (1.1)' : 'Banco (1.2)';
+    if (!confirm(`Pagar salários de ${this.months[this.selectedMonth - 1]}/${this.selectedYear}?\n\nValor: ${net.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT\nConta: ${accLabel}\n\nSerá criado o lançamento de pagamento (4.6.2.2 → ${this.paymentAccountCode}).`)) return;
+    this.paying = true;
+    const accounts = this.accountingService.getAccounts();
+    const findLeaf = (prefix: string) => accounts.find((a: any) => a.code === prefix && a.allowPosting)
+      || accounts.find((a: any) => a.code.startsWith(prefix) && a.allowPosting);
+    const salAcc: any = findLeaf('4.6.2.2');
+    const payAcc: any = findLeaf(this.paymentAccountCode);
+    if (!salAcc || !payAcc) { this.paying = false; this.toaster.showError('Contas em falta', 'Verifique 4.6.2.2 e a conta de tesouraria no Plano de Contas.'); return; }
+    const entryId = `JE${Date.now()}`;
+    const ref = `FOLHA-PAG-${String(this.selectedMonth).padStart(2, '0')}-${this.selectedYear}`;
+    const entry: any = {
+      id: entryId,
+      companyId: this.dataService.getCompanyId() || undefined,
+      journalId: this.paymentAccountCode === '1.1' ? 'JNL-CSH' : 'JNL-BNK',
+      date: new Date(),
+      description: `Pagamento de Salários - ${this.months[this.selectedMonth - 1]}/${this.selectedYear}`,
+      reference: ref,
+      sourceDocument: ref,
+      sourceType: 'PAYMENT',
+      status: 'POSTED',
+      createdBy: 'user',
+      createdAt: new Date(),
+      lines: [
+        { id: `${entryId}-1`, accountId: salAcc.id, accountCode: salAcc.code, accountName: salAcc.name, debit: net, credit: 0, description: `Liquidação salários ${this.selectedMonth}/${this.selectedYear}` },
+        { id: `${entryId}-2`, accountId: payAcc.id, accountCode: payAcc.code, accountName: payAcc.name, debit: 0, credit: net, description: `Pagamento salários ${this.selectedMonth}/${this.selectedYear}` }
+      ]
+    };
+    try {
+      this.accountingService.createJournalEntry(entry);
+      const postErr = (this.accountingService as any).consumePostingError ? (this.accountingService as any).consumePostingError() : null;
+      if (postErr) { this.toaster.showError('Pagamento não lançado', postErr); }
+      else { this.toaster.showSuccess('Salários pagos!', `Lançamento ${ref} criado: 4.6.2.2 → ${payAcc.code} (${net.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT).`); }
+    } catch (e: any) {
+      this.toaster.showError('Erro no pagamento', e?.message || 'Erro desconhecido');
+    }
+    this.paying = false;
+    this.cdr.detectChanges();
   }
 
   exportToExcel() {
