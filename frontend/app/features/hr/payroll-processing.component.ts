@@ -55,22 +55,29 @@ import { Subscription, firstValueFrom } from 'rxjs';
         </div>
 
         <!-- Dashboard / Summary -->
-        <div *ngIf="payrollData.length > 0" class="grid grid-cols-4 gap-4">
+        <div *ngIf="payrollData.length > 0" class="grid grid-cols-5 gap-3">
            <div class="bg-white p-4 rounded shadow-sm border-b-2 border-gray-100">
               <p class="text-[10px] text-gray-400 font-bold uppercase">Total Bruto</p>
               <p class="text-lg font-bold text-gray-800">{{ totals.gross | number:'1.2-2' }} MT</p>
+              <p class="text-[10px] text-gray-400 mt-0.5" *ngIf="totals.subsidies > 0">+ {{ totals.subsidies | number:'1.2-2' }} subsídios</p>
            </div>
             <div class="bg-white p-4 rounded shadow-sm border-b-2 border-red-100">
-              <p class="text-[10px] text-gray-400 font-bold uppercase text-red-500">Total IRPS (4.4.2.1)</p>
+              <p class="text-[10px] text-gray-400 font-bold uppercase text-red-500">IRPS Retido (4.4.2.1)</p>
               <p class="text-lg font-bold text-red-600">{{ (totals.irps || 0) | number:'1.2-2' }} MT</p>
             </div>
            <div class="bg-white p-4 rounded shadow-sm border-b-2 border-orange-100">
-              <p class="text-[10px] text-gray-400 font-bold uppercase text-orange-500">Total INSS (7%)</p>
+              <p class="text-[10px] text-gray-400 font-bold uppercase text-orange-500">INSS Total (7%)</p>
               <p class="text-lg font-bold text-orange-600">{{ totals.inssTotal | number:'1.2-2' }} MT</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">Trab. 3%: {{ totals.inssEmployee | number:'1.2-2' }} · Patr. 4%: {{ totals.inssEmployer | number:'1.2-2' }}</p>
            </div>
            <div class="bg-white p-4 rounded shadow-sm border-r-4 border-green-500">
               <p class="text-[10px] text-gray-400 font-bold uppercase text-green-600">Total Líquido</p>
               <p class="text-xl font-black text-green-700">{{ totals.net | number:'1.2-2' }} MT</p>
+           </div>
+           <div class="bg-slate-800 p-4 rounded shadow-sm text-white">
+              <p class="text-[10px] text-slate-400 font-bold uppercase">Custo Total Empresa</p>
+              <p class="text-xl font-black">{{ totals.employerCost | number:'1.2-2' }} MT</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Bruto + INSS Patronal + Subsídios</p>
            </div>
         </div>
 
@@ -158,13 +165,13 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   selectedMonth = new Date().getMonth() + 1;
   selectedYear = new Date().getFullYear();
   months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-  years = [2024, 2025, 2026];
+  years = [new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1];
 
   payrollData: PayrollRecord[] = [];
   processing = false;
   posting = false;
   printing = false;
-  totals = { gross: 0, inssTotal: 0, irps: 0, net: 0 };
+  totals = { gross: 0, inssTotal: 0, inssEmployee: 0, inssEmployer: 0, irps: 0, net: 0, subsidies: 0, employerCost: 0 };
 
   get hasDraftRecords() {
     return this.payrollData.some(r => r.status !== 'POSTED');
@@ -217,13 +224,21 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   calculateTotals() {
     this.totals = this.payrollData.reduce((acc, r) => {
       const rowIRPS = Number(r.irps || r['irm'] || 0);
+      const ee = Number(r.inssEmployee || 0);
+      const er = Number(r.inssEmployer || 0);
+      const subs = Number(r.transportSubsidy || 0) + Number(r.foodSubsidy || 0) + Number(r.overtimeAmount || 0) + Number(r.bonusAmount || 0);
+      const gross = Number(r.grossSalary || 0);
       return {
-        gross: acc.gross + Number(r.grossSalary || 0),
-        inssTotal: acc.inssTotal + Number(r.inssEmployee || 0) + Number(r.inssEmployer || 0),
+        gross: acc.gross + gross,
+        inssTotal: acc.inssTotal + ee + er,
+        inssEmployee: acc.inssEmployee + ee,
+        inssEmployer: acc.inssEmployer + er,
         irps: acc.irps + (isNaN(rowIRPS) ? 0 : rowIRPS),
-        net: acc.net + Number(r.netSalary || 0)
+        net: acc.net + Number(r.netSalary || 0),
+        subsidies: acc.subsidies + subs,
+        employerCost: acc.employerCost + gross + er + subs
       };
-    }, { gross: 0, inssTotal: 0, irps: 0, net: 0 });
+    }, { gross: 0, inssTotal: 0, inssEmployee: 0, inssEmployer: 0, irps: 0, net: 0, subsidies: 0, employerCost: 0 });
   }
 
   postToAccounting() {
