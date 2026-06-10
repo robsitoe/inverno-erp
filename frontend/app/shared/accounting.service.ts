@@ -1797,7 +1797,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
             lines: lines,
 
 
-            status: (salesDoc.documentType === 'VD' || paymentCondition === 'PRONTO' || isFinalStatus) ? 'POSTED' : 'DRAFT',
+            status: (['VD', 'FA', 'FR', 'FT', 'ND', 'NC'].includes(salesDoc.documentType) || paymentCondition === 'PRONTO' || isFinalStatus) ? 'POSTED' : 'DRAFT',
 
 
             createdBy: 'Sistema',
@@ -2678,7 +2678,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
             lines: lines,
 
 
-            status: (salesDoc.status === 'APPROVED' || salesDoc.status === 'POSTED') ? 'POSTED' : 'DRAFT',
+            status: (['VD', 'FA', 'FR', 'FT', 'ND', 'NC'].includes(salesDoc.documentType) || salesDoc.status === 'APPROVED' || salesDoc.status === 'POSTED') ? 'POSTED' : 'DRAFT',
 
 
             createdBy: 'Sistema',
