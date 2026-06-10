@@ -247,6 +247,25 @@ export class HRService {
     return await repo.save(absence);
   }
 
+  async updateAbsence(id: string, data: any, companyId?: string) {
+    const repo = await this.getAbsenceRepo(companyId || data?.companyId);
+    const absence = await repo.findOne({ where: { id } });
+    if (!absence) throw new NotFoundException('Registo de ausência não encontrado.');
+    const allowed = ['startDate', 'endDate', 'days', 'reason', 'status', 'type'];
+    for (const k of allowed) {
+      if (data[k] !== undefined) (absence as any)[k] = data[k];
+    }
+    return await repo.save(absence);
+  }
+
+  async deleteAbsence(id: string, companyId?: string) {
+    const repo = await this.getAbsenceRepo(companyId);
+    const absence = await repo.findOne({ where: { id } });
+    if (!absence) throw new NotFoundException('Registo de ausência não encontrado.');
+    await repo.remove(absence);
+    return { success: true };
+  }
+
   // ── Photo & Document Management ─────────────────────────────────────────────
 
   async updatePhoto(id: string, photoUrl: string, companyId?: string) {
