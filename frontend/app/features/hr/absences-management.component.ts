@@ -406,6 +406,16 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 
                   </button>
 
+                  <button (click)="editAbsence(a)"
+                    class="p-1 hover:bg-indigo-100 rounded border border-transparent hover:border-indigo-300 transition-colors" title="Editar">
+                    <app-icon name="edit" [size]="18" color="#4338ca"></app-icon>
+                  </button>
+
+                  <button (click)="deleteAbsenceRow(a)"
+                    class="p-1 hover:bg-red-100 rounded border border-transparent hover:border-red-300 transition-colors" title="Eliminar">
+                    <app-icon name="delete" [size]="18" color="#9ca3af"></app-icon>
+                  </button>
+
                 </td>
 
               </tr>
@@ -440,7 +450,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 
             <app-icon name="event_busy" [size]="22" color="#4338ca"></app-icon>
 
-            Registar Ausência
+            {{ editingAbsenceId ? 'Editar' : 'Registar' }} Ausência
 
           </h2>
 
@@ -648,6 +658,7 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
 
   openForm() {
 
+    this.editingAbsenceId = null;
     this.form = { employeeId: '', type: 'VACATION', startDate: '', endDate: '', days: 0, reason: '' };
 
     this.showForm = true;
@@ -899,6 +910,7 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
       policy: exm ? exm[2] : 'PROXIMAS',
       editing: a, wasApproved: a.status === 'APPROVED'
     };
+    this.cdr.detectChanges();
   }
 
   openVacEditor(e: any, m: number) {
@@ -908,6 +920,7 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
     const defDays = Math.min(15, avail > 0 ? avail : 15);
     const end = new Date(start.getTime() + (defDays - 1) * 86400000);
     this.vacEd = { emp: e, start: iso(start), end: iso(end), policy: 'PROXIMAS' };
+    this.cdr.detectChanges();
   }
 
   saveVacEdit() {
@@ -1024,6 +1037,25 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
     const c = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
     if (c.id) this.loadAbsences(c.id);
   }
+  editingAbsenceId: string | null = null;
+
+  editAbsence(a: any) {
+    this.editingAbsenceId = a.id;
+    this.form = { employeeId: a.employeeId, type: a.type, startDate: a.startDate, endDate: a.endDate, days: a.days, reason: a.reason || '' };
+    this.showForm = true;
+  }
+
+  deleteAbsenceRow(a: any) {
+    const label = (this.absenceTypes[a.type]?.label || a.type) + ' de ' + (a.employeeName || '') + ' (' + a.days + ' dias)';
+    if (!confirm('Eliminar ' + label + '?')) return;
+    const company = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
+    if (!company.id) return;
+    this.sub.add(this.http.delete(`${this.apiUrl}/absences/${a.id}?companyId=${company.id}`).subscribe({
+      next: () => this.loadAbsences(company.id),
+      error: () => alert('Erro ao eliminar o registo.')
+    }));
+  }
+
   saveAbsence() {
 
     if (!this.form.employeeId || !this.form.startDate || !this.form.endDate) {
@@ -1035,6 +1067,15 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
     }
 
     const company = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
+
+    if (this.editingAbsenceId) {
+      const upd = { employeeId: this.form.employeeId, type: this.form.type, startDate: this.form.startDate, endDate: this.form.endDate, days: this.form.days, reason: this.form.reason };
+      this.sub.add(this.http.patch(`${this.apiUrl}/absences/${this.editingAbsenceId}?companyId=${company.id}`, upd).subscribe({
+        next: () => { this.showForm = false; this.editingAbsenceId = null; this.loadAbsences(company.id); },
+        error: (e) => alert('Erro: ' + e.message)
+      }));
+      return;
+    }
 
     const payload = { ...this.form, companyId: company.id, status: 'PENDING' };
 
