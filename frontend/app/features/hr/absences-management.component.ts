@@ -99,6 +99,10 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 
         </div>
 
+        <div class="flex bg-gray-100 rounded-lg p-1 border border-gray-200 mr-2">
+          <button (click)="viewMode = 'LIST'" [class]="'px-3 py-1.5 text-xs font-bold rounded-md transition-all ' + (viewMode === 'LIST' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500')">Lista</button>
+          <button (click)="viewMode = 'PLAN'" [class]="'px-3 py-1.5 text-xs font-bold rounded-md transition-all ' + (viewMode === 'PLAN' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500')">Plano Anual</button>
+        </div>
         <button (click)="openForm()"
 
           class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded text-xs font-bold hover:bg-indigo-700 shadow-md">
@@ -115,7 +119,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 
       <!-- Filters -->
 
-      <div class="flex gap-3 items-center bg-white px-4 py-2 rounded shadow-sm text-xs">
+      <div *ngIf="viewMode === 'LIST'" class="flex gap-3 items-center bg-white px-4 py-2 rounded shadow-sm text-xs">
 
         <label class="font-bold text-gray-500 uppercase">Filtrar:</label>
 
@@ -141,9 +145,69 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 
 
 
+      <!-- Annual Vacation Plan -->
+      <div *ngIf="viewMode === 'PLAN'" class="bg-white rounded shadow-sm flex-1 flex flex-col overflow-hidden">
+        <div class="flex items-center gap-3 p-3 border-b bg-gray-50">
+          <label class="text-xs font-bold text-gray-500 uppercase">Ano:</label>
+          <select [(ngModel)]="planYear" class="border rounded px-2 py-1 text-xs">
+            <option *ngFor="let y of planYears" [value]="y">{{ y }}</option>
+          </select>
+          <button (click)="generateSuggestions()" class="flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-700">
+            <app-icon name="auto_awesome" [size]="14"></app-icon> Gerar Sugestões
+          </button>
+          <button *ngIf="suggestions.length > 0" (click)="submitPlan()" [disabled]="submittingPlan"
+            class="flex items-center gap-1 bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-emerald-700 disabled:bg-gray-400">
+            <app-icon name="send" [size]="14"></app-icon> {{ submittingPlan ? 'A submeter...' : 'Submeter Plano (' + suggestions.length + ' pedidos)' }}
+          </button>
+          <button *ngIf="suggestions.length > 0" (click)="suggestions = []" class="text-xs text-gray-400 hover:text-red-500 font-bold">Limpar</button>
+          <div class="ml-auto flex items-center gap-3 text-[10px] font-bold">
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-500 inline-block"></span> Aprovado</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-amber-400 inline-block"></span> Pendente</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-blue-400 border border-dashed border-blue-700 inline-block"></span> Sugestão</span>
+          </div>
+        </div>
+        <div class="overflow-auto flex-1">
+          <table class="w-full text-xs border-collapse">
+            <thead class="bg-gray-50 text-gray-500 uppercase font-bold border-b sticky top-0">
+              <tr>
+                <th class="p-2 text-left min-w-[180px]">Funcionário</th>
+                <th class="p-2 text-center w-14">Direito</th>
+                <th *ngFor="let m of monthsShort" class="p-2 text-center w-14">{{ m }}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y">
+              <tr *ngFor="let e of activeEmployees" class="hover:bg-blue-50">
+                <td class="p-2 font-bold">{{ e.code }} - {{ e.name }}</td>
+                <td class="p-2 text-center text-gray-500">{{ entitledDays(e) }}d</td>
+                <td *ngFor="let m of monthIdx" class="p-1 text-center">
+                  <span *ngIf="cellState(e, m) as st"
+                    [class]="'inline-block w-9 h-5 rounded text-[9px] font-bold leading-5 text-white ' +
+                      (st === 'APPROVED' ? 'bg-emerald-500' : st === 'PENDING' ? 'bg-amber-400' : 'bg-blue-400 border border-dashed border-blue-700')"
+                    [title]="cellTitle(e, m)">{{ cellDays(e, m) }}d</span>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="bg-gray-50 border-t font-bold sticky bottom-0">
+              <tr>
+                <td class="p-2 text-gray-500 uppercase" colspan="2">Em férias / mês</td>
+                <td *ngFor="let m of monthIdx" class="p-2 text-center"
+                  [class.text-red-600]="monthCount(m) > maxSimultaneous"
+                  [title]="monthCount(m) > maxSimultaneous ? 'Acima do limite recomendado (' + maxSimultaneous + ') - risco para a operação' : ''">
+                  {{ monthCount(m) || '-' }}<span *ngIf="monthCount(m) > maxSimultaneous"> ⚠</span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+          <div *ngIf="activeEmployees.length === 0" class="p-8 text-center text-gray-400 text-xs">Sem funcionários ativos.</div>
+        </div>
+        <div class="p-2 border-t bg-gray-50 text-[10px] text-gray-500">
+          Direito a férias (Lei do Trabalho MZ): 1.º ano 12 dias · 2.º ano 24 dias · 3.º ano+ 30 dias. As sugestões são escalonadas para manter a operação (máx. {{ maxSimultaneous }} em simultâneo). Ao submeter, cada sugestão cria um pedido PENDENTE que pode ser aprovado/rejeitado na Lista.
+        </div>
+      </div>
+
       <!-- Table -->
 
-      <div class="bg-white rounded shadow-sm overflow-hidden flex-1">
+      <div *ngIf="viewMode === 'LIST'" class="bg-white rounded shadow-sm overflow-hidden flex-1">
 
         <div class="overflow-x-auto h-full">
 
@@ -492,6 +556,129 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
   }
 
 
+
+  // ── Plano Anual de Férias ──────────────────────────────────────────────────
+  viewMode: 'LIST' | 'PLAN' = 'LIST';
+  planYear = new Date().getFullYear();
+  planYears = [new Date().getFullYear(), new Date().getFullYear() + 1];
+  monthsShort = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  monthIdx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  suggestions: any[] = [];
+  submittingPlan = false;
+
+  get activeEmployees(): any[] {
+    return (this.employees || []).filter((e: any) => e.status !== 'INACTIVE' && e.status !== 'TERMINATED');
+  }
+
+  /** Max employees on vacation at once while keeping the company running (25%, min 1). */
+  get maxSimultaneous(): number {
+    return Math.max(1, Math.ceil(this.activeEmployees.length * 0.25));
+  }
+
+  /** Lei do Trabalho MZ art.99: 12 days in 1st year, 24 in 2nd, 30 from the 3rd on. */
+  entitledDays(e: any): number {
+    if (!e.hireDate) return 30;
+    const years = (new Date(this.planYear, 11, 31).getTime() - new Date(e.hireDate).getTime()) / (365.25 * 86400000);
+    if (years < 1) return 12;
+    if (years < 2) return 24;
+    return 30;
+  }
+
+  private vacationsOf(e: any): any[] {
+    return (this.absences || []).filter((a: any) =>
+      a.employeeId === e.id && a.type === 'VACATION' && a.status !== 'REJECTED' &&
+      (new Date(a.startDate).getFullYear() === +this.planYear || new Date(a.endDate).getFullYear() === +this.planYear));
+  }
+
+  private overlapsMonth(startDate: string, endDate: string, m: number): boolean {
+    const mStart = new Date(+this.planYear, m, 1);
+    const mEnd = new Date(+this.planYear, m + 1, 0);
+    return new Date(startDate) <= mEnd && new Date(endDate) >= mStart;
+  }
+
+  cellState(e: any, m: number): string | null {
+    const vacs = this.vacationsOf(e);
+    const ap = vacs.find((a: any) => a.status === 'APPROVED' && this.overlapsMonth(a.startDate, a.endDate, m));
+    if (ap) return 'APPROVED';
+    const pe = vacs.find((a: any) => a.status === 'PENDING' && this.overlapsMonth(a.startDate, a.endDate, m));
+    if (pe) return 'PENDING';
+    const sg = this.suggestions.find(sug => sug.employeeId === e.id && this.overlapsMonth(sug.startDate, sug.endDate, m));
+    if (sg) return 'SUGGESTED';
+    return null;
+  }
+
+  cellDays(e: any, m: number): number {
+    const all = [...this.vacationsOf(e), ...this.suggestions.filter(sg => sg.employeeId === e.id)];
+    const mStart = new Date(+this.planYear, m, 1).getTime();
+    const mEnd = new Date(+this.planYear, m + 1, 0).getTime();
+    let days = 0;
+    all.forEach((a: any) => {
+      const st = Math.max(new Date(a.startDate).getTime(), mStart);
+      const en = Math.min(new Date(a.endDate).getTime(), mEnd);
+      if (en >= st) days += Math.round((en - st) / 86400000) + 1;
+    });
+    return days;
+  }
+
+  cellTitle(e: any, m: number): string {
+    const sg = this.suggestions.find(sug => sug.employeeId === e.id && this.overlapsMonth(sug.startDate, sug.endDate, m));
+    if (sg) return `Sugestão: ${sg.startDate} a ${sg.endDate} (${sg.days} dias)`;
+    const v = this.vacationsOf(e).find((a: any) => this.overlapsMonth(a.startDate, a.endDate, m));
+    return v ? `${v.startDate} a ${v.endDate}` : '';
+  }
+
+  monthCount(m: number): number {
+    return this.activeEmployees.filter(e => this.cellState(e, m) !== null).length;
+  }
+
+  /** Staggers one vacation block per employee across Feb-Nov so the operation never stops. */
+  generateSuggestions() {
+    const candidates = this.activeEmployees
+      .filter(e => this.vacationsOf(e).length === 0)
+      .sort((a: any, b: any) => new Date(a.hireDate || '2100-01-01').getTime() - new Date(b.hireDate || '2100-01-01').getTime());
+    if (candidates.length === 0) {
+      alert('Todos os funcionários ativos já têm férias marcadas/pedidas em ' + this.planYear + '.');
+      return;
+    }
+    // Months pool Feb(1)..Nov(10): avoids January (fecho de contas) and December (época alta).
+    const pool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    this.suggestions = candidates.map((e: any, i: number) => {
+      const days = this.entitledDays(e);
+      const m = pool[i % pool.length];
+      const start = new Date(+this.planYear, m, 1);
+      const end = new Date(start.getTime() + (days - 1) * 86400000);
+      const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      return { employeeId: e.id, employeeCode: e.code, employeeName: e.name, startDate: iso(start), endDate: iso(end), days };
+    });
+  }
+
+  submitPlan() {
+    if (this.suggestions.length === 0 || this.submittingPlan) return;
+    if (!confirm(`Submeter o plano anual de férias?\n\n${this.suggestions.length} pedido(s) PENDENTE(s) serão criados para aprovação.`)) return;
+    const company = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
+    if (!company.id) return;
+    this.submittingPlan = true;
+    let done = 0; const total = this.suggestions.length;
+    this.suggestions.forEach(sg => {
+      const payload = {
+        id: `ABS${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        companyId: company.id, employeeId: sg.employeeId, type: 'VACATION',
+        startDate: sg.startDate, endDate: sg.endDate, days: sg.days,
+        reason: `Plano Anual de Férias ${this.planYear}`, status: 'PENDING'
+      };
+      this.sub.add(this.http.post(`${this.apiUrl}/absences`, payload).subscribe({
+        next: () => { if (++done === total) this.finishPlanSubmit(); },
+        error: () => { if (++done === total) this.finishPlanSubmit(); }
+      }));
+    });
+  }
+
+  private finishPlanSubmit() {
+    this.submittingPlan = false;
+    this.suggestions = [];
+    const c = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
+    if (c.id) this.loadAbsences(c.id);
+  }
 
   saveAbsence() {
 
