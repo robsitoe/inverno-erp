@@ -1545,7 +1545,7 @@ export class TrialBalanceComponent implements OnInit {
   get previewDebitTotal(): number {
 
 
-    return this.selectedIssueEntry?.lines?.reduce((acc, l) => acc + (l.debit || 0), 0) || 0;
+    return this.selectedIssueEntry?.lines?.reduce((acc, l) => acc + (parseFloat(String(l.debit)) || 0), 0) || 0;
 
 
   }
@@ -1557,7 +1557,7 @@ export class TrialBalanceComponent implements OnInit {
   get previewCreditTotal(): number {
 
 
-    return this.selectedIssueEntry?.lines?.reduce((acc, l) => acc + (l.credit || 0), 0) || 0;
+    return this.selectedIssueEntry?.lines?.reduce((acc, l) => acc + (parseFloat(String(l.credit)) || 0), 0) || 0;
 
 
   }
@@ -2130,7 +2130,7 @@ export class TrialBalanceComponent implements OnInit {
           .filter(item => !item.account.parentId || !accountIds.has(item.account.parentId))
 
 
-          .reduce((sum, item) => sum + item.debit, 0);
+          .reduce((sum, item) => sum + (parseFloat(String(item.debit)) || 0), 0);
 
 
 
@@ -2142,7 +2142,7 @@ export class TrialBalanceComponent implements OnInit {
           .filter(item => !item.account.parentId || !accountIds.has(item.account.parentId))
 
 
-          .reduce((sum, item) => sum + item.credit, 0);
+          .reduce((sum, item) => sum + (parseFloat(String(item.credit)) || 0), 0);
 
 
 

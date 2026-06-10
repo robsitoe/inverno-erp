@@ -3397,10 +3397,10 @@ if (missingAccounts.length > 0) {
         this.journalEntries.forEach(entry => {
 
 
-            const totalDebit = entry.lines.reduce((sum, line) => sum + (line.debit || 0), 0);
+            const totalDebit = entry.lines.reduce((sum, line) => sum + (parseFloat(String(line.debit)) || 0), 0);
 
 
-            const totalCredit = entry.lines.reduce((sum, line) => sum + (line.credit || 0), 0);
+            const totalCredit = entry.lines.reduce((sum, line) => sum + (parseFloat(String(line.credit)) || 0), 0);
 
 
 
@@ -3820,10 +3820,10 @@ if (missingAccounts.length > 0) {
         // Validar que débitos = créditos
 
 
-        const totalDebit = entry.lines.reduce((sum, line) => sum + (line.debit || 0), 0);
+        const totalDebit = entry.lines.reduce((sum, line) => sum + (parseFloat(String(line.debit)) || 0), 0);
 
 
-        const totalCredit = entry.lines.reduce((sum, line) => sum + (line.credit || 0), 0);
+        const totalCredit = entry.lines.reduce((sum, line) => sum + (parseFloat(String(line.credit)) || 0), 0);
 
 
 
@@ -4555,10 +4555,10 @@ if (missingAccounts.length > 0) {
             postedEntries.forEach(entry => {
 
 
-                const totalDebit = entry.lines.reduce((sum, line) => sum + (line.debit || 0), 0);
+                const totalDebit = entry.lines.reduce((sum, line) => sum + (parseFloat(String(line.debit)) || 0), 0);
 
 
-                const totalCredit = entry.lines.reduce((sum, line) => sum + (line.credit || 0), 0);
+                const totalCredit = entry.lines.reduce((sum, line) => sum + (parseFloat(String(line.credit)) || 0), 0);
 
 
 
