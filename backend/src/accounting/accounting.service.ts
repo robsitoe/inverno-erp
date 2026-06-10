@@ -600,13 +600,13 @@ export class AccountingService {
 
     const getSum = (codes: string[]) => {
       return accounts
-        .filter(acc => codes.some(code => acc.code === code || acc.code.startsWith(code + '.')))
-        .filter(acc => acc.level === 1 || !acc.parentId) // We only want root level balances or direct sum
+        .filter(acc => acc.allowPosting && codes.some(code => acc.code === code || acc.code.startsWith(code + '.')))
+        .filter(acc => true) // We only want root level balances or direct sum
         // Wait, balance in root accounts should already be the sum of children if recalculateAllBalances was run.
         // If not, we should sum only the leaf accounts.
         // Current implementation of updateAccountBalances updates parents, so root balance is sum.
         .reduce((sum, acc) => {
-          if (acc.level === 1) return sum + Number(acc.balance);
+          return sum + Number(acc.balance || 0);
           return sum;
         }, 0);
     };
@@ -620,7 +620,7 @@ export class AccountingService {
         total: 0
       },
       current: {
-        inventory: getSum(['2.2', '2.3', '2.4', '2.5', '2.6']),
+        inventory: getSum(['2.1', '2.2', '2.3', '2.4', '2.5', '2.6']),
         clients: getSum(['4.1']),
         cashAndBanks: getSum(['1.1', '1.2']),
         total: 0
@@ -678,9 +678,9 @@ export class AccountingService {
 
     const getSum = (codes: string[]) => {
       return accounts
-        .filter(acc => codes.some(code => acc.code === code || acc.code.startsWith(code + '.')))
+        .filter(acc => acc.allowPosting && codes.some(code => acc.code === code || acc.code.startsWith(code + '.')))
         .reduce((sum, acc) => {
-          if (acc.level === 1) return sum + Number(acc.balance || 0);
+          return sum + Number(acc.balance || 0);
           return sum;
         }, 0);
     };
