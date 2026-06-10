@@ -253,6 +253,18 @@ export class HRController {
     return this.hrService.findAllAbsences(companyId, employeeId);
   }
 
+  @Patch('absences/:id')
+  @ApiOperation({ summary: 'Update an absence (dates/days/reason/status)' })
+  updateAbsence(@Param('id') id: string, @Body() data: any, @Query('companyId') companyId?: string) {
+    return this.hrService.updateAbsence(id, data, companyId);
+  }
+
+  @Delete('absences/:id')
+  @ApiOperation({ summary: 'Delete an absence' })
+  deleteAbsence(@Param('id') id: string, @Query('companyId') companyId?: string) {
+    return this.hrService.deleteAbsence(id, companyId);
+  }
+
   @Patch('absences/:id/status')
   @ApiOperation({ summary: 'Update absence status' })
   updateAbsenceStatus(@Param('id') id: string, @Body('status') status: AbsenceStatus) {

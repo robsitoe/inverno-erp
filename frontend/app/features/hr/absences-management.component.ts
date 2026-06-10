@@ -257,7 +257,8 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
       <div *ngIf="vacEd" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" (click)="vacEd = null">
         <div class="bg-white rounded-xl shadow-2xl w-[600px] max-h-[90vh] overflow-auto" (click)="$event.stopPropagation()">
           <div class="bg-gradient-to-r from-indigo-600 to-blue-500 text-white p-4 rounded-t-xl">
-            <h3 class="font-bold text-sm">Marcar Férias — {{ vacEd.emp.name }}</h3>
+            <h3 class="font-bold text-sm">{{ vacEd.editing ? 'Alterar' : 'Marcar' }} Férias — {{ vacEd.emp.name }}</h3>
+            <p *ngIf="vacEd.wasApproved" class="text-[10px] bg-amber-400/30 rounded px-2 py-0.5 mt-1 inline-block">⚠ Já aprovadas — a alteração exige nova aprovação</p>
             <p class="text-[10px] opacity-80">Ano {{ planYear }} · Direito: {{ entitledAdj(vacEd.emp) }} dias<span *ngIf="carryPrev(vacEd.emp) > 0"> ({{ entitledDays(vacEd.emp) }} − {{ carryPrev(vacEd.emp) }} de férias anteriores)</span></p>
           </div>
           <div class="p-5 space-y-4">
@@ -312,9 +313,10 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
             <div *ngIf="vacEdExcess === 0 && vacEdDays > 0" class="text-[10px] text-emerald-600 font-bold">✓ Dentro do direito de férias.</div>
           </div>
           <div class="flex justify-end gap-2 p-4 border-t bg-gray-50 rounded-b-xl">
+            <button *ngIf="vacEd.editing" (click)="deleteVacEdit()" [disabled]="savingVac" class="mr-auto px-4 py-1.5 text-xs border border-red-300 text-red-600 rounded hover:bg-red-50 font-bold">Eliminar</button>
             <button (click)="vacEd = null" class="px-4 py-1.5 text-xs border rounded hover:bg-gray-100">Cancelar</button>
             <button (click)="saveVacEdit()" [disabled]="vacEdDays <= 0 || savingVac" class="px-4 py-1.5 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-gray-400 font-bold shadow">
-              {{ savingVac ? 'A gravar...' : ('Criar Pedido (' + vacEdDays + ' dias)') }}
+              {{ savingVac ? 'A gravar...' : ((vacEd.editing ? 'Guardar Alteração (' : 'Criar Pedido (') + vacEdDays + ' dias)') }}
             </button>
           </div>
         </div>
@@ -846,7 +848,10 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
   }
 
   entitledAdj(e: any): number { return Math.max(0, this.entitledDays(e) - this.carryPrev(e)); }
-  bookedDays(e: any): number { return this.vacationsOf(e).reduce((s2: number, a: any) => s2 + (Number(a.days) || 0), 0); }
+  bookedDays(e: any): number {
+    const editingId = this.vacEd && this.vacEd.editing ? this.vacEd.editing.id : null;
+    return this.vacationsOf(e).filter((a: any) => a.id !== editingId).reduce((s2: number, a: any) => s2 + (Number(a.days) || 0), 0);
+  }
   suggestedDaysOf(e: any): number { return this.suggestions.filter(sg => sg.employeeId === e.id).reduce((s2, sg) => s2 + (Number(sg.days) || 0), 0); }
   availableDays(e: any): number { return this.entitledAdj(e) - this.bookedDays(e) - this.suggestedDaysOf(e); }
 
@@ -883,7 +888,17 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
 
   onChipClick(c: any, ev: Event) {
     ev.stopPropagation();
-    if (c.state === 'SUGGESTED') this.removeSuggestion(c.ref);
+    if (c.state === 'SUGGESTED') { this.removeSuggestion(c.ref); return; }
+    // PENDING/APPROVED: open the editor pre-filled for changes
+    const a = c.ref;
+    const emp = this.activeEmployees.find(e2 => e2.id === a.employeeId);
+    if (!emp) return;
+    const exm = /\[EXCESSO:(\d+)\|(PROXIMAS|SALARIO)\]/.exec(a.reason || '');
+    this.vacEd = {
+      emp, start: a.startDate, end: a.endDate,
+      policy: exm ? exm[2] : 'PROXIMAS',
+      editing: a, wasApproved: a.status === 'APPROVED'
+    };
   }
 
   openVacEditor(e: any, m: number) {
@@ -905,6 +920,18 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
       reason += ' [EXCESSO:' + this.vacEdExcess + '|' + this.vacEd.policy + ']';
     }
     this.savingVac = true;
+    if (this.vacEd.editing) {
+      // Changing a booking always returns it to PENDING for re-approval.
+      if (this.vacEd.wasApproved && !confirm('Estas férias já estavam APROVADAS.\n\nA alteração volta a colocar o pedido como PENDENTE para nova aprovação. Continuar?')) {
+        this.savingVac = false; return;
+      }
+      const upd = { startDate: this.vacEd.start, endDate: this.vacEd.end, days: this.vacEdDays, reason, status: 'PENDING' };
+      this.sub.add(this.http.patch(this.apiUrl + '/absences/' + this.vacEd.editing.id + '?companyId=' + company.id, upd).subscribe({
+        next: () => { this.savingVac = false; this.vacEd = null; this.loadAbsences(company.id); },
+        error: () => { this.savingVac = false; alert('Erro ao alterar as férias.'); }
+      }));
+      return;
+    }
     const payload = {
       id: 'ABS' + Date.now() + '-' + Math.floor(Math.random() * 10000),
       companyId: company.id, employeeId: this.vacEd.emp.id, type: 'VACATION',
@@ -917,6 +944,18 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
         this.loadAbsences(company.id);
       },
       error: () => { this.savingVac = false; alert('Erro ao gravar o pedido de férias.'); }
+    }));
+  }
+
+  deleteVacEdit() {
+    if (!this.vacEd || !this.vacEd.editing || this.savingVac) return;
+    if (!confirm('Eliminar estas férias (' + this.fmtRange(this.vacEd.editing.startDate, this.vacEd.editing.endDate) + ', ' + this.vacEd.editing.days + ' dias)?')) return;
+    const company = JSON.parse(localStorage.getItem('erp_company_info') || '{}');
+    if (!company.id) return;
+    this.savingVac = true;
+    this.sub.add(this.http.delete(this.apiUrl + '/absences/' + this.vacEd.editing.id + '?companyId=' + company.id).subscribe({
+      next: () => { this.savingVac = false; this.vacEd = null; this.loadAbsences(company.id); },
+      error: () => { this.savingVac = false; alert('Erro ao eliminar as férias.'); }
     }));
   }
   /** Impressão no formato clássico do mapa anual (cabeçalho da empresa + grelha). */
