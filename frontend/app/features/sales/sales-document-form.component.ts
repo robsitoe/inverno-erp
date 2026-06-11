@@ -3625,6 +3625,14 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
     if (isPrinting) newStatus = WorkflowStatus.APPROVED;
 
+    // Fiscal documents are final once emitted: approving on save makes the
+    // backend create the stock movements immediately (it only moves stock
+    // for APPROVED/POSTED docs), instead of only when printing.
+    const fiscalStockTypes = ['FA', 'FR', 'VD', 'FT', 'NC', 'ND'];
+    if (!isPrinting && !isCancelling && newStatus === WorkflowStatus.DRAFT && fiscalStockTypes.includes(this.selectedDocType)) {
+      newStatus = WorkflowStatus.APPROVED;
+    }
+
     if (isCancelling) newStatus = WorkflowStatus.REJECTED;
 
 
@@ -3790,22 +3798,8 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
 
 
-        // ALWAYS process stock movements
-
-        try {
-          this.inventoryService.processSalesStockMovements(
-
-          id,
-
-          salesDoc.lines,
-
-          documentNumber
-
-        );
-        } catch (stockErr) {
-          console.error('Erro nos movimentos de stock (contabilidade continua):', stockErr);
-          this.toaster.showWarning('Aviso Stock', 'Erro ao processar movimentos de stock; a contabilidade foi lancada na mesma.');
-        }
+        // Stock movements are created by the BACKEND on save (APPROVED/POSTED
+        // docs only, deduplicated by sourceDocument) - single source of truth.
 
 
 
