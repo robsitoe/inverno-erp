@@ -64,6 +64,11 @@ import { forkJoin } from 'rxjs';
           <div class="flex items-center gap-3">
 
 
+              <button (click)="exportExcel()" title="Exportar para Excel (CSV)"
+                      class="flex items-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 rounded-lg text-emerald-700 text-xs font-semibold border border-emerald-200 transition-all">
+                  <span class="material-symbols-outlined text-sm">download</span>
+                  Excel
+              </button>
               <button (click)="printTrialBalance()" title="Imprimir Balancete"
 
 
@@ -172,6 +177,12 @@ import { forkJoin } from 'rxjs';
             <button (click)="typeFilter = 'EQUITY'" [class]="chipClass('EQUITY')">Capital</button>
             <button (click)="typeFilter = 'REVENUE'" [class]="chipClass('REVENUE')">Rendimentos</button>
             <button (click)="typeFilter = 'EXPENSE'" [class]="chipClass('EXPENSE')">Gastos</button>
+          </div>
+          <div class="flex items-center gap-2 text-xs font-semibold text-slate-600">
+            <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Período</span>
+            <input type="date" [(ngModel)]="periodFrom" (ngModelChange)="onPeriodChange()" class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400">
+            <span class="text-slate-300">→</span>
+            <input type="date" [(ngModel)]="periodTo" (ngModelChange)="onPeriodChange()" class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400">
           </div>
           <label class="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer select-none ml-auto">
             <input type="checkbox" [(ngModel)]="hideZeros" class="rounded accent-indigo-600"> Ocultar contas a zero
@@ -797,10 +808,16 @@ import { forkJoin } from 'rxjs';
                     <th class="text-left p-4 font-semibold text-slate-600 w-32 uppercase text-[10px] tracking-wider">Natureza</th>
 
 
-                    <th class="text-right p-4 font-semibold text-slate-600 w-44">Débito</th>
+                    <th class="text-right p-4 font-semibold text-slate-600 w-36">Saldo Inicial</th>
 
 
-                    <th class="text-right p-4 font-semibold text-slate-600 w-44">Crédito</th>
+                    <th class="text-right p-4 font-semibold text-slate-600 w-40">Débito</th>
+
+
+                    <th class="text-right p-4 font-semibold text-slate-600 w-40">Crédito</th>
+
+
+                    <th class="text-right p-4 font-semibold text-slate-600 w-36">Saldo Final</th>
 
 
                   </tr>
@@ -878,21 +895,19 @@ import { forkJoin } from 'rxjs';
                     </td>
 
 
-                    <td class="p-4 text-right font-mono" [class.font-bold]="item.debit > 0" [class.text-slate-900]="item.debit > 0" [class.text-slate-300]="item.debit === 0">
-
-
-                      {{ item.debit > 0 ? ((+item.debit || 0) | number:'1.2-2') : '0,00' }}
-
-
+                    <td class="p-4 text-right font-mono text-xs" [class.text-rose-600]="pOpen(item) < 0" [class.text-slate-300]="pOpen(item) === 0" [class.text-slate-600]="pOpen(item) > 0">
+                      {{ pOpen(item) | number:'1.2-2' }}
+                    </td>
+                    <td class="p-4 text-right font-mono" [class.font-bold]="pDeb(item) > 0" [class.text-slate-900]="pDeb(item) > 0" [class.text-slate-300]="pDeb(item) === 0">
+                      {{ pDeb(item) | number:'1.2-2' }}
                     </td>
 
 
-                    <td class="p-4 text-right font-mono" [class.font-bold]="item.credit > 0" [class.text-slate-900]="item.credit > 0" [class.text-slate-300]="item.credit === 0">
-
-
-                      {{ item.credit > 0 ? ((+item.credit || 0) | number:'1.2-2') : '0,00' }}
-
-
+                    <td class="p-4 text-right font-mono" [class.font-bold]="pCred(item) > 0" [class.text-slate-900]="pCred(item) > 0" [class.text-slate-300]="pCred(item) === 0">
+                      {{ pCred(item) | number:'1.2-2' }}
+                    </td>
+                    <td class="p-4 text-right font-mono text-xs font-bold" [class.text-rose-600]="pFinal(item) < 0" [class.text-slate-300]="pFinal(item) === 0" [class.text-slate-700]="pFinal(item) > 0">
+                      {{ pFinal(item) | number:'1.2-2' }}
                     </td>
 
 
@@ -908,13 +923,19 @@ import { forkJoin } from 'rxjs';
                   <tr class="font-bold">
 
 
-                    <td colspan="3" class="p-6 text-right uppercase tracking-widest text-xs opacity-70">Totais do Balancete</td>
+                    <td colspan="3" class="p-6 text-right uppercase tracking-widest text-xs opacity-70">Totais do Período</td>
 
 
-                    <td class="p-6 text-right font-mono text-lg">{{ totalDebit | number:'1.2-2' }} <span class="text-xs opacity-60">MT</span></td>
+                    <td class="p-6 text-right font-mono text-xs opacity-50">—</td>
 
 
-                    <td class="p-6 text-right font-mono text-lg">{{ totalCredit | number:'1.2-2' }} <span class="text-xs opacity-60">MT</span></td>
+                    <td class="p-6 text-right font-mono text-lg">{{ tpDeb | number:'1.2-2' }} <span class="text-xs opacity-60">MT</span></td>
+
+
+                    <td class="p-6 text-right font-mono text-lg">{{ tpCred | number:'1.2-2' }} <span class="text-xs opacity-60">MT</span></td>
+
+
+                    <td class="p-6 text-right font-mono text-xs opacity-50">—</td>
 
 
                   </tr>
@@ -2111,6 +2132,8 @@ export class TrialBalanceComponent implements OnInit {
 
         this.trialBalance = this.accountingService.getTrialBalance();
 
+        this.rebuildPeriod();
+
 
 
 
@@ -2922,11 +2945,93 @@ export class TrialBalanceComponent implements OnInit {
 
 
 
+  // ── Período (Saldo Inicial | Movimentos | Saldo Final) ───────────────────
+  periodFrom = new Date().getFullYear() + '-01-01';
+  periodTo = new Date().toISOString().split('T')[0];
+  private periodData = new Map<string, { open: number; deb: number; cred: number; final: number }>();
+
+  onPeriodChange() {
+    if (!this.periodFrom || !this.periodTo) return;
+    this.rebuildPeriod();
+    this.cdr.detectChanges();
+  }
+
+  /** Aggregates POSTED journal lines into opening balance + period movements per account (incl. parents by code prefix). */
+  rebuildPeriod() {
+    const fromT = new Date(this.periodFrom); fromT.setHours(0, 0, 0, 0);
+    const toT = new Date(this.periodTo); toT.setHours(23, 59, 59, 999);
+    const leaf = new Map<string, { o: number; d: number; c: number }>();
+    (this.accountingService.getJournalEntries() || []).forEach((e: any) => {
+      if (e.status !== 'POSTED') return;
+      const t = new Date(e.date).getTime();
+      (e.lines || []).forEach((l: any) => {
+        const code = l.accountCode; if (!code) return;
+        let rec = leaf.get(code); if (!rec) { rec = { o: 0, d: 0, c: 0 }; leaf.set(code, rec); }
+        const d = parseFloat(String(l.debit)) || 0, c = parseFloat(String(l.credit)) || 0;
+        if (t < fromT.getTime()) rec.o += d - c;
+        else if (t <= toT.getTime()) { rec.d += d; rec.c += c; }
+      });
+    });
+    this.periodData.clear();
+    this.trialBalance.forEach(item => {
+      const code = item.account.code;
+      let o = 0, d = 0, c = 0;
+      leaf.forEach((rec, lc) => {
+        if (lc === code || lc.startsWith(code + '.')) { o += rec.o; d += rec.d; c += rec.c; }
+      });
+      const assetish = item.account.type === 'ASSET' || item.account.type === 'EXPENSE';
+      const open = assetish ? o : -o;
+      const final = open + (assetish ? d - c : c - d);
+      this.periodData.set(item.account.id, {
+        open: Math.round(open * 100) / 100,
+        deb: Math.round(d * 100) / 100,
+        cred: Math.round(c * 100) / 100,
+        final: Math.round(final * 100) / 100
+      });
+    });
+  }
+
+  pOpen(item: any): number { return this.periodData.get(item.account.id)?.open ?? 0; }
+  pDeb(item: any): number { return this.periodData.get(item.account.id)?.deb ?? 0; }
+  pCred(item: any): number { return this.periodData.get(item.account.id)?.cred ?? 0; }
+  pFinal(item: any): number { return this.periodData.get(item.account.id)?.final ?? 0; }
+
+  private get rootRows(): any[] {
+    const ids = new Set(this.trialBalance.map(i => i.account.id));
+    return this.trialBalance.filter(i => !i.account.parentId || !ids.has(i.account.parentId));
+  }
+  get tpDeb(): number { return Math.round(this.rootRows.reduce((s2, i) => s2 + this.pDeb(i), 0) * 100) / 100; }
+  get tpCred(): number { return Math.round(this.rootRows.reduce((s2, i) => s2 + this.pCred(i), 0) * 100) / 100; }
+
+  /** Exports the displayed rows as an Excel-friendly CSV. */
+  exportExcel() {
+    const header = ['Codigo', 'Conta', 'Natureza', 'Saldo Inicial', 'Debito', 'Credito', 'Saldo Final'];
+    const fmt = (v: number) => (Number(v) || 0).toFixed(2).replace('.', ',');
+    const rows = this.displayedRows.map(i => [
+      i.account.code,
+      i.account.name.replace(/;/g, ','),
+      this.getTypeLabel(i.account.type),
+      fmt(this.pOpen(i)), fmt(this.pDeb(i)), fmt(this.pCred(i)), fmt(this.pFinal(i))
+    ]);
+    rows.push(['', 'TOTAIS DO PERÍODO', '', '', fmt(this.tpDeb), fmt(this.tpCred), '']);
+    const csv = '\uFEFF' + [header, ...rows].map(l => l.join(';')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'balancete_' + this.periodFrom + '_' + this.periodTo + '.csv';
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+
   get displayedRows() {
     const term = (this.searchTerm || '').toLowerCase().trim();
     return this.trialBalance.filter(item => {
       if (this.typeFilter && item.account.type !== this.typeFilter) return false;
-      if (this.hideZeros && (item.debit || 0) === 0 && (item.credit || 0) === 0) return false;
+      if (this.hideZeros) {
+        const p = this.periodData.get(item.account.id);
+        const zero = p ? (p.open === 0 && p.deb === 0 && p.cred === 0 && p.final === 0)
+                       : ((item.debit || 0) === 0 && (item.credit || 0) === 0);
+        if (zero) return false;
+      }
       if (term) {
         const hay = (item.account.code + ' ' + item.account.name).toLowerCase();
         if (!hay.includes(term)) return false;
