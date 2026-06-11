@@ -304,12 +304,15 @@ export class PayrollService {
       lines.push({ accountId: '6.2.9', debit: totalSubsidies, credit: 0, description: `Subsídios e Suplementos - ${month}/${year}` });
     }
 
-    // Balance check & absorb rounding
-    const debitTotal = totalGross + totalINSS_ER + (totalSubsidies > 0 ? totalSubsidies : 0);
-    const creditTotal = totalIRPS + (totalINSS_EE + totalINSS_ER) + totalNet;
+    // Balance check: sum the ACTUAL lines (the previous formula used gross
+    // without the absence deduction, inflating the net credit whenever
+    // absence/excess-vacation deductions existed). Absorb only residual
+    // rounding into the net-to-pay line.
+    const debitTotal = lines.reduce((s2, l) => s2 + (Number(l.debit) || 0), 0);
+    const creditTotal = lines.reduce((s2, l) => s2 + (Number(l.credit) || 0), 0);
     const diff = Math.round((debitTotal - creditTotal) * 100) / 100;
     if (Math.abs(diff) > 0) {
-      lines[4].credit += diff; // Absorb into net-to-pay
+      lines[4].credit = Math.round((lines[4].credit + diff) * 100) / 100;
     }
 
     try {
