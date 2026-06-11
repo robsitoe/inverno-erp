@@ -47,3 +47,5 @@ Thumbs.db
 check_*.js
 fix_*.js
 .claude/scheduled_tasks.lock
+backend/*.cjs
+backend/docker
