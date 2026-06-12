@@ -17,7 +17,13 @@ export class ErrorInterceptor implements HttpInterceptor {
             catchError((error: HttpErrorResponse) => {
                 let errorMessage = 'Ocorreu um erro desconhecido.';
 
-                if (error.status === 401) {
+                if (error.status === 401) {
+                    // Auxiliary lookups must not nuke the whole session - show the
+                    // error and let the page handle it (e.g. stale-token on /profiles).
+                    if (request.url.includes('/profiles')) {
+                        this.toasterService.showError('Sessão desatualizada', 'O seu acesso é anterior à última atualização. Termine a sessão e entre novamente para carregar os perfis.');
+                        return throwError(() => error);
+                    }
                     // Auto logout if 401 response returned from api
                     this.authService.logout();
                     this.toasterService.showError('Sessão Expirada', 'A sua sessão expirou. Por favor, entre novamente.');
