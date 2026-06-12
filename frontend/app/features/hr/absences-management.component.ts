@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 
 import { FormsModule } from '@angular/forms';
 
+import { PermissionsService } from '../../services/permissions.service';
 import { HRService, Employee } from '../../shared/hr.service';
 
 import { AppIconComponent } from '../../shared/components/app-icon.component';
@@ -103,7 +104,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
           <button (click)="viewMode = 'LIST'" [class]="'px-3 py-1.5 text-xs font-bold rounded-md transition-all ' + (viewMode === 'LIST' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500')">Lista</button>
           <button (click)="viewMode = 'PLAN'" [class]="'px-3 py-1.5 text-xs font-bold rounded-md transition-all ' + (viewMode === 'PLAN' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500')">Plano Anual</button>
         </div>
-        <button (click)="openForm()"
+        <button *ngIf="perms.hasPerm('hr.absences.manage')" (click)="openForm()"
 
           class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded text-xs font-bold hover:bg-indigo-700 shadow-md">
 
@@ -390,7 +391,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 
                 <td class="p-3 text-center flex gap-1 justify-center">
 
-                  <button *ngIf="a.status === 'PENDING'" (click)="updateStatus(a, 'APPROVED')"
+                  <button *ngIf="a.status === 'PENDING' && perms.hasPerm('hr.absences.approve')" (click)="updateStatus(a, 'APPROVED')"
 
                     class="p-1 hover:bg-green-100 rounded border border-transparent hover:border-green-300 transition-colors" title="Aprovar">
 
@@ -398,7 +399,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 
                   </button>
 
-                  <button *ngIf="a.status === 'PENDING'" (click)="updateStatus(a, 'REJECTED')"
+                  <button *ngIf="a.status === 'PENDING' && perms.hasPerm('hr.absences.approve')" (click)="updateStatus(a, 'REJECTED')"
 
                     class="p-1 hover:bg-red-100 rounded border border-transparent hover:border-red-300 transition-colors" title="Rejeitar">
 
@@ -406,12 +407,12 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 
                   </button>
 
-                  <button (click)="editAbsence(a)"
+                  <button *ngIf="perms.hasPerm('hr.absences.manage')" (click)="editAbsence(a)"
                     class="p-1 hover:bg-indigo-100 rounded border border-transparent hover:border-indigo-300 transition-colors" title="Editar">
                     <app-icon name="edit" [size]="18" color="#4338ca"></app-icon>
                   </button>
 
-                  <button (click)="deleteAbsenceRow(a)"
+                  <button *ngIf="perms.hasPerm('hr.absences.manage')" (click)="deleteAbsenceRow(a)"
                     class="p-1 hover:bg-red-100 rounded border border-transparent hover:border-red-300 transition-colors" title="Eliminar">
                     <app-icon name="delete" [size]="18" color="#9ca3af"></app-icon>
                   </button>
@@ -589,6 +590,7 @@ export class AbsencesManagementComponent implements OnInit, OnDestroy {
   constructor(
 
     private hrService: HRService,
+    public perms: PermissionsService,
 
     private http: HttpClient,
 

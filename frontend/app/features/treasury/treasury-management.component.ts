@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import { PermissionsService } from '../../services/permissions.service';
 
 
 import { CommonModule } from '@angular/common';
@@ -224,7 +225,7 @@ interface PendingDocRow {
           </button>
 
 
-          <button (click)="onWorkflowAction('APPROVE')" *ngIf="status === 'SUBMITTED'" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
+          <button (click)="onWorkflowAction('APPROVE')" *ngIf="status === 'SUBMITTED' && perms.hasPerm('treasury.approve')" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
 
 
             <span class="material-symbols-outlined text-[18px] text-green-600">how_to_reg</span>
@@ -236,7 +237,7 @@ interface PendingDocRow {
           </button>
 
 
-          <button (click)="onWorkflowAction('REJECT')" *ngIf="status === 'SUBMITTED'" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
+          <button (click)="onWorkflowAction('REJECT')" *ngIf="status === 'SUBMITTED' && perms.hasPerm('treasury.approve')" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
 
 
             <span class="material-symbols-outlined text-[18px] text-red-600">block</span>
@@ -248,7 +249,7 @@ interface PendingDocRow {
           </button>
 
 
-          <button (click)="onWorkflowAction('POST')" *ngIf="status === 'APPROVED'" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
+          <button (click)="onWorkflowAction('POST')" *ngIf="status === 'APPROVED' && perms.hasPerm('treasury.pay')" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
 
 
             <span class="material-symbols-outlined text-[18px] text-purple-600">account_balance</span>
@@ -3141,8 +3142,7 @@ export class TreasuryManagementComponent implements OnInit {
 
 
   constructor(
-
-
+    public perms: PermissionsService,
     private accountingService: AccountingService,
 
 

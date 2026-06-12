@@ -63,6 +63,10 @@ export class Employee {
     @Column({ nullable: true })
     department: string;
 
+    /** Superior hierárquico (organigrama funcional). */
+    @Column({ nullable: true })
+    managerId: string;
+
     @Column({ nullable: true })
     position: string;
 

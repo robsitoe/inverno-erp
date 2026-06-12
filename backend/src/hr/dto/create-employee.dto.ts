@@ -56,6 +56,11 @@ export class CreateEmployeeDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
+  managerId?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
   position?: string;
 
   @ApiProperty({ enum: ContractType })

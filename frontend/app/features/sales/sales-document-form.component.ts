@@ -1,4 +1,5 @@
 import { Component, Input, HostListener, ViewChild, ChangeDetectorRef, NgZone, OnDestroy } from '@angular/core';
+import { PermissionsService } from '../../services/permissions.service';
 
 import { CommonModule } from '@angular/common';
 
@@ -187,7 +188,7 @@ interface GridRow {
 
           </button>
 
-          <button *ngIf="status === 'SUBMITTED'" (click)="onWorkflowAction('APPROVE')" class="flex items-center gap-1 px-2 py-1 hover:bg-green-50 border border-transparent hover:border-green-200 rounded-sm transition-all text-green-700 group">
+          <button *ngIf="status === 'SUBMITTED' && perms.hasPerm('sales.approve')" (click)="onWorkflowAction('APPROVE')" class="flex items-center gap-1 px-2 py-1 hover:bg-green-50 border border-transparent hover:border-green-200 rounded-sm transition-all text-green-700 group">
 
             <app-icon name="check_circle" [size]="18"></app-icon>
 
@@ -195,7 +196,7 @@ interface GridRow {
 
           </button>
 
-          <button *ngIf="status === 'SUBMITTED'" (click)="onWorkflowAction('REJECT')" class="flex items-center gap-1 px-2 py-1 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-sm transition-all text-red-700 group">
+          <button *ngIf="status === 'SUBMITTED' && perms.hasPerm('sales.approve')" (click)="onWorkflowAction('REJECT')" class="flex items-center gap-1 px-2 py-1 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-sm transition-all text-red-700 group">
 
             <app-icon name="cancel" [size]="18"></app-icon>
 
@@ -203,7 +204,7 @@ interface GridRow {
 
           </button>
 
-          <button *ngIf="status === 'APPROVED'" (click)="onWorkflowAction('POST')" class="flex items-center gap-1 px-2 py-1 hover:bg-purple-50 border border-transparent hover:border-purple-200 rounded-sm transition-all text-purple-700 group">
+          <button *ngIf="status === 'APPROVED' && perms.hasPerm('sales.post')" (click)="onWorkflowAction('POST')" class="flex items-center gap-1 px-2 py-1 hover:bg-purple-50 border border-transparent hover:border-purple-200 rounded-sm transition-all text-purple-700 group">
 
             <app-icon name="account_balance_wallet" [size]="18"></app-icon>
 
@@ -2521,7 +2522,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
 
   constructor(
-
+    public perms: PermissionsService,
     private accountingService: AccountingService,
 
     private inventoryService: InventoryService,

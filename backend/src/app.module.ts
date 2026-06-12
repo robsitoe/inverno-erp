@@ -18,6 +18,7 @@ import {
   SalesDocumentLine,
 } from './sales/entities/sales-document.entity';
 import { User } from './users/entities/user.entity';
+import { Profile } from './users/entities/profile.entity';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { PurchasesModule } from './purchases/purchases.module';
@@ -98,6 +99,7 @@ import { PaymentGatewaysModule } from './payment-gateways/payment-gateways.modul
               SalesDocument,
               SalesDocumentLine,
               User,
+        Profile,
               PurchaseDocument,
               PurchaseDocumentLine,
               TreasuryDocument,
@@ -152,6 +154,7 @@ import { PaymentGatewaysModule } from './payment-gateways/payment-gateways.modul
             SalesDocument,
             SalesDocumentLine,
             User,
+            Profile,
             PurchaseDocument,
             PurchaseDocumentLine,
             TreasuryDocument,

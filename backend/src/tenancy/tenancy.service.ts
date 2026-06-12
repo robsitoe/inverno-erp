@@ -200,6 +200,22 @@ export class TenancyService implements OnModuleDestroy {
             );
           }
 
+                    // Patch: extend payroll status enum with approval states (SoD).
+          // ALTER TYPE ADD VALUE is idempotent with IF NOT EXISTS.
+          try {
+            const st = await queryRunner.query(
+              "SELECT udt_name FROM information_schema.columns WHERE table_name='payroll_records' AND column_name='status'",
+            );
+            const udt = st && st[0] && st[0].udt_name;
+            if (udt && udt.indexOf('enum') >= 0) {
+              for (const v of ['SUBMITTED', 'APPROVED', 'REJECTED']) {
+                await queryRunner.query(`ALTER TYPE "${udt}" ADD VALUE IF NOT EXISTS '${v}'`);
+              }
+            }
+          } catch (enumErr) {
+            console.warn('[Tenancy] payroll status enum patch:', enumErr.message);
+          }
+
           // Patch 3: priceReseller, pricePump, priceFinal
           const columnsToPatch = ['priceReseller', 'pricePump', 'priceFinal'];
           for (const col of columnsToPatch) {

@@ -11,12 +11,14 @@ import { HRController } from './controllers/hr.controller';
 import { PayrollService } from './services/payroll.service';
 import { TenancyModule } from '../tenancy/tenancy.module';
 import { AccountingModule } from '../accounting/accounting.module';
+import { WorkflowModule } from '../common/workflow.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Employee, Payroll, Absence, TaxBracket, HRSettings, PettyCashVoucher, EmployeeSalaryHistory]),
     TenancyModule,
     AccountingModule,
+    WorkflowModule,
   ],
   controllers: [HRController],
   providers: [HRService, PayrollService],

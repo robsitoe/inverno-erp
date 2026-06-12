@@ -2,6 +2,9 @@ import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, Uniq
 
 export enum PayrollStatus {
     DRAFT = 'DRAFT',
+    SUBMITTED = 'SUBMITTED',
+    APPROVED = 'APPROVED',
+    REJECTED = 'REJECTED',
     POSTED = 'POSTED',
     PAID = 'PAID',
     CANCELED = 'CANCELED',
@@ -78,7 +81,7 @@ export class Payroll {
 
     @Column({
         type: 'simple-enum',
-        enum: ['DRAFT', 'POSTED', 'PAID', 'CANCELED'],
+        enum: ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'POSTED', 'PAID', 'CANCELED'],
         default: 'DRAFT',
     })
     status: string;
@@ -88,6 +91,15 @@ export class Payroll {
 
     @Column({ type: 'date', nullable: true })
     paymentDate: string;
+    @Column({ nullable: true })
+    approvalNotes: string;
+
+    @Column({ nullable: true })
+    approvedBy: string;
+
+    @Column({ type: 'timestamp', nullable: true })
+    approvedAt: Date;
+
 
     @CreateDateColumn()
     createdAt: Date;

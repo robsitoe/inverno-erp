@@ -13,6 +13,8 @@ export interface WorkflowTarget {
     documentNumber?: string;
 }
 
+export const MAKER_CHECKER_WARNING = '[AVISO] Mesmo utilizador executou passos consecutivos';
+
 @Injectable()
 export class WorkflowService {
     constructor(
@@ -25,7 +27,7 @@ export class WorkflowService {
         action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST',
         user: any, // JWT User object
         repo: Repository<any>,
-        documentType: 'SALES' | 'PURCHASES' | 'TREASURY',
+        documentType: 'SALES' | 'PURCHASES' | 'TREASURY' | 'PAYROLL',
         notes?: string
     ) {
         const fromStatus = target.status;
@@ -40,7 +42,7 @@ export class WorkflowService {
                 break;
 
             case 'APPROVE':
-                this.checkPermission(user, 'APPROVE');
+                this.checkPermission(user, 'APPROVE', documentType);
                 if (fromStatus !== WorkflowStatus.SUBMITTED) {
                     throw new BadRequestException(`Only submitted documents can be approved. Current: ${fromStatus}`);
                 }
@@ -48,7 +50,7 @@ export class WorkflowService {
                 break;
 
             case 'REJECT':
-                this.checkPermission(user, 'REJECT');
+                this.checkPermission(user, 'REJECT', documentType);
                 if (fromStatus !== WorkflowStatus.SUBMITTED) {
                     throw new BadRequestException(`Only submitted documents can be rejected. Current: ${fromStatus}`);
                 }
@@ -56,7 +58,7 @@ export class WorkflowService {
                 break;
 
             case 'POST':
-                this.checkPermission(user, 'POST');
+                this.checkPermission(user, 'POST', documentType);
                 if (fromStatus !== WorkflowStatus.APPROVED) {
                     throw new BadRequestException(`Only approved documents can be posted. Current: ${fromStatus}`);
                 }
@@ -74,7 +76,9 @@ export class WorkflowService {
         // Save target using provided repo
         await repo.save(target as any);
 
-        // Record history
+        // Record history (with maker-checker warning when the same user
+        // performs consecutive workflow steps on the same document).
+        const finalNotes = await this.appendMakerCheckerWarning(target.id, user, notes);
         const history = this.historyRepo.create({
             documentId: target.id,
             documentType,
@@ -82,7 +86,7 @@ export class WorkflowService {
             toStatus,
             userId: user.userId || user.id,
             userName: user.username || user.name,
-            notes,
+            notes: finalNotes,
             companyId: target.companyId
         });
         await this.historyRepo.save(history);
@@ -94,19 +98,70 @@ export class WorkflowService {
         };
     }
 
-    private checkPermission(user: any, action: string) {
-        // Simple logic for now: only admins can APPROVE/REJECT/POST
-        // or users with specific permission field
-        if (user.isAdmin || user.isSuperAdmin) return;
+    /**
+     * Segregação de funções: APPROVE/REJECT require {module}.approve and POST
+     * requires {module}.post (treasury POST = treasury.pay). Admin-class users
+     * bypass so existing single-user installs keep working unconfigured.
+     */
+    private checkPermission(user: any, action: string, documentType?: string) {
+        if (user.isAdmin || user.isSuperAdmin || user.isTechnical) return;
 
-        // In a real app, check permissions array
-        const hasPermission = user.permissions?.some((p: any) =>
+        const module = (documentType || '').toLowerCase();
+        let requiredKey = '';
+        if (action === 'APPROVE' || action === 'REJECT') {
+            requiredKey = module === 'payroll' ? 'hr.payroll.approve' : `${module}.approve`;
+        } else if (action === 'POST') {
+            if (module === 'payroll') requiredKey = 'hr.payroll.post';
+            else if (module === 'treasury') requiredKey = 'treasury.pay';
+            else requiredKey = `${module}.post`;
+        }
+
+        const keys: string[] = Array.isArray(user.permissionKeys) ? user.permissionKeys : [];
+        if (requiredKey && keys.includes(requiredKey)) return;
+
+        // Legacy fallback: explicit action rights stored on the user object
+        const hasLegacy = user.permissions?.some?.((p: any) =>
             p.action === action || p.action === 'WORKFLOW_ALL'
         );
+        if (hasLegacy) return;
 
-        if (!hasPermission) {
-            throw new ForbiddenException(`User does not have permission to ${action} documents.`);
-        }
+        throw new ForbiddenException(
+            `Sem permissão para ${action} (${requiredKey || documentType}). Contacte o administrador.`,
+        );
+    }
+
+    /** Maker-checker: allowed, but leaves an audit warning in the history. */
+    async appendMakerCheckerWarning(documentId: string, user: any, notes?: string): Promise<string | undefined> {
+        try {
+            const last = await this.historyRepo.findOne({
+                where: { documentId },
+                order: { createdAt: 'DESC' },
+            });
+            const currentUserId = user.userId || user.id;
+            if (last && last.userId && currentUserId && last.userId === currentUserId) {
+                return notes ? `${notes} ${MAKER_CHECKER_WARNING}` : MAKER_CHECKER_WARNING;
+            }
+        } catch { /* history lookup must never block the transition */ }
+        return notes;
+    }
+
+    /** Writes a history row directly (used by flows outside transition(), e.g. payroll). */
+    async recordHistory(entry: {
+        documentId: string; documentType: string; fromStatus: string; toStatus: string;
+        user: any; notes?: string; companyId?: string;
+    }) {
+        const finalNotes = await this.appendMakerCheckerWarning(entry.documentId, entry.user, entry.notes);
+        const history = this.historyRepo.create({
+            documentId: entry.documentId,
+            documentType: entry.documentType as any,
+            fromStatus: entry.fromStatus as any,
+            toStatus: entry.toStatus as any,
+            userId: entry.user.userId || entry.user.id,
+            userName: entry.user.username || entry.user.name,
+            notes: finalNotes,
+            companyId: entry.companyId,
+        });
+        return this.historyRepo.save(history);
     }
 
     async getHistory(documentId: string) {
