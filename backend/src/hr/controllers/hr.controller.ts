@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Body, Patch, Param, Delete,
-  Query, UseGuards, UseInterceptors, UploadedFile,
+  Query, UseGuards, UseInterceptors, UploadedFile, Req,
   BadRequestException, Res, NotFoundException
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -15,6 +15,9 @@ import { CreateEmployeeDto } from '../dto/create-employee.dto';
 import { UpdateEmployeeDto } from '../dto/update-employee.dto';
 import { AbsenceStatus } from '../entities/absence.entity';
 import { LicenseGuard } from '../../auth/guards/license.guard';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../../auth/guards/permissions.guard';
+import { RequirePermission } from '../../auth/decorators/require-permission.decorator';
 
 const UPLOADS_DIR = join(process.cwd(), 'uploads', 'hr');
 
@@ -50,6 +53,8 @@ export class HRController {
   // ── Employee CRUD ───────────────────────────────────────────────────────────
 
   @Post('employees')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.employees.manage')
   @ApiOperation({ summary: 'Create a new employee' })
   createEmployee(@Body() createEmployeeDto: CreateEmployeeDto) {
     return this.hrService.create(createEmployeeDto);
@@ -96,6 +101,8 @@ export class HRController {
   }
 
   @Patch('employees/:id')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.employees.manage')
   @ApiOperation({ summary: 'Update an employee' })
   updateEmployee(@Param('id') id: string, @Body() updateEmployeeDto: UpdateEmployeeDto) {
     // Note: in a production app, we would get the user from the request (e.g. req.user)
@@ -121,6 +128,8 @@ export class HRController {
   }
 
   @Delete('employees/:id')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.employees.manage')
   @ApiOperation({ summary: 'Delete an employee' })
   removeEmployee(@Param('id') id: string, @Query('companyId') companyId?: string) {
     return this.hrService.remove(id, companyId);
@@ -222,15 +231,57 @@ export class HRController {
   // ── Payroll ─────────────────────────────────────────────────────────────────
 
   @Post('payroll/process')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.payroll.generate')
   @ApiOperation({ summary: 'Process payroll for a specific month' })
   processMonthlyPayroll(@Body() payload: { year: number, month: number }, @Query('companyId') companyId?: string) {
     return this.payrollService.processPayroll(payload.year, payload.month, companyId);
   }
 
+  @Post('payroll/submit')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.payroll.generate')
+  @ApiOperation({ summary: 'Submit generated payroll for approval' })
+  submitPayroll(@Body() payload: { year: number, month: number }, @Req() req: any, @Query('companyId') companyId?: string) {
+    return this.payrollService.submitPayroll(payload.year, payload.month, companyId, req.user);
+  }
+
+  @Post('payroll/approve')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.payroll.approve')
+  @ApiOperation({ summary: 'Approve submitted payroll' })
+  approvePayroll(@Body() payload: { year: number, month: number, notes?: string }, @Req() req: any, @Query('companyId') companyId?: string) {
+    return this.payrollService.approvePayroll(payload.year, payload.month, companyId, req.user, payload.notes);
+  }
+
+  @Post('payroll/reject')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.payroll.approve')
+  @ApiOperation({ summary: 'Reject submitted payroll (notes required)' })
+  rejectPayroll(@Body() payload: { year: number, month: number, notes: string }, @Req() req: any, @Query('companyId') companyId?: string) {
+    return this.payrollService.rejectPayroll(payload.year, payload.month, companyId, req.user, payload.notes);
+  }
+
   @Post('payroll/post-to-accounting')
-  @ApiOperation({ summary: 'Post processed payroll to accounting module' })
-  postPayrollToAccounting(@Body() payload: { year: number, month: number }, @Query('companyId') companyId?: string) {
-    return this.payrollService.postPayrollToAccounting(payload.year, payload.month, companyId);
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.payroll.post')
+  @ApiOperation({ summary: 'Post APPROVED payroll to accounting module' })
+  postPayrollToAccounting(@Body() payload: { year: number, month: number }, @Req() req: any, @Query('companyId') companyId?: string) {
+    return this.payrollService.postPayrollToAccounting(payload.year, payload.month, companyId, req.user);
+  }
+
+  @Post('payroll/pay')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.payroll.pay')
+  @ApiOperation({ summary: 'Pay net salaries (posts 4.6.2.2 against treasury account)' })
+  payPayroll(@Body() payload: { year: number, month: number, paymentAccountCode: '1.1' | '1.2' }, @Req() req: any, @Query('companyId') companyId?: string) {
+    return this.payrollService.payPayroll(payload.year, payload.month, payload.paymentAccountCode || '1.2', companyId, req.user);
+  }
+
+  @Get('payroll/workflow-history')
+  @ApiOperation({ summary: 'Workflow history for a payroll period' })
+  getPayrollWorkflowHistory(@Query('year') year: number, @Query('month') month: number, @Query('companyId') companyId?: string) {
+    return this.payrollService.getPayrollWorkflowHistory(Number(year), Number(month), companyId);
   }
 
   @Get('payroll')
@@ -242,6 +293,8 @@ export class HRController {
   // ── Absences ────────────────────────────────────────────────────────────────
 
   @Post('absences')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.absences.manage')
   @ApiOperation({ summary: 'Request an absence/vacation' })
   createAbsence(@Body() data: any) {
     return this.hrService.createAbsence(data);
@@ -254,18 +307,24 @@ export class HRController {
   }
 
   @Patch('absences/:id')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.absences.manage')
   @ApiOperation({ summary: 'Update an absence (dates/days/reason/status)' })
   updateAbsence(@Param('id') id: string, @Body() data: any, @Query('companyId') companyId?: string) {
     return this.hrService.updateAbsence(id, data, companyId);
   }
 
   @Delete('absences/:id')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.absences.manage')
   @ApiOperation({ summary: 'Delete an absence' })
   deleteAbsence(@Param('id') id: string, @Query('companyId') companyId?: string) {
     return this.hrService.deleteAbsence(id, companyId);
   }
 
   @Patch('absences/:id/status')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.absences.approve')
   @ApiOperation({ summary: 'Update absence status' })
   updateAbsenceStatus(@Param('id') id: string, @Body('status') status: AbsenceStatus) {
     return this.hrService.updateAbsenceStatus(id, status);

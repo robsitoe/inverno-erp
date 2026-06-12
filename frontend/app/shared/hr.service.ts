@@ -60,6 +60,7 @@ export interface Employee {
   address?: string;
 
   department?: string;
+  managerId?: string;
 
   position?: string;
 
@@ -428,6 +429,26 @@ export class HRService {
   }
 
 
+
+    submitPayroll(year: number, month: number, companyId: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/payroll/submit?companyId=${companyId}`, { year, month });
+  }
+
+  approvePayroll(year: number, month: number, companyId: string, notes?: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/payroll/approve?companyId=${companyId}`, { year, month, notes });
+  }
+
+  rejectPayroll(year: number, month: number, companyId: string, notes: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/payroll/reject?companyId=${companyId}`, { year, month, notes });
+  }
+
+  payPayroll(year: number, month: number, paymentAccountCode: string, companyId: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/payroll/pay?companyId=${companyId}`, { year, month, paymentAccountCode });
+  }
+
+  getPayrollWorkflowHistory(year: number, month: number, companyId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/payroll/workflow-history?year=${year}&month=${month}&companyId=${companyId}`);
+  }
 
   postPayrollToAccounting(year: number, month: number, companyId: string): Observable<any> {
 

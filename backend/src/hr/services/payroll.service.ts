@@ -10,6 +10,7 @@ import { AccountingService } from '../../accounting/accounting.service';
 import { TenancyService } from '../../tenancy/tenancy.service';
 import { TenancyContext } from '../../tenancy/tenancy.context';
 import { JournalEntryStatus } from '../../accounting/entities/journal-entry.entity';
+import { WorkflowService } from '../../common/workflow.service';
 
 @Injectable()
 export class PayrollService {
@@ -28,6 +29,7 @@ export class PayrollService {
     private readonly defaultPettyCashVoucherRepo: Repository<PettyCashVoucher>,
     private readonly accountingService: AccountingService,
     private readonly tenancyService: TenancyService,
+    private readonly workflowService: WorkflowService,
   ) { }
 
   // ── Tenant-aware repo helpers ──────────────────────────────────────────────
@@ -270,16 +272,21 @@ export class PayrollService {
 
   // ── Post to Accounting ─────────────────────────────────────────────────────
 
-  async postPayrollToAccounting(year: number, month: number, companyId?: string) {
+  async postPayrollToAccounting(year: number, month: number, companyId?: string, user?: any) {
     const targetCompanyId = companyId || TenancyContext.getCompanyId();
     const payRepo = await this.getPayrollRepo(targetCompanyId);
 
+    // Segregação de funções: só folhas APROVADAS podem ser lançadas.
     const records = await payRepo.find({
-      where: { companyId: targetCompanyId, year, month, status: PayrollStatus.DRAFT },
+      where: { companyId: targetCompanyId, year, month, status: PayrollStatus.APPROVED },
     });
 
     if (records.length === 0) {
-      return { success: false, message: 'Nenhum registo em rascunho encontrado para este período. Gere a folha primeiro.' };
+      const pending = await payRepo.count({ where: { companyId: targetCompanyId, year, month } });
+      if (pending === 0) {
+        return { success: false, message: 'Nenhum registo encontrado para este período. Gere a folha primeiro.' };
+      }
+      return { success: false, message: 'Folha não aprovada. Submeta para aprovação e aguarde a decisão antes de lançar.' };
     }
 
     const totalGross = records.reduce((s, r) => s + Number(r.grossSalary), 0);
@@ -337,11 +344,150 @@ export class PayrollService {
         await payRepo.save(r);
       }
 
+      await this.workflowService.recordHistory({
+        documentId: `FOLHA-${String(month).padStart(2, '0')}-${year}-${targetCompanyId}`,
+        documentType: 'PAYROLL', fromStatus: 'APPROVED', toStatus: 'POSTED',
+        user: user || { id: 'system', name: 'Sistema' }, companyId: targetCompanyId,
+      });
+
       return { success: true, entryId: entry.id, processed: records.length };
     } catch (e: any) {
       console.error('[Payroll] Accounting Post Failed:', e);
       return { success: false, error: e.message };
     }
+  }
+
+
+  // ── Workflow da folha (segregação de funções) ──────────────────────────────
+
+  private payrollDocId(year: number, month: number, companyId: string) {
+    return `FOLHA-${String(month).padStart(2, '0')}-${year}-${companyId}`;
+  }
+
+  /** RH submete a folha gerada para aprovação. */
+  async submitPayroll(year: number, month: number, companyId: string | undefined, user: any) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const payRepo = await this.getPayrollRepo(cid);
+    const records = await payRepo.find({
+      where: [
+        { companyId: cid, year, month, status: PayrollStatus.DRAFT },
+        { companyId: cid, year, month, status: PayrollStatus.REJECTED },
+      ],
+    });
+    if (records.length === 0) {
+      return { success: false, message: 'Nenhum registo em rascunho/rejeitado para submeter. Gere a folha primeiro.' };
+    }
+    for (const r of records) {
+      r.status = PayrollStatus.SUBMITTED;
+      await payRepo.save(r);
+    }
+    await this.workflowService.recordHistory({
+      documentId: this.payrollDocId(year, month, cid!), documentType: 'PAYROLL',
+      fromStatus: 'DRAFT', toStatus: 'SUBMITTED', user, companyId: cid,
+    });
+    return { success: true, submitted: records.length };
+  }
+
+  /** Aprovador (ex.: diretor) aprova a folha submetida. */
+  async approvePayroll(year: number, month: number, companyId: string | undefined, user: any, notes?: string) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const payRepo = await this.getPayrollRepo(cid);
+    const records = await payRepo.find({ where: { companyId: cid, year, month, status: PayrollStatus.SUBMITTED } });
+    if (records.length === 0) {
+      return { success: false, message: 'Nenhuma folha submetida para aprovar neste período.' };
+    }
+    const approver = user?.name || user?.username || user?.userId || 'desconhecido';
+    for (const r of records) {
+      r.status = PayrollStatus.APPROVED;
+      r.approvedBy = approver;
+      r.approvedAt = new Date();
+      if (notes) r.approvalNotes = notes;
+      await payRepo.save(r);
+    }
+    await this.workflowService.recordHistory({
+      documentId: this.payrollDocId(year, month, cid!), documentType: 'PAYROLL',
+      fromStatus: 'SUBMITTED', toStatus: 'APPROVED', user, notes, companyId: cid,
+    });
+    return { success: true, approved: records.length };
+  }
+
+  /** Aprovador rejeita a folha (volta a editável pelo RH). Notas obrigatórias. */
+  async rejectPayroll(year: number, month: number, companyId: string | undefined, user: any, notes: string) {
+    if (!notes || !notes.trim()) {
+      return { success: false, message: 'Indique o motivo da rejeição.' };
+    }
+    const cid = companyId || TenancyContext.getCompanyId();
+    const payRepo = await this.getPayrollRepo(cid);
+    const records = await payRepo.find({ where: { companyId: cid, year, month, status: PayrollStatus.SUBMITTED } });
+    if (records.length === 0) {
+      return { success: false, message: 'Nenhuma folha submetida para rejeitar neste período.' };
+    }
+    for (const r of records) {
+      r.status = PayrollStatus.REJECTED;
+      r.approvalNotes = notes;
+      await payRepo.save(r);
+    }
+    await this.workflowService.recordHistory({
+      documentId: this.payrollDocId(year, month, cid!), documentType: 'PAYROLL',
+      fromStatus: 'SUBMITTED', toStatus: 'REJECTED', user, notes, companyId: cid,
+    });
+    return { success: true, rejected: records.length };
+  }
+
+  /**
+   * Tesoureiro paga os salários líquidos: lança 4.6.2.2 (débito) contra a
+   * conta de tesouraria escolhida (crédito) e marca os registos como PAID.
+   * Referência FOLHA-PAG-MM-YYYY (formato estável usado pelo frontend).
+   */
+  async payPayroll(year: number, month: number, paymentAccountCode: '1.1' | '1.2', companyId: string | undefined, user: any) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const payRepo = await this.getPayrollRepo(cid);
+    const records = await payRepo.find({ where: { companyId: cid, year, month, status: PayrollStatus.POSTED } });
+    if (records.length === 0) {
+      const paid = await payRepo.count({ where: { companyId: cid, year, month, status: PayrollStatus.PAID } });
+      if (paid > 0) return { success: false, message: 'Os salários deste período já foram pagos.' };
+      return { success: false, message: 'A folha tem de estar LANÇADA na contabilidade antes do pagamento.' };
+    }
+
+    const totalNet = records.reduce((s2, r) => s2 + Number(r.netSalary || 0), 0);
+    const ref = `FOLHA-PAG-${String(month).padStart(2, '0')}-${year}`;
+    const accCode = paymentAccountCode === '1.1' ? '1.1' : '1.2';
+
+    try {
+      const entry = await this.accountingService.createJournalEntry({
+        date: new Date().toISOString().split('T')[0],
+        description: `Pagamento de Salários - ${month}/${year}`,
+        reference: ref,
+        status: JournalEntryStatus.POSTED,
+        companyId: cid,
+        lines: [
+          { id: `${ref}-${cid}-1`, accountId: '4.6.2.2', debit: totalNet, credit: 0, description: `Liquidação salários ${month}/${year}` },
+          { id: `${ref}-${cid}-2`, accountId: accCode, debit: 0, credit: totalNet, description: `Pagamento salários ${month}/${year}` },
+        ],
+      } as any);
+
+      for (const r of records) {
+        r.status = PayrollStatus.PAID;
+        r.paymentDate = new Date().toISOString().split('T')[0] as any;
+        await payRepo.save(r);
+      }
+
+      await this.workflowService.recordHistory({
+        documentId: this.payrollDocId(year, month, cid!), documentType: 'PAYROLL',
+        fromStatus: 'POSTED', toStatus: 'PAID', user, companyId: cid,
+        notes: `Pago por ${accCode === '1.1' ? 'Caixa (1.1)' : 'Banco (1.2)'} — ${totalNet.toFixed(2)} MT`,
+      });
+
+      return { success: true, entryId: entry.id, paid: records.length, total: totalNet };
+    } catch (e: any) {
+      console.error('[Payroll] Payment posting failed:', e);
+      return { success: false, error: e.message };
+    }
+  }
+
+  async getPayrollWorkflowHistory(year: number, month: number, companyId?: string) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    return this.workflowService.getHistory(this.payrollDocId(year, month, cid!));
   }
 
   async getPayrollReportData(year: number, month: number, companyId?: string) {

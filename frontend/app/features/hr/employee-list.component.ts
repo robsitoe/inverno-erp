@@ -408,6 +408,17 @@ const MOZAMBIQUE_BANKS = [
 
                     <div class="col-span-1">
 
+                      <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Superior Hierárquico</label>
+
+                      <select [(ngModel)]="selectedEmployee.managerId" class="w-full px-3 py-2 border rounded text-xs bg-gray-50">
+                        <option [ngValue]="null">— Sem superior —</option>
+                        <option *ngFor="let m of employees" [ngValue]="m.id" [disabled]="m.id === selectedEmployee.id">{{ m.code }} - {{ m.name }}</option>
+                      </select>
+
+                    </div>
+
+                    <div class="col-span-1">
+
                       <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Tipo de Contrato</label>
 
                       <select [(ngModel)]="selectedEmployee.contractType" class="w-full px-3 py-2 border rounded text-xs bg-gray-50">

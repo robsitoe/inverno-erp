@@ -20,6 +20,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             role: payload.role,
             isAdmin: !!payload.isAdmin,
             isSuperAdmin: !!payload.isSuperAdmin,
+            isTechnical: !!payload.isTechnical,
+            permissionKeys: Array.isArray(payload.permissionKeys) ? payload.permissionKeys : [],
             name: payload.name,
             companyId: payload.companyId,
             customerId: payload.customerId,

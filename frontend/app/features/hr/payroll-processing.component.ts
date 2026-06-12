@@ -5,6 +5,7 @@ import { HRService, PayrollRecord } from '../../shared/hr.service';
 import { AppIconComponent } from '../../shared/components/app-icon.component';
 import { ToasterService } from '../../services/toaster.service';
 import { DataService } from '../../services/data.service';
+import { PermissionsService } from '../../services/permissions.service';
 import { AccountingService } from '../../shared/accounting.service';
 import { Subscription, firstValueFrom } from 'rxjs';
 
@@ -35,7 +36,8 @@ import { Subscription, firstValueFrom } from 'rxjs';
                 </div>
               </div>
               
-              <button 
+              <button
+                *ngIf="perms.hasPerm('hr.payroll.generate')"
                 (click)="processPayroll()" 
                 [disabled]="processing"
                 class="bg-blue-600 text-white px-6 py-2 rounded text-xs font-bold hover:bg-blue-700 shadow-lg flex items-center gap-2 disabled:bg-gray-400 font-black transition-all"
@@ -43,8 +45,26 @@ import { Subscription, firstValueFrom } from 'rxjs';
                 <app-icon name="sync" [size]="18" [class.animate-spin]="processing"></app-icon>
                 <span>{{ processing ? 'A PROCESSAR...' : 'GERAR FOLHA' }}</span>
               </button>
-              <button 
-                *ngIf="payrollData.length > 0 && hasDraftRecords"
+              <button
+                *ngIf="payrollData.length > 0 && hasDraftRecords && perms.hasPerm('hr.payroll.generate')"
+                (click)="submitPayroll()"
+                [disabled]="submitting"
+                class="bg-orange-500 text-white px-5 py-2 rounded text-xs font-bold hover:bg-orange-600 shadow-lg flex items-center gap-2 disabled:bg-gray-400 font-black">
+                <app-icon name="send" [size]="18"></app-icon>
+                <span>{{ submitting ? 'A SUBMETER...' : 'SUBMETER P/ APROVAÇÃO' }}</span>
+              </button>
+              <ng-container *ngIf="hasSubmittedRecords && perms.hasPerm('hr.payroll.approve')">
+                <button (click)="approvePayrollAction()" [disabled]="approving"
+                  class="bg-green-600 text-white px-5 py-2 rounded text-xs font-bold hover:bg-green-700 shadow-lg flex items-center gap-2 disabled:bg-gray-400 font-black">
+                  <app-icon name="how_to_reg" [size]="18"></app-icon><span>APROVAR FOLHA</span>
+                </button>
+                <button (click)="rejectPayrollAction()" [disabled]="approving"
+                  class="bg-red-600 text-white px-5 py-2 rounded text-xs font-bold hover:bg-red-700 shadow-lg flex items-center gap-2 disabled:bg-gray-400 font-black">
+                  <app-icon name="block" [size]="18"></app-icon><span>REJEITAR</span>
+                </button>
+              </ng-container>
+              <button
+                *ngIf="hasApprovedRecords && perms.hasPerm('hr.payroll.post')"
                 (click)="postToAccounting()" 
                 [disabled]="posting"
                 class="bg-emerald-600 text-white px-5 py-2 rounded text-xs font-bold hover:bg-emerald-700 shadow-lg flex items-center gap-2 disabled:bg-gray-400 font-black"
@@ -52,7 +72,7 @@ import { Subscription, firstValueFrom } from 'rxjs';
                 <app-icon name="account_balance" [size]="18"></app-icon>
                 <span>{{ posting ? 'A LANÇAR...' : 'LANÇAR NA CONTABILIDADE' }}</span>
               </button>
-              <div *ngIf="payrollData.length > 0 && !hasDraftRecords" class="flex items-center gap-2">
+              <div *ngIf="hasPostedRecords && perms.hasPerm('hr.payroll.pay')" class="flex items-center gap-2">
                 <select [(ngModel)]="paymentAccountCode" class="px-2 py-2 border rounded text-xs">
                   <option value="1.2">Banco (1.2)</option>
                   <option value="1.1">Caixa (1.1)</option>
@@ -161,8 +181,8 @@ import { Subscription, firstValueFrom } from 'rxjs';
                     </td>
                     <td class="p-3 text-right font-black text-gray-800 font-mono">{{ r.netSalary | number:'1.2-2' }}</td>
                     <td class="p-3 text-center">
-                      <span [class]="r.status === 'POSTED' ? 'bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full text-[10px]' : 'bg-yellow-100 text-yellow-700 font-bold px-2 py-0.5 rounded-full text-[10px]'">
-                        {{ r.status === 'POSTED' ? 'Lançado' : 'Rascunho' }}
+                      <span [class]="statusChipClass(r.status)">
+                        {{ statusLabel(r.status) }}
                       </span>
                     </td>
                     <td class="p-3 text-center">
@@ -203,8 +223,84 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   paymentAccountCode: '1.1' | '1.2' = '1.2';
   paying = false;
 
+  submitting = false;
+  approving = false;
+
   get hasDraftRecords() {
-    return this.payrollData.some(r => r.status !== 'POSTED');
+    return this.payrollData.some(r => r.status === 'DRAFT' || r.status === 'REJECTED');
+  }
+  get hasSubmittedRecords() {
+    return this.payrollData.some(r => r.status === 'SUBMITTED');
+  }
+  get hasApprovedRecords() {
+    return this.payrollData.some(r => r.status === 'APPROVED');
+  }
+  get hasPostedRecords() {
+    return this.payrollData.some(r => r.status === 'POSTED');
+  }
+
+  statusLabel(st: string): string {
+    const m: any = { DRAFT: 'Rascunho', SUBMITTED: 'Aguarda Aprovação', APPROVED: 'Aprovado', REJECTED: 'Rejeitado', POSTED: 'Lançado', PAID: 'Pago', CANCELED: 'Anulado' };
+    return m[st] || st;
+  }
+  statusChipClass(st: string): string {
+    const base = 'font-bold px-2 py-0.5 rounded-full text-[10px] ';
+    const m: any = {
+      DRAFT: 'bg-yellow-100 text-yellow-700', SUBMITTED: 'bg-orange-100 text-orange-700',
+      APPROVED: 'bg-blue-100 text-blue-700', REJECTED: 'bg-red-100 text-red-700',
+      POSTED: 'bg-green-100 text-green-700', PAID: 'bg-emerald-200 text-emerald-800',
+    };
+    return base + (m[st] || 'bg-gray-100 text-gray-600');
+  }
+
+  private setLocalStatus(from: string[], to: string) {
+    this.payrollData.forEach(r => { if (from.includes(r.status)) (r as any).status = to; });
+    this.cdr.detectChanges();
+  }
+
+  submitPayroll() {
+    const cid = this.dataService.getCompanyId(); if (!cid) return;
+    this.submitting = true;
+    this.sub.add(this.hrService.submitPayroll(this.selectedYear, this.selectedMonth, cid).subscribe({
+      next: (res) => {
+        this.submitting = false;
+        if (res.success) { this.toaster.showSuccess('Submetida', 'Folha submetida para aprovação.'); this.setLocalStatus(['DRAFT', 'REJECTED'], 'SUBMITTED'); }
+        else this.toaster.showWarning('Aviso', res.message || 'Não foi possível submeter.');
+        this.cdr.detectChanges();
+      },
+      error: (e) => { this.submitting = false; this.toaster.showError('Erro', e?.error?.message || e.message); this.cdr.detectChanges(); }
+    }));
+  }
+
+  approvePayrollAction() {
+    const cid = this.dataService.getCompanyId(); if (!cid) return;
+    if (!confirm('Aprovar a folha de ' + this.months[this.selectedMonth - 1] + '/' + this.selectedYear + '?\n\nTotal líquido: ' + this.totals.net.toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT · ' + this.payrollData.length + ' funcionário(s)')) return;
+    this.approving = true;
+    this.sub.add(this.hrService.approvePayroll(this.selectedYear, this.selectedMonth, cid).subscribe({
+      next: (res) => {
+        this.approving = false;
+        if (res.success) { this.toaster.showSuccess('Aprovada', 'Folha aprovada. Pode agora ser lançada na contabilidade.'); this.setLocalStatus(['SUBMITTED'], 'APPROVED'); }
+        else this.toaster.showWarning('Aviso', res.message || 'Não foi possível aprovar.');
+        this.cdr.detectChanges();
+      },
+      error: (e) => { this.approving = false; this.toaster.showError('Erro', e?.error?.message || e.message); this.cdr.detectChanges(); }
+    }));
+  }
+
+  rejectPayrollAction() {
+    const cid = this.dataService.getCompanyId(); if (!cid) return;
+    const notes = prompt('Motivo da rejeição (obrigatório):');
+    if (!notes || !notes.trim()) return;
+    this.approving = true;
+    this.sub.add(this.hrService.rejectPayroll(this.selectedYear, this.selectedMonth, cid, notes).subscribe({
+      next: (res) => {
+        this.approving = false;
+        if (res.success) { this.toaster.showWarning('Rejeitada', 'Folha rejeitada e devolvida ao RH para revisão.'); this.setLocalStatus(['SUBMITTED'], 'REJECTED'); }
+        else this.toaster.showWarning('Aviso', res.message || 'Não foi possível rejeitar.');
+        this.cdr.detectChanges();
+      },
+      error: (e) => { this.approving = false; this.toaster.showError('Erro', e?.error?.message || e.message); this.cdr.detectChanges(); }
+    }));
   }
 
   private sub = new Subscription();
@@ -212,6 +308,7 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   constructor(
     private hrService: HRService,
     private dataService: DataService,
+    public perms: PermissionsService,
     private accountingService: AccountingService,
     private toaster: ToasterService,
     private cdr: ChangeDetectorRef
@@ -317,8 +414,7 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   }
 
   get salariesPaid(): boolean {
-    const ref = `FOLHA-PAG-${String(this.selectedMonth).padStart(2, '0')}-${this.selectedYear}`;
-    return this.accountingService.getJournalEntries().some((e: any) => e.reference === ref && e.status === 'POSTED');
+    return this.payrollData.length > 0 && this.payrollData.every(r => r.status === 'PAID');
   }
 
   /** Bank transfer file: CSV with net salary per employee (NIB/bank from the employee record). */
@@ -375,48 +471,29 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   }
 
   /** Pays posted net salaries: debit 4.6.2.2, credit the selected treasury account. */
+  /** Pagamento agora é executado no SERVIDOR (hr.payroll.pay) - segregação de funções. */
   paySalaries() {
     if (this.paying || this.salariesPaid) return;
-    const net = this.totals.net;
-    if (net <= 0) { this.toaster.showWarning('Nada a pagar', 'Não há líquidos apurados.'); return; }
+    const cid = this.dataService.getCompanyId(); if (!cid) return;
     const accLabel = this.paymentAccountCode === '1.1' ? 'Caixa (1.1)' : 'Banco (1.2)';
-    if (!confirm(`Pagar salários de ${this.months[this.selectedMonth - 1]}/${this.selectedYear}?\n\nValor: ${net.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT\nConta: ${accLabel}\n\nSerá criado o lançamento de pagamento (4.6.2.2 → ${this.paymentAccountCode}).`)) return;
+    const msg = 'Pagar salários de ' + this.months[this.selectedMonth - 1] + '/' + this.selectedYear + '?\n\n'
+      + 'Valor líquido: ' + this.totals.net.toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT\n'
+      + 'Conta: ' + accLabel;
+    if (!confirm(msg)) return;
     this.paying = true;
-    const accounts = this.accountingService.getAccounts();
-    const findLeaf = (prefix: string) => accounts.find((a: any) => a.code === prefix && a.allowPosting)
-      || accounts.find((a: any) => a.code.startsWith(prefix) && a.allowPosting);
-    const salAcc: any = findLeaf('4.6.2.2');
-    const payAcc: any = findLeaf(this.paymentAccountCode);
-    if (!salAcc || !payAcc) { this.paying = false; this.toaster.showError('Contas em falta', 'Verifique 4.6.2.2 e a conta de tesouraria no Plano de Contas.'); return; }
-    const entryId = `JE${Date.now()}`;
-    const ref = `FOLHA-PAG-${String(this.selectedMonth).padStart(2, '0')}-${this.selectedYear}`;
-    const entry: any = {
-      id: entryId,
-      companyId: this.dataService.getCompanyId() || undefined,
-      journalId: this.paymentAccountCode === '1.1' ? 'JNL-CSH' : 'JNL-BNK',
-      date: new Date(),
-      description: `Pagamento de Salários - ${this.months[this.selectedMonth - 1]}/${this.selectedYear}`,
-      reference: ref,
-      sourceDocument: ref,
-      sourceType: 'PAYMENT',
-      status: 'POSTED',
-      createdBy: 'user',
-      createdAt: new Date(),
-      lines: [
-        { id: `${entryId}-1`, accountId: salAcc.id, accountCode: salAcc.code, accountName: salAcc.name, debit: net, credit: 0, description: `Liquidação salários ${this.selectedMonth}/${this.selectedYear}` },
-        { id: `${entryId}-2`, accountId: payAcc.id, accountCode: payAcc.code, accountName: payAcc.name, debit: 0, credit: net, description: `Pagamento salários ${this.selectedMonth}/${this.selectedYear}` }
-      ]
-    };
-    try {
-      this.accountingService.createJournalEntry(entry);
-      const postErr = (this.accountingService as any).consumePostingError ? (this.accountingService as any).consumePostingError() : null;
-      if (postErr) { this.toaster.showError('Pagamento não lançado', postErr); }
-      else { this.toaster.showSuccess('Salários pagos!', `Lançamento ${ref} criado: 4.6.2.2 → ${payAcc.code} (${net.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT).`); }
-    } catch (e: any) {
-      this.toaster.showError('Erro no pagamento', e?.message || 'Erro desconhecido');
-    }
-    this.paying = false;
-    this.cdr.detectChanges();
+    this.sub.add(this.hrService.payPayroll(this.selectedYear, this.selectedMonth, this.paymentAccountCode, cid).subscribe({
+      next: (res) => {
+        this.paying = false;
+        if (res.success) {
+          this.toaster.showSuccess('Salários pagos!', 'Lançamento ' + (res.entryId || '') + ' criado. Total: ' + (res.total || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT.');
+          this.setLocalStatus(['POSTED'], 'PAID');
+        } else {
+          this.toaster.showWarning('Aviso', res.message || res.error || 'Não foi possível pagar.');
+        }
+        this.cdr.detectChanges();
+      },
+      error: (e) => { this.paying = false; this.toaster.showError('Erro no pagamento', e?.error?.message || e.message); this.cdr.detectChanges(); }
+    }));
   }
 
   exportToExcel() {

@@ -2,12 +2,14 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
+import { ProfilesService } from '../users/profiles.service';
 import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
     constructor(
         private usersService: UsersService,
+        private profilesService: ProfilesService,
         private jwtService: JwtService,
     ) { }
 
@@ -46,20 +48,33 @@ export class AuthService {
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
         }
+
+        // Segregação de funções: resolve the user's profile assignments into
+        // concrete permission keys and embed them in the JWT (admins bypass
+        // checks anyway, so an empty list is fine for them).
+        let permissionKeys: string[] = [];
+        try {
+            permissionKeys = await this.profilesService.resolvePermissionKeys(user, user.companyId);
+        } catch (err) {
+            console.error('[Auth] Failed to resolve permission keys:', err.message);
+        }
+
         const payload = {
             username: user.username,
             sub: user.id,
             isAdmin: !!user.isAdmin,
             isSuperAdmin: !!user.isSuperAdmin,
+            isTechnical: !!user.isTechnical,
             companyId: user.companyId,
             customerId: user.customerId,
             employeeId: user.employeeId,
             userType: user.userType,
-            name: user.name
+            name: user.name,
+            permissionKeys,
         };
         return {
             access_token: this.jwtService.sign(payload),
-            user,
+            user: { ...user, permissionKeys },
         };
     }
 }
