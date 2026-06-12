@@ -7,7 +7,6 @@ import { RequirePermission } from '../auth/decorators/require-permission.decorat
 
 @ApiTags('profiles')
 @Controller('profiles')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class ProfilesController {
     constructor(private readonly profilesService: ProfilesService) { }
 
@@ -18,25 +17,27 @@ export class ProfilesController {
     }
 
     @Get()
-    @RequirePermission('admin.users')
     @ApiOperation({ summary: 'List company profiles (seeds defaults on first call)' })
     findAll(@Query('companyId') companyId: string) {
         return this.profilesService.findAll(companyId);
     }
 
     @Post()
+    @UseGuards(JwtAuthGuard, PermissionsGuard)
     @RequirePermission('admin.users')
     create(@Body() data: any) {
         return this.profilesService.create(data);
     }
 
     @Patch(':id')
+    @UseGuards(JwtAuthGuard, PermissionsGuard)
     @RequirePermission('admin.users')
     update(@Param('id') id: string, @Body() data: any) {
         return this.profilesService.update(id, data);
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard, PermissionsGuard)
     @RequirePermission('admin.users')
     remove(@Param('id') id: string) {
         return this.profilesService.remove(id);
