@@ -1,9 +1,14 @@
 /**
  * Global Configuration for Inverno ERP
- * Centralized API URL for multi-device access.
+ * In production (Docker/nginx), the API is served from the same origin —
+ * nginx proxies backend routes transparently. Set apiUrl to empty string.
+ * For local development, point directly to the NestJS dev server.
  */
 export const environment = {
     production: false,
-    apiUrl: 'http://localhost:3000', // <--- MUDAR APENAS AQUI!
-    frontendUrl: 'http://localhost:4200'
+    // Empty string = same origin (production via nginx proxy).
+    // Override by setting INVERNO_API_URL in the build environment, or
+    // change this value for direct-IP/LAN dev access.
+    apiUrl: (window as any).__INVERNO_API_URL__ || '',
+    frontendUrl: window.location.origin,
 };
