@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+﻿import { Component, OnInit, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
 import { LicenseService } from '../../services/license.service';
@@ -186,7 +186,8 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private dataService: DataService,
-    public licenseService: LicenseService
+    public licenseService: LicenseService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -292,8 +293,9 @@ export class DashboardComponent implements OnInit {
         const total = thisMonth.reduce((sum: number, d: any) => sum + (d.totalAmount || d.total || 0), 0);
         this.kpiCards[0].value = this.formatCurrency(total);
         this.kpiCards[0].sub = `${thisMonth.length} documento(s) este mês`;
+        this.cdr.detectChanges();
       },
-      error: () => { this.kpiCards[0].value = 'N/D'; this.kpiCards[0].sub = 'Sem ligação ao servidor'; }
+      error: () => { this.kpiCards[0].value = 'N/D'; this.kpiCards[0].sub = 'Sem ligação ao servidor'; this.cdr.detectChanges(); }
     });
   }
 

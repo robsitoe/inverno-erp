@@ -9,6 +9,7 @@
   "/users": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
   "/profiles": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
   "/companies": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/company": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
   "/tenants": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
   "/inventory": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
   "/reports": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
@@ -19,6 +20,15 @@
   "/suppliers": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
   "/articles": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
   "/generic-entities": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/entities": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
   "/delivery-points": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
-  "/workflow-history": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true }
+  "/workflow-history": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/document-types": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/test-route": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/payment-methods": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/taxes": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/sync": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/mobile": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/fleet": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/trips": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true }
 }
