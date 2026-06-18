@@ -87,9 +87,13 @@ export class PhoneHomeService {
                     status: LicenseStatus.ACTIVE,
                     isRevoked: false,
                     expiresAt: data.expiresAt ? new Date(data.expiresAt) : lic.expiresAt,
+                    lastPhoneHomeAt: new Date(),
                 });
                 this.blockCache.delete(lic.companyId);
                 this.logger.log(`License reactivated remotely for ${lic.companyId}`);
+            } else {
+                // Successful contact, license still valid — update timestamp
+                await this.licenseRepo.update(lic.id, { lastPhoneHomeAt: new Date() });
             }
         } catch (err) {
             this.logger.error(`Phone-home failed for ${lic.companyId}: ${err.message}`);

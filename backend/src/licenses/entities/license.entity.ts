@@ -89,6 +89,14 @@ export class License {
     @Column({ type: 'text', nullable: true })
     licenseToken?: string;
 
+    // Last successful phone-home timestamp (null = never contacted central server)
+    @Column({ type: 'timestamp', nullable: true })
+    lastPhoneHomeAt?: Date;
+
+    // Max days allowed offline before hard block (0 = no offline limit, purely local)
+    @Column({ default: 7 })
+    offlineGraceDays: number;
+
     @CreateDateColumn()
     createdAt: Date;
 
