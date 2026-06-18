@@ -1,7 +1,8 @@
 ﻿
 
 
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
 
 import { CommonModule } from '@angular/common';
@@ -218,6 +219,24 @@ import { ToasterService } from './services/toaster.service';
 
         </div>
 
+        <!-- Update Available Banner (admin only, shown at login) -->
+        <div *ngIf="updateAvailable && isAdminUser"
+             class="bg-blue-600 text-white px-4 py-2 flex items-center justify-between text-xs font-medium">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">system_update</span>
+            <span>Nova versão disponível ({{ latestVersion }}). Pode aplicar quando não houver trabalho em curso.</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button (click)="dismissUpdate()" class="text-blue-200 hover:text-white text-[10px] uppercase font-bold px-2 py-1 rounded transition-colors">
+              Ignorar
+            </button>
+            <button (click)="applyUpdate()" [disabled]="updatingNow"
+                    class="bg-white text-blue-700 hover:bg-blue-50 text-[10px] uppercase font-bold px-3 py-1 rounded transition-colors disabled:opacity-50">
+              {{ updatingNow ? 'A atualizar...' : 'Aplicar Agora' }}
+            </button>
+          </div>
+        </div>
+
 
 
 
@@ -359,6 +378,16 @@ export class AppComponent {
 
   license: LicenseInfo | null = null;
 
+  updateAvailable = false;
+  latestVersion = '';
+  updatingNow = false;
+  get isAdminUser(): boolean {
+    try {
+      const u = JSON.parse(localStorage.getItem('erp_current_user') || 'null');
+      return !!(u && (u.isAdmin || u.isSuperAdmin || u.isTechnical));
+    } catch { return false; }
+  }
+
 
 
 
@@ -396,8 +425,8 @@ export class AppComponent {
     private toaster: ToasterService,
 
 
-    private cdr: ChangeDetectorRef
-
+    private cdr: ChangeDetectorRef,
+    private http: HttpClient,
 
   ) { }
 
@@ -751,6 +780,11 @@ export class AppComponent {
     // sidebar modules & badge reflect the actual plan (avoids first-login DEMO).
     setTimeout(() => this.licenseService.refreshFromServer(), 300);
 
+    // Check for a new version silently — only shown to admins, doesn't block work.
+    if (this.isAdminUser) {
+      setTimeout(() => this.checkForUpdate(), 1500);
+    }
+
 
   }
 
@@ -797,6 +831,43 @@ export class AppComponent {
     this.dataService.setActiveCompany(null);
 
 
+  }
+
+  private checkForUpdate(): void {
+    this.http.get<any>('/admin/version').subscribe({
+      next: (data) => {
+        if (data?.updateAvailable) {
+          this.updateAvailable = true;
+          this.latestVersion = data.latest || '';
+          this.cdr.detectChanges();
+        }
+      },
+      error: () => { /* central server unreachable — silently ignore */ },
+    });
+  }
+
+  applyUpdate(): void {
+    const secret = localStorage.getItem('erp_update_secret') || '';
+    if (!secret) {
+      this.toaster.showError('Segredo de atualização não configurado.', 'Contacte o administrador do sistema.');
+      return;
+    }
+    this.updatingNow = true;
+    this.http.post<any>('/admin/update', {}, { headers: { 'x-update-secret': secret } }).subscribe({
+      next: () => {
+        this.toaster.showSuccess('Atualização iniciada', 'O servidor irá reiniciar em ~2 minutos. Pode continuar a trabalhar até lá.');
+        this.updateAvailable = false;
+        this.updatingNow = false;
+      },
+      error: (e) => {
+        this.toaster.showError('Falha na atualização', e?.error?.message || 'Verifique o segredo de atualização.');
+        this.updatingNow = false;
+      },
+    });
+  }
+
+  dismissUpdate(): void {
+    this.updateAvailable = false;
   }
 
 
