@@ -1,17 +1,20 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException, Optional } from '@nestjs/common';
 import { LicensesService } from '../../licenses/licenses.service';
+import { PhoneHomeService } from '../../licenses/phone-home.service';
 
 /**
  * LicenseGuard — protects routes that require a valid license.
- * 
- * Usage: @UseGuards(JwtAuthGuard, LicenseGuard)
- * 
- * The guard reads the companyId from the request (set by TenancyMiddleware)
- * and checks the license status from the database (server-side time, tamper-proof).
+ *
+ * Checks local DB status first; also consults PhoneHomeService in-memory
+ * block cache (populated by the periodic phone-home cron) so that remote
+ * revocations take effect without a server restart.
  */
 @Injectable()
 export class LicenseGuard implements CanActivate {
-    constructor(private readonly licensesService: LicensesService) { }
+    constructor(
+        private readonly licensesService: LicensesService,
+        @Optional() private readonly phoneHome?: PhoneHomeService,
+    ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
@@ -21,8 +24,15 @@ export class LicenseGuard implements CanActivate {
             || request.body?.companyId;
 
         if (!companyId) {
-            // No company context — allow (will be caught by other guards)
             return true;
+        }
+
+        // Fast in-memory check from last phone-home result
+        if (this.phoneHome?.isBlockedLocally(companyId)) {
+            throw new ForbiddenException(
+                `Licença revogada remotamente para a empresa ${companyId}. ` +
+                `Contacte o fornecedor para regularizar o pagamento.`
+            );
         }
 
         const status = await this.licensesService.getStatus(companyId);
@@ -34,9 +44,7 @@ export class LicenseGuard implements CanActivate {
             );
         }
 
-        // Attach license info to request for downstream use
         request.license = status;
-
         return true;
     }
 }

@@ -12,6 +12,7 @@ import {
     Delete,
     Patch,
     UnauthorizedException,
+    Headers,
 } from '@nestjs/common';
 import { LicensesService } from './licenses.service';
 import { GenerateLicenseDto, ActivateLicenseDto } from './dto/generate-license.dto';
@@ -78,6 +79,28 @@ export class LicensesController {
     @Get('status/:companyId')
     async getStatus(@Param('companyId') companyId: string) {
         return this.licensesService.getStatus(companyId);
+    }
+
+    // ─── REMOTE STATUS (Phone-home endpoint — called by on-premise installs) ──
+    // GET /licenses/remote-status?companyId=xxx&token=yyy
+    // No auth guard: protected by the licenseToken matching and server-side check.
+    @Get('remote-status')
+    async getRemoteStatus(
+        @Query('companyId') companyId: string,
+        @Req() req: any,
+    ) {
+        if (!req.headers['x-phone-home']) {
+            return { error: 'Acesso direto não permitido.' };
+        }
+        const status = await this.licensesService.getStatus(companyId);
+        return {
+            companyId,
+            status: status.status,
+            isRevoked: !status.valid && status.status === 'REVOKED',
+            valid: status.valid,
+            expiresAt: status.expiresAt,
+            reason: status.valid ? undefined : 'Licença inválida ou revogada.',
+        };
     }
 
     // ─── REVOKE (SuperAdmin only) ─────────────────────────────────────────────

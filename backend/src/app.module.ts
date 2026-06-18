@@ -72,6 +72,7 @@ import { Trip } from './mobile/trip.entity';
 import { RoutePoint } from './mobile/route-point.entity';
 import { PaymentGatewayConfig } from './payment-gateways/entities/payment-gateway-config.entity';
 import { PaymentGatewaysModule } from './payment-gateways/payment-gateways.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -210,6 +211,7 @@ import { PaymentGatewaysModule } from './payment-gateways/payment-gateways.modul
     GasControlModule,
     MobileModule,
     PaymentGatewaysModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
