@@ -97,6 +97,15 @@ export class License {
     @Column({ default: 7 })
     offlineGraceDays: number;
 
+    // Short-lived operational token (signed by central server, 30 days).
+    // Validated locally without internet. Cannot be forged or tampered with.
+    // Null = phone-home not configured (SaaS or pure offline install).
+    @Column({ type: 'text', nullable: true })
+    operationalToken?: string;
+
+    @Column({ type: 'timestamp', nullable: true })
+    operationalTokenExpiresAt?: Date;
+
     @CreateDateColumn()
     createdAt: Date;
 

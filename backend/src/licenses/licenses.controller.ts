@@ -81,9 +81,11 @@ export class LicensesController {
         return this.licensesService.getStatus(companyId);
     }
 
-    // ─── REMOTE STATUS (Phone-home endpoint — called by on-premise installs) ──
-    // GET /licenses/remote-status?companyId=xxx&token=yyy
-    // No auth guard: protected by the licenseToken matching and server-side check.
+    // ─── REMOTE STATUS + OPERATIONAL TOKEN (Phone-home endpoint) ────────────────
+    // GET /licenses/remote-status?companyId=xxx
+    // Called by on-premise installs every 4h. Returns status AND a fresh
+    // short-lived operational token signed by this server's LICENSE_SECRET.
+    // Protected by x-phone-home header (not a public endpoint).
     @Get('remote-status')
     async getRemoteStatus(
         @Query('companyId') companyId: string,
@@ -93,12 +95,16 @@ export class LicensesController {
             return { error: 'Acesso direto não permitido.' };
         }
         const status = await this.licensesService.getStatus(companyId);
+        const operationalToken = status.valid
+            ? await this.licensesService.issueOperationalToken(companyId)
+            : null;
         return {
             companyId,
             status: status.status,
             isRevoked: !status.valid && status.status === 'REVOKED',
             valid: status.valid,
             expiresAt: status.expiresAt,
+            operationalToken,
             reason: status.valid ? undefined : 'Licença inválida ou revogada.',
         };
     }

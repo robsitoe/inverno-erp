@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException, Optional } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException, Optional, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LicensesService } from '../../licenses/licenses.service';
@@ -48,16 +48,20 @@ export class LicenseGuard implements CanActivate {
             );
         }
 
-        // Offline grace period check: if phone-home is configured but the server
-        // has been unreachable for more than offlineGraceDays, block access.
+        // Operational token check — cryptographically tamper-proof.
+        // Only active when phone-home is configured (operationalToken is present).
+        // If the token is expired the client MUST reconnect to get a new one —
+        // modifying the local database does not help because the signature is invalid.
         if (this.licenseRepo) {
             const lic = await this.licenseRepo.findOne({ where: { companyId } });
-            if (lic && lic.offlineGraceDays > 0 && lic.lastPhoneHomeAt) {
-                const daysSinceContact = (Date.now() - new Date(lic.lastPhoneHomeAt).getTime()) / 86_400_000;
-                if (daysSinceContact > lic.offlineGraceDays) {
+            if (lic?.operationalToken) {
+                try {
+                    this.licensesService.verifyOperationalToken(lic.operationalToken);
+                    // Token valid — passes. Expiry is encoded inside the JWT.
+                } catch {
                     throw new ForbiddenException(
-                        `Verificação de licença necessária. Sem contacto com o servidor central há ${Math.floor(daysSinceContact)} dias ` +
-                        `(limite: ${lic.offlineGraceDays} dias). Ligue à internet para continuar.`
+                        `Token operacional expirado para a empresa ${companyId}. ` +
+                        `Ligue à internet para renovar a licença (contacto com servidor central necessário).`
                     );
                 }
             }

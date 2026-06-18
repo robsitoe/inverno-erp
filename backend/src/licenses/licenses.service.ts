@@ -412,6 +412,38 @@ export class LicensesService {
         });
     }
 
+    /**
+     * Issues a short-lived operational token (30 days) signed by LICENSE_SECRET.
+     * On-premise installs validate this token locally — no internet needed.
+     * Because it's signed with our private secret, the client cannot forge or
+     * extend it. After 30 days they MUST contact this server for a new one.
+     */
+    async issueOperationalToken(companyId: string): Promise<string> {
+        const license = await this.licenseRepo.findOne({ where: { companyId } });
+        if (!license) throw new Error(`No license for ${companyId}`);
+
+        const secret = this.configService.get<string>('LICENSE_SECRET') || 'license-secret-change-in-production';
+        return this.jwtService.sign(
+            {
+                sub: license.id,
+                cid: companyId,
+                plan: license.plan,
+                features: license.features,
+                type: 'operational',
+            },
+            { secret, expiresIn: '30d' },
+        );
+    }
+
+    /**
+     * Validates an operational token locally (no HTTP call).
+     * Returns the payload if valid, throws if expired or tampered.
+     */
+    verifyOperationalToken(token: string): any {
+        const secret = this.configService.get<string>('LICENSE_SECRET') || 'license-secret-change-in-production';
+        return this.jwtService.verify(token, { secret });
+    }
+
     // ─── VALIDATE TOKEN (for LicenseGuard) ───────────────────────────────────
 
     async validateToken(token: string): Promise<LicensePayload | null> {

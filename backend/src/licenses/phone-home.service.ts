@@ -92,8 +92,14 @@ export class PhoneHomeService {
                 this.blockCache.delete(lic.companyId);
                 this.logger.log(`License reactivated remotely for ${lic.companyId}`);
             } else {
-                // Successful contact, license still valid — update timestamp
-                await this.licenseRepo.update(lic.id, { lastPhoneHomeAt: new Date() });
+                // Successful contact, license still valid — store fresh operational token
+                const opTokenExpiry = new Date();
+                opTokenExpiry.setDate(opTokenExpiry.getDate() + 30);
+                await this.licenseRepo.update(lic.id, {
+                    lastPhoneHomeAt: new Date(),
+                    operationalToken: data.operationalToken || lic.operationalToken,
+                    operationalTokenExpiresAt: data.operationalToken ? opTokenExpiry : lic.operationalTokenExpiresAt,
+                });
             }
         } catch (err) {
             this.logger.error(`Phone-home failed for ${lic.companyId}: ${err.message}`);
