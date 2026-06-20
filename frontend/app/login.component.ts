@@ -383,6 +383,13 @@ export class LoginComponent implements OnInit {
     }
     localStorage.setItem('erp_license_entry_mode', option === 'buy' ? 'BUY' : option === 'key' ? 'KEY' : 'DEMO');
     this.selectedMode = 'ADMIN';
+
+    // Obtain a real JWT so that protected endpoints (create user, etc.) work.
+    // Fails silently if backend is unreachable — admin panel still opens.
+    this.authService.adminSession(this.adminAccessCode).subscribe({
+      error: () => { /* backend unavailable — admin panel opens without token */ }
+    });
+
     this.finishLogin('admin-page');
   }
 

@@ -77,4 +77,30 @@ export class AuthService {
             user: { ...user, permissionKeys },
         };
     }
+
+    /** Issues a JWT for a pre-validated user (no password check). */
+    async loginDirect(user: any) {
+        let permissionKeys: string[] = [];
+        try {
+            permissionKeys = await this.profilesService.resolvePermissionKeys(user, user.companyId);
+        } catch { /* admins bypass anyway */ }
+
+        const payload = {
+            username: user.username,
+            sub: user.id,
+            isAdmin: !!user.isAdmin,
+            isSuperAdmin: !!user.isSuperAdmin,
+            isTechnical: !!user.isTechnical,
+            companyId: user.companyId,
+            customerId: user.customerId,
+            employeeId: user.employeeId,
+            userType: user.userType,
+            name: user.name,
+            permissionKeys,
+        };
+        return {
+            access_token: this.jwtService.sign(payload),
+            user: { ...user, permissionKeys },
+        };
+    }
 }

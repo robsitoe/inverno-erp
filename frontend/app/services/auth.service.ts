@@ -107,6 +107,18 @@ export class AuthService {
 
 
 
+    adminSession(code: string): Observable<any> {
+        return this.http.post<any>(`${this.apiUrl}/admin-session`, { code }).pipe(
+            tap(response => {
+                if (response.access_token && response.user) {
+                    localStorage.setItem('access_token', response.access_token);
+                    localStorage.setItem('erp_current_user', JSON.stringify(response.user));
+                    this.currentUserSubject.next(response.user);
+                }
+            }),
+        );
+    }
+
     logout() {
 
 
