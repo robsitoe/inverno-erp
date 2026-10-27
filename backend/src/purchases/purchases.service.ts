@@ -141,6 +141,11 @@ export class PurchasesService {
     repo.merge(document, updatePurchaseDto as any);
     const savedDoc = await repo.save(document) as unknown as PurchaseDocument;
 
+    // Documento anulado depois de ter movimentado stock: estorna os movimentos
+    if (savedDoc.status === 'REJECTED' && (oldStatus === 'APPROVED' || oldStatus === 'POSTED')) {
+      const fullDoc = await this.findOne(savedDoc.id);
+      await this.reverseStockMovementsForPurchases(fullDoc);
+    }
     // Trigger stock movements if status just changed to final
     if ((savedDoc.status === 'APPROVED' || savedDoc.status === 'POSTED') && oldStatus !== savedDoc.status) {
       console.log(`[PurchasesService] Direct update trigger for ${savedDoc.type} ${savedDoc.series}/${savedDoc.number} (${savedDoc.status})`);
@@ -191,6 +196,9 @@ export class PurchasesService {
     if (updatedDoc.status === 'POSTED' || updatedDoc.status === 'APPROVED') {
       await this.createStockMovementsForPurchases(updatedDoc);
     }
+    if (updatedDoc.status === 'REJECTED') {
+      await this.reverseStockMovementsForPurchases(updatedDoc);
+    }
 
     return result;
   }
@@ -206,11 +214,12 @@ export class PurchasesService {
 
     const type = document.type;
 
-    // Setup logic for IN/OUT based on doc type
-    // FC (Fatura Compra), GR (Guia Remessa), ND (Nota Debito) = IN
-    // NC (Nota Credito), DC (Devolucao) = OUT
-    const isIn = ['FC', 'GR', 'ND', 'FCOMP'].includes(type);
-    const isOut = ['NC', 'DC'].includes(type);
+    // Tipos de compra que movimentam stock:
+    // FC (Fatura de Compra), VDC (Venda a Dinheiro de Compra) e GRC (Guia de Remessa de Compra) = entrada
+    // NCC (Nota de Crédito de Compra / devolução ao fornecedor) = saída
+    // NDC (Nota de Débito) e NEC (Nota de Encomenda) não movimentam stock.
+    const isIn = ['FC', 'VDC', 'GRC', 'GR', 'FCOMP'].includes(type);
+    const isOut = ['NCC', 'DC'].includes(type);
 
     console.log(`[PurchasesService] Processing movements for ${document.type} ${document.series}/${document.number}. Type: ${type}, Lines: ${document.lines?.length || 0}`);
 
@@ -230,14 +239,41 @@ export class PurchasesService {
         articleName: line.articleName,
         movementType: isIn ? 'IN' : 'OUT',
         quantity: Number(line.quantity),
-        unitCost: Number(line.unitPrice),
-        totalCost: Number(line.totalValue),
+        // custo líquido de desconto e sem IVA, para o preço médio ponderado
+        unitCost: Number(line.quantity) > 0 && Number((line as any).totalLiquid) > 0 ? Math.round((Number((line as any).totalLiquid) / Number(line.quantity)) * 10000) / 10000 : Number(line.unitPrice),
+        totalCost: Number((line as any).totalLiquid) || Number(line.quantity) * Number(line.unitPrice),
         reference: `${document.type} ${document.series}/${document.number}`,
         sourceDocument: document.id,
         notes: `Gerado via ${type}`
       };
 
       await this.inventoryService.createStockMovement(movementDto);
+    }
+  }
+
+  /** Estorna (movimentos inversos) o stock gerado por um documento de compra anulado. */
+  private async reverseStockMovementsForPurchases(document: PurchaseDocument) {
+    const all = await this.inventoryService.findAllStockMovements(document.companyId);
+    if (all.some(m => m.sourceDocument === `${document.id}:VOID`)) return; // já estornado
+    const originals = all.filter(m => m.sourceDocument === document.id);
+    for (const m of originals) {
+      const inverse = m.movementType === 'IN' ? 'OUT' : m.movementType === 'OUT' ? 'IN' : null;
+      if (!inverse) continue;
+      await this.inventoryService.createStockMovement({
+        date: new Date().toISOString().slice(0, 10),
+        articleId: m.articleId,
+        companyId: document.companyId,
+        articleCode: m.articleCode,
+        articleName: m.articleName,
+        warehouseId: m.warehouseId,
+        movementType: inverse as any,
+        quantity: Number(m.quantity),
+        unitCost: 0,
+        totalCost: 0,
+        reference: `Anulação ${document.type} ${document.series}/${document.number}`,
+        sourceDocument: `${document.id}:VOID`,
+        notes: `Estorno por anulação de ${document.type} ${document.series}/${document.number}`
+      } as any);
     }
   }
 

@@ -2,6 +2,8 @@
   label: string;
   icon: string;
   view?: string;
+  /** Abre o ecrã partilhado já filtrado para clientes ou fornecedores. */
+  context?: 'CUSTOMER' | 'SUPPLIER';
   beta?: boolean;
   productionReady?: boolean;
   comingSoon?: boolean;
@@ -29,10 +31,10 @@ export const MENU_ITEMS: MenuItem[] = [
       { label: "Diários", icon: "book", view: "diaries" },
       { label: "Balancetes", icon: "balance", view: "trial-balance" },
       { label: "Demonstrações Financeiras", icon: "assessment", view: "financial-statements" },
-      { label: "Centros de Custo", icon: "business_center", view: "cost-centers", beta: true, productionReady: false },
+      { label: "Centros de Custo", icon: "business_center", view: "cost-centers" },
       { label: "IVA", icon: "receipt_long", view: "vat", beta: true, productionReady: false },
       { label: "Fecho de Período", icon: "lock_clock", view: "period-close", beta: true, productionReady: false },
-      { label: "Exploração", icon: "explore", view: "exploration", beta: true, productionReady: false },
+      { label: "Exploração", icon: "explore", view: "exploration" },
       { label: "Utilitários", icon: "build", view: "utilities", beta: true, productionReady: false }
     ]
   },
@@ -68,8 +70,8 @@ export const MENU_ITEMS: MenuItem[] = [
     feature: "TREASURY",
     children: [
       { label: "Gestão de Tesouraria", icon: "account_balance_wallet", view: "treasury-management" },
-      { label: "Pagamentos", icon: "payment" },
-      { label: "Recebimentos", icon: "account_balance" },
+      { label: "Pagamentos", icon: "payment", view: "treasury-management" },
+      { label: "Recebimentos", icon: "account_balance", view: "treasury-management" },
       { label: "Caixas", icon: "point_of_sale" },
       { label: "Bancos", icon: "account_balance" },
       { label: "Reconciliação Bancária", icon: "sync", view: "bank-reconciliation" },
@@ -83,6 +85,7 @@ export const MENU_ITEMS: MenuItem[] = [
         icon: "explore",
         children: [
           { label: "Extrato de Conta", icon: "history", view: "account-statement" },
+          { label: "Antiguidade de Saldos", icon: "hourglass_bottom", view: "aging-report" },
           { label: "Listagem de Movimentos", icon: "list" },
           { label: "Fluxos de Caixa", icon: "payments" }
         ]
@@ -137,7 +140,14 @@ export const MENU_ITEMS: MenuItem[] = [
       { label: "Vendas/Encomendas", icon: "receipt", view: "sales-form" },
       { label: "Campanhas de Vendas", icon: "campaign" },
       { label: "Comissões", icon: "percent" },
-      { label: "Exploração", icon: "explore" },
+      {
+        label: "Exploração",
+        icon: "explore",
+        children: [
+          { label: "Extrato de Conta", icon: "history", view: "account-statement", context: "CUSTOMER" },
+          { label: "Antiguidade de Saldos", icon: "hourglass_bottom", view: "aging-report", context: "CUSTOMER" }
+        ]
+      },
       { label: "Utilitários", icon: "build" }
     ]
   },
@@ -148,18 +158,16 @@ export const MENU_ITEMS: MenuItem[] = [
     children: [
       { label: "Fornecedores", icon: "group", view: "supplier-management" },
       { label: "Compras/Encomendas", icon: "receipt", view: "purchase-form" },
-      { label: "Encomendas a Fornecedor", icon: "receipt_long" },
-      { label: "Faturas de Fornecedor", icon: "description" },
-      { label: "Notas de Crédito", icon: "credit_card" },
-      { label: "Guias de Receção", icon: "move_to_inbox" },
-      { label: "Devoluções a Fornecedor", icon: "keyboard_return" },
-      { label: "Requisições de Compra", icon: "assignment" },
-      { label: "Consultas de Preço", icon: "search" },
-      { label: "Gestão de Stocks", icon: "warehouse" },
-      { label: "Projeção de Necessidades", icon: "analytics" },
-      { label: "Estado de Encomendas", icon: "local_shipping" },
-      { label: "Preços de Compra", icon: "euro" },
-      { label: "Exploração", icon: "explore" },
+      {
+        label: "Exploração",
+        icon: "explore",
+        children: [
+          { label: "Extrato de Conta", icon: "history", view: "account-statement", context: "SUPPLIER" },
+          { label: "Antiguidade de Saldos", icon: "hourglass_bottom", view: "aging-report", context: "SUPPLIER" },
+          { label: "Estado de Encomendas", icon: "local_shipping" },
+          { label: "Preços de Compra", icon: "euro" }
+        ]
+      },
       { label: "Utilitários", icon: "build" }
     ]
   },
@@ -303,14 +311,14 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
     children: [
       { label: "Geral", icon: "tune", view: "admin-companies" },
       { label: "Pagamentos", icon: "payments", view: "payment-gateway-settings" },
-      { label: "Parâmetros", icon: "settings_applications" }
+      { label: "Parâmetros", icon: "settings_applications", view: "admin-page" }
     ]
   },
   {
     label: "Consola",
     icon: "terminal",
     children: [
-      { label: "Eventos", icon: "event_note" },
+      { label: "Eventos", icon: "event_note", view: "admin-system" },
       { label: "Tarefas", icon: "task" }
     ]
   },
@@ -343,7 +351,7 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
     label: "Perfis",
     icon: "badge",
     children: [
-      { label: "Perfis de Acesso", icon: "admin_panel_settings" }
+      { label: "Perfis de Acesso", icon: "admin_panel_settings", view: "admin-users" }
     ]
   },
   {
@@ -357,15 +365,16 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
     label: "Planos de Manutenção",
     icon: "healing",
     children: [
-      { label: "Backups", icon: "backup" },
-      { label: "Limpeza", icon: "cleaning_services" }
+      { label: "Planos Agendados", icon: "event_repeat", view: "admin-maintenance" },
+      { label: "Verificação de Integridade", icon: "health_and_safety", view: "admin-maintenance" },
+      { label: "Backups e Restauro", icon: "backup", view: "admin-system" }
     ]
   },
   {
     label: "Servidor de Dados",
     icon: "dns",
     children: [
-      { label: "Conexões", icon: "link" }
+      { label: "Conexões", icon: "link", view: "admin-system" }
     ]
   }
 ];

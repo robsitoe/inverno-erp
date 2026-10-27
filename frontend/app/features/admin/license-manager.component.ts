@@ -3,14 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { finalize } from 'rxjs';
+import { environment, VENDOR_CONTACT } from '../../shared/config';
 import { LicenseService, LicenseInfo, LicensePlanDefinition, LicenseRenewalInfo } from '../../services/license.service';
-import { MobilePaymentFormComponent } from './mobile-payment-form.component';
 import { PaymentService, PaymentStatus } from '../../services/payment.service';
 
 @Component({
   selector: 'app-license-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule, MobilePaymentFormComponent],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   template: `
     <div class="space-y-6 p-2 h-full overflow-y-auto">
 
@@ -22,11 +22,11 @@ import { PaymentService, PaymentStatus } from '../../services/payment.service';
         </button>
         <button (click)="activeTab = 'buy'" 
                 [class]="'px-4 py-1.5 rounded-md text-xs font-bold transition-all ' + (activeTab === 'buy' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700')">
-          COMPRAR / RENOVAR
+          PEDIR / RENOVAR
         </button>
         <button (click)="activeTab = 'activate'" 
                 [class]="'px-4 py-1.5 rounded-md text-xs font-bold transition-all ' + (activeTab === 'activate' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700')">
-          ATIVAR MANUAL
+          ATIVAR
         </button>
       </div>
 
@@ -196,60 +196,35 @@ import { PaymentService, PaymentStatus } from '../../services/payment.service';
             </div>
           </div>
 
-          <!-- Promo Code Section -->
-          <div *ngIf="selectedPlan && !paymentMethod" class="animate-slide-up max-w-2xl mx-auto bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4">
-            <div class="flex items-center gap-3">
-              <div class="flex-1 relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-[20px]">sell</span>
-                <input type="text" [(ngModel)]="promoInput" placeholder="Tem um código promocional?" 
-                       class="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-none uppercase font-bold tracking-wider">
-              </div>
-              <button (click)="applyPromo()" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-black transition-all">APLICAR</button>
+          <!-- Pedido de licença: a chave é emitida pelo fornecedor -->
+          <div class="max-w-2xl mx-auto bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-4">
+            <div>
+              <h2 class="text-base font-bold text-gray-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-blue-600">request_quote</span>
+                Pedir ou renovar licença
+              </h2>
+              <p class="text-xs text-gray-500 mt-1">
+                A licença é emitida pelo fornecedor do Inverno ERP. Escolha o plano acima, envie o pedido com o ID desta instalação
+                e cole a chave recebida no separador <b>ATIVAR</b>.
+              </p>
             </div>
-            <p *ngIf="promoError" class="text-[10px] text-red-600 mt-2 font-medium">{{ promoError }}</p>
-            <div *ngIf="appliedPromo" class="mt-2 flex items-center justify-between text-[11px] text-green-700 bg-green-50 p-2 rounded-md border border-green-100">
-              <span class="flex items-center gap-1 font-bold">
-                <span class="material-symbols-outlined text-[14px]">check_circle</span>
-                CÓDIGO APLICADO: {{ appliedPromo.code }}
-              </span>
-              <span class="font-bold">- {{ appliedPromo.discountPercent ? appliedPromo.discountPercent + '%' : appliedPromo.discountFixed + ' MT' }}</span>
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <p class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">ID desta instalação</p>
+              <code class="block mt-1 text-sm font-mono text-slate-800 break-all">{{ installationId || 'a obter...' }}</code>
             </div>
-          </div>
-
-          <!-- Payment Options -->
-          <div *ngIf="selectedPlan" class="animate-slide-up space-y-4 max-w-2xl mx-auto">
-            
-            <div *ngIf="appliedPromo" class="text-center mb-2">
-               <span class="text-xs text-gray-400 line-through">{{ getPlanPrice(selectedPlan) | number }} MT</span>
-               <span class="text-lg font-bold text-blue-800 ml-2">{{ getFinalPrice() | number }} MT</span>
+            <div class="flex flex-wrap gap-2">
+              <a *ngIf="vendor.phone" [href]="whatsappLink()" target="_blank" rel="noopener"
+                 class="px-4 py-2 rounded-lg text-sm font-bold bg-green-600 hover:bg-green-700 text-white">Pedir por WhatsApp</a>
+              <a *ngIf="vendor.email" [href]="mailLink()"
+                 class="px-4 py-2 rounded-lg text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white">Pedir por email</a>
+              <button type="button" (click)="copyRequest()"
+                 class="px-4 py-2 rounded-lg text-sm font-bold border border-gray-300 bg-white hover:bg-gray-50 text-gray-700">
+                {{ requestCopied ? 'Copiado ✓' : 'Copiar pedido' }}
+              </button>
             </div>
-
-            <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wide text-center">Escolha o Método de Pagamento</h4>
-            <div class="grid grid-cols-2 gap-4">
-                <button (click)="paymentMethod = 'MPESA'" 
-                        [class]="'p-4 border-2 rounded-xl flex flex-col items-center justify-center gap-2 transition-all ' + 
-                           (paymentMethod === 'MPESA' ? 'border-red-600 bg-red-50' : 'border-gray-200 bg-white hover:border-gray-300')">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/M-Pesa_logo.png" class="h-8 object-contain" alt="M-Pesa">
-                  <span class="text-[10px] font-bold uppercase tracking-wider text-gray-600">Carteira M-Pesa</span>
-                </button>
-                <button (click)="paymentMethod = 'EMOLA'" 
-                        [class]="'p-4 border-2 rounded-xl flex flex-col items-center justify-center gap-2 transition-all ' + 
-                           (paymentMethod === 'EMOLA' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white hover:border-gray-300')">
-                  <img src="https://yt3.googleusercontent.com/I2vW848n1XmQ8m_JOfp0FkE-7k1X_wE_w-QW-_t0X6_8E8_B7E-7k1X_wE_w-QW-_t0X6_8E8_B7E-7k1X_wE_w-QW-_t0X6_8E8_B7E-7k1X_wE_w-QW-_t0X6_8E8_B7E" class="h-8 object-contain" alt="e-Mola">
-                  <span class="text-[10px] font-bold uppercase tracking-wider text-gray-600">Carteira e-Mola</span>
-                </button>
-            </div>
-
-            <!-- Mobile Payment Form (Integrated) -->
-            <div *ngIf="paymentMethod" class="mt-6 animate-fade-in">
-              <app-mobile-payment-form 
-                [wallet]="paymentMethod" 
-                [amount]="getFinalPrice()"
-                [companyId]="license?.companyName || ''"
-                (onPaymentSuccess)="handlePaymentDone($event)"
-              >
-              </app-mobile-payment-form>
-            </div>
+            <p *ngIf="!vendor.phone && !vendor.email" class="text-xs text-gray-500">
+              Copie o pedido e envie-o ao seu fornecedor do Inverno ERP.
+            </p>
           </div>
       </div>
 
@@ -264,6 +239,13 @@ import { PaymentService, PaymentStatus } from '../../services/payment.service';
               <p class="text-xs text-gray-500 mt-1">Se já possui um token de licença, introduza-o aqui.</p>
             </div>
             
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <p class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">ID desta instalação (envie ao fornecedor para pedir a licença)</p>
+              <div class="flex items-center gap-2 mt-1">
+                <code class="flex-1 text-sm font-mono text-slate-800 break-all">{{ installationId || 'a obter...' }}</code>
+                <button type="button" (click)="copyInstallationId()" class="text-xs font-bold bg-white border border-slate-300 hover:bg-slate-100 px-2 py-1 rounded">COPIAR</button>
+              </div>
+            </div>
             <textarea
               [(ngModel)]="activationToken"
               rows="5"
@@ -306,6 +288,7 @@ export class LicenseManagerComponent implements OnInit {
   refreshing = false;
   activationError = '';
   activationSuccess = '';
+  installationId = '';
 
   // UI Tabs
   activeTab: 'status' | 'buy' | 'activate' = 'status';
@@ -318,10 +301,39 @@ export class LicenseManagerComponent implements OnInit {
 
   constructor(
     public licenseService: LicenseService,
-    private paymentService: PaymentService
+    private paymentService: PaymentService,
+    private http: HttpClient
   ) { }
 
+  vendor = VENDOR_CONTACT;
+  requestCopied = false;
+
+  requestText(): string {
+    const plan = this.selectedPlan || '(a indicar)';
+    return `Pedido de licença Inverno ERP${'\n'}Empresa: ${this.license?.companyName || ''}${'\n'}Plano: ${plan}${'\n'}ID da instalação: ${this.installationId}`;
+  }
+  whatsappLink(): string {
+    const digits = (this.vendor.phone || '').replace(/\D/g, '');
+    return 'https://wa.me/' + digits + '?text=' + encodeURIComponent(this.requestText());
+  }
+  mailLink(): string {
+    return 'mailto:' + this.vendor.email + '?subject=' + encodeURIComponent('Pedido de licença Inverno ERP') + '&body=' + encodeURIComponent(this.requestText());
+  }
+  copyRequest() {
+    try { navigator.clipboard.writeText(this.requestText()); } catch { /* ignora */ }
+    this.requestCopied = true;
+    setTimeout(() => this.requestCopied = false, 2500);
+  }
+
+  copyInstallationId() {
+    try { navigator.clipboard.writeText(this.installationId); } catch { /* ignora */ }
+  }
+
   ngOnInit() {
+    this.http.get<{ installationId: string | null }>(`${environment.apiUrl}/licenses/installation-id`).subscribe({
+      next: r => this.installationId = r.installationId || '(indisponível)',
+      error: () => this.installationId = '(indisponível em modo local)',
+    });
     this.licenseService.license$.subscribe(l => {
       this.license = l;
     });

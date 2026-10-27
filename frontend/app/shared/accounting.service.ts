@@ -1506,6 +1506,23 @@ export class AccountingService {
 
 
 
+    /**
+     * Garante partida dobrada: se débitos e créditos diferirem (por exemplo por descontos comerciais
+     * ou financeiros que não estão nas linhas), ajusta a linha âncora (receita/inventário) pela diferença.
+     */
+    private forceBalanced(lines: JournalLine[], anchorIndex: number, ref: string): void {
+        const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+        const debit = lines.reduce((t, l) => t + (Number(l.debit) || 0), 0);
+        const credit = lines.reduce((t, l) => t + (Number(l.credit) || 0), 0);
+        const diff = r2(debit - credit);
+        if (Math.abs(diff) < 0.005) return;
+        const a = lines[Math.min(Math.max(anchorIndex, 0), lines.length - 1)];
+        if (!a) return;
+        if ((Number(a.debit) || 0) > 0) a.debit = r2((Number(a.debit) || 0) - diff);
+        else a.credit = r2((Number(a.credit) || 0) + diff);
+        console.warn(`[AccountingService] Lançamento ${ref} desequilibrado em ${diff.toFixed(2)}; linha ${a.accountCode} ajustada.`);
+    }
+
     createSalesJournalEntry(salesDoc: SalesDocument, customer: any, articles: Article[], paymentCondition: 'PRONTO' | 'PRAZO' = 'PRONTO', paymentAccountId?: string, isPreview: boolean = false, forceRecreate: boolean = false): JournalEntry {
 
 
@@ -1530,7 +1547,7 @@ export class AccountingService {
         if (existing && !forceRecreate) {
 
 
-            const shouldBePosted = isFinalStatus || paymentCondition === 'PRONTO' || salesDoc.documentType === 'VD';
+            const shouldBePosted = isFinalStatus;
 
 
             if (existing.status === 'DRAFT' && shouldBePosted && !isPreview) {
@@ -1769,6 +1786,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
 
 
 
+        this.forceBalanced(lines, 1, String(salesDoc.documentNumber || salesDoc.id));
         const entry: JournalEntry = {
 
 
@@ -1799,7 +1817,8 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
             lines: lines,
 
 
-            status: (['VD', 'FA', 'FR', 'FT', 'ND', 'NC'].includes(salesDoc.documentType) || paymentCondition === 'PRONTO' || isFinalStatus) ? 'POSTED' : 'DRAFT',
+            // Só documentos efectivos (aprovados/lançados) afectam a contabilidade; rascunhos ficam como rascunho.
+            status: isFinalStatus ? 'POSTED' : 'DRAFT',
 
 
             createdBy: 'Sistema',
@@ -2314,6 +2333,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
 
 
 
+        this.forceBalanced(lines, 0, String(purchaseDoc.documentNumber || purchaseDoc.id));
         const entry: JournalEntry = {
 
 
@@ -4729,7 +4749,8 @@ if (missingAccounts.length > 0) {
         // Incluimos todos os estados finais prováveis (case-insensitive)
 
 
-        const activeDocStatuses = ['APPROVED', 'POSTED', 'FINALIZADO', 'SUBMITTED', 'EMITIDO', 'PAGO', 'CONCLUIDO', 'SUBMETIDO', 'FECHADO', 'DRAFT'];
+        // Rascunhos não geram lançamento, por isso não entram na reconciliação.
+        const activeDocStatuses = ['APPROVED', 'POSTED', 'FINALIZADO', 'SUBMITTED', 'EMITIDO', 'PAGO', 'CONCLUIDO', 'SUBMETIDO', 'FECHADO'];
 
 
 
@@ -5075,7 +5096,8 @@ if (missingAccounts.length > 0) {
 
 
 
-        const salesEntries = postedEntries.filter(e => e.sourceType === 'SALE' && !e.description?.includes('CMV'));
+        const reversedEntryIds = new Set<string>(postedEntries.filter(e => e.sourceType === 'REVERSAL' && (e as any).relatedEntryId).map(e => (e as any).relatedEntryId as string));
+        const salesEntries = postedEntries.filter(e => e.sourceType === 'SALE' && !e.description?.includes('CMV') && !reversedEntryIds.has(e.id));
 
 
         const totalSalesInAccounting = salesEntries.reduce((sum, e) => {
@@ -5119,6 +5141,19 @@ if (missingAccounts.length > 0) {
 
 
 
+        // Causas prováveis da divergência (para o utilizador saber o que corrigir)
+        const salesCauseParts: string[] = [];
+        const docRef = (d: any) => `${d.documentType || ''} ${d.series || ''}/${d.seriesNumber || d.documentNumber || ''}`.trim();
+        const noPosting = finalSales.filter((d: any) => !postedEntries.some(e => e.sourceDocument === d.id && e.sourceType === 'SALE'));
+        if (noPosting.length) {
+            salesCauseParts.push(`sem lançamento: ${noPosting.slice(0, 5).map(docRef).join(', ')}${noPosting.length > 5 ? '…' : ''} (${noPosting.reduce((t: number, d: any) => t + saleSign(d.documentType) * (Number(d.total) || 0), 0).toFixed(2)} MT)`);
+        }
+        const voidedDocs = (salesDocs || []).filter((d: any) => String(d.status || '').toUpperCase() === 'REJECTED');
+        const voidedActive = voidedDocs.filter((d: any) => salesEntries.some(e => e.sourceDocument === d.id));
+        if (voidedActive.length) {
+            salesCauseParts.push(`anulados com lançamento ainda activo: ${voidedActive.slice(0, 5).map(docRef).join(', ')}${voidedActive.length > 5 ? '…' : ''}`);
+        }
+        const salesDivergenceCauses = salesCauseParts.length ? ' Causas: ' + salesCauseParts.join(' | ') + '.' : '';
         // Alerta de Divergência Modular Inteligente
 
 
@@ -5176,7 +5211,7 @@ if (missingAccounts.length > 0) {
                 severity: 'CRITICAL',
 
 
-                description: `Divergência Global (Vendas): Documentos somam ${totalSalesDocs.toFixed(2)} MT vs Contabilidade ${totalSalesInAccounting.toFixed(2)} MT.`,
+                description: `Divergência Global (Vendas): Documentos somam ${totalSalesDocs.toFixed(2)} MT vs Contabilidade ${totalSalesInAccounting.toFixed(2)} MT.${salesDivergenceCauses}`,
 
 
                 details: { docTotal: totalSalesDocs, accTotal: totalSalesInAccounting }
@@ -6092,6 +6127,13 @@ if (missingAccounts.length > 0) {
 
 
 
+            // Rascunhos não podem ter lançamentos efectivos: passa-os a rascunho (deixam de contar nos saldos)
+            salesDocs.forEach(doc => {
+                if ((doc.status || '').toString().trim().toUpperCase() !== 'DRAFT') return;
+                this.allJournalEntries
+                    .filter(e => e.sourceDocument === doc.id && e.sourceType === 'SALE' && e.status === 'POSTED')
+                    .forEach(e => { e.status = 'DRAFT'; this.saveEntryResiliently(e); fixedCount++; });
+            });
             // Fix Sales
 
 

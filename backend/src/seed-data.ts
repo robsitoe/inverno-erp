@@ -3,6 +3,7 @@ import { Company } from './companies/entities/company.entity';
 import { FiscalYear } from './companies/entities/fiscal-year.entity';
 import { User } from './users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import { initialAdminPassword } from './common/secrets';
 
 export async function seedDatabase(dataSource: DataSource) {
     console.log('🌱 Starting database seeding...');
@@ -68,7 +69,8 @@ export async function seedDatabase(dataSource: DataSource) {
     if (!existingAdmin) {
         console.log('👤 Creating admin user...');
 
-        const hashedPassword = await bcrypt.hash('admin', 10);
+        const initPw = initialAdminPassword();
+        const hashedPassword = await bcrypt.hash(initPw.value, 10);
 
         const adminUser: User = {
             id: 'user-admin-001',
@@ -89,7 +91,9 @@ export async function seedDatabase(dataSource: DataSource) {
         };
 
         await userRepo.save(adminUser);
-        console.log('✅ Admin user created (username: admin, password: admin)');
+        console.log(initPw.generated
+            ? `[Setup] Administrador criado. Utilizador: admin | Palavra-passe inicial: ${initPw.value}  (guarde-a e altere-a no primeiro acesso; não será mostrada de novo)`
+            : '✅ Admin user created.');
     } else {
         console.log('ℹ️  Admin user already exists');
 

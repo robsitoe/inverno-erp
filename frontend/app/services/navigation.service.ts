@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { MENU_ITEMS, MenuItem } from '../shared/constants';
 
+export type ViewContext = 'CUSTOMER' | 'SUPPLIER';
+
 export interface NavItem {
     label: string;
     view: string;
@@ -22,6 +24,12 @@ export class NavigationService {
     private paramsSubject = new BehaviorSubject<any>(null);
     public params$ = this.paramsSubject.asObservable();
 
+    /** Contexto (cliente/fornecedor) com que um ecrã partilhado deve abrir, definido pelo item de menu clicado. */
+    private viewContextSubject = new BehaviorSubject<{ view: string; side: ViewContext } | null>(null);
+    public viewContext$ = this.viewContextSubject.asObservable();
+    setViewContext(view: string, side: ViewContext) { this.viewContextSubject.next({ view, side }); }
+    clearViewContext() { this.viewContextSubject.next(null); }
+
     private recentSubject = new BehaviorSubject<NavItem[]>(this.loadFromStorage(this.RECENT_KEY));
     public recents$ = this.recentSubject.asObservable();
 

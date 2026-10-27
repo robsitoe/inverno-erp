@@ -49,3 +49,12 @@ fix_*.js
 .claude/scheduled_tasks.lock
 backend/*.cjs
 backend/docker
+
+# ─── Licenciamento: chave PRIVADA nunca vai para o git/imagens ───
+tools/licenca/PRIVADA*
+*.pem
+!tools/licenca/publica.pem
+
+# Pacotes de entrega ao cliente
+entrega/
+INSTALACAO-CONCLUIDA.txt

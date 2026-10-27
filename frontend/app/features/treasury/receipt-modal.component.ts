@@ -55,7 +55,7 @@ interface PendingDocRow {
             <span class="material-symbols-outlined text-[18px] text-green-600">add_circle</span>
             <span>Novo</span>
           </button>
-          <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+          <button disabled title="Ainda não disponível" style="opacity:.45;cursor:not-allowed" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
             <span class="material-symbols-outlined text-[18px]">print</span>
             <span>Imprimir</span>
           </button>
@@ -64,12 +64,12 @@ interface PendingDocRow {
             <span class="material-symbols-outlined text-[18px] text-green-600">refresh</span>
             <span>Atualizar</span>
           </button>
-          <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+          <button disabled title="Ainda não disponível" style="opacity:.45;cursor:not-allowed" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
             <span class="material-symbols-outlined text-[18px]">search</span>
             <span>Procurar</span>
           </button>
           <div class="w-px h-4 bg-gray-300 mx-1"></div>
-          <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+          <button disabled title="Ainda não disponível" style="opacity:.45;cursor:not-allowed" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
             <span class="material-symbols-outlined text-[18px] text-blue-400">help</span>
             <span>Ajuda</span>
           </button>
@@ -516,16 +516,21 @@ export class ReceiptModalComponent implements OnInit {
       receipts: this.dataService.getReceipts(this.activeCompanyId || undefined)
     }).subscribe({
       next: ({ sales, receipts }) => {
-        // Filter documents for this entity that are CONFIRMED, INVOICED or POSTED
+        // Só documentos financeiros efectivos (APPROVED/POSTED, e os estados legados
+        // CONFIRMED/INVOICED). Cotações, encomendas, vendas a dinheiro, faturas-recibo
+        // e notas de crédito não são cobráveis por recibo.
+        const RECEIVABLE_TYPES = ['FA', 'FT', 'ND'];
         const entityDocs = (sales || []).filter((d: any) =>
           (d.customerName === this.customerName || d.customerId === this.customerCode) &&
-          (d.status === 'CONFIRMED' || d.status === 'INVOICED' || d.status === 'POSTED')
+          RECEIVABLE_TYPES.includes(d.documentType) &&
+          (d.status === 'APPROVED' || d.status === 'CONFIRMED' || d.status === 'INVOICED' || d.status === 'POSTED')
         );
 
         this.pendingRows = entityDocs.map((doc: any) => {
           // Calculate already paid amount by checking all receipts and their lines
           let paidAmount = 0;
           (receipts || []).forEach((r: any) => {
+            if (r.status === 'REJECTED') return; // rejeitados não liquidam
             if (r.lines && r.lines.length > 0) {
               const line = r.lines.find((l: any) => l.docNumber === doc.documentNumber);
               if (line) paidAmount += Number(line.amount) || 0;

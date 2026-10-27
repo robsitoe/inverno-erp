@@ -54,7 +54,7 @@ interface PendingDocRow {
             <span class="material-symbols-outlined text-[18px] text-green-600">add_circle</span>
             <span>Novo</span>
           </button>
-          <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+          <button disabled title="Ainda não disponível" style="opacity:.45;cursor:not-allowed" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
             <span class="material-symbols-outlined text-[18px]">print</span>
             <span>Imprimir</span>
           </button>
@@ -63,12 +63,12 @@ interface PendingDocRow {
             <span class="material-symbols-outlined text-[18px] text-green-600">refresh</span>
             <span>Atualizar</span>
           </button>
-          <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+          <button disabled title="Ainda não disponível" style="opacity:.45;cursor:not-allowed" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
             <span class="material-symbols-outlined text-[18px]">search</span>
             <span>Procurar</span>
           </button>
           <div class="w-px h-4 bg-gray-300 mx-1"></div>
-          <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
+          <button disabled title="Ainda não disponível" style="opacity:.45;cursor:not-allowed" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700">
             <span class="material-symbols-outlined text-[18px] text-blue-400">help</span>
             <span>Ajuda</span>
           </button>
@@ -493,10 +493,12 @@ export class PaymentModalComponent implements OnInit {
       payments: this.dataService.getPayments(this.activeCompanyId || undefined)
     }).subscribe({
       next: ({ purchases, payments }) => {
-        // Filter documents for this entity that are POSTED or CONFIRMED
-        const entityDocs = (purchases || []).filter((d: any) =>
-          (d.supplierName === this.supplierName || d.supplierCode === this.supplierCode) &&
-          (d.status === 'POSTED' || d.status === 'CONFIRMED')
+        // Só documentos pagáveis (FC/NDC) efectivos; VDC/NCC/encomendas/guias não geram dívida a pagar.
+        const PAYABLE_TYPES = ['FC', 'NDC'];
+        const entityDocs = (purchases || []).filter((d: any) =>
+          (d.supplierName === this.supplierName || d.supplierCode === this.supplierCode) &&
+          PAYABLE_TYPES.includes(d.documentType || d.type || 'FC') &&
+          ['APPROVED', 'POSTED', 'CONFIRMED'].includes(d.status)
         );
 
         this.pendingRows = entityDocs.map((doc: any) => {
@@ -505,7 +507,8 @@ export class PaymentModalComponent implements OnInit {
           const rawDocType = doc.documentType || doc.type || 'FC';
           const docNum = doc.documentNumber || `${rawDocType} ${doc.series}/${doc.number}`;
 
-          (payments || []).forEach((p: any) => {
+          (payments || []).forEach((p: any) => {
+            if (p.status === 'REJECTED') return; // rejeitados não liquidam
             if (p.lines && p.lines.length > 0) {
               const line = p.lines.find((l: any) => l.docNumber === docNum);
               if (line) paidAmount += (line.amount || 0);

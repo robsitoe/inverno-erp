@@ -48,6 +48,7 @@ import { AuthService } from './services/auth.service';
 
 
 import { LicenseService, LicenseInfo } from './services/license.service';
+import { EulaGateComponent } from './features/admin/eula-gate.component';
 
 
 import { NavigationService } from './services/navigation.service';
@@ -72,7 +73,7 @@ import { ToasterService } from './services/toaster.service';
   standalone: true,
 
 
-  imports: [CommonModule, HeaderComponent, SidebarComponent, FooterComponent, MainContentComponent, LoginComponent, ToasterComponent],
+  imports: [CommonModule, HeaderComponent, SidebarComponent, FooterComponent, MainContentComponent, LoginComponent, ToasterComponent, EulaGateComponent],
 
 
   animations: [
@@ -164,6 +165,7 @@ import { ToasterService } from './services/toaster.service';
 
 
     <ng-container *ngIf="isLoggedIn; else loginTpl">
+      <app-eula-gate></app-eula-gate>
 
 
       <div @fadeSlideIn class="flex flex-col h-screen w-screen overflow-hidden bg-[#F0F0F0]">

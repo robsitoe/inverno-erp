@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Inverno ERP</title>
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--ink:#14202e;--muted:#5b6b7d;--line:#dbe2ea;--brand:#1d5fd1;--bad:#b3261e;--ok:#0f7a4a}
+@media (prefers-color-scheme:dark){:root{--bg:#0e151e;--card:#172130;--ink:#e6edf5;--muted:#9aabbd;--line:#283648;--brand:#6aa3ff;--bad:#ff8c82;--ok:#58d19a}}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,sans-serif}
+.card{width:min(520px,92vw);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px}
+h1{margin:0 0 4px;font-size:22px}p{color:var(--muted);margin:0 0 18px}
+label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+input{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+input:focus{outline:2px solid var(--brand)}
+button{margin-top:16px;width:100%;font:inherit;font-weight:700;border:0;border-radius:8px;padding:11px;background:var(--brand);color:#fff;cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}
+.msg{min-height:22px;margin-top:12px;font-size:13px}.bad{color:var(--bad)}.ok{color:var(--ok)}
+.hint{font-size:12px;color:var(--muted);margin-top:10px}
+</style></head><body>
+<div class="card">
+  <h1>Ligar ao servidor</h1>
+  <p>Indique o endereço do servidor onde o Inverno ERP está instalado.</p>
+  <label for="u">Endereço do servidor</label>
+  <input id="u" placeholder="http://192.168.1.10" autofocus spellcheck="false">
+  <button id="go">Testar e ligar</button>
+  <div id="m" class="msg"></div>
+  <div class="hint">No computador onde o ERP foi instalado use <b>http://localhost</b>. Nos outros computadores da rede, use o IP desse computador (ex.: http://192.168.1.10).</div>
+</div>
+<script>
+const q = new URLSearchParams(location.search), u = document.getElementById('u'), m = document.getElementById('m'), b = document.getElementById('go');
+u.value = q.get('url') || 'http://localhost';
+async function go() {
+  b.disabled = true; m.className = 'msg'; m.textContent = 'A testar a ligação...';
+  const r = await window.inverno.save(u.value);
+  if (r.ok) { m.className = 'msg ok'; m.textContent = 'Ligado.'; }
+  else { m.className = 'msg bad'; m.textContent = r.error; b.disabled = false; }
+}
+b.onclick = go; u.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+</script></body></html>

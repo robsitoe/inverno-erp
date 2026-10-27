@@ -144,6 +144,9 @@ export class SalesDocumentLine {
   @Column({ nullable: true })
   ivaCode: string;
 
+  @Column({ type: 'text', nullable: true })
+  notes: string;
+
   @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
   subtotal: number;
 

@@ -44,6 +44,11 @@ export class TreasuryController {
     return this.treasuryService.processWorkflow(id, data.action, req.user, data.notes);
   }
 
+  @Patch('documents/:id/void')
+  voidDocument(@Param('id') id: string, @Body() data: { reason: string }, @Req() req: any) {
+    return this.treasuryService.voidDocument(id, data?.reason, req.user);
+  }
+
   @Get('documents/:id/history')
   getHistory(@Param('id') id: string) {
     return this.treasuryService.getWorkflowHistory(id);

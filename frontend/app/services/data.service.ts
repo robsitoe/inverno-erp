@@ -2282,6 +2282,52 @@ export class DataService {
 
 
 
+    // ── Contas correntes (calculadas no servidor) ───────────────────────────
+    /** Documentos pendentes de clientes (CUSTOMER) ou fornecedores (SUPPLIER). */
+    getOpenItems(side: 'CUSTOMER' | 'SUPPLIER', opts: { companyId?: string; entity?: string; asOf?: string } = {}): Observable<any[]> {
+        if (this.isLocalBrowser()) return of([]);
+        const q = new URLSearchParams({ side });
+        if (opts.companyId) q.set('companyId', opts.companyId);
+        if (opts.entity) q.set('entity', opts.entity);
+        if (opts.asOf) q.set('asOf', opts.asOf);
+        return this.http.get<any[]>(`${this.baseUrl}/treasury/open-items?${q.toString()}`);
+    }
+
+    /** Mapa de antiguidade de saldos. */
+    getAging(side: 'CUSTOMER' | 'SUPPLIER', opts: { companyId?: string; asOf?: string } = {}): Observable<any> {
+        if (this.isLocalBrowser()) return of(null);
+        const q = new URLSearchParams({ side });
+        if (opts.companyId) q.set('companyId', opts.companyId);
+        if (opts.asOf) q.set('asOf', opts.asOf);
+        return this.http.get<any>(`${this.baseUrl}/treasury/aging?${q.toString()}`);
+    }
+
+    /** Anula um recibo/pagamento (mantém o número, regista o motivo). */
+    voidTreasuryDocument(id: string, kind: 'RECEIPT' | 'PAYMENT', reason: string): Observable<any> {
+        if (this.isLocalBrowser()) {
+            const key = kind === 'RECEIPT' ? 'erp_receipts' : 'erp_payments';
+            const list = JSON.parse(localStorage.getItem(key) || '[]');
+            const doc = list.find((d: any) => d.id === id);
+            if (doc) { doc.status = 'REJECTED'; doc.statusNotes = `Anulado: ${reason}`; }
+            localStorage.setItem(key, JSON.stringify(list));
+            return of(doc);
+        }
+        return this.http.patch<any>(`${this.baseUrl}/treasury/documents/${id}/void`, { reason });
+    }
+
+    /** Extracto de conta corrente de cliente/fornecedor (calculado no servidor). */
+    getEntityStatement(side: 'CUSTOMER' | 'SUPPLIER', opts: { companyId?: string; entity: string; name?: string; id?: string; from?: string; to?: string; includeDrafts?: boolean }): Observable<any> {
+        if (this.isLocalBrowser()) return of(null);
+        const q = new URLSearchParams({ side, entity: opts.entity });
+        if (opts.name) q.set('name', opts.name);
+        if (opts.id) q.set('id', opts.id);
+        if (opts.companyId) q.set('companyId', opts.companyId);
+        if (opts.from) q.set('from', opts.from);
+        if (opts.to) q.set('to', opts.to);
+        if (opts.includeDrafts) q.set('includeDrafts', 'true');
+        return this.http.get<any>(`${this.baseUrl}/treasury/statement?${q.toString()}`);
+    }
+
     getReceipts(companyId?: string): Observable<any[]> {
 
 
@@ -2314,6 +2360,38 @@ export class DataService {
 
 
 
+
+    // ---- Administração do sistema (só servidor) ----
+    getSystemInfo(companyId?: string): Observable<any> {
+        return this.http.get<any>(`${this.baseUrl}/admin/system/info`, { params: companyId ? { companyId } : {} });
+    }
+
+    getSystemEvents(companyId?: string): Observable<any[]> {
+        return this.http.get<any[]>(`${this.baseUrl}/admin/system/events`, { params: companyId ? { companyId } : {} });
+    }
+
+    restoreBackup(backup: any, opts: { confirm?: string; dryRun?: boolean; companyId?: string }): Observable<any> {
+        const params: any = {};
+        if (opts.dryRun) params.dryRun = 'true';
+        if (opts.companyId) params.companyId = opts.companyId;
+        return this.http.post<any>(`${this.baseUrl}/admin/system/restore`, { backup, confirm: opts.confirm }, { params });
+    }
+
+    // ---- Planos de manutenção ----
+    maintenanceListPlans(companyId?: string): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/admin/maintenance/plans`, { params: companyId ? { companyId } : {} }); }
+    maintenanceCreateDefaults(companyId?: string): Observable<any[]> { return this.http.post<any[]>(`${this.baseUrl}/admin/maintenance/plans/defaults`, {}, { params: companyId ? { companyId } : {} }); }
+    maintenanceSavePlan(plan: any, companyId?: string): Observable<any> { return this.http.put<any>(`${this.baseUrl}/admin/maintenance/plans`, plan, { params: companyId ? { companyId } : {} }); }
+    maintenanceDeletePlan(id: number, companyId?: string): Observable<any> { return this.http.delete<any>(`${this.baseUrl}/admin/maintenance/plans/${id}`, { params: companyId ? { companyId } : {} }); }
+    maintenanceRunPlan(id: number, companyId?: string): Observable<any> { return this.http.post<any>(`${this.baseUrl}/admin/maintenance/plans/${id}/run`, {}, { params: companyId ? { companyId } : {} }); }
+    maintenanceListRuns(companyId?: string): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/admin/maintenance/runs`, { params: companyId ? { companyId } : {} }); }
+    maintenanceIntegrity(companyId?: string): Observable<any> { return this.http.post<any>(`${this.baseUrl}/admin/maintenance/integrity/run`, {}, { params: companyId ? { companyId } : {} }); }
+    maintenanceRepairOrphans(companyId?: string): Observable<any> { return this.http.post<any>(`${this.baseUrl}/admin/maintenance/integrity/repair-orphans`, {}, { params: companyId ? { companyId } : {} }); }
+    maintenanceListFiles(companyId?: string): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/admin/maintenance/files`, { params: companyId ? { companyId } : {} }); }
+    maintenanceDownloadFile(name: string, companyId?: string): Observable<Blob> { return this.http.get(`${this.baseUrl}/admin/maintenance/files/download`, { params: companyId ? { name, companyId } : { name }, responseType: 'blob' }); }
+
+    downloadServerBackup(companyId?: string): Observable<import('@angular/common/http').HttpResponse<Blob>> {
+        return this.http.get(`${this.baseUrl}/admin/system/backup`, { params: companyId ? { companyId } : {}, observe: 'response', responseType: 'blob' });
+    }
 
     saveReceipt(receipt: any): Observable<any> {
 
@@ -2806,7 +2884,7 @@ export class DataService {
 
 
 
-    saveUser(user: any): Observable<any> {
+    saveUser(user: any, isNew = false): Observable<any> {
 
 
         if (this.isLocalBrowser()) {
@@ -2860,7 +2938,7 @@ export class DataService {
 
 
 
-            if (cleanUser.id) {
+            if (!isNew && cleanUser.id) {
 
 
                 return this.http.patch(`${this.baseUrl}/users/${cleanUser.id}`, cleanUser);

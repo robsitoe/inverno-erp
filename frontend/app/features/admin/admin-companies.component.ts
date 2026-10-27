@@ -579,9 +579,12 @@ export class AdminCompaniesComponent implements OnInit {
     // Or if we are just loading general definitions, we might want all?
     // For the wizard, we usually want series for the company we are editing.
     // If creating new, we have no ID yet, so no series.
-    if (this.newCompany.id) {
-      this.dataService.getSeries(this.newCompany.id).subscribe(series => {
-        this.availableSeries = series;
+    // Only query the backend when editing an existing company — the pre-assigned
+    // ID for a new company does not exist in the DB yet, so the call would fail.
+    if (this.isEditing && this.newCompany.id) {
+      this.dataService.getSeries(this.newCompany.id).subscribe({
+        next: series => { this.availableSeries = series; },
+        error: () => { this.availableSeries = []; }
       });
     } else {
       this.availableSeries = [];
@@ -722,7 +725,9 @@ export class AdminCompaniesComponent implements OnInit {
     // Priority 2: Attempt to load from available series (which should be loaded by now if company has ID)
     // Since loadSeriesDefinitions is async, we might need to wait or rely on it being fast enough or call it here.
 
-    this.dataService.getSeries(company.id).subscribe(series => {
+    this.dataService.getSeries(company.id).subscribe({
+      error: () => { this.availableSeries = []; },
+      next: series => {
       this.availableSeries = series;
 
       const matchingSeries = this.availableSeries.find(s => s.code === company.currentYear.toString());
@@ -741,6 +746,7 @@ export class AdminCompaniesComponent implements OnInit {
           this.seriesConfig.endDate = `${company.currentYear}-12-31`;
         }
       }
+    }
     });
   }
 

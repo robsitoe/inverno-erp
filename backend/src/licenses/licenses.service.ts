@@ -1,3 +1,4 @@
+import { signLicenseToken, verifyLicenseToken, hashInstallation } from './license-crypto';
 import {
     Injectable,
     UnauthorizedException,
@@ -13,6 +14,8 @@ import { ConfigService } from '@nestjs/config';
 import { License, LicensePlan, LicenseStatus } from './entities/license.entity';
 import { GenerateLicenseDto } from './dto/generate-license.dto';
 import { ListLicensesQueryDto } from './dto/manage-license.dto';
+
+export const EULA_VERSION = '1.0';
 
 export interface LicensePayload {
     sub: string;        // license id
@@ -215,7 +218,6 @@ export class LicensesService {
         );
 
         // Sign JWT with license secret (separate from user auth secret)
-        const licenseSecret = this.configService.get<string>('LICENSE_SECRET') || 'license-secret-change-in-production';
 
         const payload: LicensePayload = {
             sub: license.id,
@@ -228,10 +230,7 @@ export class LicensesService {
             gracePeriodHours,
         };
 
-        const token = this.jwtService.sign(payload, {
-            secret: licenseSecret,
-            expiresIn: `${dto.durationDays}d`,
-        });
+        const token = signLicenseToken({ ...payload, iid: dto.installationId }, Math.max(60, Math.floor((expiresAt.getTime() - Date.now()) / 1000)));
 
         license.licenseToken = token;
         await this.licenseRepo.save(license);
@@ -273,23 +272,45 @@ export class LicensesService {
     // ─── ACTIVATE (Client activates their license) ────────────────────────────
 
     async activate(token: string, requestIp: string): Promise<LicenseStatusResponse> {
-        const licenseSecret = this.configService.get<string>('LICENSE_SECRET') || 'license-secret-change-in-production';
 
         let payload: LicensePayload;
         try {
-            payload = this.jwtService.verify<LicensePayload>(token, { secret: licenseSecret });
+            payload = verifyLicenseToken<LicensePayload>(token);
         } catch (err) {
             throw new BadRequestException('Token de licença inválido ou expirado.');
         }
 
-        const license = await this.licenseRepo.findOne({ where: { id: payload.sub, companyId: payload.cid } });
-        if (!license) {
-            throw new NotFoundException('Licença não encontrada no servidor.');
+        const boundTo = (payload as any).iid;
+        if (boundTo) {
+            const here = await this.getInstallationId();
+            if (here && here !== boundTo) {
+                throw new UnauthorizedException('Esta licença pertence a outra instalação. Contacte o fornecedor.');
+            }
         }
 
-        if (license.isRevoked) {
-            throw new UnauthorizedException('Esta licença foi revogada.');
+        // A licença é emitida pelo fabricante (offline): o registo local é criado/atualizado a partir do token assinado.
+        let license = await this.licenseRepo.findOne({ where: { companyId: payload.cid } });
+        const issuedAtMs = ((payload as any).iat || 0) * 1000;
+        if (license?.isRevoked) {
+            // Uma licença emitida DEPOIS da revogação (cliente regularizou) levanta a revogação.
+            if (license.revokedAt && issuedAtMs > new Date(license.revokedAt).getTime()) {
+                license.isRevoked = false; license.revokedAt = undefined; license.revokedBy = undefined; license.revokedReason = undefined;
+            } else {
+                throw new UnauthorizedException('Esta licença foi revogada.');
+            }
         }
+        if (!license) {
+            license = this.licenseRepo.create({ isRevoked: false, offlineGraceDays: 7 } as any) as unknown as License;
+            license.companyId = payload.cid;
+        }
+        license.companyName = payload.cn;
+        license.plan = payload.plan;
+        license.status = LicenseStatus.ACTIVE;
+        license.expiresAt = new Date((payload.exp as number) * 1000);
+        license.features = payload.features?.length ? payload.features : this.defaultFeaturesForPlan(payload.plan);
+        license.maxUsers = payload.maxUsers;
+        license.maxCompanies = payload.maxCompanies;
+        license.gracePeriodHours = payload.gracePeriodHours ?? 168;
 
         // Update activation IP
         license.activatedIp = requestIp;
@@ -303,11 +324,63 @@ export class LicensesService {
 
     // ─── STATUS (Frontend polls this) ─────────────────────────────────────────
 
+    /** Limites da licença da instalação, lidos do token ASSINADO (não da tabela). Sem licença válida: sem limites (período de avaliação). */
+    async getLimits(): Promise<{ maxUsers?: number; maxCompanies?: number }> {
+        const rows = await this.licenseRepo.find();
+        let maxUsers: number | undefined;
+        let maxCompanies: number | undefined;
+        for (const r of rows) {
+            try {
+                const p = verifyLicenseToken<any>(r.licenseToken || '', true);
+                if (p.cid !== '*' && !r.companyId) continue;
+                if (p.iid) {
+                    const here = await this.getInstallationId();
+                    if (here && here !== p.iid) continue;
+                }
+                if (p.maxUsers) maxUsers = Math.max(maxUsers ?? 0, p.maxUsers);
+                if (p.maxCompanies) maxCompanies = Math.max(maxCompanies ?? 0, p.maxCompanies);
+            } catch { /* ignora licenças inválidas */ }
+        }
+        return { maxUsers, maxCompanies };
+    }
+
+    async assertCanAddUser(currentUsers: number): Promise<void> {
+        const { maxUsers } = await this.getLimits();
+        if (maxUsers && currentUsers >= maxUsers) {
+            throw new BadRequestException(`Limite de utilizadores da licença atingido (${maxUsers}). Contacte o fornecedor para ampliar a licença.`);
+        }
+    }
+
+    async assertCanAddCompany(currentCompanies: number): Promise<void> {
+        const { maxCompanies } = await this.getLimits();
+        if (maxCompanies && currentCompanies >= maxCompanies) {
+            throw new BadRequestException(`Limite de empresas da licença atingido (${maxCompanies}). Contacte o fornecedor para ampliar a licença.`);
+        }
+    }
+
     async getStatus(companyId: string): Promise<LicenseStatusResponse> {
-        const license = await this.licenseRepo.findOne({ where: { companyId } });
+        // Licença da empresa, ou licença da INSTALAÇÃO (companyId '*') que cobre todas as empresas.
+        const license = (await this.licenseRepo.findOne({ where: { companyId } }))
+            || (await this.licenseRepo.findOne({ where: { companyId: '*' } }));
 
         if (!license) {
-            // Return a DEMO license status if none found
+            return this.buildDemoStatus(companyId);
+        }
+
+        // A validade vem SEMPRE do token assinado — a tabela pode ser editada pelo cliente.
+        try {
+            const p = verifyLicenseToken<any>(license.licenseToken || '', true);
+            if (p.cid !== '*' && p.cid !== companyId) throw new Error('empresa diferente');
+            if (p.iid) {
+                const here = await this.getInstallationId();
+                if (here && here !== p.iid) throw new Error('instalação diferente');
+            }
+            license.expiresAt = new Date(p.exp * 1000);
+            license.gracePeriodHours = p.gracePeriodHours ?? license.gracePeriodHours;
+            if (p.plan) license.plan = p.plan;
+            if (Array.isArray(p.features) && p.features.length) license.features = p.features;
+        } catch {
+            this.logger.warn(`Licença sem assinatura válida para ${companyId} — a tratar como não licenciado.`);
             return this.buildDemoStatus(companyId);
         }
 
@@ -422,17 +495,13 @@ export class LicensesService {
         const license = await this.licenseRepo.findOne({ where: { companyId } });
         if (!license) throw new Error(`No license for ${companyId}`);
 
-        const secret = this.configService.get<string>('LICENSE_SECRET') || 'license-secret-change-in-production';
-        return this.jwtService.sign(
-            {
+        return signLicenseToken({
                 sub: license.id,
                 cid: companyId,
                 plan: license.plan,
                 features: license.features,
                 type: 'operational',
-            },
-            { secret, expiresIn: '30d' },
-        );
+            }, 30 * 86400);
     }
 
     /**
@@ -440,16 +509,25 @@ export class LicensesService {
      * Returns the payload if valid, throws if expired or tampered.
      */
     verifyOperationalToken(token: string): any {
-        const secret = this.configService.get<string>('LICENSE_SECRET') || 'license-secret-change-in-production';
-        return this.jwtService.verify(token, { secret });
+        return verifyLicenseToken(token);
+    }
+
+    /** Identificador estável desta instalação (derivado do cluster PostgreSQL). Enviado ao fabricante para emitir a licença. */
+    async getInstallationId(): Promise<string | null> {
+        if (process.env.INSTALLATION_ID) return hashInstallation(process.env.INSTALLATION_ID);
+        try {
+            const r = await this.licenseRepo.manager.query('SELECT system_identifier::text AS id FROM pg_control_system()');
+            return r?.[0]?.id ? hashInstallation(r[0].id) : null;
+        } catch {
+            return null;
+        }
     }
 
     // ─── VALIDATE TOKEN (for LicenseGuard) ───────────────────────────────────
 
     async validateToken(token: string): Promise<LicensePayload | null> {
-        const licenseSecret = this.configService.get<string>('LICENSE_SECRET') || 'license-secret-change-in-production';
         try {
-            return this.jwtService.verify<LicensePayload>(token, { secret: licenseSecret });
+            return verifyLicenseToken<LicensePayload>(token);
         } catch {
             return null;
         }
@@ -505,21 +583,54 @@ export class LicensesService {
         };
     }
 
-    private buildDemoStatus(companyId: string): LicenseStatusResponse {
-        const expires = new Date();
-        expires.setDate(expires.getDate() + 30);
+    /** Início do período de avaliação (1.º arranque desta instalação) — persistente. */
+    private async getTrialStart(): Promise<Date> {
+        const m = this.licenseRepo.manager;
+        await m.query(`CREATE TABLE IF NOT EXISTS installation_info (key text PRIMARY KEY, value text NOT NULL, updated_at timestamptz DEFAULT now())`);
+        await m.query(`INSERT INTO installation_info (key, value) VALUES ('trial_start', $1) ON CONFLICT (key) DO NOTHING`, [new Date().toISOString()]);
+        const r = await m.query(`SELECT value FROM installation_info WHERE key = 'trial_start'`);
+        return new Date(r[0].value);
+    }
 
+    private async buildDemoStatus(companyId: string): Promise<LicenseStatusResponse> {
+        const TRIAL_DAYS = Number(process.env.TRIAL_DAYS || 30);
+        let expires: Date;
+        if (process.env.NODE_ENV !== 'production') {
+            // Desenvolvimento: demo sempre válida (não bloqueia o ambiente de trabalho).
+            expires = new Date(); expires.setDate(expires.getDate() + TRIAL_DAYS);
+        } else {
+            expires = new Date((await this.getTrialStart()).getTime() + TRIAL_DAYS * 86400000);
+        }
+        const msLeft = expires.getTime() - Date.now();
+        const valid = msLeft > 0;
         return {
-            valid: true,
-            status: LicenseStatus.ACTIVE,
+            valid,
+            status: valid ? LicenseStatus.ACTIVE : LicenseStatus.EXPIRED,
             plan: LicensePlan.DEMO,
             companyName: companyId,
             expiresAt: expires,
-            daysRemaining: 30,
+            daysRemaining: Math.max(0, Math.ceil(msLeft / 86400000)),
             features: ['SALES', 'PURCHASES', 'BASIC', 'HR'],
             inGracePeriod: false,
             gracePeriodEndsAt: expires,
         };
+    }
+
+    // ─── EULA ────────────────────────────────────────────────────────────────
+    async getEulaStatus(): Promise<{ accepted: boolean; acceptedAt?: string; version: string }> {
+        const m = this.licenseRepo.manager;
+        await m.query(`CREATE TABLE IF NOT EXISTS installation_info (key text PRIMARY KEY, value text NOT NULL, updated_at timestamptz DEFAULT now())`);
+        const r = await m.query(`SELECT value FROM installation_info WHERE key = 'eula'`);
+        const v = r[0] ? JSON.parse(r[0].value) : null;
+        return { accepted: !!v && v.version === EULA_VERSION, acceptedAt: v?.at, version: EULA_VERSION };
+    }
+
+    async acceptEula(user: string, ip: string, signerName: string): Promise<void> {
+        const m = this.licenseRepo.manager;
+        await this.getEulaStatus();
+        const value = JSON.stringify({ version: EULA_VERSION, at: new Date().toISOString(), by: user, signer: signerName, ip });
+        await m.query(`INSERT INTO installation_info (key, value) VALUES ('eula', $1) ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = now()`, [value]);
+        this.logger.log(`EULA ${EULA_VERSION} aceite por ${user} (${signerName}) de ${ip}`);
     }
 
     private defaultFeaturesForPlan(plan: LicensePlan): string[] {

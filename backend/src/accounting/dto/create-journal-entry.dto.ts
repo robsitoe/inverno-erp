@@ -36,6 +36,14 @@ export class CreateJournalLineDto {
     @ApiProperty({ example: 0.00, description: 'Credit amount' })
     @IsNumber()
     credit: number;
+
+    @IsString()
+    @IsOptional()
+    costCenterId?: string;
+
+    @IsString()
+    @IsOptional()
+    costCenterCode?: string;
 }
 
 export class CreateJournalEntryDto {

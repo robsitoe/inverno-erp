@@ -37,6 +37,7 @@ import { Customer } from '../customers/entities/customer.entity';
 import { DeliveryPoint } from '../customers/entities/delivery-point.entity';
 import { Supplier } from '../suppliers/entities/supplier.entity';
 import { Series } from '../companies/entities/series.entity';
+import { CostCenter } from '../accounting/entities/cost-center.entity';
 import { GenericEntity } from '../common-entities/generic-entity.entity';
 import { PaymentMethod } from '../treasury/entities/payment-method.entity';
 import { PettyCashVoucher } from '../treasury/entities/petty-cash-voucher.entity';
@@ -136,6 +137,7 @@ export class TenancyService implements OnModuleDestroy {
         database: targetDbName,
         entities: [
           Account,
+          CostCenter,
           JournalEntry,
           JournalLine,
           Article,

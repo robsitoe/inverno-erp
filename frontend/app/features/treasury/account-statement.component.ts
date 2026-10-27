@@ -5,6 +5,7 @@ import { AccountingService } from '../../shared/accounting.service';
 import { CustomerService } from '../../shared/customer.service';
 import { SupplierService } from '../../shared/supplier.service';
 import { DataService } from '../../services/data.service';
+import { NavigationService } from '../../services/navigation.service';
 
 import { Account, JournalEntry } from '../../shared/models';
 import { EntityListModalComponent } from '../../shared/components/entity-list-modal.component';
@@ -75,12 +76,12 @@ interface StatementMovement {
                             >F4</button>
                         </div>
                         <div class="flex-1 h-6 border border-gray-300 bg-gray-50 rounded-sm px-2 flex items-center overflow-hidden">
-                            <span class="text-[11px] text-gray-700 truncate font-medium" [class.text-red-500]="!selectedAccountId && entityCode">
+                            <span class="text-[11px] text-gray-700 truncate font-medium" [class.text-red-500]="!selectedAccountId && !selectedEntity && entityCode">
                                 {{ entityName || 'Selecione uma conta ou entidade...' }}
                             </span>
                         </div>
                     </div>
-                    <p *ngIf="entityCode && !selectedAccountId" class="text-[9px] text-red-500 font-bold uppercase italic">
+                    <p *ngIf="entityCode && !selectedAccountId && !selectedEntity" class="text-[9px] text-red-500 font-bold uppercase italic">
                         ⚠️ Código não encontrado no sistema.
                     </p>
                     <p *ngIf="entityCode && selectedAccountId && (!selectedEntity?.receivableAccountId && !selectedEntity?.payableAccountId)" class="text-[9px] text-blue-600 font-bold uppercase italic">
@@ -141,10 +142,10 @@ interface StatementMovement {
                     <button class="flex items-center gap-1.5 text-gray-600 hover:text-blue-700 text-[11px] font-bold uppercase tracking-tight" (click)="windowPrint()">
                         <span class="material-symbols-outlined text-lg">print</span> Imprimir
                     </button>
-                    <button class="flex items-center gap-1.5 text-gray-600 hover:text-green-700 text-[11px] font-bold uppercase tracking-tight">
+                    <button class="flex items-center gap-1.5 text-gray-600 hover:text-green-700 text-[11px] font-bold uppercase tracking-tight" (click)="exportCsv()">
                         <span class="material-symbols-outlined text-lg">table_view</span> Excel
                     </button>
-                    <button class="flex items-center gap-1.5 text-gray-600 hover:text-red-700 text-[11px] font-bold uppercase tracking-tight">
+                    <button class="flex items-center gap-1.5 text-gray-600 hover:text-red-700 text-[11px] font-bold uppercase tracking-tight" (click)="windowPrint()" title="Use «Guardar como PDF» na janela de impressão">
                         <span class="material-symbols-outlined text-lg">picture_as_pdf</span> PDF
                     </button>
                 </div>
@@ -156,20 +157,21 @@ interface StatementMovement {
 
             <!-- Statement Content -->
             <div class="flex-1 overflow-auto bg-[#E5E7EB] p-8" id="statement-area">
-                <div *ngIf="!movements.length" class="h-full flex flex-col items-center justify-center text-gray-400">
+                <div *ngIf="!hasResult" class="h-full flex flex-col items-center justify-center text-gray-400">
                     <div class="bg-white p-12 rounded-full shadow-inner mb-6">
                         <span class="material-symbols-outlined text-[120px] opacity-20">description</span>
                     </div>
                     <p *ngIf="!selectedAccountId" class="text-2xl font-light tracking-widest uppercase opacity-40 text-center">Selecione uma conta para gerar o extrato</p>
                     <div *ngIf="selectedAccountId" class="text-center space-y-2">
                         <p class="text-2xl font-light tracking-widest uppercase opacity-40">Nenhum movimento encontrado</p>
-                        <p class="text-xs opacity-60 italic">Verifique se as faturas estão rascunho ou tente marcar "Incluir Rascunhos".</p>
+                        <p *ngIf="skippedDrafts > 0" class="text-sm text-amber-600 font-semibold not-italic">Este cliente tem {{ skippedDrafts }} documento(s) ainda não aprovados. Marque "Incluir Rascunhos" ou aprove-os.</p>
+                        <p class="text-xs opacity-60 italic">Só entram documentos aprovados/lançados e recebimentos/pagamentos válidos. Marque "Incluir Rascunhos" para ver também os não aprovados.</p>
                     </div>
                 </div>
 
 
                 <!-- Template Content (Paper format) -->
-                <div *ngIf="movements.length > 0" class="max-w-4xl mx-auto bg-white p-10 shadow-2xl border border-gray-200 rounded-sm min-h-[1120px] flex flex-col Paper">
+                <div *ngIf="hasResult" class="max-w-4xl mx-auto bg-white p-10 shadow-2xl border border-gray-200 rounded-sm min-h-[1120px] flex flex-col Paper">
                     <!-- Document Header -->
                     <div class="border-b-2 border-gray-900 pb-4 mb-6 flex justify-between items-start">
                         <div>
@@ -376,7 +378,8 @@ export class AccountStatementComponent implements OnInit {
         private accountingService: AccountingService,
         private customerService: CustomerService,
         private supplierService: SupplierService,
-        private dataService: DataService
+        private dataService: DataService,
+        private navService: NavigationService
     ) { }
 
 
@@ -387,6 +390,11 @@ export class AccountStatementComponent implements OnInit {
             const user = JSON.parse(storedUser);
             this.currentUser = user.username || user.name || 'Utilizador';
         }
+
+        // Abre já no lado (cliente/fornecedor) do menu de onde veio
+        this.navService.viewContext$.subscribe(ctx => {
+            if (ctx && ctx.view === 'account-statement' && ctx.side !== this.entityType) this.setEntityType(ctx.side);
+        });
 
         const today = new Date();
         const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -433,6 +441,8 @@ export class AccountStatementComponent implements OnInit {
         this.entityName = '';
         this.selectedEntity = null;
         this.movements = [];
+        this.initialBalance = 0;
+        this.finalBalance = 0;
     }
 
     openEntityModal() {
@@ -511,7 +521,8 @@ export class AccountStatementComponent implements OnInit {
             this.onCodeBlur();
         }
 
-        if (!this.selectedAccountId) {
+        const serverEntity = !!this.selectedEntity && this.entityType !== 'ACCOUNT' && !this.dataService.isLocalBrowser();
+        if (!this.selectedAccountId && !serverEntity) {
             alert('Por favor, selecione uma entidade/conta válida que possua mapeamento contabilístico.');
             return;
         }
@@ -523,13 +534,42 @@ export class AccountStatementComponent implements OnInit {
         // Professional per-entity statement: when this customer/supplier uses the SHARED
         // generic receivable/payable account, a per-account statement would mix ALL
         // entities together. Generate an entity-filtered statement instead.
-        const usesGenericAccount = !!this.selectedEntity &&
-            !this.selectedEntity.receivableAccountId && !this.selectedEntity.payableAccountId;
-        if (usesGenericAccount) {
-            this.isLoading = false;
-            this.generateStatementLocally();
+        if (this.selectedEntity && this.entityType !== 'ACCOUNT' && !this.dataService.isLocalBrowser()) {
+            const side = this.entityType === 'SUPPLIER' ? 'SUPPLIER' : 'CUSTOMER';
+            if (this.showOnlyPending) {
+                this.dataService.getOpenItems(side, { companyId, entity: this.selectedEntity.code, asOf: this.dateTo }).subscribe({
+                    next: (items: any[]) => {
+                        this.isLoading = false;
+                        const sgn = side === 'SUPPLIER' ? -1 : 1;
+                        const moves = (items || []).map((it: any) => ({
+                            date: it.date, docType: it.docType, docNumber: it.docNumber,
+                            description: `Em aberto · vence ${it.dueDate}`,
+                            debit: it.pending > 0 ? it.pending : 0, credit: it.pending < 0 ? -it.pending : 0
+                        }));
+                        // para fornecedores o saldo em aberto é crédito
+                        if (sgn === -1) moves.forEach((m: any) => { const d = m.debit; m.debit = m.credit; m.credit = d; });
+                        this.applyServerStatement({ initialBalance: 0, movements: moves });
+                    },
+                    error: () => { this.isLoading = false; this.generateStatementLocally(); }
+                });
+                return;
+            }
+            this.dataService.getEntityStatement(side, {
+                companyId, entity: this.selectedEntity.code, name: this.selectedEntity.name, id: this.selectedEntity.id,
+                from: this.dateFrom, to: this.dateTo, includeDrafts: this.includeDrafts
+            }).subscribe({
+                next: (data) => {
+                    this.isLoading = false;
+                    this.applyServerStatement(data);
+                },
+                error: () => {
+                    this.isLoading = false;
+                    this.generateStatementLocally();
+                }
+            });
             return;
         }
+
 
         this.accountingService.getAccountStatement(this.selectedAccountId, this.dateFrom, this.dateTo, companyId, this.includeDrafts).subscribe({
             next: (data) => {
@@ -545,6 +585,47 @@ export class AccountStatementComponent implements OnInit {
                 this.generateStatementLocally();
             }
         });
+    }
+
+    skippedDrafts = 0;
+
+    get hasResult(): boolean { return this.movements.length > 0 || this.initialBalance !== 0; }
+
+    private applyServerStatement(data: any) {
+        let moves: any[] = (data?.movements || []).map((m: any) => ({ ...m, date: new Date(m.date + 'T00:00:00') }));
+        this.initialBalance = Number(data?.initialBalance) || 0;
+        this.skippedDrafts = Number(data?.skippedDrafts) || 0;
+        let running = this.initialBalance;
+        const sign = this.entityType === 'SUPPLIER' ? -1 : 1;
+        this.totalDebit = 0;
+        this.totalCredit = 0;
+        this.movements = moves.map((m: any) => {
+            running = Math.round((running + sign * ((Number(m.debit) || 0) - (Number(m.credit) || 0))) * 100) / 100;
+            this.totalDebit += Number(m.debit) || 0;
+            this.totalCredit += Number(m.credit) || 0;
+            return { ...m, balance: running };
+        });
+        this.finalBalance = running;
+        this.currentDate = new Date();
+    }
+
+    exportCsv() {
+        if (!this.movements.length) { alert('Gere primeiro o extracto.'); return; }
+        const q = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+        const f = (d: Date) => d.toISOString().slice(0, 10);
+        const lines = [['Data', 'Documento', 'Descricao', 'Debito', 'Credito', 'Saldo'].join(';')];
+        lines.push([q(this.dateFrom), q(''), q('Saldo inicial'), '', '', this.initialBalance].join(';'));
+        for (const m of this.movements) {
+            lines.push([q(f(m.date)), q(`${m.docType} ${m.docNumber}`.trim()), q(m.description), m.debit || 0, m.credit || 0, m.balance].join(';'));
+        }
+        lines.push([q(''), q(''), q('Totais'), this.totalDebit, this.totalCredit, this.finalBalance].join(';'));
+        const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `extracto-${(this.entityCode || 'conta').replace(/[^\w-]/g, '_')}-${this.dateFrom}_${this.dateTo}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
     }
 
     processMovements(movements: any[], initialBalance: number) {

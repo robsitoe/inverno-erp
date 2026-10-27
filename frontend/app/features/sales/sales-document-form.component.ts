@@ -97,6 +97,7 @@ interface GridRow {
   contract: string;
 
   processNumber: string;
+  notes?: string;
 
 }
 
@@ -157,8 +158,9 @@ interface GridRow {
           <button 
 
             (click)="handleToolbarClick(item.label)"
+            [disabled]="isToolbarDisabled(item.label)"
 
-            class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 whitespace-nowrap group focus:bg-gray-200 focus:outline-none"
+            class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 whitespace-nowrap group focus:bg-gray-200 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-transparent"
 
           >
 
@@ -246,14 +248,11 @@ interface GridRow {
 
         <!-- Locked Overlay -->
 
-        <div *ngIf="isLocked" class="absolute inset-0 bg-white/60 z-20 flex items-center justify-center pointer-events-none backdrop-blur-[1px]">
-
-          <div class="bg-red-600 text-white px-5 py-2.5 rounded-xl shadow-2xl font-black text-sm uppercase tracking-widest transform -rotate-6 border-2 border-white">
-
-            {{ status === 'POSTED' ? 'LANÇADO' : status === 'APPROVED' ? 'APROVADO' : status === 'REJECTED' ? 'REJEITADO' : 'BLOQUEADO' }}
-
-          </div>
-
+        <div *ngIf="isLocked" class="absolute bottom-2 left-3 z-20 pointer-events-none flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-semibold uppercase tracking-wide bg-white"
+             [ngClass]="status === 'POSTED' ? 'border-blue-300 text-blue-700' : status === 'APPROVED' ? 'border-green-300 text-green-700' : status === 'REJECTED' ? 'border-red-300 text-red-700' : 'border-gray-300 text-gray-600'">
+          <span class="inline-block w-1.5 h-1.5 rounded-full"
+                [ngClass]="status === 'POSTED' ? 'bg-blue-500' : status === 'APPROVED' ? 'bg-green-500' : status === 'REJECTED' ? 'bg-red-500' : 'bg-gray-400'"></span>
+          {{ status === 'POSTED' ? 'Lançado' : status === 'APPROVED' ? 'Aprovado' : status === 'REJECTED' ? 'Rejeitado' : 'Bloqueado' }}
         </div>
 
 
@@ -274,13 +273,13 @@ interface GridRow {
 
             <div class="flex items-center gap-1">
 
-              <label class="w-20 text-blue-600 font-medium text-right text-[11px] cursor-pointer hover:underline" (click)="!isLocked && openDocConfigModal()">Documento:</label>
+              <label class="w-20 text-blue-600 font-medium text-right text-[11px] cursor-pointer hover:underline" (click)="!isReadOnly && openDocConfigModal()">Documento:</label>
 
               <div class="flex items-center border border-gray-300 bg-white rounded-sm h-5 w-16 relative">
 
-                 <input class="w-full h-full px-1 focus:outline-none text-[11px]" [value]="selectedDocType || defaultDocValue" [readOnly]="!isInternal" [disabled]="isLocked" (keydown)="onDocTypeKeydown($event)" />
+                 <input class="w-full h-full px-1 focus:outline-none text-[11px]" [value]="selectedDocType || defaultDocValue" [readOnly]="!isInternal" [disabled]="isReadOnly" (keydown)="onDocTypeKeydown($event)" />
 
-                 <button (click)="!isLocked && openDocTypeModal()" [disabled]="isLocked" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50">F4</button>
+                 <button (click)="!isReadOnly && openDocTypeModal()" [disabled]="isReadOnly" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50">F4</button>
 
               </div>
 
@@ -322,7 +321,7 @@ interface GridRow {
 
                  <label class="font-medium text-[11px]">Data Doc.:</label>
 
-                 <input type="date" class="h-5 border border-gray-300 px-1 w-24 rounded-sm text-[11px] disabled:bg-gray-100" [(ngModel)]="documentDate" (change)="validateSeriesDate()" [disabled]="isLocked" />
+                 <input type="date" class="h-5 border border-gray-300 px-1 w-24 rounded-sm text-[11px] disabled:bg-gray-100" [(ngModel)]="documentDate" (change)="validateSeriesDate()" [disabled]="isReadOnly" />
 
               </div>
 
@@ -338,13 +337,13 @@ interface GridRow {
 
               <div class="flex items-center border border-gray-300 bg-white rounded-sm h-5 w-24 relative">
 
-                 <input class="w-full h-full px-1 focus:outline-none text-[11px] disabled:bg-gray-100" [value]="selectedEntityCode" [disabled]="isLocked" (keydown)="onEntityKeydown($event)" (change)="onEntityCodeChange($any($event.target))" />
+                 <input class="w-full h-full px-1 focus:outline-none text-[11px] disabled:bg-gray-100" [value]="selectedEntityCode" [disabled]="isReadOnly" (keydown)="onEntityKeydown($event)" (change)="onEntityCodeChange($any($event.target))" />
 
-                 <button (click)="!isLocked && openEntityModal()" [disabled]="isLocked" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50">F4</button>
+                 <button (click)="!isReadOnly && openEntityModal()" [disabled]="isReadOnly" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50">F4</button>
 
               </div>
 
-              <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm focus:outline-none text-[11px] disabled:bg-gray-100" [value]="selectedEntityName" [disabled]="isLocked" />
+              <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm focus:outline-none text-[11px] disabled:bg-gray-100" [value]="selectedEntityName" [disabled]="isReadOnly" />
 
               
 
@@ -354,7 +353,7 @@ interface GridRow {
 
                  <label class="font-medium text-blue-600 text-[11px]">Data Venc.:</label>
 
-                 <input type="date" class="h-5 border border-gray-300 px-1 w-24 rounded-sm text-[11px] disabled:bg-gray-100" [(ngModel)]="dueDate" [disabled]="isLocked" />
+                 <input type="date" class="h-5 border border-gray-300 px-1 w-24 rounded-sm text-[11px] disabled:bg-gray-100" [(ngModel)]="dueDate" [disabled]="isReadOnly" />
 
               </div>
 
@@ -388,7 +387,7 @@ interface GridRow {
 
                     (ngModelChange)="calculateTotals()"
 
-                    [disabled]="isLocked"
+                    [disabled]="isReadOnly"
 
                     min="0" max="100"
 
@@ -410,7 +409,7 @@ interface GridRow {
 
                      <input class="w-full h-5 border border-gray-300 px-1 bg-[#F8F8F8] text-gray-500 rounded-sm text-[11px]" readonly />
 
-                     <button class="absolute right-0 top-0 bottom-0 px-0.5 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50" [disabled]="isLocked">F4</button>
+                     <button class="absolute right-0 top-0 bottom-0 px-0.5 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50" [disabled]="isReadOnly">F4</button>
 
                    </div>
 
@@ -418,7 +417,7 @@ interface GridRow {
 
                      <input class="w-full h-full border border-gray-300 px-1 bg-[#F8F8F8] text-gray-500 rounded-sm text-[11px]" readonly />
 
-                     <button class="absolute right-0 top-0 bottom-0 px-0.5 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50" [disabled]="isLocked">F4</button>
+                     <button class="absolute right-0 top-0 bottom-0 px-0.5 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50" [disabled]="isReadOnly">F4</button>
 
                    </div>
 
@@ -442,7 +441,7 @@ interface GridRow {
 
                     (ngModelChange)="calculateTotals()"
 
-                    [disabled]="isLocked"
+                    [disabled]="isReadOnly"
 
                     min="0" max="100"
 
@@ -460,13 +459,13 @@ interface GridRow {
 
                <label class="w-20 font-medium text-right text-[11px]">Contribuinte:</label>
 
-               <input class="w-32 h-5 border border-gray-300 px-1 bg-white rounded-sm text-[11px] disabled:bg-gray-100" [value]="selectedEntityNif" [disabled]="isLocked" />
+               <input class="w-32 h-5 border border-gray-300 px-1 bg-white rounded-sm text-[11px] disabled:bg-gray-100" [value]="selectedEntityNif" [disabled]="isReadOnly" />
 
                
 
                <label class="ml-4 font-medium text-gray-500 text-[11px]">{{ documentRefLabel }}</label>
 
-               <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm text-[11px] disabled:bg-gray-100" [disabled]="isLocked" />
+               <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm text-[11px] disabled:bg-gray-100" [disabled]="isReadOnly" />
 
                <span class="material-symbols-outlined text-[16px] text-gray-400 cursor-pointer">search</span>
 
@@ -568,7 +567,7 @@ interface GridRow {
 
                <label class="w-32 font-medium text-gray-700">Condição:</label>
 
-               <select [(ngModel)]="paymentCondition" [disabled]="isLocked" class="flex-1 h-7 border border-gray-300 px-2 bg-white rounded text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100">
+               <select [(ngModel)]="paymentCondition" [disabled]="isReadOnly" class="flex-1 h-7 border border-gray-300 px-2 bg-white rounded text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100">
 
                  <option value="PRONTO">Pronto Pagamento</option>
 
@@ -584,7 +583,7 @@ interface GridRow {
 
                <label class="w-32 font-medium text-gray-700">Conta de Depósito:</label>
 
-               <select [(ngModel)]="selectedTreasuryAccountId" [disabled]="isLocked" class="flex-1 h-7 border border-gray-300 px-2 bg-white rounded text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100">
+               <select [(ngModel)]="selectedTreasuryAccountId" [disabled]="isReadOnly" class="flex-1 h-7 border border-gray-300 px-2 bg-white rounded text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100">
 
                  <option *ngFor="let acc of treasuryAccounts" [value]="acc.id">{{ acc.code }} - {{ acc.name }}</option>
 
@@ -598,7 +597,7 @@ interface GridRow {
 
                <label class="w-32 font-medium text-gray-700">Prazo (dias):</label>
 
-               <input type="number" class="h-7 border border-gray-300 px-2 rounded text-sm w-24 disabled:bg-gray-100" value="30" min="0" [disabled]="isLocked" />
+               <input type="number" class="h-7 border border-gray-300 px-2 rounded text-sm w-24 disabled:bg-gray-100" value="30" min="0" [disabled]="isReadOnly" />
 
              </div>
 
@@ -608,7 +607,7 @@ interface GridRow {
 
                <label class="w-32 font-medium text-gray-700">Moeda:</label>
 
-               <select class="flex-1 h-7 border border-gray-300 px-2 bg-white rounded text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100" [disabled]="isLocked">
+               <select class="flex-1 h-7 border border-gray-300 px-2 bg-white rounded text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100" [disabled]="isReadOnly">
 
                  <option value="MZN">MZN - Metical</option>
 
@@ -638,7 +637,7 @@ interface GridRow {
 
                <label class="w-32 font-medium text-gray-700">Vendedor:</label>
 
-               <input type="text" class="flex-1 h-7 border border-gray-300 px-2 rounded text-sm disabled:bg-gray-100" placeholder="Código do vendedor" [disabled]="isLocked" />
+               <input type="text" class="flex-1 h-7 border border-gray-300 px-2 rounded text-sm disabled:bg-gray-100" placeholder="Código do vendedor" [disabled]="isReadOnly" />
 
              </div>
 
@@ -648,7 +647,7 @@ interface GridRow {
 
                <label class="w-32 font-medium text-gray-700">Comissão (%):</label>
 
-               <input type="number" class="h-7 border border-gray-300 px-2 rounded text-sm w-24 disabled:bg-gray-100" value="0" min="0" max="100" step="0.1" [disabled]="isLocked" />
+               <input type="number" class="h-7 border border-gray-300 px-2 rounded text-sm w-24 disabled:bg-gray-100" value="0" min="0" max="100" step="0.1" [disabled]="isReadOnly" />
 
              </div>
 
@@ -663,7 +662,7 @@ interface GridRow {
 
        <div *ngIf="activeTab === 2" class="flex flex-col gap-2 p-4">
          <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Observações do Documento</label>
-         <textarea [(ngModel)]="documentNotes" [disabled]="isLocked" rows="8" placeholder="Notas internas ou a imprimir no documento..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+         <textarea [(ngModel)]="documentNotes" [disabled]="isReadOnly" rows="8" placeholder="Notas internas ou a imprimir no documento..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
        </div>
 
          
@@ -679,7 +678,7 @@ interface GridRow {
 
        <!-- Locked Overlay for Grid -->
 
-       <div *ngIf="isLocked" class="absolute inset-0 bg-gray-100/30 z-20 pointer-events-none"></div>
+
 
 
 
@@ -698,6 +697,7 @@ interface GridRow {
               <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[80px]">Lote</th>
 
               <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[300px]">Descrição</th>
+              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[220px]">Notas</th>
 
               <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[50px]">CIVA</th>
 
@@ -733,7 +733,7 @@ interface GridRow {
 
           <tbody class="text-[11px]">
 
-             <tr *ngFor="let row of rows; let i = index" 
+             <tr *ngFor="let row of rows; let i = index; trackBy: trackByIndex" 
 
                  class="hover:bg-blue-50 cursor-pointer group h-6"
 
@@ -741,7 +741,7 @@ interface GridRow {
 
                  (click)="activeRowIndex = i"
 
-                 (contextmenu)="!isLocked && onContextMenu($event, i)">
+                 (contextmenu)="!isReadOnly && onContextMenu($event, i)">
 
                <td class="border-r border-b border-gray-200 h-6 px-1 relative p-0 overflow-hidden">
 
@@ -753,9 +753,9 @@ interface GridRow {
 
                     (blur)="onArticleBlur(i)"
 
-                    (keydown)="!isLocked && onArticleKeydown(i, $event)"
+                    (keydown)="!isReadOnly && onArticleKeydown(i, $event)"
 
-                    [disabled]="isLocked"
+                    [disabled]="isReadOnly"
 
                     class="w-full h-full px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50 disabled:bg-transparent"
 
@@ -777,15 +777,15 @@ interface GridRow {
 
                    <input [(ngModel)]="row.warehouse" 
 
-                     (keydown)="!isLocked && onWarehouseKeydown(i, $event)"
+                     (keydown)="!isReadOnly && onWarehouseKeydown(i, $event)"
 
-                     [disabled]="isLocked"
+                     [disabled]="isReadOnly"
 
                      class="flex-1 px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50 disabled:bg-transparent" />
 
-                   <button (click)="!isLocked && openWarehouseSearch(i)" 
+                   <button (click)="!isReadOnly && openWarehouseSearch(i)" 
 
-                     [disabled]="isLocked"
+                     [disabled]="isReadOnly"
 
                      class="w-5 bg-blue-50 hover:bg-blue-100 flex items-center justify-center border-l border-gray-200 opacity-0 group-hover/wh:opacity-100 transition-opacity disabled:hidden">
 
@@ -807,15 +807,15 @@ interface GridRow {
 
                    <input [(ngModel)]="row.location" 
 
-                     (keydown)="!isLocked && onLocationKeydown(i, $event)"
+                     (keydown)="!isReadOnly && onLocationKeydown(i, $event)"
 
-                     [disabled]="isLocked"
+                     [disabled]="isReadOnly"
 
                      class="flex-1 px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50 disabled:bg-transparent" />
 
-                    <button (click)="!isLocked && openLocationSearch(i)" 
+                    <button (click)="!isReadOnly && openLocationSearch(i)" 
 
-                      [disabled]="isLocked"
+                      [disabled]="isReadOnly"
 
                       class="w-5 bg-blue-50 hover:bg-blue-100 flex items-center justify-center border-l border-gray-200 opacity-0 group-hover/loc:opacity-100 transition-opacity disabled:hidden">
 
@@ -837,15 +837,15 @@ interface GridRow {
 
                    <input [(ngModel)]="row.batch" 
 
-                     (keydown)="!isLocked && onBatchKeydown(i, $event)"
+                     (keydown)="!isReadOnly && onBatchKeydown(i, $event)"
 
-                     [disabled]="isLocked"
+                     [disabled]="isReadOnly"
 
                      class="flex-1 px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50 disabled:bg-transparent" />
 
-                    <button (click)="!isLocked && openBatchSearch(i)" 
+                    <button (click)="!isReadOnly && openBatchSearch(i)" 
 
-                      [disabled]="isLocked"
+                      [disabled]="isReadOnly"
 
                       class="w-5 bg-blue-50 hover:bg-blue-100 flex items-center justify-center border-l border-gray-200 opacity-0 group-hover/batch:opacity-100 transition-opacity disabled:hidden">
 
@@ -858,6 +858,10 @@ interface GridRow {
                </td>
 
                <td class="border-r border-b border-gray-200 h-6 px-1 overflow-hidden">{{ row.description }}</td>
+               <td class="border-r border-b border-gray-200 h-6 px-0 overflow-hidden">
+                 <input [(ngModel)]="row.notes" [disabled]="isReadOnly || !row.articleCode" maxlength="500" [title]="row.notes || ''"
+                   class="w-full h-full px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50 disabled:bg-transparent" />
+               </td>
 
                <td class="border-r border-b border-gray-200 h-6 px-1 relative p-0 group/civa">
 
@@ -867,9 +871,9 @@ interface GridRow {
 
                     [(ngModel)]="row.civa" 
 
-                    (keydown)="!isLocked && onCivaKeydown(i, $event)"
+                    (keydown)="!isReadOnly && onCivaKeydown(i, $event)"
 
-                    [disabled]="isLocked"
+                    [disabled]="isReadOnly"
 
                     class="w-full h-full px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50 disabled:bg-transparent"
 
@@ -899,7 +903,7 @@ interface GridRow {
 
                     (ngModelChange)="calculateRow(i)"
 
-                    [disabled]="isLocked"
+                    [disabled]="isReadOnly"
 
                     class="w-full h-full px-1 border-none bg-transparent focus:outline-none text-right disabled:bg-transparent" 
 
@@ -2126,15 +2130,8 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
     // Update row
 
-    this.rows[index] = {
-
-      ...row,
-
-      totalLiquid: liquidTotal,
-
-      totalValue: totalValue
-
-    };
+    row.totalLiquid = liquidTotal;
+    row.totalValue = totalValue;
 
 
 
@@ -2657,6 +2654,13 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
 
 
+  get isReadOnly(): boolean {
+    // Aprovado/Lançado (emitido) ou Rejeitado (anulado): não aceita alterações
+    return this.isLocked || this.status === WorkflowStatus.REJECTED;
+  }
+
+  trackByIndex(index: number): number { return index; }
+
   get isLocked(): boolean {
 
     // Only approved or posted docs are locked for editing
@@ -2667,7 +2671,96 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
 
 
+  // ── Estado "por gravar" (para confirmar antes de descartar alterações) ──
+  private baselineSig: string | null = null;
+  private computeSig(): string {
+    return JSON.stringify([
+      this.selectedDocType, this.selectedEntityCode, this.documentDate, this.dueDate,
+      this.documentNotes, this.paymentCondition,
+      (this.rows || []).filter(r => r.articleCode).map(r => [r.articleCode, r.quantity, r.unitPrice, r.discount, r.civa, r.description, r.notes]),
+    ]);
+  }
+  private markClean() { this.baselineSig = this.computeSig(); }
+  private hasLines(): boolean { return (this.rows || []).some(r => !!r.articleCode); }
+  get isDirty(): boolean {
+    if (this.isLocked) return false;
+    if (this.baselineSig === null) return this.hasLines() || !!this.selectedEntityCode;
+    return this.computeSig() !== this.baselineSig;
+  }
+  private confirmDiscard(): boolean {
+    return !this.isDirty || window.confirm('Existem alterações por gravar. Deseja descartá-las?');
+  }
+  private currentDocLabel(): string {
+    return `${this.selectedDocType} ${this.currentSeries}/${this.currentSeriesNumber}`;
+  }
+
+  /** Botões indisponíveis ficam desativados (como no Primavera), em vez de não fazerem nada. */
+  isToolbarDisabled(label: string): boolean {
+    const saved = !!this.currentId;
+    const voided = this.status === WorkflowStatus.REJECTED;
+
+    switch (label) {
+      case 'Gravar': return this.isLocked || voided;
+      case 'Anular': return !saved || voided;
+      case 'Anular e Duplicar': return !saved || voided || this.isLocked;
+      case 'Duplicar': return !saved;
+      case 'Imprimir': return !saved && !this.hasLines();
+      default: return false;
+    }
+  }
+
   handleToolbarClick(action: string) {
+    if (this.isToolbarDisabled(action)) return;
+    switch (action) {
+      case 'Novo':
+      case 'Cancelar':
+        if (!this.confirmDiscard()) return;
+        break;
+      case 'Anular':
+        if (this.isLocked) { this.proposeCreditNote(); return; } // documento emitido: só por Nota de Crédito
+        if (!window.confirm(`Pretende anular o documento ${this.currentDocLabel()}?\nEsta ação não pode ser desfeita.`)) return;
+        break;
+      case 'Anular e Duplicar':
+        if (!window.confirm(`Pretende anular o documento ${this.currentDocLabel()} e criar uma cópia?`)) return;
+        break;
+    }
+    this.runToolbarAction(action);
+  }
+
+  /** Documento já emitido: não se anula diretamente, emite-se uma Nota de Crédito (como no Primavera). */
+  private proposeCreditNote() {
+    const ok = window.confirm(
+      `O documento ${this.currentDocLabel()} já foi emitido e não pode ser anulado diretamente.\n\n` +
+      `Deseja emitir uma Nota de Crédito para o anular?`
+    );
+    if (ok) this.issueCreditNote();
+  }
+
+  private issueCreditNote() {
+    const ncType = ((this.salesDocTypes as any[]) || []).find((t: any) => t.code === 'NC');
+    if (!ncType) {
+      this.toaster.showWarning('Nota de Crédito', "O tipo de documento 'NC' não está configurado. Configure-o antes de anular documentos emitidos.");
+      return;
+    }
+    const origLabel = this.currentDocLabel();
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    // Mantém cliente e linhas; passa a ser um documento novo, do tipo NC, ainda por gravar.
+    this.currentId = undefined;
+    this.status = WorkflowStatus.DRAFT;
+    this.selectedDocType = 'NC';
+    this.selectedDocDescription = ncType.description || 'Nota de Crédito';
+    this.currentSeries = '';
+    this.documentDate = today;
+    this.dueDate = today;
+    this.documentNotes = `Anulação do documento ${origLabel}`;
+    this.workflowHistory = [];
+    this.baselineSig = '__novo__';
+    this.loadSeries();
+    this.toaster.showInfo('Nota de Crédito', `Nota de crédito criada a partir de ${origLabel}. Verifique os dados e grave.`);
+  }
+
+  private runToolbarAction(action: string) {
 
     switch (action) {
 
@@ -2876,6 +2969,14 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
 
     this.status = WorkflowStatus.REJECTED; // Using REJECTED as CANCELLED for now or we could add CANCELLED
+    // Se o documento já tinha lançamentos contabilísticos activos, estorna-os (senão a contabilidade
+    // fica com vendas que já não existem).
+    try {
+      const all = this.accountingService.getJournalEntries();
+      const reversed = new Set(all.filter((e: any) => e.sourceType === 'REVERSAL' && e.relatedEntryId).map((e: any) => e.relatedEntryId));
+      all.filter((e: any) => e.sourceDocument === this.currentId && e.sourceType === 'SALE' && e.status === 'POSTED' && !reversed.has(e.id))
+        .forEach((e: any) => this.accountingService.reverseJournalEntry(e.id, `Anulação de ${this.currentDocLabel()}`, 'user'));
+    } catch (err) { console.warn('[cancelDocument] estorno contabilístico falhou:', err); }
 
     this.saveDocument(false, true); // Save as cancelled
 
@@ -3165,6 +3266,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
           articleCode: line.articleCode,
 
           description: line.articleName,
+          notes: line.notes || '',
 
           quantity: line.quantity,
 
@@ -3189,6 +3291,8 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
 
     this.calculateTotals();
+
+    this.markClean();
 
     this.isSearchModalOpen = false;
 
@@ -3265,6 +3369,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
         articleCode: row.articleCode,
 
         articleName: row.description,
+        notes: row.notes ? row.notes : undefined,
 
         quantity: row.quantity,
 
@@ -3346,6 +3451,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
     this.loadNextNumber();
 
+    this.baselineSig = '__novo__'; // cópia ainda por gravar
     this.toaster.showSuccess('Documento Duplicado', 'Novo documento criado a partir do duplicado. Verifique os dados e grave.');
 
   }
@@ -3751,6 +3857,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
               this.status = newStatus;
 
               this.currentId = savedDoc?.id || this.currentId;
+              this.markClean();
 
               this.loadWorkflowHistory();
 
@@ -3995,6 +4102,8 @@ export class SalesDocumentFormComponent implements OnDestroy {
     this.status = WorkflowStatus.DRAFT;
 
     this.workflowHistory = [];
+    this.documentNotes = '';
+    this.markClean();
 
   }
 

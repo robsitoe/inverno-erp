@@ -255,8 +255,8 @@ export class SalesService {
         articleName: line.articleName,
         movementType: isOut ? 'OUT' : 'IN',
         quantity: quantity,
-        unitCost: unitPrice,
-        totalCost: quantity * unitPrice,
+        unitCost: 0, // valorizado ao PMP pelo InventoryService
+        totalCost: 0,
         reference: document.documentNumber,
         sourceDocument: document.id,
         notes: `Gerado via ${type}`

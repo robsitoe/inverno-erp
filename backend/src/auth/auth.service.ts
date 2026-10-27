@@ -22,8 +22,6 @@ export class AuthService {
         }
 
         if (!user) {
-            // Emergency bootstrap fallback — DISABLED by default. Only enabled when
-            // ALLOW_ADMIN_FALLBACK=true (e.g. first-run recovery when the DB has no users).
             if (process.env.ALLOW_ADMIN_FALLBACK === 'true' && username === 'admin' && pass === 'admin') {
                 console.warn('[Auth] Emergency admin fallback used — set ALLOW_ADMIN_FALLBACK=false after recovery.');
                 return {
@@ -43,47 +41,46 @@ export class AuthService {
         return null;
     }
 
+    /** Login with specific error messages for missing user vs wrong password. */
+    async loginWithCredentials(loginDto: LoginDto) {
+        let user;
+        try {
+            user = await this.usersService.findOneByUsername(loginDto.username);
+        } catch { /* DB error */ }
+
+        if (!user) {
+            throw new UnauthorizedException('Utilizador não encontrado.');
+        }
+
+        const isMatch = await bcrypt.compare(loginDto.password, user.password);
+        if (!isMatch) {
+            throw new UnauthorizedException('Palavra-passe incorrecta.');
+        }
+
+        const { password, ...safeUser } = user;
+        return this.issueToken(safeUser);
+    }
+
     async login(loginDto: LoginDto) {
         const user = await this.validateUser(loginDto.username, loginDto.password);
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
         }
-
-        // Segregação de funções: resolve the user's profile assignments into
-        // concrete permission keys and embed them in the JWT (admins bypass
-        // checks anyway, so an empty list is fine for them).
-        let permissionKeys: string[] = [];
-        try {
-            permissionKeys = await this.profilesService.resolvePermissionKeys(user, user.companyId);
-        } catch (err) {
-            console.error('[Auth] Failed to resolve permission keys:', err.message);
-        }
-
-        const payload = {
-            username: user.username,
-            sub: user.id,
-            isAdmin: !!user.isAdmin,
-            isSuperAdmin: !!user.isSuperAdmin,
-            isTechnical: !!user.isTechnical,
-            companyId: user.companyId,
-            customerId: user.customerId,
-            employeeId: user.employeeId,
-            userType: user.userType,
-            name: user.name,
-            permissionKeys,
-        };
-        return {
-            access_token: this.jwtService.sign(payload),
-            user: { ...user, permissionKeys },
-        };
+        return this.issueToken(user);
     }
 
     /** Issues a JWT for a pre-validated user (no password check). */
     async loginDirect(user: any) {
+        return this.issueToken(user);
+    }
+
+    private async issueToken(user: any) {
         let permissionKeys: string[] = [];
         try {
             permissionKeys = await this.profilesService.resolvePermissionKeys(user, user.companyId);
-        } catch { /* admins bypass anyway */ }
+        } catch (err) {
+            console.error('[Auth] Failed to resolve permission keys:', err?.message);
+        }
 
         const payload = {
             username: user.username,

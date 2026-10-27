@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gerador de Licenças — Inverno ERP</title>
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--ink:#14202e;--muted:#5b6b7d;--line:#dbe2ea;--brand:#1d5fd1;--brand-ink:#fff;--soft:#eef3fc;--ok:#0f7a4a;--ok-bg:#e1f3ea;--warn:#9a5b00;--warn-bg:#fff1d6;--bad:#b3261e;--bad-bg:#fde6e4;--field:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#0e151e;--card:#172130;--ink:#e6edf5;--muted:#9aabbd;--line:#283648;--brand:#6aa3ff;--brand-ink:#07101c;--soft:#1b2a40;--ok:#58d19a;--ok-bg:#12332a;--warn:#f0b35a;--warn-bg:#3a2c10;--bad:#ff8a80;--bad-bg:#3b1a18;--field:#101925}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--card);border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.2px}
+h1 small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+main{max-width:1080px;margin:0 auto;padding:20px 16px 60px}
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.tab{border:0;background:none;color:var(--muted);font:inherit;font-weight:600;padding:10px 16px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tab[aria-selected=true]{color:var(--brand);border-bottom-color:var(--brand)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px}
+.card h2{font-size:15px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--brand);color:var(--brand-ink);font-size:12px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px 16px}
+label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+input.bad{border-color:var(--bad)}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+.err{font-size:12px;color:var(--bad);margin-top:4px}
+a.btn,button.btn{display:inline-block;font:inherit;font-weight:600;border-radius:8px;padding:9px 16px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+a.btn.primary,button.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+a.btn:hover,button.btn:hover{border-color:var(--brand)}
+button.btn:disabled{opacity:.45;cursor:not-allowed}
+a.btn.small,button.btn.small{padding:5px 10px;font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.mute{background:var(--soft);color:var(--muted)}
+.quick button{padding:6px 12px}
+.key{font:12px/1.4 ui-monospace,Consolas,monospace;min-height:120px;resize:vertical}
+.result{border-color:var(--ok)}
+.sum{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0 0 10px;font-size:13px;color:var(--muted)}
+.sum b{color:var(--ink)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;color:var(--muted);padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.scroll{overflow-x:auto}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.banner{padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:14px}
+.banner.bad{background:var(--bad-bg);color:var(--bad)}.banner.warn{background:var(--warn-bg);color:var(--warn)}
+footer{max-width:1080px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--ink)}
+.check input{width:auto;margin-top:3px}
+@media (max-width:640px){
+  header{padding:12px 16px}
+  main{padding:14px 12px 50px}
+  .card{padding:14px}
+  .tab{padding:10px 12px}
+  .row .btn,.row button.btn{flex:1 1 auto;text-align:center}
+  #busca{max-width:none!important}
+  td .row{flex-wrap:nowrap}
+}
+.mini input,.mini select{padding:6px 8px;font-size:13px}
+.mini td{padding:5px 6px}
+.stack{display:flex;flex-direction:column;gap:16px}
+h3{font-size:14px;margin:18px 0 8px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <h1>Inverno ERP · Gerador de Licenças<small>Uso exclusivo do fabricante</small></h1>
+  <div class="row">
+    <span id="keyPill" class="pill bad">Chave privada não carregada</span>
+    <input id="keyFile" type="file" accept=".pem,text/plain" hidden>
+    <button class="btn primary" id="keyBtn" type="button">Carregar chave privada</button>
+  </div>
+</header>
+
+<main>
+  <div id="cryptoWarn" class="banner bad" hidden>Este browser não suporta assinaturas Ed25519. Use o Google Chrome ou o Microsoft Edge atualizados.</div>
+  <div id="storeWarn" class="banner warn" hidden>O browser não permite guardar o registo neste ficheiro. Exporte o registo (separador Registo) depois de cada licença.</div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tabEmitir" aria-selected="true">Emitir licença</button>
+    <button class="tab" role="tab" id="tabRegisto" aria-selected="false">Registo <span id="count" class="pill mute">0</span></button>
+    <button class="tab" role="tab" id="tabClientes" aria-selected="false">Clientes e entregas</button>
+  </div>
+
+  <section id="paneEmitir">
+    <div class="card">
+      <h2><span class="num">1</span> Cliente</h2>
+      <div class="grid">
+        <div style="grid-column:1/-1">
+          <label for="clienteSel">Cliente guardado</label>
+          <select id="clienteSel"><option value="">— Novo cliente —</option></select>
+        </div>
+        <div><label for="empresa">Nome da empresa *</label><input id="empresa" autocomplete="off" placeholder="Ex.: Mavi-Gás &amp; Comércio Geral, Lda."></div>
+        <div><label for="nuit">NUIT</label><input id="nuit" inputmode="numeric" autocomplete="off"></div>
+        <div><label for="contacto">Pessoa de contacto</label><input id="contacto" autocomplete="off"></div>
+        <div><label for="telefone">Telefone / WhatsApp</label><input id="telefone" inputmode="tel" autocomplete="off" placeholder="84 000 0000"></div>
+        <div><label for="email">Email</label><input id="email" type="email" autocomplete="off"></div>
+        <div><label for="notas">Notas</label><input id="notas" autocomplete="off"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="num">2</span> Licença</h2>
+      <div class="grid">
+        <div>
+          <label for="plano">Plano</label>
+          <select id="plano">
+            <option value="LITE">LITE — Vendas e Inventário</option>
+            <option value="STANDARD">STANDARD — + Compras, Tesouraria</option>
+            <option value="PRO" selected>PRO — + Contabilidade, RH</option>
+            <option value="ENTERPRISE">ENTERPRISE — Todos os módulos</option>
+            <option value="DEMO">DEMO — Avaliação</option>
+          </select>
+        </div>
+        <div>
+          <label for="dias">Duração (dias)</label>
+          <input id="dias" type="number" min="1" max="3650" value="365">
+          <div class="row quick" style="margin-top:6px">
+            <button type="button" class="btn small" data-d="30">30</button>
+            <button type="button" class="btn small" data-d="90">90</button>
+            <button type="button" class="btn small" data-d="180">180</button>
+            <button type="button" class="btn small" data-d="365">1 ano</button>
+          </div>
+          <div id="renewHint" class="hint" hidden></div>
+        </div>
+        <div style="grid-column:1/-1">
+          <label for="iid">ID da instalação *</label>
+          <input id="iid" class="mono" autocomplete="off" spellcheck="false" placeholder="32 caracteres, enviado pelo cliente (ecrã Licença → Ativar)">
+          <div id="iidErr" class="err" hidden>O ID tem 32 caracteres (0-9 e a-f).</div>
+          <label class="check" style="margin-top:8px"><input type="checkbox" id="semIid"> Ainda não tenho o ID — a chave servirá em qualquer instalação (menos segura)</label>
+        </div>
+        <div><label for="maxUsers">Utilizadores máx. (opcional)</label><input id="maxUsers" type="number" min="1"></div>
+        <div><label for="maxEmpresas">Empresas máx. (opcional)</label><input id="maxEmpresas" type="number" min="1"></div>
+        <div><label for="preco">Valor pago (MZN)</label><input id="preco" type="number" min="0" step="0.01"></div>
+        <div><label for="ref">Referência do pagamento</label><input id="ref" autocomplete="off" placeholder="M-Pesa / e-Mola / transferência"></div>
+      </div>
+      <div class="row" style="margin-top:16px">
+        <button class="btn primary" id="gerar" type="button" disabled>Gerar licença</button>
+        <span id="gerarMsg" class="hint"></span>
+      </div>
+    </div>
+
+    <div class="card result" id="resultado" hidden>
+      <h2>Licença gerada</h2>
+      <div class="sum" id="resumo"></div>
+      <textarea id="chave" class="key" readonly></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="copiar" type="button">Copiar chave</button>
+        <button class="btn" id="baixar" type="button">Guardar .txt</button>
+        <a class="btn" id="wa" target="_blank" rel="noopener" style="text-decoration:none;color:var(--ink)">WhatsApp</a>
+        <a class="btn" id="mail" style="text-decoration:none;color:var(--ink)">Email</a>
+        <span id="copiado" class="hint"></span>
+      </div>
+      <p class="hint">O cliente cola a chave em Licença → Ativar → ATIVAR AGORA. Esta licença já ficou guardada no Registo.</p>
+    </div>
+  </section>
+
+  <section id="paneRegisto" hidden>
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:12px">
+        <input id="busca" placeholder="Procurar cliente, NUIT, plano…" style="max-width:340px">
+        <div class="row">
+          <button class="btn small" id="expJson" type="button">Exportar registo (JSON)</button>
+          <button class="btn small" id="expCsv" type="button">Exportar CSV</button>
+          <button class="btn small" id="impBtn" type="button">Importar registo</button>
+          <input type="file" id="impFile" accept="application/json,.json" hidden>
+        </div>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr><th>Cliente</th><th>Plano</th><th>Instalação</th><th>Emitida</th><th>Válida até</th><th>Estado</th><th>Valor (MZN)</th><th></th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table></div>
+      <div id="vazio" class="empty" hidden>Ainda não há licenças emitidas.</div>
+      <p class="hint">O registo fica guardado neste browser. Faça uma cópia (Exportar registo) com regularidade e guarde-a fora deste computador.</p>
+    </div>
+  </section>
+
+  <section id="paneClientes" hidden>
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:12px">
+        <input id="cBusca" placeholder="Procurar empresa, NUIT, cidade…" style="max-width:340px">
+        <div class="row">
+          <button class="btn primary small" id="cNovo" type="button">+ Novo cliente</button>
+          <button class="btn small" id="cCsv" type="button">Exportar CSV</button>
+        </div>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr><th>Empresa</th><th>NUIT</th><th>Cidade</th><th>Estab.</th><th>Programa entregue</th><th>Licença</th><th></th></tr></thead>
+        <tbody id="cBody"></tbody>
+      </table></div>
+      <div id="cVazio" class="empty" hidden>Ainda não há clientes registados. Clique em “+ Novo cliente”.</div>
+    </div>
+
+    <div class="card" id="cDet" hidden>
+      <h2 id="cdTitulo">Cliente</h2>
+      <h3 style="margin-top:0">Dados da empresa</h3>
+      <div class="grid">
+        <div><label for="cd_nome">Nome da empresa *</label><input id="cd_nome" autocomplete="off"></div>
+        <div><label for="cd_nuit">NUIT</label><input id="cd_nuit" inputmode="numeric" autocomplete="off"></div>
+        <div><label for="cd_ativ">Atividade</label><input id="cd_ativ" autocomplete="off" placeholder="Ex.: Comércio de gás, restauração…"></div>
+        <div><label for="cd_morada">Morada</label><input id="cd_morada" autocomplete="off"></div>
+        <div><label for="cd_cidade">Cidade</label><input id="cd_cidade" autocomplete="off"></div>
+        <div><label for="cd_prov">Província</label><input id="cd_prov" autocomplete="off"></div>
+        <div><label for="cd_contacto">Pessoa de contacto</label><input id="cd_contacto" autocomplete="off"></div>
+        <div><label for="cd_tel">Telefone / WhatsApp</label><input id="cd_tel" inputmode="tel" autocomplete="off"></div>
+        <div><label for="cd_email">Email</label><input id="cd_email" type="email" autocomplete="off"></div>
+        <div style="grid-column:1/-1"><label for="cd_notas">Notas</label><input id="cd_notas" autocomplete="off"></div>
+      </div>
+
+      <h3>Estabelecimentos / filiais</h3>
+      <div class="scroll"><table class="mini">
+        <thead><tr><th>Nome</th><th>Morada</th><th>Cidade</th><th>Telefone</th><th></th></tr></thead>
+        <tbody id="cdEst"></tbody>
+      </table></div>
+      <button class="btn small" id="cdEstAdd" type="button" style="margin-top:8px">+ Adicionar estabelecimento</button>
+
+      <div class="row" style="margin-top:18px">
+        <button class="btn primary" id="cdGuardar" type="button">Guardar cliente</button>
+        <button class="btn" id="cdLicenca" type="button">Emitir licença para este cliente</button>
+        <button class="btn" id="cdFechar" type="button">Fechar</button>
+        <button class="btn" id="cdApagar" type="button" style="color:var(--bad)">Eliminar cliente</button>
+        <span id="cdMsg" class="hint"></span>
+      </div>
+
+      <div id="cdEntregas" hidden>
+        <h3>Programas entregues a este cliente</h3>
+        <div class="scroll"><table class="mini">
+          <thead><tr><th>Data</th><th>Versão</th><th>Tipo</th><th>Estado</th><th>ID da instalação</th><th>SHA256</th><th>Notas</th><th></th></tr></thead>
+          <tbody id="enBody"></tbody>
+        </table></div>
+        <div id="enVazio" class="empty" hidden>Ainda sem entregas registadas.</div>
+
+        <h3>Registar nova entrega</h3>
+        <div class="grid">
+          <div><label for="en_pacote">Pacote gerado</label><select id="en_pacote"><option value="">— indicar à mão —</option></select></div>
+          <div><label for="en_versao">Versão</label><input id="en_versao" placeholder="1.0.0" autocomplete="off"></div>
+          <div><label for="en_tipo">Tipo</label><select id="en_tipo"><option>Web + Desktop</option><option>Só Web</option><option>Só Desktop</option></select></div>
+          <div><label for="en_data">Data de entrega</label><input id="en_data" type="date"></div>
+          <div><label for="en_estado">Estado</label><select id="en_estado"><option>Entregue</option><option>Instalado</option><option>Em avaliação</option><option>Licenciado</option><option>Suspenso</option></select></div>
+          <div><label for="en_iid">ID da instalação</label><input id="en_iid" class="mono" autocomplete="off" spellcheck="false"></div>
+          <div style="grid-column:1/-1"><label for="en_sha">SHA256 do ZIP</label><input id="en_sha" class="mono" autocomplete="off" spellcheck="false"></div>
+          <div style="grid-column:1/-1"><label for="en_notas">Notas (computadores, quem instalou, problemas…)</label><input id="en_notas" autocomplete="off"></div>
+        </div>
+        <div class="row" style="margin-top:12px"><button class="btn primary" id="enGuardar" type="button">Registar entrega</button><span id="enMsg" class="hint"></span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Pacotes gerados</h2>
+      <div class="row" style="justify-content:space-between;margin-bottom:10px">
+        <span class="hint">O Empacotador guarda cada pacote em <b>entrega\registo-pacotes.json</b>. Importe esse ficheiro para os poder escolher nas entregas.</span>
+        <div class="row"><button class="btn small" id="pImp" type="button">Importar pacotes</button><input type="file" id="pFile" accept="application/json,.json" hidden></div>
+      </div>
+      <div class="scroll"><table class="mini">
+        <thead><tr><th>Data</th><th>Versão</th><th>Desktop</th><th>Ficheiro</th><th>SHA256</th><th>Entregas</th><th></th></tr></thead>
+        <tbody id="pBody"></tbody>
+      </table></div>
+      <div id="pVazio" class="empty" hidden>Ainda não importou nenhum pacote.</div>
+    </div>
+  </section>
+</main>
+<footer>A chave privada é lida pelo browser apenas para assinar; não é enviada nem gravada em lado nenhum. Feche esta página quando terminar.</footer>
+
+<script>
+const PUB_SPKI_B64 = 'MCowBQYDK2VwAyEATge7c/+ZR+E7S8PvUIUhsJU3Vc663ZzLV1UOL0GfiDU=';
+const STORE = 'inverno_licencas_v1';
+const $ = id => document.getElementById(id);
+let privKey = null, lastSelectedClient = '', prevLicense = null;
+let db = { clientes: [], licencas: [], pacotes: [], entregas: [] };
+
+/* ---------- utilidades ---------- */
+const b64ToBytes = b64 => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+const bytesToB64u = bytes => { let s = ''; new Uint8Array(bytes).forEach(b => s += String.fromCharCode(b)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)));
+const fmt = ms => { const d = new Date(ms); return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(); };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const daysLeft = exp => Math.ceil((exp * 1000 - Date.now()) / 86400000);
+
+function load() {
+  try { const r = localStorage.getItem(STORE); if (r) db = JSON.parse(r); db.clientes = db.clientes || []; db.licencas = db.licencas || []; db.pacotes = db.pacotes || []; db.entregas = db.entregas || []; }
+  catch (e) { $('storeWarn').hidden = false; }
+}
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(db)); } catch (e) { $('storeWarn').hidden = false; }
+}
+
+/* ---------- chave privada ---------- */
+async function loadKey(file) {
+  try {
+    const txt = await file.text();
+    const m = txt.match(/-----BEGIN PRIVATE KEY-----([\s\S]+?)-----END PRIVATE KEY-----/);
+    if (!m) throw new Error('Ficheiro inválido: não é uma chave privada PEM.');
+    const key = await crypto.subtle.importKey('pkcs8', b64ToBytes(m[1].replace(/\s+/g, '')), { name: 'Ed25519' }, false, ['sign']);
+    const pub = await crypto.subtle.importKey('spki', b64ToBytes(PUB_SPKI_B64), { name: 'Ed25519' }, false, ['verify']);
+    const probe = new TextEncoder().encode('inverno-erp');
+    const sig = await crypto.subtle.sign({ name: 'Ed25519' }, key, probe);
+    if (!(await crypto.subtle.verify({ name: 'Ed25519' }, pub, sig, probe))) throw new Error('Esta chave NÃO corresponde ao produto (chave pública diferente).');
+    privKey = key;
+    setPill(true);
+  } catch (e) {
+    privKey = null; setPill(false, e.message || String(e));
+  }
+  validate();
+}
+function setPill(ok, msg) {
+  const p = $('keyPill');
+  p.className = 'pill ' + (ok ? 'ok' : 'bad');
+  p.textContent = ok ? 'Chave privada carregada ✓' : (msg || 'Chave privada não carregada');
+  $('keyBtn').textContent = ok ? 'Trocar chave' : 'Carregar chave privada';
+}
+
+/* ---------- formulário ---------- */
+const IID_RE = /^[0-9a-f]{32}$/;
+function formState() {
+  const empresa = $('empresa').value.trim();
+  const iid = $('iid').value.trim().toLowerCase();
+  const semIid = $('semIid').checked;
+  const dias = parseInt($('dias').value, 10);
+  const iidOk = semIid || IID_RE.test(iid);
+  return { empresa, iid, semIid, dias, iidOk, ok: !!privKey && empresa.length >= 3 && iidOk && dias >= 1 && dias <= 3650 };
+}
+function validate() {
+  const s = formState();
+  $('iid').disabled = s.semIid;
+  $('iid').classList.toggle('bad', !s.semIid && $('iid').value.trim() !== '' && !IID_RE.test(s.iid));
+  $('iidErr').hidden = !( !s.semIid && $('iid').value.trim() !== '' && !IID_RE.test(s.iid));
+  $('gerar').disabled = !s.ok;
+  $('gerarMsg').textContent = s.ok ? '' : (!privKey ? 'Carregue primeiro a chave privada.' : (s.empresa.length < 3 ? 'Indique o nome da empresa.' : (!s.iidOk ? 'Indique o ID da instalação.' : 'Duração inválida.')));
+}
+
+function fillClient(c) {
+  $('empresa').value = c?.nome || ''; $('nuit').value = c?.nuit || ''; $('contacto').value = c?.contacto || '';
+  $('telefone').value = c?.telefone || ''; $('email').value = c?.email || ''; $('notas').value = c?.notas || '';
+}
+function refreshClientSelect(selectId) {
+  const sel = $('clienteSel'); sel.innerHTML = '<option value="">— Novo cliente —</option>';
+  [...db.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).forEach(c => {
+    const o = document.createElement('option'); o.value = c.id; o.textContent = c.nome + (c.nuit ? ' (' + c.nuit + ')' : ''); sel.appendChild(o);
+  });
+  sel.value = selectId || '';
+}
+
+/* ---------- emissão ---------- */
+async function gerar() {
+  const s = formState(); if (!s.ok) return;
+  const plano = $('plano').value;
+  const now = Math.floor(Date.now() / 1000);
+  const num = id => { const v = parseInt($(id).value, 10); return v > 0 ? v : undefined; };
+  const payload = {
+    sub: uuid(), cid: '*', cn: s.empresa, plan: plano, features: [],
+    maxUsers: num('maxUsers'), maxCompanies: num('maxEmpresas'), gracePeriodHours: 168,
+    iid: s.semIid ? undefined : s.iid, iat: now, exp: now + s.dias * 86400,
+  };
+  const body = new TextEncoder().encode(JSON.stringify(payload));
+  const sig = await crypto.subtle.sign({ name: 'Ed25519' }, privKey, body);
+  const token = bytesToB64u(body) + '.' + bytesToB64u(sig);
+
+  // cliente: atualiza o selecionado ou procura por nome/NUIT; senão cria
+  const dados = { nome: s.empresa, nuit: $('nuit').value.trim(), contacto: $('contacto').value.trim(), telefone: $('telefone').value.trim(), email: $('email').value.trim(), notas: $('notas').value.trim() };
+  let cli = db.clientes.find(c => c.id === $('clienteSel').value)
+    || db.clientes.find(c => c.nome.toLowerCase() === dados.nome.toLowerCase() || (dados.nuit && c.nuit === dados.nuit));
+  if (cli) Object.assign(cli, dados); else { cli = { id: uuid(), criado: Date.now(), ...dados }; db.clientes.push(cli); }
+  const lic = { id: payload.sub, clienteId: cli.id, plano, emitida: now * 1000, exp: payload.exp, dias: s.dias, iid: s.semIid ? '' : s.iid, maxUsers: payload.maxUsers, maxEmpresas: payload.maxCompanies, preco: parseFloat($('preco').value) || 0, ref: $('ref').value.trim(), chave: token };
+  db.licencas.push(lic); save();
+  refreshClientSelect(cli.id); renderTable(); showResult(lic, cli);
+}
+
+function showResult(lic, cli) {
+  $('resultado').hidden = false;
+  $('resumo').innerHTML = `<span>Para <b>${esc(cli.nome)}</b></span><span>Plano <b>${esc(lic.plano)}</b></span><span>Válida até <b>${fmt(lic.exp * 1000)}</b></span><span>${lic.iid ? 'Presa à instalação <b class="mono">' + esc(lic.iid.slice(0, 8)) + '…</b>' : '<b>Sem ID de instalação</b>'}</span>`;
+  $('chave').value = lic.chave; $('copiado').textContent = '';
+  const msg = `Olá! Segue a chave de licença do Inverno ERP para ${cli.nome}.\nPlano ${lic.plano}, válida até ${fmt(lic.exp * 1000)}.\n\nChave:\n${lic.chave}\n\nPara ativar: Inverno ERP → Licença → Ativar → colar a chave → ATIVAR AGORA.`;
+  let tel = (cli.telefone || '').replace(/\D/g, ''); if (tel.length === 9 && tel[0] === '8') tel = '258' + tel;
+  $('wa').href = 'https://wa.me/' + tel + '?text=' + encodeURIComponent(msg);
+  $('mail').href = 'mailto:' + encodeURIComponent(cli.email || '') + '?subject=' + encodeURIComponent('Licença Inverno ERP — ' + cli.nome) + '&body=' + encodeURIComponent(msg);
+  $('resultado').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function copyText(t, el) {
+  try { await navigator.clipboard.writeText(t); el.textContent = 'Copiado ✓'; }
+  catch (e) { $('chave').select(); document.execCommand('copy'); el.textContent = 'Copiado ✓'; }
+  setTimeout(() => el.textContent = '', 2500);
+}
+function download(name, text, type) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: type || 'text/plain' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ---------- registo ---------- */
+function statusOf(l) {
+  const d = daysLeft(l.exp);
+  if (d < 0) return ['bad', 'Expirada'];
+  if (d <= 30) return ['warn', 'Expira em ' + d + ' d'];
+  return ['ok', 'Ativa · ' + d + ' d'];
+}
+function renderTable() {
+  $('count').textContent = db.licencas.length;
+  const q = $('busca').value.trim().toLowerCase();
+  const rows = [...db.licencas].reverse().map(l => ({ l, c: db.clientes.find(c => c.id === l.clienteId) || { nome: '(removido)' } }))
+    .filter(({ l, c }) => !q || [c.nome, c.nuit, l.plano, l.iid].join(' ').toLowerCase().includes(q));
+  $('vazio').hidden = rows.length > 0;
+  $('tbody').innerHTML = rows.map(({ l, c }) => {
+    const [cls, txt] = statusOf(l);
+    return `<tr><td><b>${esc(c.nome)}</b><div class="hint">${esc(c.nuit || '')} ${esc(c.telefone || '')}</div></td><td>${esc(l.plano)}</td><td class="mono">${l.iid ? esc(l.iid.slice(0, 8)) + '…' : '—'}</td><td>${fmt(l.emitida)}</td><td>${fmt(l.exp * 1000)}</td><td><span class="pill ${cls}">${txt}</span></td><td>${l.preco ? l.preco.toLocaleString('pt-PT') : '—'}</td><td class="row"><button class="btn small" data-act="copy" data-id="${l.id}">Copiar chave</button><button class="btn small" data-act="renew" data-id="${l.id}">Renovar</button><button class="btn small" data-act="edit" data-id="${l.id}">Editar cliente</button><button class="btn small" data-act="del" data-id="${l.id}" style="color:var(--bad)">Remover</button></td></tr>`;
+  }).join('');
+}
+function renew(id) {
+  const l = db.licencas.find(x => x.id === id); if (!l) return;
+  const c = db.clientes.find(x => x.id === l.clienteId); if (!c) return;
+  tab('emitir'); refreshClientSelect(c.id); fillClient(c);
+  $('plano').value = l.plano; $('dias').value = 365; $('iid').value = l.iid || ''; $('semIid').checked = !l.iid;
+  $('maxUsers').value = l.maxUsers || ''; $('maxEmpresas').value = l.maxEmpresas || ''; $('preco').value = ''; $('ref').value = '';
+  const d = daysLeft(l.exp); prevLicense = l;
+  const h = $('renewHint');
+  if (d > 0) { h.hidden = false; h.innerHTML = `A licença anterior ainda tem ${d} dias. <a href="#" id="somar">Somar ${d} dias</a> para o cliente não perder tempo pago.`; $('somar').onclick = e => { e.preventDefault(); $('dias').value = (parseInt($('dias').value, 10) || 0) + d; h.hidden = true; validate(); }; }
+  else h.hidden = true;
+  $('resultado').hidden = true; validate(); window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function csvEscape(v) { v = String(v ?? ''); return /[",\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function exportCsv() {
+  const head = ['Cliente', 'NUIT', 'Contacto', 'Telefone', 'Email', 'Plano', 'ID instalação', 'Emitida', 'Válida até', 'Valor MZN', 'Referência'];
+  const lines = [head.join(';')].concat(db.licencas.map(l => { const c = db.clientes.find(x => x.id === l.clienteId) || {}; return [c.nome, c.nuit, c.contacto, c.telefone, c.email, l.plano, l.iid, fmt(l.emitida), fmt(l.exp * 1000), l.preco, l.ref].map(csvEscape).join(';'); }));
+  download('registo-licencas.csv', '﻿' + lines.join('\r\n'), 'text/csv');
+}
+
+/* ---------- separadores e eventos ---------- */
+function tab(name) {
+  [['emitir', 'Emitir'], ['registo', 'Registo'], ['clientes', 'Clientes']].forEach(([n, C]) => {
+    $('pane' + C).hidden = n !== name; $('tab' + C).setAttribute('aria-selected', n === name);
+  });
+  if (name === 'registo') renderTable();
+  if (name === 'clientes') { renderClientes(); renderPacotes(); }
+}
+$('tabClientes').onclick = () => tab('clientes');
+$('tabEmitir').onclick = () => tab('emitir'); $('tabRegisto').onclick = () => tab('registo');
+$('keyBtn').onclick = () => $('keyFile').click();
+$('keyFile').onchange = e => { if (e.target.files[0]) loadKey(e.target.files[0]); e.target.value = ''; };
+$('clienteSel').onchange = e => { const c = db.clientes.find(x => x.id === e.target.value); fillClient(c); if (!c) { $('iid').value = ''; } validate(); };
+['empresa', 'iid', 'dias', 'semIid'].forEach(id => $(id).addEventListener('input', validate));
+document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { $('dias').value = b.dataset.d; validate(); });
+$('gerar').onclick = gerar;
+$('copiar').onclick = () => copyText($('chave').value, $('copiado'));
+$('baixar').onclick = () => download('licenca-' + ($('empresa').value.trim().replace(/[^\w]+/g, '_') || 'cliente') + '.txt', $('chave').value);
+$('busca').oninput = renderTable;
+$('tbody').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const l = db.licencas.find(x => x.id === b.dataset.id); if (!l) return;
+  if (b.dataset.act === 'copy') { copyText(l.chave, b); setTimeout(() => b.textContent = 'Copiar chave', 2600); }
+  if (b.dataset.act === 'renew') renew(l.id);
+  if (b.dataset.act === 'edit') { const c = db.clientes.find(x => x.id === l.clienteId); if (c) { tab('emitir'); refreshClientSelect(c.id); fillClient(c); $('renewHint').hidden = true; $('resultado').hidden = true; validate(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }
+  if (b.dataset.act === 'del') {
+    const c = db.clientes.find(x => x.id === l.clienteId);
+    if (confirm('Remover do registo a licença de ' + (c ? c.nome : '(cliente)') + ' emitida em ' + fmt(l.emitida) + '?\n\nA chave já entregue continua a funcionar no cliente; só deixa de constar do seu registo.')) {
+      db.licencas = db.licencas.filter(x => x.id !== l.id);
+      if (c && !db.licencas.some(x => x.clienteId === c.id) && confirm('O cliente ' + c.nome + ' ficou sem licenças. Remover também o cliente?')) db.clientes = db.clientes.filter(x => x.id !== c.id);
+      save(); refreshClientSelect(); renderTable();
+    }
+  }
+};
+$('expJson').onclick = () => download('registo-licencas-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(db, null, 1), 'application/json');
+$('expCsv').onclick = exportCsv;
+$('impBtn').onclick = () => $('impFile').click();
+$('impFile').onchange = async e => {
+  try {
+    const d = JSON.parse(await e.target.files[0].text());
+    if (!Array.isArray(d.clientes) || !Array.isArray(d.licencas)) throw new Error('x');
+    const merge = (dst, src) => (src || []).forEach(o => { const i = dst.findIndex(x => x.id === o.id); if (i < 0) dst.push(o); else dst[i] = Object.assign({}, o, dst[i]); });
+    merge(db.clientes, d.clientes); merge(db.licencas, d.licencas); merge(db.pacotes, d.pacotes); merge(db.entregas, d.entregas);
+    save(); refreshClientSelect(); renderTable();
+  } catch (err) { alert('Ficheiro de registo inválido.'); }
+  e.target.value = '';
+};
+
+/* ---------- clientes e entregas ---------- */
+let curCli = null;
+const val = id => $(id).value.trim();
+function lastLic(cid) { return db.licencas.filter(l => l.clienteId === cid).sort((a, b) => b.emitida - a.emitida)[0]; }
+function lastEnt(cid) { return db.entregas.filter(e => e.clienteId === cid).sort((a, b) => (b.data || '').localeCompare(a.data || ''))[0]; }
+function renderClientes() {
+  const q = $('cBusca').value.trim().toLowerCase();
+  const rows = [...db.clientes].sort((a, b) => a.nome.localeCompare(b.nome))
+    .filter(c => !q || [c.nome, c.nuit, c.cidade, c.contacto].join(' ').toLowerCase().includes(q));
+  $('cVazio').hidden = rows.length > 0;
+  $('cBody').innerHTML = rows.map(c => {
+    const e = lastEnt(c.id), l = lastLic(c.id);
+    const st = l ? statusOf(l) : ['mute', 'Sem licença'];
+    return `<tr><td><b>${esc(c.nome)}</b><div class="hint">${esc(c.contacto || '')} ${esc(c.telefone || '')}</div></td><td>${esc(c.nuit || '')}</td><td>${esc(c.cidade || '')}</td><td>${(c.estabelecimentos || []).length}</td><td>${e ? esc(e.versao) + ' · ' + esc(e.estado) + '<div class="hint">' + esc(e.data || '') + '</div>' : '—'}</td><td><span class="pill ${st[0]}">${esc(st[1])}</span></td><td><button class="btn small" data-c="${c.id}">Abrir</button></td></tr>`;
+  }).join('');
+}
+function openCliente(id) {
+  const c = id ? db.clientes.find(x => x.id === id) : null;
+  curCli = c ? JSON.parse(JSON.stringify(c)) : { id: null, nome: '', estabelecimentos: [] };
+  curCli.estabelecimentos = curCli.estabelecimentos || [];
+  $('cDet').hidden = false;
+  $('cdTitulo').textContent = c ? c.nome : 'Novo cliente';
+  [['nome', 'nome'], ['nuit', 'nuit'], ['ativ', 'atividade'], ['morada', 'morada'], ['cidade', 'cidade'], ['prov', 'provincia'], ['contacto', 'contacto'], ['tel', 'telefone'], ['email', 'email'], ['notas', 'notas']]
+    .forEach(([i, k]) => { $('cd_' + i).value = curCli[k] || ''; });
+  $('cdMsg').textContent = ''; $('cdApagar').hidden = !c; $('cdLicenca').hidden = !c; $('cdEntregas').hidden = !c;
+  renderEst(); renderEnt(); fillPacoteSelect();
+  $('en_data').value = new Date().toISOString().slice(0, 10);
+  ['en_versao', 'en_iid', 'en_sha', 'en_notas'].forEach(i => $(i).value = ''); $('en_pacote').value = '';
+  $('cDet').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function renderEst() {
+  $('cdEst').innerHTML = curCli.estabelecimentos.map((e, i) => `<tr><td><input data-i="${i}" data-k="nome" value="${esc(e.nome || '')}"></td><td><input data-i="${i}" data-k="morada" value="${esc(e.morada || '')}"></td><td><input data-i="${i}" data-k="cidade" value="${esc(e.cidade || '')}"></td><td><input data-i="${i}" data-k="telefone" value="${esc(e.telefone || '')}"></td><td><button class="btn small" data-del="${i}" type="button">Remover</button></td></tr>`).join('')
+    || '<tr><td colspan="5" class="hint">Sem estabelecimentos. Adicione a sede e as filiais.</td></tr>';
+}
+function collectCliente() {
+  const c = curCli;
+  c.nome = val('cd_nome'); c.nuit = val('cd_nuit'); c.atividade = val('cd_ativ'); c.morada = val('cd_morada'); c.cidade = val('cd_cidade');
+  c.provincia = val('cd_prov'); c.contacto = val('cd_contacto'); c.telefone = val('cd_tel'); c.email = val('cd_email'); c.notas = val('cd_notas');
+  c.estabelecimentos = c.estabelecimentos.filter(e => (e.nome || e.morada || e.cidade || e.telefone));
+  return c;
+}
+function guardarCliente() {
+  const c = collectCliente();
+  if (c.nome.length < 3) { $('cdMsg').textContent = 'Indique o nome da empresa.'; return; }
+  const dup = db.clientes.find(x => x.id !== c.id && (x.nome.toLowerCase() === c.nome.toLowerCase() || (c.nuit && x.nuit === c.nuit)));
+  if (dup) { $('cdMsg').textContent = 'Já existe um cliente com este nome ou NUIT: ' + dup.nome; return; }
+  if (!c.id) { c.id = uuid(); c.criado = Date.now(); db.clientes.push(c); }
+  else { const i = db.clientes.findIndex(x => x.id === c.id); db.clientes[i] = Object.assign({}, db.clientes[i], c); }
+  save(); refreshClientSelect(); renderClientes(); openCliente(c.id); $('cdMsg').textContent = 'Guardado ✓';
+}
+function apagarCliente() {
+  const c = curCli; if (!c || !c.id) return;
+  if (db.licencas.some(l => l.clienteId === c.id)) { alert('Este cliente tem licenças emitidas e não pode ser eliminado. Remova primeiro as licenças no separador Registo.'); return; }
+  if (!confirm('Eliminar o cliente ' + c.nome + ' e as suas entregas?')) return;
+  db.clientes = db.clientes.filter(x => x.id !== c.id); db.entregas = db.entregas.filter(e => e.clienteId !== c.id);
+  save(); refreshClientSelect(); $('cDet').hidden = true; curCli = null; renderClientes(); renderPacotes();
+}
+function renderEnt() {
+  const list = db.entregas.filter(e => e.clienteId === curCli.id).sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+  $('enVazio').hidden = list.length > 0;
+  $('enBody').innerHTML = list.map(e => `<tr><td>${esc(e.data || '')}</td><td>${esc(e.versao)}</td><td>${esc(e.tipo)}</td><td><select data-es="${e.id}">${['Entregue', 'Instalado', 'Em avaliação', 'Licenciado', 'Suspenso'].map(o => `<option${o === e.estado ? ' selected' : ''}>${o}</option>`).join('')}</select></td><td class="mono">${esc((e.iid || '').slice(0, 12))}${e.iid ? '…' : ''}</td><td class="mono">${esc((e.sha256 || '').slice(0, 12))}${e.sha256 ? '…' : ''}</td><td>${esc(e.notas || '')}</td><td><button class="btn small" data-edel="${e.id}" type="button">Remover</button></td></tr>`).join('');
+}
+function fillPacoteSelect() {
+  const sel = $('en_pacote'); sel.innerHTML = '<option value="">— indicar à mão —</option>';
+  [...db.pacotes].sort((a, b) => (b.data || '').localeCompare(a.data || '')).forEach(p => {
+    const o = document.createElement('option'); o.value = p.id; o.textContent = p.versao + ' · ' + (p.data || '').slice(0, 10) + (p.desktop ? ' · +Desktop' : ''); sel.appendChild(o);
+  });
+}
+function registarEntrega() {
+  const versao = val('en_versao');
+  if (!curCli || !curCli.id) return;
+  if (!versao) { $('enMsg').textContent = 'Indique a versão (ou escolha um pacote).'; return; }
+  db.entregas.push({ id: uuid(), clienteId: curCli.id, pacoteId: $('en_pacote').value || '', versao, tipo: $('en_tipo').value, data: val('en_data'), estado: $('en_estado').value, iid: val('en_iid').toLowerCase(), sha256: val('en_sha'), notas: val('en_notas') });
+  save(); renderEnt(); renderClientes(); renderPacotes(); $('enMsg').textContent = 'Entrega registada ✓';
+  ['en_versao', 'en_iid', 'en_sha', 'en_notas'].forEach(i => $(i).value = ''); $('en_pacote').value = '';
+}
+function renderPacotes() {
+  const list = [...db.pacotes].sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+  $('pVazio').hidden = list.length > 0;
+  $('pBody').innerHTML = list.map(p => `<tr><td>${esc((p.data || '').slice(0, 16).replace('T', ' '))}</td><td>${esc(p.versao)}</td><td>${p.desktop ? 'Sim' : 'Não'}</td><td>${esc(p.ficheiro || '')}</td><td class="mono">${esc((p.sha256 || '').slice(0, 16))}…</td><td>${db.entregas.filter(e => e.pacoteId === p.id).length}</td><td><button class="btn small" data-pdel="${p.id}" type="button">Remover</button></td></tr>`).join('');
+}
+async function importarPacotes(file) {
+  try {
+    const arr = JSON.parse((await file.text()).replace(/^﻿/, ''));
+    const list = Array.isArray(arr) ? arr : [arr];
+    let n = 0;
+    list.forEach(p => { if (p && p.id && p.versao && !db.pacotes.some(x => x.id === p.id)) { db.pacotes.push(p); n++; } });
+    save(); renderPacotes(); fillPacoteSelect(); alert(n + ' pacote(s) importado(s).');
+  } catch (e) { alert('Ficheiro inválido. Use o registo-pacotes.json criado pelo Empacotador.'); }
+}
+function exportarClientesCsv() {
+  const head = ['Empresa', 'NUIT', 'Atividade', 'Morada', 'Cidade', 'Província', 'Contacto', 'Telefone', 'Email', 'Estabelecimentos', 'Última versão', 'Estado da entrega', 'Data da entrega', 'Licença válida até'];
+  const lines = [head.join(';')].concat(db.clientes.map(c => { const e = lastEnt(c.id) || {}, l = lastLic(c.id);
+    return [c.nome, c.nuit, c.atividade, c.morada, c.cidade, c.provincia, c.contacto, c.telefone, c.email, (c.estabelecimentos || []).map(x => x.nome).join(' / '), e.versao, e.estado, e.data, l ? fmt(l.exp * 1000) : ''].map(csvEscape).join(';'); }));
+  download('clientes-' + new Date().toISOString().slice(0, 10) + '.csv', '﻿' + lines.join('\r\n'), 'text/csv');
+}
+$('cBusca').oninput = renderClientes;
+$('cNovo').onclick = () => openCliente(null);
+$('cCsv').onclick = exportarClientesCsv;
+$('cBody').onclick = e => { const b = e.target.closest('button[data-c]'); if (b) openCliente(b.dataset.c); };
+$('cdEstAdd').onclick = () => { collectCliente(); curCli.estabelecimentos.push({ nome: '', morada: '', cidade: '', telefone: '' }); renderEst(); };
+$('cdEst').oninput = e => { const t = e.target; if (t.dataset.i !== undefined) curCli.estabelecimentos[+t.dataset.i][t.dataset.k] = t.value; };
+$('cdEst').onclick = e => { const b = e.target.closest('button[data-del]'); if (b) { curCli.estabelecimentos.splice(+b.dataset.del, 1); renderEst(); } };
+$('cdGuardar').onclick = guardarCliente;
+$('cdApagar').onclick = apagarCliente;
+$('cdFechar').onclick = () => { $('cDet').hidden = true; curCli = null; };
+$('cdLicenca').onclick = () => { const c = curCli; if (!c || !c.id) return; const e = lastEnt(c.id); tab('emitir'); refreshClientSelect(c.id); fillClient(c); if (e && e.iid) { $('iid').value = e.iid; $('semIid').checked = false; } validate(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+$('en_pacote').onchange = e => { const p = db.pacotes.find(x => x.id === e.target.value); if (p) { $('en_versao').value = p.versao; $('en_sha').value = p.sha256 || ''; $('en_tipo').value = p.desktop ? 'Web + Desktop' : 'Só Web'; } };
+$('enGuardar').onclick = registarEntrega;
+$('enBody').onchange = e => { const t = e.target; if (t.dataset.es) { const en = db.entregas.find(x => x.id === t.dataset.es); if (en) { en.estado = t.value; save(); renderClientes(); } } };
+$('enBody').onclick = e => { const b = e.target.closest('button[data-edel]'); if (b && confirm('Remover esta entrega do registo?')) { db.entregas = db.entregas.filter(x => x.id !== b.dataset.edel); save(); renderEnt(); renderClientes(); renderPacotes(); } };
+$('pImp').onclick = () => $('pFile').click();
+$('pFile').onchange = e => { if (e.target.files[0]) importarPacotes(e.target.files[0]); e.target.value = ''; };
+$('pBody').onclick = e => { const b = e.target.closest('button[data-pdel]'); if (b && confirm('Remover este pacote da lista? (As entregas já registadas ficam.)')) { db.pacotes = db.pacotes.filter(x => x.id !== b.dataset.pdel); save(); renderPacotes(); } };
+
+/* ---------- arranque ---------- */
+(async () => {
+  try { await crypto.subtle.importKey('spki', b64ToBytes(PUB_SPKI_B64), { name: 'Ed25519' }, false, ['verify']); }
+  catch (e) { $('cryptoWarn').hidden = false; $('keyBtn').disabled = true; }
+  load(); refreshClientSelect(); renderTable(); validate();
+})();
+</script>
+</body>
+</html>

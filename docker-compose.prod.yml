@@ -1,4 +1,5 @@
-version: '3.8'
+# Nome fixo: os dados (volumes) NAO dependem do nome da pasta onde o sistema esta instalado
+name: inverno-erp
 
 services:
   db:
@@ -17,6 +18,7 @@ services:
       retries: 5
 
   backend:
+    image: inverno/backend:${INVERNO_VERSION:-local}
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -33,12 +35,20 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_DATABASE: ${DB_DATABASE:-inverno_erp}
       JWT_SECRET: ${JWT_SECRET}
-      LICENSE_JWT_SECRET: ${LICENSE_JWT_SECRET}
+      LICENSE_SECRET: ${LICENSE_SECRET}
+      INITIAL_ADMIN_PASSWORD: ${INITIAL_ADMIN_PASSWORD:-}
+      RESET_ADMIN_PASSWORD: ${RESET_ADMIN_PASSWORD:-}
+      SEED_DEMO: "false"
+      ALLOW_ADMIN_FALLBACK: "false"
+      BACKUP_DIR: /backups
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    volumes:
+      - backups_data:/backups
     expose:
       - "3000"
 
   frontend:
+    image: inverno/frontend:${INVERNO_VERSION:-local}
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -50,3 +60,4 @@ services:
 
 volumes:
   postgres_data:
+  backups_data:

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from './services/auth.service';
@@ -80,14 +80,7 @@ import { LicenseService } from './services/license.service';
           <span class="font-black text-xl text-gray-800 tracking-tight">Inverno ERP</span>
         </div>
 
-        <!-- Management shortcut -->
-        <div class="absolute top-5 right-5">
-          <button (click)="step = 'ACCESS_GATE'"
-                  class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-blue-600 hover:border-blue-200 transition-all">
-            <span class="material-symbols-outlined text-[14px]">settings</span>
-            Administração
-          </button>
-        </div>
+
 
         <div class="w-full max-w-sm animate-fade-in">
 
@@ -110,28 +103,49 @@ import { LicenseService } from './services/license.service';
 
             <form (ngSubmit)="onCredentialsSubmit()" class="space-y-4">
               <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Utilizador</label>
+                <label class="block text-sm font-semibold mb-1.5 transition-colors"
+                       [ngClass]="usernameError ? 'text-red-600' : 'text-gray-700'">Utilizador</label>
                 <div class="relative">
-                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px] pointer-events-none">person</span>
+                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] pointer-events-none transition-colors"
+                        [ngClass]="usernameError ? 'text-red-400' : 'text-gray-400'">person</span>
                   <input
-                    class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-300"
+                    [ngClass]="usernameError
+                      ? 'border-red-400 bg-red-50 focus:ring-red-400 text-red-800 placeholder-red-300'
+                      : 'border-gray-300 bg-white focus:ring-blue-500 text-gray-800 placeholder-gray-300'"
+                    class="w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-all"
                     type="text" placeholder="Nome de utilizador"
-                    [(ngModel)]="username" name="username" autofocus>
+                    [(ngModel)]="username" name="username" autofocus
+                    (ngModelChange)="usernameError = ''">
+                </div>
+                <div *ngIf="usernameError" class="flex items-center gap-1.5 mt-1.5 animate-fade-in">
+                  <span class="material-symbols-outlined text-red-500 text-[15px]">person_off</span>
+                  <span class="text-xs text-red-600 font-medium">{{ usernameError }}</span>
                 </div>
               </div>
               <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Palavra-passe</label>
+                <label class="block text-sm font-semibold mb-1.5 transition-colors"
+                       [ngClass]="passwordError ? 'text-red-600' : 'text-gray-700'">Palavra-passe</label>
                 <div class="relative">
-                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px] pointer-events-none">lock</span>
+                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] pointer-events-none transition-colors"
+                        [ngClass]="passwordError ? 'text-red-400' : 'text-gray-400'">lock</span>
                   <input
-                    class="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-300"
+                    [ngClass]="passwordError
+                      ? 'border-red-400 bg-red-50 focus:ring-red-400 text-red-800 placeholder-red-300'
+                      : 'border-gray-300 bg-white focus:ring-blue-500 text-gray-800 placeholder-gray-300'"
+                    class="w-full pl-10 pr-10 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-all"
                     [type]="showPassword ? 'text' : 'password'"
                     placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
-                    [(ngModel)]="password" name="password">
+                    [(ngModel)]="password" name="password"
+                    (ngModelChange)="passwordError = ''">
                   <button type="button" (click)="showPassword = !showPassword"
-                          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                          class="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                          [ngClass]="passwordError ? 'text-red-400 hover:text-red-600' : 'text-gray-400 hover:text-gray-600'">
                     <span class="material-symbols-outlined text-[18px]">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
                   </button>
+                </div>
+                <div *ngIf="passwordError" class="flex items-center gap-1.5 mt-1.5 animate-fade-in">
+                  <span class="material-symbols-outlined text-red-500 text-[15px]">lock_open</span>
+                  <span class="text-xs text-red-600 font-medium">{{ passwordError }}</span>
                 </div>
               </div>
               <button type="submit"
@@ -147,22 +161,10 @@ import { LicenseService } from './services/license.service';
             <h2 class="text-2xl font-bold text-gray-900 mb-1">Acesso Administrativo</h2>
             <p class="text-gray-500 text-sm mb-6">
               Bem-vindo, <strong class="text-gray-700">{{ currentUser?.name || currentUser?.username || 'Utilizador' }}</strong>.
-              Introduza o código de administração.
+              Escolha como pretende continuar.
             </p>
 
-            <div class="mb-5">
-              <label class="block text-sm font-semibold text-gray-700 mb-1.5">Código de Administração</label>
-              <div class="relative">
-                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-amber-500 text-[20px] pointer-events-none">admin_panel_settings</span>
-                <input type="password"
-                       [(ngModel)]="adminAccessCode"
-                       (keyup.enter)="onAdminCodeSubmit()"
-                       class="w-full pl-10 pr-4 py-2.5 border border-amber-300 rounded-lg text-sm bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
-                       placeholder="Código de administração">
-              </div>
-            </div>
-
-            <div class="space-y-2" *ngIf="adminAccessCode === defaultAdminAccessCode">
+            <div class="space-y-2">
               <ng-container *ngIf="!licenseService.current?.valid">
                 <button (click)="enterViaAdministration('buy')"
                         class="w-full text-left p-3.5 border border-blue-200 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors flex items-center gap-3 group">
@@ -213,7 +215,7 @@ import { LicenseService } from './services/license.service';
               </button>
             </div>
 
-            <button (click)="step = 'LOGIN'; password = ''; adminAccessCode = ''"
+            <button (click)="step = 'LOGIN'; password = ''"
                     class="w-full mt-5 text-sm text-gray-400 hover:text-gray-700 py-2 flex items-center justify-center gap-1 transition-colors">
               <span class="material-symbols-outlined text-[16px]">arrow_back</span>
               Voltar ao Login
@@ -245,11 +247,11 @@ import { LicenseService } from './services/license.service';
 
               <div *ngIf="availableCompanies.length === 0" class="text-center py-8 text-gray-500">
                 <span class="material-symbols-outlined text-5xl text-gray-300 mb-2 block">business_center</span>
-                <p class="text-sm mb-4">Não tem acesso a nenhuma empresa.</p>
-                <button *ngIf="currentUser?.role === 'ADMIN'"
+                <p class="text-sm mb-4">Ainda não existe nenhuma empresa, ou não tem acesso a nenhuma.</p>
+                <button *ngIf="currentUser?.isAdmin || currentUser?.isSuperAdmin || currentUser?.role === 'ADMIN'"
                         (click)="selectedMode = 'ADMIN'; finishLogin('admin-page')"
                         class="bg-blue-600 text-white text-xs font-bold py-2 px-5 rounded-lg hover:bg-blue-700 transition-colors">
-                  Ir para Administração
+                  Ir para Administração (criar a primeira empresa)
                 </button>
               </div>
             </div>
@@ -290,12 +292,13 @@ export class LoginComponent implements OnInit {
   password = '';
   showPassword = false;
   selectedMode = 'ERP';
-  adminAccessCode = '';
-  readonly defaultAdminAccessCode = 'admin';
   readonly currentYear = new Date().getFullYear();
 
   currentUser: any = null;
   availableCompanies: any[] = [];
+
+  usernameError = '';
+  passwordError = '';
 
   features = [
     { icon: 'point_of_sale', label: 'Vendas e Faturação Electrónica' },
@@ -316,7 +319,8 @@ export class LoginComponent implements OnInit {
     private authService: AuthService,
     private dataService: DataService,
     private toasterService: ToasterService,
-    public licenseService: LicenseService
+    public licenseService: LicenseService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   selectCompany(company: any) {
@@ -358,22 +362,9 @@ export class LoginComponent implements OnInit {
     return 'Armazenamento Local';
   }
 
-  onAdminCodeSubmit() {
-    if (this.adminAccessCode === this.defaultAdminAccessCode) {
-      const license = this.licenseService.current;
-      if (license?.valid) {
-        this.enterViaAdministration('demo');
-      } else {
-        this.enterViaAdministration('buy');
-      }
-    } else {
-      this.toasterService.showError('Código inválido', 'Código especial do administrador incorrecto.');
-    }
-  }
-
   enterViaAdministration(option: 'buy' | 'key' | 'demo' | 'erp') {
-    if (option !== 'erp' && this.adminAccessCode !== this.defaultAdminAccessCode) {
-      this.toasterService.showError('Código inválido', 'Código especial do administrador incorrecto.');
+    if (option !== 'erp' && !(this.currentUser?.isAdmin || this.currentUser?.isSuperAdmin)) {
+      this.toasterService.showError('Acesso negado', 'Apenas administradores.');
       return;
     }
     if (option === 'erp') {
@@ -383,12 +374,6 @@ export class LoginComponent implements OnInit {
     }
     localStorage.setItem('erp_license_entry_mode', option === 'buy' ? 'BUY' : option === 'key' ? 'KEY' : 'DEMO');
     this.selectedMode = 'ADMIN';
-
-    // Obtain a real JWT so that protected endpoints (create user, etc.) work.
-    // Fails silently if backend is unreachable — admin panel still opens.
-    this.authService.adminSession(this.adminAccessCode).subscribe({
-      error: () => { /* backend unavailable — admin panel opens without token */ }
-    });
 
     this.finishLogin('admin-page');
   }
@@ -421,11 +406,20 @@ export class LoginComponent implements OnInit {
           } else {
             this.step = 'ACCESS_GATE';
           }
+          this.cdr.markForCheck();
         },
         error: (err) => {
-          console.error('Login failed', err);
-          const errorMsg = err.error?.message || 'Utilizador ou palavra-passe incorrectos.';
-          this.toasterService.showError('Falha no Login', errorMsg);
+          this.cdr.markForCheck();
+          const msg: string = err.error?.message || '';
+          this.usernameError = '';
+          this.passwordError = '';
+          if (msg.includes('não encontrado')) {
+            this.usernameError = 'Utilizador não encontrado.';
+          } else if (msg.includes('incorrecta')) {
+            this.passwordError = 'Palavra-passe incorrecta.';
+          } else {
+            this.toasterService.showError('Falha no Login', msg || 'Erro ao entrar no sistema.');
+          }
         }
       });
   }
@@ -438,6 +432,7 @@ export class LoginComponent implements OnInit {
       } else {
         this.step = 'COMPANY_SELECT';
       }
+      this.cdr.markForCheck();
     });
   }
 }

@@ -40,6 +40,10 @@ export class Article {
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     purchasePrice: number;
 
+    // Preço médio ponderado (PMP) — actualizado a cada entrada de stock
+    @Column({ type: 'decimal', precision: 14, scale: 4, default: 0, nullable: true })
+    averageCost: number;
+
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     salePrice: number;
 

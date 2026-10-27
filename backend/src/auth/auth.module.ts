@@ -1,3 +1,4 @@
+import { getSecret } from '../common/secrets';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -15,7 +16,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'secretKey', // Fallback for dev
+        secret: getSecret('JWT_SECRET', 'dev-only-jwt-secret-not-for-production'), // Fallback for dev
         signOptions: { expiresIn: '30d' },
       }),
       inject: [ConfigService],

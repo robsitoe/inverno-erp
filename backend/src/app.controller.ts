@@ -10,6 +10,7 @@ import { PurchaseDocument } from './purchases/entities/purchase.entity';
 import { TreasuryDocument } from './treasury/entities/treasury.entity';
 import { Company } from './companies/entities/company.entity';
 import { Series } from './companies/entities/series.entity';
+import { LicensesService } from './licenses/licenses.service';
 import { FiscalYear } from './companies/entities/fiscal-year.entity';
 import { Journal } from './accounting/entities/journal.entity';
 import { Customer } from './customers/entities/customer.entity';
@@ -34,7 +35,8 @@ export class AppController {
     private readonly appService: AppService,
     private readonly dataSource: DataSource,
     private readonly tenancyService: TenancyService,
-    private readonly periodControlService: PeriodControlService
+    private readonly periodControlService: PeriodControlService,
+    private readonly licensesService: LicensesService
   ) { }
 
   private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, companyId?: string): Promise<Repository<T>> {
@@ -82,6 +84,7 @@ export class AppController {
       const isNew = !company.id || !(await repo.findOne({ where: { id: company.id } }));
 
       if (isNew) {
+        await this.licensesService.assertCanAddCompany(await repo.count());
         const existingName = await repo.findOne({ where: { name: company.name } });
         if (existingName) {
           throw new BadRequestException(`Já existe uma empresa registrada com o nome "${company.name}".`);

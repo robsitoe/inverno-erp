@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../shared/config';
 import { PERMISSIONS_CATALOG } from '../../shared/permissions.catalog';
@@ -416,7 +416,7 @@ export class AdminUsersComponent implements OnInit {
   users: User[] = [];
   companies: Company[] = [];
 
-  constructor(private dataService: DataService, private http: HttpClient) { }
+  constructor(private dataService: DataService, private http: HttpClient, private cdr: ChangeDetectorRef) { }
 
   // Modal State
   showUserModal = false;
@@ -622,10 +622,11 @@ export class AdminUsersComponent implements OnInit {
       userToSave.id = userToSave.username.toLowerCase().replace(/\s/g, '');
     }
 
-    this.dataService.saveUser(userToSave).subscribe({
+    this.dataService.saveUser(userToSave, !this.isEditing).subscribe({
       next: () => {
-        this.loadUsers();
         this.closeUserModal();
+        this.cdr.detectChanges();
+        this.loadUsers();
         alert('Utilizador gravado com sucesso!');
       },
       error: (err) => {

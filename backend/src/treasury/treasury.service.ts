@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityTarget, ObjectLiteral } from 'typeorm';
 import { CreateTreasuryDto } from './dto/create-treasury.dto';
@@ -84,6 +84,22 @@ export class TreasuryService {
     return repo.remove(document);
   }
 
+  /**
+   * Anula um recibo/pagamento: o documento mantém o número e fica com o estado REJECTED
+   * (anulado) e o motivo; deixa de liquidar documentos. O estorno contabilístico é feito
+   * pelo cliente através do lançamento de estorno.
+   */
+  async voidDocument(id: string, reason: string, user?: any) {
+    if (!reason || !reason.trim()) throw new BadRequestException('O motivo da anulação é obrigatório.');
+    const repo = await this.getTreasuryRepo();
+    const doc = await this.findOne(id);
+    if (String(doc.status) === 'REJECTED') throw new BadRequestException('Este documento já está anulado.');
+    await this.periodControlService.ensureDateInOpenPeriod(doc.date, doc.companyId);
+    doc.status = 'REJECTED' as any;
+    doc.statusNotes = `Anulado${user?.username ? ' por ' + user.username : ''}: ${reason.trim()}`;
+    return repo.save(doc);
+  }
+
   async processWorkflow(id: string, action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST', user: any, notes?: string) {
     const document = await this.findOne(id);
     const repo = await this.getTreasuryRepo();
@@ -112,10 +128,17 @@ export class TreasuryService {
   }
 
 
+  /** As linhas de recibo/pagamento chegam sem id; a chave primaria e manual, por isso atribui-se aqui. */
+  private withLineIds(data: any) {
+    const stamp = Date.now();
+    const lines = Array.isArray(data?.lines) ? data.lines.map((l: any, i: number) => ({ ...l, id: l.id || `${data.id || 'DOC'}-L${i + 1}-${stamp}` })) : data?.lines;
+    return { ...data, lines };
+  }
+
   async createReceipt(data: any) {
     await this.periodControlService.ensureDateInOpenPeriod(data.date, data.companyId);
     const repo = await this.getTreasuryRepo();
-    const receipt = repo.create({ ...data, type: TreasuryDocumentType.RECEIPT });
+    const receipt = repo.create({ ...this.withLineIds(data), type: TreasuryDocumentType.RECEIPT });
     return repo.save(receipt);
   }
 
@@ -132,7 +155,7 @@ export class TreasuryService {
   async createPayment(data: any) {
     await this.periodControlService.ensureDateInOpenPeriod(data.date, data.companyId);
     const repo = await this.getTreasuryRepo();
-    const payment = repo.create({ ...data, type: TreasuryDocumentType.PAYMENT });
+    const payment = repo.create({ ...this.withLineIds(data), type: TreasuryDocumentType.PAYMENT });
     return repo.save(payment);
   }
 

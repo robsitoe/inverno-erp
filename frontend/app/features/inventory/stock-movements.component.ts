@@ -29,7 +29,7 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
       <div class="flex flex-col h-full w-full no-print">
       <!-- Toolbar -->
       <div class="flex items-center gap-1 px-2 py-1.5 border-b border-gray-300 bg-[#F0F0F0] shadow-sm shrink-0">
-        <button (click)="saveDocument()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
+        <button (click)="saveDocument()" [disabled]="isPosted" [style.opacity]="isPosted ? .45 : 1" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
           <span class="material-symbols-outlined text-[18px]">save</span>
           <span>Gravar</span>
         </button>
@@ -42,24 +42,24 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
           <span>Imprimir</span>
         </button>
         <div class="w-px h-4 bg-gray-300 mx-1"></div>
-        <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
+        <button disabled title="Ainda não disponível" style="opacity:.45;cursor:not-allowed" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
           <span class="material-symbols-outlined text-[18px]">search</span>
           <span>Procurar</span>
         </button>
-        <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
+        <button disabled title="Ainda não disponível" style="opacity:.45;cursor:not-allowed" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
           <span class="material-symbols-outlined text-[18px]">send</span>
           <span>Enviar</span>
         </button>
-        <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
+        <button disabled title="Ainda não disponível" style="opacity:.45;cursor:not-allowed" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
           <span class="material-symbols-outlined text-[18px]">menu</span>
           <span>Contexto</span>
         </button>
         <div class="w-px h-4 bg-gray-300 mx-1"></div>
-        <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
+        <button disabled title="Ainda não disponível" style="opacity:.45;cursor:not-allowed" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
           <span class="material-symbols-outlined text-[18px]">help</span>
           <span>Ajuda</span>
         </button>
-        <button class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
+        <button (click)="cancelEdit()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 text-xs">
           <span class="material-symbols-outlined text-[18px]">close</span>
           <span>Cancelar</span>
         </button>
@@ -99,11 +99,11 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
           
           <!-- Series and Number with Navigation -->
           <div class="flex items-center gap-1 w-40">
-            <select [(ngModel)]="currentDoc.series" (change)="loadDocument(); validateSeriesDate()" class="w-16 border border-gray-300 px-1 py-0.5 h-6 bg-white text-center text-xs" title="Série">
+            <select [disabled]="isPosted" [(ngModel)]="currentDoc.series" (change)="loadDocument(); validateSeriesDate()" class="w-16 border border-gray-300 px-1 py-0.5 h-6 bg-white text-center text-xs" title="Série">
               <option *ngFor="let s of availableSeries" [value]="s.code">{{ s.code }}</option>
             </select>
             <div class="flex items-center border border-gray-300 bg-white h-6 flex-1">
-              <input type="number" [(ngModel)]="currentDoc.number" (change)="loadDocument()" class="w-full px-1 py-0.5 h-full border-none text-right focus:ring-0">
+              <input [disabled]="isPosted" type="number" [(ngModel)]="currentDoc.number" (change)="loadDocument()" class="w-full px-1 py-0.5 h-full border-none text-right focus:ring-0">
               <div class="flex flex-col border-l border-gray-300">
                 <button (click)="navigateDocument(1)" class="h-3 px-0.5 hover:bg-gray-100 flex items-center justify-center border-b border-gray-300">
                   <span class="material-symbols-outlined text-[10px]">expand_less</span>
@@ -118,15 +118,15 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
           <div class="flex-1"></div>
           <div class="flex items-center gap-2">
             <label class="text-gray-700">Data:</label>
-            <input type="date" [(ngModel)]="currentDoc.date" (change)="validateSeriesDate()" class="border border-gray-300 px-1 py-0.5 h-6 w-28">
-            <input type="time" [(ngModel)]="currentDoc.time" class="border border-gray-300 px-1 py-0.5 h-6 w-20">
+            <input [disabled]="isPosted" type="date" [(ngModel)]="currentDoc.date" (change)="validateSeriesDate()" class="border border-gray-300 px-1 py-0.5 h-6 w-28">
+            <input [disabled]="isPosted" type="time" [(ngModel)]="currentDoc.time" class="border border-gray-300 px-1 py-0.5 h-6 w-20">
           </div>
         </div>
 
         <!-- Row 2: Input Type -->
         <div class="flex items-center gap-2 mb-2">
           <label class="text-gray-700 font-medium w-20 text-right">Tipo de Introdução:</label>
-          <select [(ngModel)]="currentDoc.inputType" class="border border-gray-300 px-1 py-0.5 h-6 w-48">
+          <select [disabled]="isPosted" [(ngModel)]="currentDoc.inputType" class="border border-gray-300 px-1 py-0.5 h-6 w-48">
             <option value="Cód. Artigo">Cód. Artigo</option>
             <option value="Código de Barras">Código de Barras</option>
             <option value="Referência">Referência</option>
@@ -144,7 +144,7 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
               <div class="col-span-1 text-right text-blue-700">Conta:</div>
               <div class="col-span-2">
                 <div class="flex">
-                  <input [(ngModel)]="currentDoc.originAccount" class="w-full border border-gray-300 px-1 h-5">
+                  <input [disabled]="isPosted" [(ngModel)]="currentDoc.originAccount" class="w-full border border-gray-300 px-1 h-5">
                   <button class="bg-gray-200 border border-gray-300 px-1 h-5 flex items-center justify-center hover:bg-gray-300">
                     <span class="material-symbols-outlined text-[10px]">search</span>
                   </button>
@@ -153,12 +153,12 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
 
               <div class="col-span-1 text-right text-gray-700">C. Custo:</div>
               <div class="col-span-2">
-                <input [(ngModel)]="currentDoc.originCostCenter" class="w-full border border-gray-300 px-1 h-5">
+                <input [disabled]="isPosted" [(ngModel)]="currentDoc.originCostCenter" class="w-full border border-gray-300 px-1 h-5">
               </div>
 
               <div class="col-span-1 text-right text-gray-700">Projeto:</div>
               <div class="col-span-2">
-                <input [(ngModel)]="currentDoc.originProject" class="w-full border border-gray-300 px-1 h-5">
+                <input [disabled]="isPosted" [(ngModel)]="currentDoc.originProject" class="w-full border border-gray-300 px-1 h-5">
               </div>
               
               <div class="col-span-3"></div>
@@ -167,7 +167,7 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
               <div class="col-span-1 text-right text-gray-700">Analítica:</div>
               <div class="col-span-2">
                 <div class="flex">
-                  <input [(ngModel)]="currentDoc.originAnalytic" class="w-full border border-gray-300 px-1 h-5">
+                  <input [disabled]="isPosted" [(ngModel)]="currentDoc.originAnalytic" class="w-full border border-gray-300 px-1 h-5">
                   <button class="bg-gray-200 border border-gray-300 px-1 h-5 flex items-center justify-center hover:bg-gray-300">
                     <span class="material-symbols-outlined text-[10px]">search</span>
                   </button>
@@ -176,13 +176,13 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
 
               <div class="col-span-1 text-right text-gray-700">Funcional:</div>
               <div class="col-span-2">
-                <input [(ngModel)]="currentDoc.originFunctional" class="w-full border border-gray-300 px-1 h-5">
+                <input [disabled]="isPosted" [(ngModel)]="currentDoc.originFunctional" class="w-full border border-gray-300 px-1 h-5">
               </div>
 
               <div class="col-span-1 text-right text-gray-700">Elemento PEP:</div>
               <div class="col-span-2">
                 <div class="flex">
-                  <input [(ngModel)]="currentDoc.originPep" class="w-full border border-gray-300 px-1 h-5">
+                  <input [disabled]="isPosted" [(ngModel)]="currentDoc.originPep" class="w-full border border-gray-300 px-1 h-5">
                   <button class="bg-gray-200 border border-gray-300 px-1 h-5 flex items-center justify-center hover:bg-gray-300">
                     <span class="material-symbols-outlined text-[10px]">search</span>
                   </button>
@@ -192,7 +192,7 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
               <div class="col-span-1 text-right text-blue-700">Armazém:</div>
               <div class="col-span-2">
                 <div class="flex">
-                  <input [(ngModel)]="currentDoc.warehouse" class="w-full border border-gray-300 px-1 h-5">
+                  <input [disabled]="isPosted" [(ngModel)]="currentDoc.warehouse" class="w-full border border-gray-300 px-1 h-5">
                   <button class="bg-gray-200 border border-gray-300 px-1 h-5 flex items-center justify-center hover:bg-gray-300">
                     <span class="material-symbols-outlined text-[10px]">search</span>
                   </button>
@@ -205,14 +205,14 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
           <div class="w-64 border border-gray-300 p-2 flex flex-col gap-2">
             <div class="flex items-center justify-between">
               <label class="text-gray-700">Movimento em:</label>
-              <select [(ngModel)]="currentDoc.movementIn" class="border border-gray-300 px-1 h-5 w-32">
+              <select [disabled]="isPosted" [(ngModel)]="currentDoc.movementIn" class="border border-gray-300 px-1 h-5 w-32">
                 <option value="Preço Unitário">Preço Unitário</option>
                 <option value="Valor Total">Valor Total</option>
               </select>
             </div>
             <div class="flex items-center justify-between">
               <label class="text-gray-700">Qtd. Componentes:</label>
-              <select [(ngModel)]="currentDoc.componentQty" class="border border-gray-300 px-1 h-5 w-32">
+              <select [disabled]="isPosted" [(ngModel)]="currentDoc.componentQty" class="border border-gray-300 px-1 h-5 w-32">
                 <option value="Unitária">Unitária</option>
                 <option value="Total">Total</option>
               </select>
@@ -255,7 +255,7 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
               <!-- Artigo -->
               <td class="border-b border-r border-gray-200 p-0 relative">
                 <div class="flex h-full">
-                  <input [(ngModel)]="line.articleCode" (blur)="onArticleChange(line)" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent">
+                  <input [disabled]="isPosted" [(ngModel)]="line.articleCode" (blur)="onArticleChange(line)" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent">
                   <button (click)="openArticleSearch(line)" class="w-4 bg-gray-100 hover:bg-gray-200 border-l border-gray-200 flex items-center justify-center opacity-0 group-hover:opacity-100 absolute right-0 top-0 bottom-0">
                     <span class="material-symbols-outlined text-[10px]">search</span>
                   </button>
@@ -264,7 +264,7 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
 
               <!-- Armazém -->
               <td class="border-b border-r border-gray-200 p-0">
-                <select [(ngModel)]="line.warehouse" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent text-xs">
+                <select [disabled]="isPosted" [(ngModel)]="line.warehouse" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent text-xs">
                   <option value="">-</option>
                   <option *ngFor="let wh of warehouses" [value]="wh.code">{{ wh.code }}</option>
                 </select>
@@ -272,14 +272,14 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
 
               <!-- Localização -->
               <td class="border-b border-r border-gray-200 p-0">
-                <select [(ngModel)]="line.location" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent text-xs">
+                <select [disabled]="isPosted" [(ngModel)]="line.location" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent text-xs">
                   <option value="">-</option>
                   <option *ngFor="let loc of locations" [value]="loc.code">{{ loc.code }}</option>
                 </select>
               </td>
 
               <td class="border-b border-r border-gray-200 p-0">
-                <input [(ngModel)]="line.batch" [attr.list]="'batches-' + i" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent">
+                <input [disabled]="isPosted" [(ngModel)]="line.batch" [attr.list]="'batches-' + i" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent">
                 <datalist [id]="'batches-' + i">
                   <option *ngFor="let batch of batches" [value]="batch.code">{{ batch.description }}</option>
                 </datalist>
@@ -287,12 +287,12 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
 
               <!-- Descrição -->
               <td class="border-b border-r border-gray-200 p-0">
-                <input [(ngModel)]="line.description" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent">
+                <input [disabled]="isPosted" [(ngModel)]="line.description" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent">
               </td>
 
               <!-- Unidade -->
               <td class="border-b border-r border-gray-200 p-0">
-                <select [(ngModel)]="line.unit" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent text-center text-xs">
+                <select [disabled]="isPosted" [(ngModel)]="line.unit" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent text-center text-xs">
                   <option value="">-</option>
                   <option *ngFor="let unit of units" [value]="unit.code">{{ unit.code }}</option>
                 </select>
@@ -300,29 +300,29 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
 
               <!-- Quantidade -->
               <td class="border-b border-r border-gray-200 p-0">
-                <input type="number" [(ngModel)]="line.quantity" (change)="calculateLine(line)" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent text-right">
+                <input [disabled]="isPosted" type="number" [(ngModel)]="line.quantity" (change)="calculateLine(line)" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent text-right">
               </td>
 
               <!-- Valor -->
               <td class="border-b border-r border-gray-200 p-0">
-                <input type="number" [(ngModel)]="line.total" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent text-right">
+                <input [disabled]="isPosted" type="number" [(ngModel)]="line.total" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent text-right">
               </td>
 
               <!-- Outros Campos -->
-              <td class="border-b border-r border-gray-200 p-0"><input [(ngModel)]="line.generalAccount" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
-              <td class="border-b border-r border-gray-200 p-0"><input [(ngModel)]="line.costCenter" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
-              <td class="border-b border-r border-gray-200 p-0"><input [(ngModel)]="line.analytic" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
-              <td class="border-b border-r border-gray-200 p-0"><input [(ngModel)]="line.functional" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
-              <td class="border-b border-r border-gray-200 p-0"><input [(ngModel)]="line.project" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
-              <td class="border-b border-r border-gray-200 p-0"><input [(ngModel)]="line.pepElement" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
-              <td class="border-b border-gray-200 p-0"><input [(ngModel)]="line.item" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
+              <td class="border-b border-r border-gray-200 p-0"><input [disabled]="isPosted" [(ngModel)]="line.generalAccount" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
+              <td class="border-b border-r border-gray-200 p-0"><input [disabled]="isPosted" [(ngModel)]="line.costCenter" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
+              <td class="border-b border-r border-gray-200 p-0"><input [disabled]="isPosted" [(ngModel)]="line.analytic" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
+              <td class="border-b border-r border-gray-200 p-0"><input [disabled]="isPosted" [(ngModel)]="line.functional" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
+              <td class="border-b border-r border-gray-200 p-0"><input [disabled]="isPosted" [(ngModel)]="line.project" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
+              <td class="border-b border-r border-gray-200 p-0"><input [disabled]="isPosted" [(ngModel)]="line.pepElement" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
+              <td class="border-b border-gray-200 p-0"><input [disabled]="isPosted" [(ngModel)]="line.item" class="w-full h-full px-1 border-none focus:ring-1 focus:ring-blue-500 bg-transparent"></td>
             </tr>
             
             <!-- Empty Line for New Entry -->
             <tr class="hover:bg-blue-50">
               <td class="border-b border-r border-gray-200 bg-gray-50 text-center text-gray-400 text-[10px]">*</td>
               <td class="border-b border-r border-gray-200 p-0" colspan="15">
-                <button (click)="addLine()" class="w-full text-left px-2 py-1 text-gray-400 hover:text-blue-600 text-xs italic">
+                <button (click)="!isPosted && addLine()" [hidden]="isPosted" class="w-full text-left px-2 py-1 text-gray-400 hover:text-blue-600 text-xs italic">
                   Clique aqui para adicionar uma linha...
                 </button>
               </td>
@@ -333,7 +333,7 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
 
       <!-- Footer -->
       <div class="px-2 py-1 bg-[#DCE4F2] border-t border-gray-300 shrink-0 flex justify-between items-center text-xs">
-        <button class="flex items-center gap-1 px-2 py-0.5 border border-gray-400 bg-gray-100 hover:bg-gray-200 rounded-sm">
+        <button disabled title="Ainda não disponível" style="opacity:.45;cursor:not-allowed" class="flex items-center gap-1 px-2 py-0.5 border border-gray-400 bg-gray-100 hover:bg-gray-200 rounded-sm">
           <span class="material-symbols-outlined text-[14px]">expand_less</span>
           <span>Mais Detalhes</span>
         </button>
@@ -646,6 +646,13 @@ export class StockMovementsComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  cancelEdit() {
+    if (!this.isPosted && this.currentDoc.lines.some(l => l.articleCode) && !confirm('Descartar as alterações ao documento actual?')) return;
+    this.newDocument();
+  }
+
+  get isPosted(): boolean { return this.currentDoc?.status === 'POSTED'; }
+
   navigateDocument(direction: number) {
     this.currentDoc.number += direction;
     if (this.currentDoc.number < 1) this.currentDoc.number = 1;

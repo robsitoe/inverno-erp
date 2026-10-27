@@ -141,9 +141,19 @@ export class AdminToolsComponent {
   isSyncing = false;
   syncStatus: { success: boolean, message: string } | null = null;
 
+  /** Em modo servidor os dados vivem na base de dados: estas ferramentas (que só apagam o localStorage) não se aplicam. */
+  get serverMode(): boolean { return !this.dataService.isLocalBrowser(); }
+
+  private blockedInServerMode(): boolean {
+    if (!this.serverMode) return false;
+    alert('Em modo servidor estas ferramentas não se aplicam (só limpam dados locais do navegador).\n\nUse Administração → Sistema → Cópia de Segurança para guardar os dados.');
+    return true;
+  }
+
   constructor(private dataService: DataService) { }
 
-  resetDatabase() {
+  resetDatabase() {
+    if (this.blockedInServerMode()) return;
     if (confirm('⚠️ ATENÇÃO!\n\nTem certeza que deseja REINICIAR TODA A BASE DE DADOS?\n\nTodos os dados serão perdidos permanentemente:\n- Documentos de venda\n- Lançamentos contábeis\n- Movimentos de stock\n- Clientes customizados\n\nEsta ação é IRREVERSÍVEL!')) {
       localStorage.clear();
       alert('✅ Base de dados reiniciada com sucesso!\n\nA página será recarregada.');
@@ -151,7 +161,8 @@ export class AdminToolsComponent {
     }
   }
 
-  clearSalesDocuments() {
+  clearSalesDocuments() {
+    if (this.blockedInServerMode()) return;
     if (confirm('Tem certeza que deseja limpar TODOS os documentos de venda?')) {
       localStorage.removeItem('erp_sales_documents');
       alert('✅ Documentos de venda removidos com sucesso!');
@@ -159,7 +170,8 @@ export class AdminToolsComponent {
     }
   }
 
-  clearJournalEntries() {
+  clearJournalEntries() {
+    if (this.blockedInServerMode()) return;
     if (confirm('Tem certeza que deseja limpar TODOS os lançamentos contábeis?')) {
       localStorage.removeItem('erp_journal_entries');
       alert('✅ Lançamentos contábeis removidos com sucesso!');
@@ -167,7 +179,8 @@ export class AdminToolsComponent {
     }
   }
 
-  clearStockMovements() {
+  clearStockMovements() {
+    if (this.blockedInServerMode()) return;
     if (confirm('Tem certeza que deseja limpar TODOS os movimentos de stock?')) {
       localStorage.removeItem('erp_stock_movements');
       alert('✅ Movimentos de stock removidos com sucesso!');
@@ -175,7 +188,8 @@ export class AdminToolsComponent {
     }
   }
 
-  exportData() {
+  exportData() {
+    if (this.blockedInServerMode()) return;
     const data = {
       salesDocuments: localStorage.getItem('erp_sales_documents'),
       journalEntries: localStorage.getItem('erp_journal_entries'),
@@ -197,7 +211,8 @@ export class AdminToolsComponent {
     alert('✅ Backup exportado com sucesso!');
   }
 
-  syncWithBackend() {
+  syncWithBackend() {
+    if (this.blockedInServerMode()) return;
     if (!confirm('Deseja enviar todos os dados locais para o backend? Isso pode sobrescrever dados existentes no servidor.')) {
       return;
     }

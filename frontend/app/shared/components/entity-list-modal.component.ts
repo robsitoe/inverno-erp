@@ -1,185 +1,245 @@
-import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { CustomerService } from '../customer.service';
-import { AccountingService } from '../accounting.service';
-import { Customer, Account } from '../models';
-
-@Component({
-  selector: 'app-entity-list-modal',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  template: `
-    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" (click)="onClose()">
-      <div class="bg-white rounded-sm shadow-lg w-[900px] max-h-[80vh] flex flex-col" (click)="$event.stopPropagation()">
-        <!-- Header -->
-        <div class="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-gray-50">
-          <h3 class="text-sm font-medium text-gray-700">{{ title || 'Lista de Entidades (Clientes)' }}</h3>
-          <button (click)="onClose()" class="text-gray-400 hover:text-gray-600">
-            <span class="material-symbols-outlined text-lg">close</span>
-          </button>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="px-3 py-2 border-b border-gray-200 bg-white flex gap-2">
-          <div class="relative flex-1">
-            <input 
-              type="text"
-              [value]="searchQuery"
-              (input)="onSearchChange($event)"
-              placeholder="Pesquisar por nome, NIF ou morada..."
-              class="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 rounded-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[16px]">search</span>
-          </div>
-        </div>
-
-        <!-- List -->
-        <div class="overflow-y-auto p-1 flex-1">
-          <table class="w-full text-xs border-collapse">
-            <thead class="bg-gray-50 text-gray-600 font-medium sticky top-0 z-10">
-              <tr>
-                <th class="px-2 py-1 text-left border-b w-20">Código</th>
-                <th class="px-2 py-1 text-left border-b">Nome</th>
-                <th class="px-2 py-1 text-left border-b w-24">NIF</th>
-                <th class="px-2 py-1 text-left border-b">Conta Contábil</th>
-                <th class="px-2 py-1 text-center border-b w-16">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let entity of filteredEntities" 
-                  class="hover:bg-blue-50 transition-colors border-b border-gray-100">
-                <td class="px-2 py-1.5 font-medium text-blue-600 cursor-pointer" (click)="onSelect(entity)">{{ entity.code }}</td>
-                <td class="px-2 py-1.5 text-gray-700 cursor-pointer" (click)="onSelect(entity)">{{ entity.name }}</td>
-                <td class="px-2 py-1.5 text-gray-600 cursor-pointer" (click)="onSelect(entity)">{{ entity.nif }}</td>
-                <td class="px-2 py-1.5">
-                    <div *ngIf="editingId !== entity.id" class="text-gray-600 flex items-center gap-1">
-                        <span class="font-mono bg-gray-100 px-1 rounded">{{ getAccountCode(entity.receivableAccountId) }}</span>
-                        <span class="truncate max-w-[150px]">{{ getAccountName(entity.receivableAccountId) }}</span>
-                    </div>
-                    <select *ngIf="editingId === entity.id" 
-                            [(ngModel)]="tempAccountId"
-                            class="w-full border border-blue-300 rounded px-1 py-0.5 text-xs bg-white focus:outline-none">
-                        <option *ngFor="let acc of availableAccounts" [value]="acc.id">
-                            {{ acc.code }} - {{ acc.name }}
-                        </option>
-                    </select>
-                </td>
-                <td class="px-2 py-1.5 text-center">
-                    <button *ngIf="editingId !== entity.id" (click)="startEdit(entity)" class="text-gray-500 hover:text-blue-600" title="Editar Conta">
-                        <span class="material-symbols-outlined text-[16px]">edit</span>
-                    </button>
-                    <div *ngIf="editingId === entity.id" class="flex justify-center gap-1">
-                        <button (click)="saveEdit(entity)" class="text-green-600 hover:text-green-800" title="Salvar">
-                            <span class="material-symbols-outlined text-[16px]">check</span>
-                        </button>
-                        <button (click)="cancelEdit()" class="text-red-500 hover:text-red-700" title="Cancelar">
-                            <span class="material-symbols-outlined text-[16px]">close</span>
-                        </button>
-                    </div>
-                </td>
-              </tr>
-              <tr *ngIf="filteredEntities.length === 0">
-                <td colspan="5" class="px-2 py-4 text-center text-gray-400 italic">
-                  Nenhuma entidade encontrada
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Footer -->
-        <div class="px-3 py-2 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
-          <span class="text-xs text-gray-500">{{ filteredEntities.length }} entidade(s) encontrada(s)</span>
-          <button (click)="onClose()" class="px-3 py-1 bg-white border border-gray-300 rounded-sm text-xs hover:bg-gray-50">
-            Cancelar
-          </button>
-        </div>
-      </div>
-    </div>
-  `
-})
-export class EntityListModalComponent implements OnInit {
-  @Input() title: string = '';
-  @Output() close = new EventEmitter<void>();
-  @Output() select = new EventEmitter<any>();
-
-  entities: Customer[] = [];
-  filteredEntities: Customer[] = [];
-  searchQuery = '';
-
-  availableAccounts: Account[] = [];
-  editingId: string | null = null;
-  tempAccountId: string = '';
-
-  constructor(
-    private customerService: CustomerService,
-    private accountingService: AccountingService
-  ) { }
-
-  ngOnInit() {
-    this.entities = this.customerService.getCustomers();
-    this.filteredEntities = this.entities;
-    if (!this.entities.length) { this.customerService.loadCustomers().then(() => { this.entities = this.customerService.getCustomers(); this.filteredEntities = this.entities; }); }
-
-    // Load accounts that are Assets (Receivable) - usually class 21
-    // For simplicity, loading all analytic accounts or filtering by code starts with '21'
-    this.availableAccounts = this.accountingService.getAccounts()
-      .filter(a => a.allowPosting && (a.code.startsWith('4.1') || a.type === 'ASSET'))
-      .sort((a, b) => a.code.localeCompare(b.code));
-  }
-
-  onSearchChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.searchQuery = input.value;
-    const query = this.searchQuery.toLowerCase().trim();
-
-    if (!query) {
-      this.filteredEntities = this.entities;
-      return;
-    }
-
-    this.filteredEntities = this.entities.filter(entity =>
-      entity.name.toLowerCase().includes(query) ||
-      entity.nif.toLowerCase().includes(query) ||
-      entity.address.toLowerCase().includes(query) ||
-      entity.code.toLowerCase().includes(query)
-    );
-  }
-
-  getAccountCode(id: string): string {
-    const acc = this.availableAccounts.find(a => a.id === id);
-    return acc ? acc.code : id;
-  }
-
-  getAccountName(id: string): string {
-    const acc = this.availableAccounts.find(a => a.id === id);
-    return acc ? acc.name : 'Conta não encontrada';
-  }
-
-  startEdit(entity: Customer) {
-    this.editingId = entity.id;
-    this.tempAccountId = entity.receivableAccountId;
-  }
-
-  saveEdit(entity: Customer) {
-    if (this.tempAccountId) {
-      entity.receivableAccountId = this.tempAccountId;
-      this.customerService.updateCustomer(entity);
-      this.editingId = null;
-    }
-  }
-
-  cancelEdit() {
-    this.editingId = null;
-  }
-
-  onClose() {
-    this.close.emit();
-  }
-
-  onSelect(entity: any) {
-    if (this.editingId) return; // Prevent selection while editing
-    this.select.emit(entity);
-  }
-}
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { CustomerService } from '../customer.service';
+import { Customer } from '../models';
+import { DataService } from '../../services/data.service';
+import { lastValueFrom } from 'rxjs';
+
+type SearchField = 'all' | 'name' | 'code' | 'nif' | 'address';
+
+/**
+ * Lista de entidades (clientes) — lookup ao estilo Primavera:
+ * grelha compacta, ↑/↓ para mover, Enter ou duplo clique para escolher, Esc para fechar,
+ * e pesquisa incremental por campo.
+ */
+@Component({
+  selector: 'app-entity-list-modal',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
+    <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50" (click)="onClose()" (keydown)="onKeydown($event)">
+      <div class="bg-[#F0F0F0] border border-gray-500 shadow-2xl w-[860px] max-w-[95vw] h-[520px] max-h-[90vh] flex flex-col text-[11px] text-gray-800"
+           (click)="$event.stopPropagation()">
+
+        <!-- Barra de título -->
+        <div class="flex items-center justify-between px-2 py-1 bg-slate-700 text-white select-none">
+          <span class="font-medium">{{ title || 'Lista de Clientes' }}</span>
+          <button type="button" (click)="onClose()" class="hover:bg-red-600 px-1.5 leading-none" title="Fechar (Esc)">&#10005;</button>
+        </div>
+
+        <!-- Grelha -->
+        <div #gridBox class="flex-1 overflow-auto bg-white border border-gray-400 m-2">
+          <table class="w-full border-collapse">
+            <thead class="sticky top-0 z-10 bg-[#E1E1E1] text-gray-800">
+              <tr>
+                <th class="px-2 py-1 text-left font-semibold border-r border-b border-gray-400 w-24">Cliente</th>
+                <th class="px-2 py-1 text-left font-semibold border-r border-b border-gray-400">Nome</th>
+                <th class="px-2 py-1 text-left font-semibold border-r border-b border-gray-400 w-28">Contribuinte</th>
+                <th class="px-2 py-1 text-left font-semibold border-b border-gray-400">Morada</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let e of filteredEntities; let i = index"
+                  [attr.data-row]="i"
+                  (click)="selectedIndex = i"
+                  (dblclick)="onSelect(e)"
+                  class="cursor-default"
+                  [ngClass]="i === selectedIndex ? 'bg-blue-600 text-white' : 'bg-white hover:bg-blue-100'">
+                <td class="px-2 py-0.5 border-r border-gray-200">{{ e.code }}</td>
+                <td class="px-2 py-0.5 border-r border-gray-200">{{ e.name }}</td>
+                <td class="px-2 py-0.5 border-r border-gray-200">{{ e.nif }}</td>
+                <td class="px-2 py-0.5 truncate max-w-[260px]">{{ e.address }}</td>
+              </tr>
+              <tr *ngIf="filteredEntities.length === 0 && !creating">
+                <td colspan="4" class="px-2 py-6 text-center text-gray-600">
+                  <div class="italic mb-2">Nenhum cliente encontrado{{ searchQuery ? ' para "' + searchQuery + '"' : '' }}.</div>
+                  <button type="button" (click)="startCreate()"
+                          class="px-3 py-1 border border-blue-700 bg-blue-600 text-white hover:bg-blue-700">+ Criar novo cliente</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Criação rápida -->
+        <div *ngIf="creating" class="mx-2 mb-2 p-2 border border-blue-500 bg-blue-50 grid grid-cols-12 gap-2 items-end">
+          <div class="col-span-12 font-semibold">Novo cliente ({{ newCode }})</div>
+          <label class="col-span-5 flex flex-col gap-0.5">Nome *
+            <input type="text" [(ngModel)]="draft.name" (keydown)="$event.stopPropagation()" class="border border-gray-400 bg-white px-1 py-0.5 focus:outline-none focus:border-blue-600" />
+          </label>
+          <label class="col-span-2 flex flex-col gap-0.5">Contribuinte
+            <input type="text" [(ngModel)]="draft.nif" (keydown)="$event.stopPropagation()" class="border border-gray-400 bg-white px-1 py-0.5 focus:outline-none focus:border-blue-600" />
+          </label>
+          <label class="col-span-2 flex flex-col gap-0.5">Telefone
+            <input type="text" [(ngModel)]="draft.phone" (keydown)="$event.stopPropagation()" class="border border-gray-400 bg-white px-1 py-0.5 focus:outline-none focus:border-blue-600" />
+          </label>
+          <label class="col-span-3 flex flex-col gap-0.5">Morada
+            <input type="text" [(ngModel)]="draft.address" (keydown)="$event.stopPropagation()" class="border border-gray-400 bg-white px-1 py-0.5 focus:outline-none focus:border-blue-600" />
+          </label>
+          <div class="col-span-12 flex items-center justify-end gap-2">
+            <span *ngIf="createError" class="text-red-600 mr-auto">{{ createError }}</span>
+            <button type="button" (click)="saveCreate()" [disabled]="saving" class="px-3 py-0.5 border border-blue-700 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">{{ saving ? 'A gravar…' : 'Gravar e seleccionar' }}</button>
+            <button type="button" (click)="creating = false" class="px-3 py-0.5 border border-gray-500 bg-white hover:bg-gray-100">Cancelar</button>
+          </div>
+        </div>
+
+        <!-- Pesquisa -->
+        <div class="flex items-center gap-2 px-2 pb-2">
+          <label class="whitespace-nowrap">Pesquisar por:</label>
+          <select [(ngModel)]="searchField" (ngModelChange)="applyFilter()"
+                  class="border border-gray-400 bg-white px-1 py-0.5 focus:outline-none focus:border-blue-600">
+            <option value="all">Todos os campos</option>
+            <option value="name">Nome</option>
+            <option value="code">Código</option>
+            <option value="nif">Contribuinte</option>
+            <option value="address">Morada</option>
+          </select>
+          <input #searchInput type="text" [(ngModel)]="searchQuery" (ngModelChange)="applyFilter()"
+                 placeholder="Escreva para filtrar…"
+                 class="flex-1 border border-gray-400 bg-white px-1.5 py-0.5 focus:outline-none focus:border-blue-600" />
+        </div>
+
+        <!-- Rodapé -->
+        <div class="flex items-center justify-between px-2 py-1.5 border-t border-gray-300 bg-[#E8E8E8]">
+          <span class="text-gray-600">{{ filteredEntities.length }} registo(s)</span>
+          <div class="flex gap-2">
+            <button type="button" (click)="startCreate()" class="px-3 py-0.5 border border-gray-500 bg-white hover:bg-gray-100">Novo…</button>
+            <button type="button" (click)="confirm()" [disabled]="selectedIndex < 0"
+                    class="w-20 py-0.5 border border-gray-500 bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed">OK</button>
+            <button type="button" (click)="onClose()"
+                    class="w-20 py-0.5 border border-gray-500 bg-white hover:bg-gray-100">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+})
+export class EntityListModalComponent implements OnInit, AfterViewInit {
+  @Input() title: string = '';
+  @Output() close = new EventEmitter<void>();
+  @Output() select = new EventEmitter<any>();
+
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('gridBox') gridBox?: ElementRef<HTMLElement>;
+
+  entities: Customer[] = [];
+  filteredEntities: Customer[] = [];
+  searchQuery = '';
+  searchField: SearchField = 'all';
+  selectedIndex = -1;
+
+  creating = false;
+  saving = false;
+  createError = '';
+  newCode = '';
+  draft: any = { name: '', nif: '', phone: '', address: '' };
+  private companyId: string | undefined;
+
+  constructor(private customerService: CustomerService, private dataService: DataService) {
+    this.dataService.activeCompany$.subscribe(c => this.companyId = c?.id || undefined);
+  }
+
+  startCreate() {
+    const max = this.entities
+      .filter(e => String(e.code).startsWith('C'))
+      .map(e => parseInt(String(e.code).substring(1), 10))
+      .reduce((m, n) => (isNaN(n) ? m : Math.max(m, n)), 0);
+    this.newCode = 'C' + String(max + 1).padStart(3, '0');
+    this.draft = { name: this.searchField === 'nif' ? '' : this.searchQuery.trim(), nif: this.searchField === 'nif' ? this.searchQuery.trim() : '', phone: '', address: '' };
+    this.createError = '';
+    this.creating = true;
+  }
+
+  async saveCreate() {
+    if (!this.draft.name?.trim()) { this.createError = 'O nome é obrigatório.'; return; }
+    this.saving = true;
+    this.createError = '';
+    const customer: any = {
+      id: 'NEW_' + Date.now(), companyId: this.companyId, code: this.newCode,
+      name: this.draft.name.trim(), nif: this.draft.nif?.trim() || '', address: this.draft.address?.trim() || '',
+      city: '', postalCode: '', country: 'Moçambique', phone: this.draft.phone?.trim() || '', email: '',
+      paymentTerms: 30, creditLimit: 0, currentBalance: 0, receivableAccountId: '', isActive: true, type: 'CONSUMIDOR'
+    };
+    try {
+      const saved = await lastValueFrom(this.dataService.saveCustomer(customer));
+      const final = saved?.id ? saved : customer;
+      await this.customerService.loadCustomers();
+      this.creating = false;
+      this.onSelect(final);
+    } catch (e: any) {
+      this.createError = e?.error?.message || 'Não foi possível criar o cliente.';
+    } finally {
+      this.saving = false;
+    }
+  }
+
+  ngOnInit() {
+    this.setEntities(this.customerService.getCustomers());
+    if (!this.entities.length) {
+      this.customerService.loadCustomers().then(() => this.setEntities(this.customerService.getCustomers()));
+    }
+  }
+
+  ngAfterViewInit() {
+    setTimeout(() => this.searchInput?.nativeElement.focus());
+  }
+
+  private setEntities(list: Customer[]) {
+    this.entities = [...(list || [])].sort((a, b) =>
+      String(a.code ?? '').localeCompare(String(b.code ?? ''), undefined, { numeric: true, sensitivity: 'base' }));
+    this.applyFilter();
+  }
+
+  applyFilter() {
+    const q = this.searchQuery.toLowerCase().trim();
+    const f = this.searchField;
+    const has = (v: any) => String(v ?? '').toLowerCase().includes(q);
+    this.filteredEntities = !q
+      ? this.entities
+      : this.entities.filter(e =>
+          f === 'name' ? has(e.name)
+          : f === 'code' ? has(e.code)
+          : f === 'nif' ? has(e.nif)
+          : f === 'address' ? has(e.address)
+          : has(e.name) || has(e.code) || has(e.nif) || has(e.address));
+    this.selectedIndex = this.filteredEntities.length ? 0 : -1;
+  }
+
+  onKeydown(ev: KeyboardEvent) {
+    if (this.creating) { if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); this.creating = false; } return; }
+    const n = this.filteredEntities.length;
+    switch (ev.key) {
+      case 'ArrowDown': ev.preventDefault(); this.move(1, n); break;
+      case 'ArrowUp': ev.preventDefault(); this.move(-1, n); break;
+      case 'PageDown': ev.preventDefault(); this.move(10, n); break;
+      case 'PageUp': ev.preventDefault(); this.move(-10, n); break;
+      case 'Enter': ev.preventDefault(); this.confirm(); break;
+      case 'Escape': ev.preventDefault(); this.onClose(); break;
+    }
+  }
+
+  private move(delta: number, n: number) {
+    if (!n) return;
+    const next = this.selectedIndex < 0 ? 0 : this.selectedIndex + delta;
+    this.selectedIndex = Math.max(0, Math.min(n - 1, next));
+    setTimeout(() => {
+      this.gridBox?.nativeElement
+        .querySelector(`[data-row="${this.selectedIndex}"]`)
+        ?.scrollIntoView({ block: 'nearest' });
+    });
+  }
+
+  confirm() {
+    const e = this.filteredEntities[this.selectedIndex];
+    if (e) this.onSelect(e);
+  }
+
+  onClose() {
+    this.close.emit();
+  }
+
+  onSelect(entity: any) {
+    this.select.emit(entity);
+  }
+}

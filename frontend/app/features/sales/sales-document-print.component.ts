@@ -111,7 +111,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
             <tbody>
               <tr *ngFor="let line of document.lines" class="line-row">
                 <td>{{ line.articleCode }}</td>
-                <td>{{ line.articleName }}</td>
+                <td>{{ line.articleName }}<div *ngIf="line.notes" style="font-size:0.85em;font-style:italic;color:#555;white-space:pre-wrap">{{ line.notes }}</div></td>
                 <td class="text-right">{{ line.quantity | number:'1.2-2' }}</td>
                 <td class="text-center">UN</td>
                 <td class="text-right">{{ line.unitPrice | number:'1.2-2' }}</td>
@@ -207,7 +207,6 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
   `,
   styles: [`
     /* Import Premium Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     /* Global Print Settings */
     @media print {

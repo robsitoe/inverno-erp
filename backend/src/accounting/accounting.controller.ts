@@ -116,15 +116,40 @@ export class AccountingController {
   }
 
   @Get('cost-centers')
-  @ApiOperation({ summary: 'List cost centers (MVP)' })
-  listCostCenters(): Promise<any> {
-    return this.accountingService.listCostCenters();
+  @ApiOperation({ summary: 'List cost centers' })
+  listCostCenters(@Query('companyId') companyId?: string) {
+    return this.accountingService.listCostCenters(companyId);
+  }
+
+  @Get('cost-centers/:id')
+  @ApiOperation({ summary: 'Get cost center by ID' })
+  getCostCenter(@Param('id') id: string, @Query('companyId') companyId?: string) {
+    return this.accountingService.getCostCenterById(id, companyId);
   }
 
   @Post('cost-centers')
-  @ApiOperation({ summary: 'Create cost center (MVP)' })
-  createCostCenter(@Body() payload: { code: string; description: string; active?: boolean }): Promise<any> {
-    return this.accountingService.createCostCenter(payload);
+  @ApiOperation({ summary: 'Create cost center' })
+  createCostCenter(
+    @Body() payload: { code: string; name: string; description?: string; type?: string; isActive?: boolean },
+    @Query('companyId') companyId?: string,
+  ) {
+    return this.accountingService.createCostCenter(payload, companyId);
+  }
+
+  @Patch('cost-centers/:id')
+  @ApiOperation({ summary: 'Update cost center' })
+  updateCostCenter(
+    @Param('id') id: string,
+    @Body() payload: Partial<{ code: string; name: string; description: string; type: string; isActive: boolean }>,
+    @Query('companyId') companyId?: string,
+  ) {
+    return this.accountingService.updateCostCenter(id, payload, companyId);
+  }
+
+  @Delete('cost-centers/:id')
+  @ApiOperation({ summary: 'Delete cost center' })
+  deleteCostCenter(@Param('id') id: string, @Query('companyId') companyId?: string) {
+    return this.accountingService.deleteCostCenter(id, companyId);
   }
 
   @Get('vat/summary')

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Inverno ERP</title>
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--ink:#14202e;--muted:#5b6b7d;--line:#dbe2ea;--brand:#1d5fd1;--bad:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#0e151e;--card:#172130;--ink:#e6edf5;--muted:#9aabbd;--line:#283648;--brand:#6aa3ff;--bad:#ff8c82}}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,sans-serif}
+.card{width:min(560px,92vw);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px}
+h1{margin:0 0 6px;font-size:22px}.err{color:var(--bad);margin:0 0 14px;font-weight:600}
+code{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+ul{color:var(--muted);padding-left:20px}.row{display:flex;gap:10px;margin-top:18px}
+button{flex:1;font:inherit;font-weight:700;border-radius:8px;padding:11px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+button.p{background:var(--brand);border-color:var(--brand);color:#fff}
+</style></head><body>
+<div class="card">
+  <h1>Não foi possível ligar ao Inverno ERP</h1>
+  <p class="err" id="e"></p>
+  <p>Servidor: <code id="s"></code></p>
+  <ul>
+    <li>Confirme que o computador do servidor está ligado e que o <b>Docker Desktop</b> está a correr.</li>
+    <li>Se está noutro computador, confirme que está na mesma rede e que o endereço (IP) está certo.</li>
+    <li>Aguarde 1 minuto depois de ligar o servidor e tente de novo.</li>
+  </ul>
+  <div class="row"><button class="p" id="r">Tentar de novo</button><button id="c">Alterar servidor</button></div>
+</div>
+<script>
+const q = new URLSearchParams(location.search);
+document.getElementById('e').textContent = q.get('error') || '';
+document.getElementById('s').textContent = q.get('url') || '';
+document.getElementById('r').onclick = () => window.inverno.retry();
+document.getElementById('c').onclick = () => window.inverno.change();
+</script></body></html>

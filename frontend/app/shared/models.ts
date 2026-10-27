@@ -451,6 +451,7 @@ export interface SalesDocumentLine {
     total: number;
 
 
+    notes?: string;
 }
 
 

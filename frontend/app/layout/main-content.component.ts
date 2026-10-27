@@ -8,6 +8,8 @@ import { ChartOfAccountsComponent } from '../features/accounting/chart-of-accoun
 import { JournalEntriesComponent } from '../features/accounting/journal-entries.component';
 import { TrialBalanceComponent } from '../features/accounting/trial-balance.component';
 import { AccountingPlaceholderComponent } from '../features/accounting/accounting-placeholder.component';
+import { AccountingExplorationComponent } from '../features/accounting/accounting-exploration.component';
+import { CostCentersComponent } from '../features/accounting/cost-centers.component';
 import { JournalsComponent } from '../features/accounting/journals.component';
 import { FinancialStatementsComponent } from '../features/accounting/financial-statements.component';
 import { JournalEntriesReviewComponent } from '../features/accounting/journal-entries-review.component';
@@ -33,9 +35,12 @@ import { AdminCompaniesComponent } from '../features/admin/admin-companies.compo
 import { AdminFiscalYearsComponent } from '../features/admin/admin-fiscal-years.component';
 import { AdminUsersComponent } from '../features/admin/admin-users.component';
 import { AdminSeriesComponent } from '../features/admin/admin-series.component';
+import { AdminSystemComponent } from '../features/admin/admin-system.component';
+import { AdminMaintenanceComponent } from '../features/admin/admin-maintenance.component';
 import { EntityManagementComponent } from '../features/admin/entity-management.component';
 import { BankReconciliationComponent } from '../features/treasury/bank-reconciliation.component';
 import { AccountStatementComponent } from '../features/treasury/account-statement.component';
+import { AgingReportComponent } from '../features/treasury/aging-report.component';
 import { ToasterComponent } from '../shared/toaster.component';
 import { LicenseManagerComponent } from '../features/admin/license-manager.component';
 import { EmployeeListComponent } from '../features/hr/employee-list.component';
@@ -66,6 +71,8 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
     JournalEntriesComponent,
     TrialBalanceComponent,
     AccountingPlaceholderComponent,
+    AccountingExplorationComponent,
+    CostCentersComponent,
     JournalsComponent,
     FinancialStatementsComponent,
     JournalEntriesReviewComponent,
@@ -90,10 +97,11 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
     AdminCompaniesComponent,
     AdminFiscalYearsComponent,
     AdminUsersComponent,
-    AdminSeriesComponent,
+    AdminSeriesComponent, AdminSystemComponent, AdminMaintenanceComponent,
     EntityManagementComponent,
     BankReconciliationComponent,
     AccountStatementComponent,
+    AgingReportComponent,
     ToasterComponent,
     EmployeeListComponent,
     PayrollProcessingComponent,
@@ -143,6 +151,14 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
       <app-admin-users class="w-full h-full block"></app-admin-users>
     </ng-container>
 
+    <ng-container *ngIf="activeView === 'admin-maintenance'">
+      <app-admin-maintenance class="w-full h-full block"></app-admin-maintenance>
+    </ng-container>
+
+    <ng-container *ngIf="activeView === 'admin-system'">
+      <app-admin-system class="w-full h-full block"></app-admin-system>
+    </ng-container>
+
     <ng-container *ngIf="activeView === 'admin-series'">
       <app-admin-series class="w-full h-full block"></app-admin-series>
     </ng-container>
@@ -182,8 +198,18 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
       <app-financial-statements class="w-full h-full block"></app-financial-statements>
     </ng-container>
 
+    <!-- Accounting: Exploration -->
+    <ng-container *ngIf="activeView === 'exploration'">
+      <app-accounting-exploration class="w-full h-full flex flex-col"></app-accounting-exploration>
+    </ng-container>
+
+    <!-- Accounting: Cost Centers -->
+    <ng-container *ngIf="activeView === 'cost-centers'">
+      <app-cost-centers class="w-full h-full flex flex-col"></app-cost-centers>
+    </ng-container>
+
     <!-- Accounting: Other features (placeholder) -->
-    <ng-container *ngIf="['cost-centers', 'vat', 'period-close', 'exploration', 'utilities'].includes(activeView)">
+    <ng-container *ngIf="['vat', 'period-close', 'utilities'].includes(activeView)">
       <div class="bg-yellow-100 border-b border-yellow-300 px-4 py-2 text-sm text-yellow-900 font-medium">
         Módulo Beta: funcionalidades em validação de produção.
       </div>
@@ -268,6 +294,11 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
     <!-- Treasury: Account Statement -->
     <ng-container *ngIf="activeView === 'account-statement'">
       <app-account-statement class="w-full h-full block"></app-account-statement>
+    </ng-container>
+
+    <!-- Treasury: Aging report -->
+    <ng-container *ngIf="activeView === 'aging-report'">
+      <app-aging-report class="w-full h-full block"></app-aging-report>
     </ng-container>
 
     <!-- Treasury: Petty Cash Vouchers -->
@@ -459,12 +490,14 @@ export class MainContentComponent {
       'period-close',
       'exploration',
       'utilities',
+      // 'exploration' kept above so the licence/accounting guard still fires
       'admin-tools',
       'article-management',
       'stock-movements',
       'treasury-management',
       'bank-reconciliation',
       'account-statement',
+      'aging-report',
       'petty-cash-vouchers',
       'delivery-planning',
       'warehouse-management',
@@ -484,6 +517,8 @@ export class MainContentComponent {
       'admin-fiscal-years',
       'admin-users',
       'admin-series',
+      'admin-system',
+      'admin-maintenance',
       'customer-management',
       'supplier-management',
       'license-manager',
@@ -508,7 +543,6 @@ export class MainContentComponent {
   }
 
   getBackgroundImage(): SafeStyle {
-    const imageUrl = 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1920';
-    return this.sanitizer.bypassSecurityTrustStyle(`url('${imageUrl}')`);
+    return this.sanitizer.bypassSecurityTrustStyle('linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%)');
   }
 }

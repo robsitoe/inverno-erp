@@ -386,6 +386,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   handleMenuItemClick(e: Event, item: MenuItem) {
     e.preventDefault();
     if (item.view) {
+      if (item.context) this.navService.setViewContext(item.view, item.context);
+      else this.navService.clearViewContext();
       this.onNavigate.emit(item.view);
     }
   }

@@ -6,6 +6,7 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
 import { Account } from './entities/account.entity';
+import { CostCenter } from './entities/cost-center.entity';
 import { JournalEntry, JournalLine } from './entities/journal-entry.entity';
 
 import { EntityTarget, ObjectLiteral } from 'typeorm';
@@ -68,6 +69,12 @@ export class AccountingService {
   private async getAccountRepo(companyId?: string) { return this.getRepo(Account, this.defaultAccountRepo, companyId); }
   private async getJournalEntryRepo(companyId?: string) { return this.getRepo(JournalEntry, this.defaultJournalEntryRepo, companyId); }
   private async getJournalLineRepo(companyId?: string) { return this.getRepo(JournalLine, this.defaultJournalLineRepo, companyId); }
+  private async getCostCenterRepo(companyId?: string) {
+    const targetId = companyId || TenancyContext.getCompanyId();
+    if (!targetId) throw new BadRequestException('companyId é obrigatório para centros de custo.');
+    const ds = await this.tenancyService.getTenantDataSource(targetId);
+    return ds.getRepository(CostCenter);
+  }
 
   // Accounts
 
@@ -497,31 +504,54 @@ export class AccountingService {
     return { imported: accounts.length, mode: mergeMode };
   }
 
-  // MVP endpoints for placeholder accounting modules
-  async listCostCenters() {
-    return this.costCenters;
+  // ── Cost Centers (persistent) ─────────────────────────────────────────────
+
+  async listCostCenters(companyId?: string) {
+    const repo = await this.getCostCenterRepo(companyId);
+    return repo.find({ order: { code: 'ASC' } });
   }
 
-  async createCostCenter(payload: { code: string; description: string; active?: boolean }) {
-    if (!payload.code?.trim() || !payload.description?.trim()) {
-      throw new BadRequestException('Código e descrição são obrigatórios.');
+  async createCostCenter(payload: { code: string; name: string; description?: string; type?: string; isActive?: boolean }, companyId?: string) {
+    const repo = await this.getCostCenterRepo(companyId);
+    const targetId = companyId || TenancyContext.getCompanyId();
+    if (!payload.code?.trim() || !payload.name?.trim()) {
+      throw new BadRequestException('Código e nome são obrigatórios.');
     }
-
-    const exists = this.costCenters.some(item => item.code === payload.code.trim());
-    if (exists) {
-      throw new BadRequestException('Código de centro de custo já existe.');
-    }
-
-    const item: AccountingMvpRecord = {
+    const exists = await repo.findOne({ where: { code: payload.code.trim(), companyId: targetId } });
+    if (exists) throw new BadRequestException(`Código "${payload.code}" já existe.`);
+    const cc = repo.create({
       id: `cc-${Date.now()}`,
+      companyId: targetId,
       code: payload.code.trim(),
-      description: payload.description.trim(),
-      active: payload.active ?? true,
-      createdAt: new Date().toISOString()
-    };
+      name: payload.name.trim(),
+      description: payload.description?.trim(),
+      type: payload.type || 'OPERATIONAL',
+      isActive: payload.isActive ?? true,
+    });
+    return repo.save(cc);
+  }
 
-    this.costCenters.push(item);
-    return item;
+  async updateCostCenter(id: string, payload: Partial<{ code: string; name: string; description: string; type: string; isActive: boolean }>, companyId?: string) {
+    const repo = await this.getCostCenterRepo(companyId);
+    const cc = await repo.findOne({ where: { id } });
+    if (!cc) throw new NotFoundException(`Centro de custo "${id}" não encontrado.`);
+    Object.assign(cc, payload);
+    return repo.save(cc);
+  }
+
+  async deleteCostCenter(id: string, companyId?: string) {
+    const repo = await this.getCostCenterRepo(companyId);
+    const cc = await repo.findOne({ where: { id } });
+    if (!cc) throw new NotFoundException(`Centro de custo "${id}" não encontrado.`);
+    await repo.remove(cc);
+    return { deleted: true };
+  }
+
+  async getCostCenterById(id: string, companyId?: string) {
+    const repo = await this.getCostCenterRepo(companyId);
+    const cc = await repo.findOne({ where: { id } });
+    if (!cc) throw new NotFoundException(`Centro de custo "${id}" não encontrado.`);
+    return cc;
   }
 
   async getVatSummary(fromDate?: string, toDate?: string) {
@@ -570,13 +600,60 @@ export class AccountingService {
     return closure;
   }
 
-  async getExplorationSummary(fromDate?: string, toDate?: string) {
+  async getExplorationSummary(fromDate?: string, toDate?: string, companyId?: string) {
+    const targetId = companyId || TenancyContext.getCompanyId();
+    const jlRepo = await this.getJournalLineRepo(targetId);
+    const accRepo = await this.getAccountRepo(targetId);
+
+    const qb = jlRepo.createQueryBuilder('line')
+      .leftJoin('line.journalEntry', 'entry')
+      .where('entry.status = :status', { status: 'POSTED' });
+
+    if (fromDate) qb.andWhere('entry.date >= :fromDate', { fromDate });
+    if (toDate) qb.andWhere('entry.date <= :toDate', { toDate });
+    if (targetId) qb.andWhere('entry.companyId = :companyId', { companyId: targetId });
+
+    // Totals
+    const totalsRaw = await qb.clone()
+      .select('SUM(CAST(line.debit AS DECIMAL))', 'totalDebit')
+      .addSelect('SUM(CAST(line.credit AS DECIMAL))', 'totalCredit')
+      .getRawOne();
+
+    // Per-account aggregation
+    const byAccount = await qb.clone()
+      .select('line.accountId', 'accountId')
+      .addSelect('line.accountCode', 'accountCode')
+      .addSelect('line.accountName', 'accountName')
+      .addSelect('SUM(CAST(line.debit AS DECIMAL))', 'totalDebit')
+      .addSelect('SUM(CAST(line.credit AS DECIMAL))', 'totalCredit')
+      .addSelect('COUNT(line.id)', 'movements')
+      .groupBy('line.accountId')
+      .addGroupBy('line.accountCode')
+      .addGroupBy('line.accountName')
+      .orderBy('SUM(CAST(line.debit AS DECIMAL) + CAST(line.credit AS DECIMAL))', 'DESC')
+      .limit(20)
+      .getRawMany();
+
+    // All accounts with balances for the left panel
+    const accounts = await accRepo.find({ order: { code: 'ASC' } });
+
+    const topVariations = byAccount.map(r => ({
+      accountId: r.accountId,
+      accountCode: r.accountCode,
+      accountName: r.accountName,
+      totalDebit: parseFloat(r.totalDebit || '0'),
+      totalCredit: parseFloat(r.totalCredit || '0'),
+      net: parseFloat(r.totalDebit || '0') - parseFloat(r.totalCredit || '0'),
+      movements: parseInt(r.movements || '0'),
+    }));
+
     return {
       period: { fromDate, toDate },
-      totalDebit: 0,
-      totalCredit: 0,
-      topVariations: [],
-      generatedAt: new Date().toISOString()
+      totalDebit: parseFloat(totalsRaw?.totalDebit || '0'),
+      totalCredit: parseFloat(totalsRaw?.totalCredit || '0'),
+      topVariations,
+      accounts,
+      generatedAt: new Date().toISOString(),
     };
   }
 

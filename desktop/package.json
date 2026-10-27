@@ -1,0 +1,38 @@
+{
+  "name": "inverno-erp-desktop",
+  "productName": "Inverno ERP",
+  "version": "1.0.0",
+  "description": "Inverno ERP - aplicacao de secretaria",
+  "main": "src/main.js",
+  "author": "Inverno ERP",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis portable --x64",
+    "dist:dir": "electron-builder --win dir --x64"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "mz.inverno.erp.desktop",
+    "productName": "Inverno ERP",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["src/**/*", "package.json"],
+    "asar": true,
+    "win": { "icon": "build/icon.png", "signAndEditExecutable": false },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Inverno ERP",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": { "artifactName": "Inverno-ERP-Portatil-${version}.exe" },
+    "artifactName": "Inverno-ERP-Desktop-Setup-${version}.${ext}"
+  }
+}

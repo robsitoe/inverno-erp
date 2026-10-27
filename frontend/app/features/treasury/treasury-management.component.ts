@@ -213,7 +213,7 @@ interface PendingDocRow {
         <ng-container *ngIf="currentDocId">
 
 
-          <button (click)="onWorkflowAction('SUBMIT')" *ngIf="status === 'DRAFT' || status === 'REJECTED'" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
+          <button (click)="onWorkflowAction('SUBMIT')" *ngIf="status === 'DRAFT'" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
 
 
             <span class="material-symbols-outlined text-[18px] text-orange-500">send</span>
@@ -274,6 +274,11 @@ interface PendingDocRow {
 
 
         </button>
+        <button (click)="voidCurrentDocument()" *ngIf="currentDocId && status !== 'REJECTED'" class="flex items-center gap-1 px-2 py-1 hover:bg-red-50 hover:text-red-700 border border-transparent rounded-md transition-all text-gray-600 font-medium" title="Anular este documento (mantém o número e estorna o lançamento)">
+          <span class="material-symbols-outlined text-[18px] text-red-600">block</span>
+          <span>Anular</span>
+        </button>
+        <span *ngIf="status === 'REJECTED'" class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded border border-red-300 bg-red-50 text-red-700">Anulado</span>
 
 
         <button (click)="openPrintSettings()" class="flex items-center gap-1 px-2 py-1 hover:bg-blue-50 hover:text-blue-700 border border-transparent rounded-md transition-all text-gray-600 font-medium">
@@ -2049,7 +2054,7 @@ export class TreasuryManagementComponent implements OnInit {
   get isLocked(): boolean {
 
 
-    return this.status === WorkflowStatus.APPROVED || this.status === WorkflowStatus.POSTED;
+    return this.status === WorkflowStatus.APPROVED || this.status === WorkflowStatus.POSTED || this.status === WorkflowStatus.REJECTED;
 
 
   }
@@ -5541,6 +5546,43 @@ export class TreasuryManagementComponent implements OnInit {
 
 
 
+
+  voidCurrentDocument() {
+    if (!this.currentDocId) return;
+    const isReceipt = this.entityType === 'CUSTOMER';
+    const kind: 'RECEIPT' | 'PAYMENT' = isReceipt ? 'RECEIPT' : 'PAYMENT';
+    const label = this.docNumberString;
+    if (!this.periodService.isPeriodOpen(this.docDate)) {
+      alert('O período deste documento está fechado. Não é possível anulá-lo; emita um documento de correcção no período aberto.');
+      return;
+    }
+    if (!confirm(`Anular ${label}?\n\nO documento mantém o número mas deixa de contar: o lançamento contabilístico é estornado e os documentos que liquidava voltam a ficar em aberto.`)) return;
+    const reason = (prompt('Motivo da anulação (obrigatório):') || '').trim();
+    if (!reason) { alert('Anulação cancelada: o motivo é obrigatório.'); return; }
+    const id = this.currentDocId;
+    this.dataService.voidTreasuryDocument(id, kind, reason).subscribe({
+      next: () => {
+        this.ngZone.run(() => {
+          const user = this.authService.currentUserValue?.username || 'user';
+          const all = this.accountingService.getJournalEntries();
+          const reversed = new Set(all.filter((e: any) => e.sourceType === 'REVERSAL' && e.relatedEntryId).map((e: any) => e.relatedEntryId));
+          const originals = all.filter((e: any) => e.sourceDocument === id && (e.sourceType === 'RECEIPT' || e.sourceType === 'PAYMENT') && e.status === 'POSTED' && !reversed.has(e.id));
+          let failed = 0;
+          originals.forEach((e: any) => {
+            try { this.accountingService.reverseJournalEntry(e.id, `Anulação de ${label}: ${reason}`, user); } catch { failed++; }
+          });
+          this.status = 'REJECTED' as any;
+          this.cdr.detectChanges();
+          alert(failed
+            ? `${label} anulado, mas ${failed} lançamento(s) não foram estornados automaticamente. Estorne-os em Contabilidade.`
+            : `${label} anulado com sucesso.`);
+        });
+      },
+      error: (err) => {
+        this.ngZone.run(() => alert('Erro ao anular: ' + (err?.error?.message || err?.message || 'tente novamente.')));
+      }
+    });
+  }
 
   onWorkflowAction(action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST') {
 

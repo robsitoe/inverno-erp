@@ -197,6 +197,23 @@ export class InventoryService {
     // Check if article exists
     const article = await this.findOne(articleId, companyId);
 
+    // Custo: entradas com custo > 0 recalculam o PMP; saídas (e entradas sem custo,
+    // como devoluções) valorizam-se ao PMP corrente (ou ao preço de compra se ainda não houver PMP).
+    const qtyNum = Math.abs(Number(quantity));
+    const mt = String(movementType);
+    const stockNow = Number(article.currentStock) || 0;
+    const avgNow = Number((article as any).averageCost) || Number(article.purchasePrice) || 0;
+    const dtoCost = Number(createStockMovementDto.unitCost) || 0;
+    const isEntry = mt === 'IN' || mt === 'ADJUSTMENT_IN' || (mt === 'ADJUSTMENT' && Number(quantity) > 0);
+    const isExit = mt === 'OUT' || mt === 'ADJUSTMENT_OUT' || (mt === 'ADJUSTMENT' && Number(quantity) < 0);
+    if (isEntry && dtoCost > 0) {
+      const base = Math.max(stockNow, 0);
+      const newAvg = base + qtyNum > 0 ? (base * avgNow + qtyNum * dtoCost) / (base + qtyNum) : dtoCost;
+      (article as any).averageCost = Math.round(newAvg * 10000) / 10000;
+    } else if (isEntry || isExit) {
+      createStockMovementDto.unitCost = avgNow;
+      createStockMovementDto.totalCost = Math.round(avgNow * qtyNum * 100) / 100;
+    }
     // Create movement
     const movement = smRepo.create(createStockMovementDto);
     await smRepo.save(movement);

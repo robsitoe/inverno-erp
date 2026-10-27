@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+.env.*
+*.pem
+*.log
+build_log*.txt
+_legacy_react

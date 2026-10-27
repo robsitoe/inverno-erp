@@ -2501,7 +2501,7 @@ export class TrialBalanceComponent implements OnInit {
   recalculateBalances() {
 
 
-    if (!confirm('Esta operação irá:\n1. Adicionar lançamentos perdidos\n2. Reconfigurar lançamentos aos Tipos de Documentos recentes\n3. Recalcular todos os saldos do zero\n\nDeseja continuar?')) return;
+    if (!confirm('ATENÇÃO: esta operação regera TODOS os lançamentos automáticos (vendas, compras, recebimentos e pagamentos) a partir das configurações actuais e recalcula todos os saldos. Substitui lançamentos existentes.\n\nFaça uma cópia de segurança da base de dados antes de continuar.\n\nDeseja continuar?')) return;
 
 
 

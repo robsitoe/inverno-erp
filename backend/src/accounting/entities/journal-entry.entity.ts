@@ -101,4 +101,10 @@ export class JournalLine {
 
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     credit: number;
+
+    @Column({ nullable: true })
+    costCenterId: string;
+
+    @Column({ nullable: true })
+    costCenterCode: string;
 }

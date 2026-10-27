@@ -12,3 +12,13 @@ export const environment = {
     apiUrl: (window as any).__INVERNO_API_URL__ || '',
     frontendUrl: window.location.origin,
 };
+
+/**
+ * Contacto do fornecedor do Inverno ERP (mostrado no ecrã de licença, para pedir/renovar).
+ * Preencher antes de entregar a clientes. Deixar vazio esconde o botão correspondente.
+ */
+export const VENDOR_CONTACT = {
+    name: 'Inverno ERP',
+    phone: '849354296',   // ex.: '258841234567'
+    email: 'roberto.manuelsitoe@gmail.com',   // ex.: 'suporte@inverno.co.mz'
+};

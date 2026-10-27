@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, MinLength, IsBoolean, IsArray } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, MinLength, IsBoolean, IsArray, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
@@ -67,4 +67,24 @@ export class CreateUserDto {
     @IsArray()
     @IsOptional()
     permissions?: any[];
+
+    @IsString()
+    @IsOptional()
+    companyId?: string;
+
+    @IsString()
+    @IsOptional()
+    status?: string;
+
+    @IsString()
+    @IsOptional()
+    customerId?: string;
+
+    @IsString()
+    @IsOptional()
+    employeeId?: string;
+
+    @IsString()
+    @IsOptional()
+    userType?: string;
 }

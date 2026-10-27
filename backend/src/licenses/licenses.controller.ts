@@ -7,6 +7,7 @@ import {
     Req,
     Query,
     UseGuards,
+    ForbiddenException,
     HttpCode,
     HttpStatus,
     Delete,
@@ -23,6 +24,24 @@ import { BlockLicensesDto, ListLicensesQueryDto, UpdateLicensePricingDto } from 
 @Controller('licenses')
 export class LicensesController {
     constructor(private readonly licensesService: LicensesService) { }
+
+    @Get('eula')
+    async eula() { return this.licensesService.getEulaStatus(); }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('eula/accept')
+    @HttpCode(HttpStatus.OK)
+    async acceptEula(@Body() body: { signerName: string }, @Req() req: any) {
+        const name = (body?.signerName || '').trim();
+        if (name.length < 3) throw new ForbiddenException('Indique o nome completo de quem aceita.');
+        await this.licensesService.acceptEula(req.user?.username || req.user?.sub || 'desconhecido', String(req.ip || req.headers['x-forwarded-for'] || ''), name);
+        return { accepted: true };
+    }
+
+    @Get('installation-id')
+    async installationId() {
+        return { installationId: await this.licensesService.getInstallationId() };
+    }
 
     @Get('plans')
     async getPlans() {
@@ -68,9 +87,14 @@ export class LicensesController {
     }
 
     // ─── SUBSCRIBE (Auto-generation after payment) ───────────────────────────
+    // Só super-admin: emitir licença sem pagamento verificado seria oferecer licenças grátis.
+    @UseGuards(JwtAuthGuard)
     @Post('subscribe')
     @HttpCode(HttpStatus.OK)
-    async subscribe(@Body() body: { companyId: string; plan: LicensePlan }) {
+    async subscribe(@Body() body: { companyId: string; plan: LicensePlan }, @Req() req: any) {
+        if (!req.user?.isSuperAdmin) {
+            throw new ForbiddenException('Apenas o fabricante pode emitir licenças.');
+        }
         return this.licensesService.subscribe(body.companyId, body.plan);
     }
 

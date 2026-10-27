@@ -41,6 +41,10 @@ export class GenerateLicenseDto {
     contactPhone?: string;
 
     @IsOptional()
+    @IsString()
+    installationId?: string;
+
+    @IsOptional()
     @IsNumber({ maxDecimalPlaces: 2 })
     @Min(0)
     price?: number;

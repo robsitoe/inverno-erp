@@ -209,7 +209,10 @@ interface CompanyInfo {
               (click)="handleToolbarClick(item.label)"
 
 
-              class="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 whitespace-nowrap group focus:bg-gray-200 focus:outline-none"
+              [disabled]="isToolbarDisabled(item.label)"
+
+
+              class="disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 px-2 py-1 hover:bg-gray-200 border border-transparent hover:border-gray-300 rounded-sm transition-all text-gray-700 whitespace-nowrap group focus:bg-gray-200 focus:outline-none"
 
 
             >
@@ -369,16 +372,16 @@ interface CompanyInfo {
               <div class="flex items-center gap-1">
 
 
-                <label class="w-24 text-green-600 font-medium text-right text-[11px] cursor-pointer hover:underline" (click)="!isLocked && openConfigModal()">Documento:</label>
+                <label class="w-24 text-green-600 font-medium text-right text-[11px] cursor-pointer hover:underline" (click)="!isReadOnly && openConfigModal()">Documento:</label>
 
 
                 <div class="flex items-center border border-gray-300 bg-white rounded-sm h-5 w-16 relative">
 
 
-                  <input class="w-full h-full px-1 focus:outline-none text-[11px]" [(ngModel)]="currentDoc.type" readonly [disabled]="isLocked" />
+                  <input class="w-full h-full px-1 focus:outline-none text-[11px]" [(ngModel)]="currentDoc.type" readonly [disabled]="isReadOnly" />
 
 
-                  <button (click)="!isLocked && openDocTypeModal()" [disabled]="isLocked" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-green-600 text-[9px] font-bold cursor-pointer">F4</button>
+                  <button (click)="!isReadOnly && openDocTypeModal()" [disabled]="isReadOnly" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-green-600 text-[9px] font-bold cursor-pointer">F4</button>
 
 
                 </div>
@@ -390,7 +393,7 @@ interface CompanyInfo {
                 <div class="flex items-center gap-1 ml-2">
 
 
-                  <select [(ngModel)]="currentDoc.series" (change)="loadNextNumber(); validateSeriesDate()" [disabled]="isLocked" class="h-5 border border-gray-300 bg-white rounded-sm text-[11px] w-16">
+                  <select [(ngModel)]="currentDoc.series" (change)="loadNextNumber(); validateSeriesDate()" [disabled]="isReadOnly" class="h-5 border border-gray-300 bg-white rounded-sm text-[11px] w-16">
 
 
                     <option *ngFor="let s of availableSeries" [value]="s.code">{{ s.code }}</option>
@@ -411,7 +414,7 @@ interface CompanyInfo {
                   <label class="font-medium text-[11px]">Data Doc.:</label>
 
 
-                  <input type="date" [(ngModel)]="currentDoc.date" (change)="validateSeriesDate()" [disabled]="isLocked" class="h-5 border border-gray-300 px-1 w-24 rounded-sm text-[11px]" />
+                  <input type="date" [(ngModel)]="currentDoc.date" (change)="validateSeriesDate()" [disabled]="isReadOnly" class="h-5 border border-gray-300 px-1 w-24 rounded-sm text-[11px]" />
 
 
                 </div>
@@ -435,16 +438,16 @@ interface CompanyInfo {
                 <div class="flex items-center border border-gray-300 bg-white rounded-sm h-5 w-24 relative">
 
 
-                  <input class="w-full h-full px-1 focus:outline-none text-[11px]" [(ngModel)]="currentDoc.supplierCode" readonly [disabled]="isLocked" />
+                  <input class="w-full h-full px-1 focus:outline-none text-[11px]" [(ngModel)]="currentDoc.supplierCode" readonly [disabled]="isReadOnly" />
 
 
-                  <button (click)="!isLocked && openSupplierModal()" [disabled]="isLocked" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-green-600 text-[9px] font-bold cursor-pointer">F4</button>
+                  <button (click)="!isReadOnly && openSupplierModal()" [disabled]="isReadOnly" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-green-600 text-[9px] font-bold cursor-pointer">F4</button>
 
 
                 </div>
 
 
-                <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm focus:outline-none text-[11px]" [(ngModel)]="currentDoc.supplierName" readonly [disabled]="isLocked" />
+                <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm focus:outline-none text-[11px]" [(ngModel)]="currentDoc.supplierName" readonly [disabled]="isReadOnly" />
 
 
                 <div class="flex items-center gap-1 ml-2">
@@ -453,7 +456,7 @@ interface CompanyInfo {
                   <label class="font-medium text-green-600 text-[11px]">Data Venc.:</label>
 
 
-                  <input type="date" [(ngModel)]="currentDoc.dueDate" [disabled]="isLocked" class="h-5 border border-gray-300 px-1 w-24 rounded-sm text-[11px]" />
+                  <input type="date" [(ngModel)]="currentDoc.dueDate" [disabled]="isReadOnly" class="h-5 border border-gray-300 px-1 w-24 rounded-sm text-[11px]" />
 
 
                 </div>
@@ -486,13 +489,13 @@ interface CompanyInfo {
                 <label class="w-24 font-medium text-right text-[11px]">Contribuinte:</label>
 
 
-                <input class="w-32 h-5 border border-gray-300 px-1 bg-white rounded-sm text-[11px]" [(ngModel)]="currentDoc.supplierNif" readonly [disabled]="isLocked" />
+                <input class="w-32 h-5 border border-gray-300 px-1 bg-white rounded-sm text-[11px]" [(ngModel)]="currentDoc.supplierNif" readonly [disabled]="isReadOnly" />
 
 
                 <label class="ml-4 font-medium text-gray-500 text-[11px]">Referência:</label>
 
 
-                <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm text-[11px]" [(ngModel)]="currentDoc.reference" [disabled]="isLocked" />
+                <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm text-[11px]" [(ngModel)]="currentDoc.reference" [disabled]="isReadOnly" />
 
 
               </div>
@@ -555,7 +558,7 @@ interface CompanyInfo {
                   <label class="w-32 font-medium text-gray-700">Condição:</label>
 
 
-                  <select [(ngModel)]="currentDoc.paymentCondition" [disabled]="isLocked" class="flex-1 h-7 border border-gray-300 px-2 bg-white rounded text-sm">
+                  <select [(ngModel)]="currentDoc.paymentCondition" [disabled]="isReadOnly" class="flex-1 h-7 border border-gray-300 px-2 bg-white rounded text-sm">
 
 
                     <option value="PRONTO">Pronto Pagamento</option>
@@ -576,7 +579,7 @@ interface CompanyInfo {
                   <label class="w-32 font-medium text-gray-700">Prazo (dias):</label>
 
 
-                  <input type="number" [(ngModel)]="currentDoc.paymentDays" [disabled]="isLocked" class="h-7 border border-gray-300 px-2 rounded text-sm w-24" min="0" />
+                  <input type="number" [(ngModel)]="currentDoc.paymentDays" [disabled]="isReadOnly" class="h-7 border border-gray-300 px-2 rounded text-sm w-24" min="0" />
 
 
                 </div>
@@ -588,7 +591,7 @@ interface CompanyInfo {
                   <label class="w-32 font-medium text-gray-700">Moeda:</label>
 
 
-                  <select [(ngModel)]="currentDoc.currency" [disabled]="isLocked" class="flex-1 h-7 border border-gray-300 px-2 bg-white rounded text-sm">
+                  <select [(ngModel)]="currentDoc.currency" [disabled]="isReadOnly" class="flex-1 h-7 border border-gray-300 px-2 bg-white rounded text-sm">
 
 
                     <option value="MZN">MZN - Metical</option>
@@ -845,7 +848,7 @@ interface CompanyInfo {
             <tbody>
 
 
-              <tr *ngFor="let line of currentDoc.lines; let i = index" (contextmenu)="onContextMenu($event, i)" class="border-b border-gray-200 hover:bg-blue-50 h-6 group">
+              <tr *ngFor="let line of currentDoc.lines; let i = index; trackBy: trackByIndex" (contextmenu)="onContextMenu($event, i)" class="border-b border-gray-200 hover:bg-blue-50 h-6 group">
 
 
                 <td class="border-r border-b border-l border-gray-200 h-6 p-0 relative overflow-hidden">
@@ -860,13 +863,13 @@ interface CompanyInfo {
                       (keydown)="onArticleKeydown(i, $event)"
 
 
-                      (dblclick)="!isLocked && openArticleSearch(i)" 
+                      (dblclick)="!isReadOnly && openArticleSearch(i)" 
 
 
                       (change)="onArticleCodeChange(i, line.articleCode)" 
 
 
-                      [disabled]="isLocked" 
+                      [disabled]="isReadOnly" 
 
 
                       class="flex-1 w-0 h-full px-1 border-none bg-transparent focus:outline-none text-[11px]" />
@@ -905,10 +908,10 @@ interface CompanyInfo {
                       (keydown)="onWarehouseKeydown(i, $event)"
 
 
-                      [disabled]="isLocked" />
+                      [disabled]="isReadOnly" />
 
 
-                    <button *ngIf="!isLocked && line.articleCode" (click)="openWarehouseSearch(i)" 
+                    <button *ngIf="!isReadOnly && line.articleCode" (click)="openWarehouseSearch(i)" 
 
 
                       class="w-4 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-blue-600 opacity-0 group-hover/cell:opacity-100 transition-all">
@@ -941,10 +944,10 @@ interface CompanyInfo {
                       (keydown)="onLocationKeydown(i, $event)"
 
 
-                      [disabled]="isLocked" />
+                      [disabled]="isReadOnly" />
 
 
-                    <button *ngIf="!isLocked && line.articleCode" (click)="openLocationSearch(i)" 
+                    <button *ngIf="!isReadOnly && line.articleCode" (click)="openLocationSearch(i)" 
 
 
                       class="w-4 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-blue-600 opacity-0 group-hover/cell:opacity-100 transition-all">
@@ -977,10 +980,10 @@ interface CompanyInfo {
                       (keydown)="onBatchKeydown(i, $event)"
 
 
-                      [disabled]="isLocked" />
+                      [disabled]="isReadOnly" />
 
 
-                    <button *ngIf="!isLocked && line.articleCode" (click)="openBatchSearch(i)" 
+                    <button *ngIf="!isReadOnly && line.articleCode" (click)="openBatchSearch(i)" 
 
 
                       class="w-4 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-blue-600 opacity-0 group-hover/cell:opacity-100 transition-all">
@@ -998,7 +1001,7 @@ interface CompanyInfo {
                 </td>
 
 
-                <td class="border-r border-b border-gray-200 p-0"><input class="w-full h-full border-none px-1 bg-transparent focus:bg-blue-50" [(ngModel)]="line.description" [disabled]="isLocked" /></td>
+                <td class="border-r border-b border-gray-200 p-0"><input class="w-full h-full border-none px-1 bg-transparent focus:bg-blue-50" [(ngModel)]="line.description" [disabled]="isReadOnly" /></td>
 
 
                 <td class="border-r border-b border-gray-200 p-0 text-center overflow-hidden">
@@ -1016,10 +1019,10 @@ interface CompanyInfo {
                       (keydown)="onTaxKeydown(i, $event)"
 
 
-                      [disabled]="isLocked" />
+                      [disabled]="isReadOnly" />
 
 
-                    <button *ngIf="!isLocked && line.articleCode" (click)="openTaxSearch(i)" 
+                    <button *ngIf="!isReadOnly && line.articleCode" (click)="openTaxSearch(i)" 
 
 
                       class="w-4 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-blue-600 opacity-0 group-hover/cell:opacity-100 transition-all">
@@ -1040,25 +1043,25 @@ interface CompanyInfo {
                 <td class="border-r border-b border-gray-200 p-0 text-center text-gray-500">{{ line.articleCode ? line.taxRate + '%' : '' }}</td>
 
 
-                <td class="border-r border-b border-gray-200 p-0 text-right"><input *ngIf="line.articleCode" type="number" class="w-full h-full border-none px-1 text-right bg-transparent focus:bg-blue-50" [(ngModel)]="line.unitPrice" (change)="calculateLine(i)" [disabled]="isLocked" /></td>
+                <td class="border-r border-b border-gray-200 p-0 text-right"><input *ngIf="line.articleCode" type="number" class="w-full h-full border-none px-1 text-right bg-transparent focus:bg-blue-50" [ngModel]="line.unitPrice" (ngModelChange)="line.unitPrice = $event; calculateLine(i)" [disabled]="isReadOnly" /></td>
 
 
-                <td class="border-r border-b border-gray-200 p-0 text-right"><input *ngIf="line.articleCode" type="number" class="w-full h-full border-none px-1 text-right bg-transparent focus:bg-blue-50" [(ngModel)]="line.discount" (change)="calculateLine(i)" [disabled]="isLocked" /></td>
+                <td class="border-r border-b border-gray-200 p-0 text-right"><input *ngIf="line.articleCode" type="number" class="w-full h-full border-none px-1 text-right bg-transparent focus:bg-blue-50" [ngModel]="line.discount" (ngModelChange)="line.discount = $event; calculateLine(i)" [disabled]="isReadOnly" /></td>
 
 
                 <td class="border-r border-b border-gray-200 p-0 text-center text-gray-500">{{ line.articleCode ? line.unit : '' }}</td>
 
 
-                <td class="border-r border-b border-gray-200 p-0 text-right font-medium"><input *ngIf="line.articleCode" type="number" class="w-full h-full border-none px-1 text-right bg-transparent focus:bg-blue-50 text-blue-700" [(ngModel)]="line.quantity" (change)="calculateLine(i)" [disabled]="isLocked" /></td>
+                <td class="border-r border-b border-gray-200 p-0 text-right font-medium"><input *ngIf="line.articleCode" type="number" class="w-full h-full border-none px-1 text-right bg-transparent focus:bg-blue-50 text-blue-700" [ngModel]="line.quantity" (ngModelChange)="line.quantity = $event; calculateLine(i)" [disabled]="isReadOnly" /></td>
 
 
                 <td class="border-r border-b border-gray-200 p-0 text-right text-gray-600 bg-[#F9F9F9]">{{ line.articleCode ? (line.totalLiquid | number:'1.2-2') : '' }}</td>
 
 
-                <td class="border-r border-b border-gray-200 p-0"><input class="w-full h-full border-none px-1 bg-transparent focus:bg-blue-50" [(ngModel)]="line.costCenter" [disabled]="isLocked" /></td>
+                <td class="border-r border-b border-gray-200 p-0"><input class="w-full h-full border-none px-1 bg-transparent focus:bg-blue-50" [(ngModel)]="line.costCenter" [disabled]="isReadOnly" /></td>
 
 
-                <td class="border-r border-b border-gray-200 p-0"><input class="w-full h-full border-none px-1 bg-transparent focus:bg-blue-50" [(ngModel)]="line.project" [disabled]="isLocked" /></td>
+                <td class="border-r border-b border-gray-200 p-0"><input class="w-full h-full border-none px-1 bg-transparent focus:bg-blue-50" [(ngModel)]="line.project" [disabled]="isReadOnly" /></td>
 
 
                 <td class="border-r border-b border-gray-200 p-0 text-right font-bold text-gray-700 bg-[#F5F5F5]">{{ line.articleCode ? (line.totalValue | number:'1.2-2') : '' }}</td>
@@ -1709,6 +1712,46 @@ export class PurchaseDocumentFormComponent implements OnDestroy {
 
 
 
+
+  get isReadOnly(): boolean {
+    return this.isLocked || this.currentDoc?.status === WorkflowStatus.REJECTED;
+  }
+
+  trackByIndex(index: number): number { return index; }
+
+  isToolbarDisabled(label: string): boolean {
+    const saved = !!this.currentDoc?.id;
+    const voided = this.currentDoc?.status === WorkflowStatus.REJECTED;
+    switch (label) {
+      case 'Gravar': return this.isLocked || voided;
+      case 'Anular': return !saved || voided;
+      case 'Anular e Duplicar': return !saved || voided || this.isLocked;
+      case 'Duplicar': return !saved;
+      default: return false;
+    }
+  }
+
+  private proposeCreditNote(): void {
+    const ncc = (this.purchaseDocTypes || []).find((t: any) => t.code === 'NCC');
+    const label = `${this.currentDoc.type} ${this.currentDoc.series}/${this.currentDoc.number}`;
+    if (!ncc) {
+      alert(`O documento ${label} já foi emitido e não pode ser anulado directamente.\nCrie o tipo de documento "NCC – Nota de Crédito (Compra)" para o corrigir por nota de crédito.`);
+      return;
+    }
+    if (!confirm(`O documento ${label} já foi emitido e não pode ser anulado directamente.\n\nDeseja emitir uma Nota de Crédito (NCC) para o anular?`)) return;
+    const copy = JSON.parse(JSON.stringify(this.currentDoc));
+    copy.id = '';
+    copy.status = WorkflowStatus.DRAFT;
+    copy.type = 'NCC';
+    copy.series = '';
+    copy.date = new Date().toISOString().split('T')[0];
+    copy.dueDate = copy.date;
+    copy.notes = `Anulação do documento ${label}`;
+    this.currentDoc = copy;
+    this.loadSeries();
+    this.loadNextNumber();
+    alert('Nota de Crédito preparada. Verifique os dados e grave.');
+  }
 
   get isLocked(): boolean {
 
@@ -3281,7 +3324,9 @@ export class PurchaseDocumentFormComponent implements OnDestroy {
   voidDocument() {
 
 
-    if (this.currentDoc.status === WorkflowStatus.REJECTED) return;
+    
+    if (this.isLocked) { this.proposeCreditNote(); return; }
+if (this.currentDoc.status === WorkflowStatus.REJECTED) return;
 
 
     if (!this.currentDoc.id) {

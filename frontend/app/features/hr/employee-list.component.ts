@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
 
@@ -800,8 +800,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
   constructor(
     private hrService: HRService,
     private dataService: DataService,
-    private toaster: ToasterService,
-    private cdr: ChangeDetectorRef
+    private toaster: ToasterService
   ) { }
 
   ngOnInit() {
@@ -836,7 +835,6 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
         })
       ).subscribe(result => {
         this.codeStatus = result.available ? 'available' : 'taken';
-        this.cdr.detectChanges();
       })
     );
   }
@@ -859,7 +857,6 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
           this.nibStatus = 'taken';
           this.nibConflictName = result.usedBy || 'Outro funcionário';
         }
-        this.cdr.detectChanges();
       })
     );
   }
@@ -873,7 +870,6 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
         next: (data) => {
           this.employees = data;
           this.filterEmployees();
-          this.cdr.detectChanges();
         },
         error: (err) => this.toaster.showError('Erro ao carregar', err.message)
       })
@@ -902,7 +898,6 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
     this.codeStatus = 'idle';
     this.nibStatus = 'idle';
     this.nibConflictName = '';
-    this.cdr.detectChanges();
   }
 
   setTab(tab: any) {
@@ -920,7 +915,6 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
     this.hrService.getSalaryHistory(this.selectedEmployee.id, cid)
       .subscribe(h => {
         this.salaryHistory = h;
-        this.cdr.detectChanges();
       });
   }
 
@@ -969,13 +963,15 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
       this.hrService.saveEmployee(payload as any, cid).subscribe({
         next: (saved) => {
           this.toaster.showSuccess('Sucesso', 'Funcionário gravado com sucesso.');
-          this.isSaving = false;
-          this.changeReason = '';
-          this.refresh();
-          this.selectEmployee(saved);
+          setTimeout(() => {
+            this.isSaving = false;
+            this.changeReason = '';
+            this.refresh();
+            this.selectEmployee(saved);
+          });
         },
         error: (err) => {
-          this.isSaving = false;
+          setTimeout(() => { this.isSaving = false; });
           this.toaster.showError('Erro ao gravar', err.error?.message || err.message);
         }
       })
@@ -1036,7 +1032,6 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
           this.toaster.showSuccess('Sucesso', 'Foto actualizada com sucesso.');
           this.selectedEmployee!.photoUrl = emp.photoUrl;
           this.updateEmployeeInList(emp);
-          this.cdr.detectChanges();
         },
         error: (e) => this.toaster.showError('Erro no upload', e?.error?.message || e.message)
       })
@@ -1067,7 +1062,6 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
           this.selectedEmployee!.documents = emp.documents;
           this.updateEmployeeInList(emp);
           this.currentUploadType = 'OUTRO';
-          this.cdr.detectChanges();
         },
         error: (e) => {
           this.toaster.showError('Erro no upload', e?.error?.message || e.message);
@@ -1086,7 +1080,6 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
           this.toaster.showSuccess('Eliminado', 'O anexo foi removido.');
           this.selectedEmployee!.documents = emp.documents;
           this.updateEmployeeInList(emp);
-          this.cdr.detectChanges();
         },
         error: (e) => this.toaster.showError('Erro ao eliminar', e?.error?.message || e.message)
       })

@@ -53,6 +53,11 @@ export class CreateSalesDocumentLineDto {
     @IsString()
     @IsOptional()
     ivaCode?: string;
+
+    @ApiProperty({ example: 'Entregar até sexta', description: 'Line notes', required: false })
+    @IsString()
+    @IsOptional()
+    notes?: string;
     @ApiProperty({ example: 100.00, description: 'Subtotal' })
     @IsNumber()
     @IsOptional()
