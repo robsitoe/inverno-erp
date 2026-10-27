@@ -13,25 +13,29 @@ export class UsersController {
   @Post()
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermission('admin.users')
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto) {
+    return UsersService.toPublic(await this.usersService.create(createUserDto));
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('admin.users')
+  async findAll() {
+    return (await this.usersService.findAll()).map(u => UsersService.toPublic(u));
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('admin.users')
+  async findOne(@Param('id') id: string) {
+    return UsersService.toPublic(await this.usersService.findOne(id));
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermission('admin.users')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return UsersService.toPublic(await this.usersService.update(id, updateUserDto));
   }
 
   @Delete(':id')

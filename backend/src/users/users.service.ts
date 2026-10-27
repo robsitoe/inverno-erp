@@ -66,6 +66,13 @@ export class UsersService implements OnModuleInit {
     return this.userRepository.find();
   }
 
+  /** Remove o hash da palavra-passe antes de devolver o utilizador numa resposta HTTP. */
+  static toPublic<T extends { password?: string } | null | undefined>(user: T): Omit<NonNullable<T>, 'password'> {
+    if (!user) return user as any;
+    const { password, ...safe } = user as any;
+    return safe;
+  }
+
   async findOne(id: string) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) {

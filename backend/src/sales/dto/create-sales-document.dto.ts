@@ -1,4 +1,4 @@
-import { IsArray, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import { IsArray, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { SalesDocumentType } from '../entities/sales-document.entity';
@@ -22,11 +22,13 @@ export class CreateSalesDocumentLineDto {
 
     @ApiProperty({ example: 1, description: 'Quantity' })
     @IsNumber()
+    @Min(0, { message: 'A quantidade não pode ser negativa.' })
     @IsNotEmpty()
     quantity: number;
 
     @ApiProperty({ example: 100.00, description: 'Unit Price' })
     @IsNumber()
+    @Min(0, { message: 'O preço unitário não pode ser negativo.' })
     @IsNotEmpty()
     unitPrice: number;
 
@@ -37,6 +39,8 @@ export class CreateSalesDocumentLineDto {
 
     @ApiProperty({ example: 0, description: 'Discount percentage' })
     @IsNumber()
+    @Min(0, { message: 'O desconto não pode ser negativo.' })
+    @Max(100, { message: 'O desconto não pode exceder 100%.' })
     @IsOptional()
     discount?: number;
 

@@ -50,6 +50,6 @@ export class AuthController {
     async getProfile(@Request() req) {
         const user = await this.usersService.findOne(req.user.userId || req.user.sub);
         console.log(`[AuthController] Profile requested for ${user.username}. Status: ${user.status}`);
-        return user;
+        return UsersService.toPublic(user);
     }
 }

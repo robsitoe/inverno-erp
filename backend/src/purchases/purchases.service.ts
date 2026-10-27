@@ -149,9 +149,7 @@ export class PurchasesService {
     const repo = await this.getPurchaseRepo();
     const document = await this.findOne(id);
 
-    if (user) {
-      this.workflowService.checkEditLock(document.status as any, user);
-    }
+    this.workflowService.checkDeleteLock(document.status as any);
 
     return repo.remove(document);
   }

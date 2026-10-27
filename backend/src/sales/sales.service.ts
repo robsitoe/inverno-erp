@@ -187,9 +187,7 @@ export class SalesService {
     const sdRepo = await this.getSalesDocRepo();
     const document = await this.findOne(id);
 
-    if (user) {
-      this.workflowService.checkEditLock(document.status, user);
-    }
+    this.workflowService.checkDeleteLock(document.status);
 
     return sdRepo.remove(document);
   }

@@ -182,4 +182,14 @@ export class WorkflowService {
             }
         }
     }
+
+    /**
+     * Documentos aprovados/contabilizados já movimentaram stock, contas-correntes e numeração fiscal:
+     * nunca podem ser apagados (nem por super admin). A correcção faz-se por anulação ou nota de crédito.
+     */
+    checkDeleteLock(status: WorkflowStatus) {
+        if (status === WorkflowStatus.APPROVED || status === WorkflowStatus.POSTED) {
+            throw new BadRequestException(`Documento ${status === WorkflowStatus.POSTED ? 'contabilizado' : 'aprovado'} não pode ser apagado. Utilize a anulação ou uma nota de crédito.`);
+        }
+    }
 }

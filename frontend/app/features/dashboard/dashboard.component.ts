@@ -228,12 +228,6 @@ export class DashboardComponent implements OnInit {
   }
 
   getLicenseLabel(): string {
-    // Check if chart of accounts is loaded
-    this.dataService.getAccounts().subscribe({
-      next: (accs: any[]) => { this.hasChartOfAccounts = (accs && accs.length > 0); },
-      error: () => { this.hasChartOfAccounts = true; } // Assume OK on error
-    });
-
     const lic = this.licenseService.current;
     if (!lic) return 'A verificar...';
     if (lic.status === 'ACTIVE') return `Licença Activa — ${lic.plan || 'Standard'}`;
