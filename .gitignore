@@ -58,3 +58,12 @@ tools/licenca/PRIVADA*
 # Pacotes de entrega ao cliente
 entrega/
 INSTALACAO-CONCLUIDA.txt
+
+# Backups automáticos (dados da empresa) e ficheiros temporários/diagnóstico locais
+backend/backups/
+*.bak
+*.tmp
+tmp_*.tgz
+correcao.sql
+diagnostico*.sql
+diagnostico*_resultado.txt
