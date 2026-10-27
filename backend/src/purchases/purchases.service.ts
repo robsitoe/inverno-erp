@@ -40,21 +40,40 @@ export class PurchasesService {
     const { lines, ...documentData } = createPurchaseDto;
     const repo = await this.getPurchaseRepo();
 
+    // Totais calculados a partir das linhas (mesma fórmula do formulário de compras),
+    // para não depender dos totais enviados pelo cliente.
+    let merchandiseTotal = 0;
+    let discountValue = 0;
+    let taxTotal = 0;
+    const documentLines = lines.map(line => {
+      const quantity = Number(line.quantity);
+      const unitPrice = Number(line.unitPrice);
+      const taxRate = Number(line.ivaRate || 0);
+      const gross = quantity * unitPrice;
+      const discount = gross * (Number(line.discount || 0) / 100);
+      const liquid = gross - discount;
+      const tax = liquid * (taxRate / 100);
+      merchandiseTotal += gross;
+      discountValue += discount;
+      taxTotal += tax;
+      return {
+        ...line,
+        totalLiquid: liquid,
+        totalValue: liquid + tax,
+        taxRate,
+        taxCode: line.ivaCode || 'IVA'
+      };
+    });
+
     const entityData: any = {
       ...documentData,
       type: documentData.documentType,
       number: documentData.seriesNumber,
-      merchandiseTotal: documentData.subtotal || 0,
-      discountValue: documentData.discounts || 0,
-      taxTotal: documentData.totalIva || 0,
-      totalValue: documentData.total || 0,
-      lines: lines.map(line => ({
-        ...line,
-        totalLiquid: line.subtotal || (line.quantity * line.unitPrice),
-        totalValue: line.total || (line.quantity * line.unitPrice * (1 + (line.ivaRate || 0) / 100)),
-        taxRate: line.ivaRate || 0,
-        taxCode: line.ivaCode || 'IVA'
-      }))
+      merchandiseTotal,
+      discountValue,
+      taxTotal,
+      totalValue: merchandiseTotal - discountValue + taxTotal,
+      lines: documentLines
     };
 
     // Remove DTO redundant fields

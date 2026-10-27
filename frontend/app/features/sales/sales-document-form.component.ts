@@ -338,7 +338,7 @@ interface GridRow {
 
               <div class="flex items-center border border-gray-300 bg-white rounded-sm h-5 w-24 relative">
 
-                 <input class="w-full h-full px-1 focus:outline-none text-[11px] disabled:bg-gray-100" [value]="selectedEntityCode" [disabled]="isLocked" (keydown)="onEntityKeydown($event)" />
+                 <input class="w-full h-full px-1 focus:outline-none text-[11px] disabled:bg-gray-100" [value]="selectedEntityCode" [disabled]="isLocked" (keydown)="onEntityKeydown($event)" (change)="onEntityCodeChange($any($event.target))" />
 
                  <button (click)="!isLocked && openEntityModal()" [disabled]="isLocked" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50">F4</button>
 
@@ -683,7 +683,7 @@ interface GridRow {
 
 
 
-       <table class="w-full border-collapse table-fixed">
+       <table class="min-w-full w-max border-collapse table-fixed">
 
           <thead class="bg-gray-50 sticky top-0 z-10 shadow-sm text-[10px] uppercase">
 
@@ -697,7 +697,7 @@ interface GridRow {
 
               <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[80px]">Lote</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap min-w-[300px]">Descrição</th>
+              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[300px]">Descrição</th>
 
               <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[50px]">CIVA</th>
 
@@ -1463,6 +1463,12 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
         const docType = types.find((t: any) => t.code === (this.selectedDocType || this.defaultDocValue));
 
+        // O tipo por omissão (FA) só aparecia no campo; sem isto o documento era gravado sem tipo
+        if (docType && !this.selectedDocType) {
+          this.selectedDocType = docType.code;
+          this.selectedDocDescription = docType.description;
+        }
+
 
 
         if (docType && docType.series && docType.series.length > 0) {
@@ -1873,6 +1879,26 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
     this.showEntityModal = true;
 
+  }
+
+  // Código escrito à mão no campo Entidade: resolve o cliente como o F4 faria
+  onEntityCodeChange(input: HTMLInputElement) {
+    const code = (input.value || '').trim();
+    if (!code || code === this.selectedEntityCode) return;
+    this.dataService.getCustomers().subscribe({
+      next: (customers: any[]) => {
+        this.ngZone.run(() => {
+          const found = (customers || []).find((c: any) => String(c.code || '').toLowerCase() === code.toLowerCase());
+          if (found) {
+            this.onEntitySelect(found);
+          } else {
+            this.toaster.showWarning('Entidade Inválida', `O cliente '${code}' não foi encontrado.`);
+            input.value = this.selectedEntityCode || '';
+          }
+        });
+      },
+      error: () => {}
+    });
   }
 
 
@@ -3059,6 +3085,9 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
     this.documentNotes = (doc as any).notes || '';
 
+    if ((doc as any).paymentCondition) this.paymentCondition = (doc as any).paymentCondition;
+    if ((doc as any).treasuryAccountId) this.selectedTreasuryAccountId = (doc as any).treasuryAccountId;
+
     this.currentId = doc.id;
 
     this.loadWorkflowHistory();
@@ -3298,6 +3327,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
       notes: this.documentNotes || '',
       currency: this.currentCurrency,
       paymentCondition: this.paymentCondition,
+      treasuryAccountId: this.paymentCondition === 'PRONTO' ? this.selectedTreasuryAccountId || undefined : undefined,
       clientDiscount: this.clientDiscount,
       financialDiscount: this.financialDiscount,
       exchangeRate: this.exchangeRate,
@@ -3679,6 +3709,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
       notes: this.documentNotes || '',
       currency: this.currentCurrency,
       paymentCondition: this.paymentCondition,
+      treasuryAccountId: this.paymentCondition === 'PRONTO' ? this.selectedTreasuryAccountId || undefined : undefined,
       clientDiscount: this.clientDiscount,
       financialDiscount: this.financialDiscount,
       exchangeRate: this.exchangeRate,

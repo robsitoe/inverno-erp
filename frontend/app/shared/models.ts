@@ -400,6 +400,7 @@ export interface SalesDocument {
     notes: string;
     currency?: string;
     paymentCondition?: string;
+    treasuryAccountId?: string;
     clientDiscount?: number;
     financialDiscount?: number;
     exchangeRate?: number;

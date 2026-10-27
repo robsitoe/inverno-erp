@@ -97,6 +97,13 @@ export class SalesDocument {
   @Column({ nullable: true })
   notes: string;
 
+  /** PRONTO ou PRAZO. A pronto com conta de tesouraria, o documento nasce liquidado. */
+  @Column({ nullable: true })
+  paymentCondition: string;
+
+  @Column({ nullable: true })
+  treasuryAccountId: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
