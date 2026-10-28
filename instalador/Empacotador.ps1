@@ -196,10 +196,31 @@ function Get-Diagnostico($txt) {
   return @{ auto = $false; msg = "A geração falhou por uma razão não reconhecida.`n`nO que fazer: clique em 'Copiar registo' e envie-o para análise. Pode também tentar 'Limpar cache Docker' e gerar de novo." }
 }
 
+# Termina o processo e todos os filhos (powershell, docker compose, buildx).
+# Process.Kill() so termina o cmd.exe e deixava a compilacao a correr escondida.
+function Stop-Tree($procId) {
+  try { & taskkill.exe /PID $procId /T /F 2>&1 | Out-Null } catch {}
+}
+
+# Geracoes interrompidas (janela fechada, programa terminado) que ainda estejam a correr
+function Stop-Leftovers {
+  try {
+    Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction Stop |
+      Where-Object { $_.CommandLine -match 'empacotar\.ps1' -and $_.ProcessId -ne $PID } |
+      ForEach-Object {
+        Log "[!] A terminar uma geração anterior que ainda estava a correr (PID $($_.ProcessId))..." ([System.Drawing.Color]::FromArgb(255, 200, 100))
+        Stop-Tree $_.ProcessId
+      }
+  } catch {}
+}
+
 function Start-Build {
   $v = $script:ultimaVersao
+  Stop-Leftovers
+  # Registo novo em cada geracao: nunca se mostra o registo de uma geracao antiga
+  try { Get-ChildItem $env:TEMP -Filter 'inverno-empacotador*.log' | Remove-Item -Force -ErrorAction SilentlyContinue } catch {}
+  $script:logFile = Join-Path $env:TEMP ("inverno-empacotador-{0:yyyyMMdd-HHmmss}.log" -f (Get-Date))
   $script:logPos = 0; $script:partial = ''
-  try { if (Test-Path $script:logFile) { Remove-Item $script:logFile -Force } } catch {}
   $psi = New-Object System.Diagnostics.ProcessStartInfo
   $psi.FileName = 'cmd.exe'
   $psi.Arguments = "/c chcp 65001 >nul & powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$script`" -Versao $v$($script:desktopArg) > `"$($script:logFile)`" 2>&1"
@@ -301,7 +322,7 @@ $f.Add_FormClosing({
   param($s, $e)
   if ($script:proc -and -not $script:proc.HasExited) {
     $r = [System.Windows.Forms.MessageBox]::Show('A geração está a decorrer. Fechar interrompe-a. Fechar mesmo?', 'Inverno ERP', 'YesNo', 'Warning')
-    if ($r -ne 'Yes') { $e.Cancel = $true } else { try { $script:proc.Kill() } catch {} }
+    if ($r -ne 'Yes') { $e.Cancel = $true } else { $timer.Stop(); Stop-Tree $script:proc.Id }
   }
 })
 
