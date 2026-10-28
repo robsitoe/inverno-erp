@@ -44,7 +44,7 @@ if ($leak) { Say '[X] Ficheiros sensiveis dentro de backend/frontend (nao vao pa
 
 $env:INVERNO_VERSION = $Versao
 Say "A compilar imagens (versao $Versao)..." 'Cyan'
-docker compose -f docker-compose.prod.yml build --no-cache
+docker compose -f docker-compose.prod.yml build
 if ($LASTEXITCODE -ne 0) { Say '[X] Falha na compilacao.' 'Red'; exit 1 }
 
 $dest = Join-Path $root "entrega\Inverno-ERP-$Versao"
