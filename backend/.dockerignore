@@ -7,3 +7,4 @@ backups
 uploads
 *.log
 *.tgz
+tmp
