@@ -238,25 +238,7 @@ export class StockAccountingService {
         }
       }
 
-      const moves = await ds.query(`SELECT "movementType", quantity, "totalCost" FROM stock_movements WHERE "sourceDocument"=$1`, [p.sourceDocument]);
-      if (!moves.length) return null;
-      const isIn = (m: any) => m.movementType === 'IN' || (m.movementType === 'ADJUSTMENT' && Number(m.quantity) > 0);
-      const valueIn = round2(moves.filter(isIn).reduce((a: number, m: any) => a + Math.abs(Number(m.totalCost) || 0), 0));
-      const valueOut = round2(moves.filter((m: any) => !isIn(m) && m.movementType !== 'TRANSFER').reduce((a: number, m: any) => a + Math.abs(Number(m.totalCost) || 0), 0));
-      const valueAll = round2(moves.reduce((a: number, m: any) => a + Math.abs(Number(m.totalCost) || 0), 0));
-
-      const type = String(p.docType || '').toUpperCase();
-      const parts: { rule: PostingRule; value: number }[] = [];
-      const ruleFor = (dt: string) => settings.rules.find(r => r.module === p.module && r.docType === dt);
-      if (p.module === 'STOCK' && type === 'INV') {
-        const plus = ruleFor('INV'), minus = ruleFor('INV-');
-        if (plus && valueIn > 0) parts.push({ rule: plus, value: valueIn });
-        if (minus && valueOut > 0) parts.push({ rule: minus, value: valueOut });
-      } else {
-        const r = ruleFor(type);
-        if (r) parts.push({ rule: r, value: valueAll });
-      }
-      const active = parts.filter(x => x.rule.enabled && x.value > 0 && x.rule.debitAccount !== x.rule.creditAccount);
+      const active = (await this.computeParts(ds, settings, p.module, p.docType, p.sourceDocument)).filter(x => x.value > 0);
       if (!active.length) return null;
 
       const real = (code: string) => (code === INV ? settings.inventoryAccount : code);
@@ -283,6 +265,136 @@ export class StockAccountingService {
       this.logger.error(`Lançamento de stock falhou para ${p.reference}: ${e?.message || e}`);
       return null;
     }
+  }
+
+  /** Partes do lançamento de um documento: regra a aplicar e valor (custo dos seus movimentos). */
+  private async computeParts(ds: DataSource, settings: StockAccountingSettings, module: StockModule, docType: string, sourceDocument: string) {
+    const moves = await ds.query(`SELECT "movementType", quantity, "totalCost" FROM stock_movements WHERE "sourceDocument"=$1`, [sourceDocument]);
+    if (!moves.length) return [];
+    const isIn = (m: any) => m.movementType === 'IN' || (m.movementType === 'ADJUSTMENT' && Number(m.quantity) > 0);
+    const sum = (list: any[]) => round2(list.reduce((a: number, m: any) => a + Math.abs(Number(m.totalCost) || 0), 0));
+    const valueIn = sum(moves.filter(isIn));
+    const valueOut = sum(moves.filter((m: any) => !isIn(m) && m.movementType !== 'TRANSFER'));
+    const type = String(docType || '').toUpperCase();
+    const ruleFor = (dt: string) => settings.rules.find(r => r.module === module && r.docType === dt);
+    const parts: { rule: PostingRule; value: number }[] = [];
+    if (module === 'STOCK' && type === 'INV') {
+      const plus = ruleFor('INV'), minus = ruleFor('INV-');
+      if (plus) parts.push({ rule: plus, value: valueIn });
+      if (minus) parts.push({ rule: minus, value: valueOut });
+    } else {
+      const r = ruleFor(type);
+      if (r) parts.push({ rule: r, value: sum(moves) });
+    }
+    return parts.filter(x => x.rule.enabled && x.rule.debitAccount !== x.rule.creditAccount);
+  }
+
+  /**
+   * Recalcula o custo de todos os movimentos com o método escolhido (por ordem cronológica, artigo a artigo):
+   * as entradas mantêm o seu custo (as entradas sem custo e todas as saídas são revalorizadas), o custo médio
+   * e os lotes FIFO são reconstruídos. Os lançamentos já feitos não são alterados: a diferença de cada documento
+   * é lançada como ajuste com a data de hoje (rasto de auditoria).
+   */
+  async revalue(companyId: string, user: string | null) {
+    const settings = await this.getSettings(companyId);
+    const ds = await this.tenancy.getTenantDataSource(companyId);
+    const fifo = settings.valuation === 'FIFO';
+    const moves = await ds.query(`SELECT id, "articleId", "movementType", quantity, "unitCost", "totalCost", "sourceDocument"
+      FROM stock_movements ORDER BY date, "createdAt", id`);
+    const byArticle = new Map<string, any[]>();
+    for (const m of moves) { if (!byArticle.has(m.articleId)) byArticle.set(m.articleId, []); byArticle.get(m.articleId)!.push(m); }
+
+    let changedMoves = 0;
+    const touchedSources = new Set<string>();
+    await ensureLayerTable(ds);
+    await ds.query(`DELETE FROM stock_cost_layers`);
+    for (const [articleId, list] of byArticle) {
+      let qty = 0, avg = 0;
+      let layers: { qty: number; cost: number }[] = [];
+      for (const m of list) {
+        const q = Math.abs(Number(m.quantity) || 0);
+        const t = String(m.movementType);
+        const isIn = t === 'IN' || (t === 'ADJUSTMENT' && Number(m.quantity) > 0);
+        const isOut = t === 'OUT' || (t === 'ADJUSTMENT' && Number(m.quantity) < 0);
+        let unit = Number(m.unitCost) || 0;
+        if (isIn) {
+          if (unit <= 0) unit = avg; // entrada sem custo (ex.: devolução): ao custo corrente
+          const base = Math.max(qty, 0);
+          avg = base + q > 0 ? (base * avg + q * unit) / (base + q) : unit;
+          qty += q;
+          layers.push({ qty: q, cost: unit });
+        } else if (isOut) {
+          if (fifo) {
+            let left = q, cost = 0;
+            for (const l of layers) {
+              if (left <= 0) break;
+              const take = Math.min(left, l.qty); cost += take * l.cost; l.qty -= take; left -= take;
+            }
+            layers = layers.filter(l => l.qty > 0.00001);
+            if (left > 0) cost += left * avg;
+            unit = q > 0 ? cost / q : 0;
+          } else {
+            unit = avg;
+            // mantém os lotes coerentes com a quantidade, para uma futura passagem a FIFO
+            let left = q;
+            for (const l of layers) { if (left <= 0) break; const take = Math.min(left, l.qty); l.qty -= take; left -= take; }
+            layers = layers.filter(l => l.qty > 0.00001);
+          }
+          qty -= q;
+        } else continue;
+        const total = round2(unit * q);
+        // o custo unitário é guardado com 2 casas: compara-se com essa precisão (recalcular de novo não muda nada)
+        if (Math.abs(total - Number(m.totalCost || 0)) >= 0.01 || Math.abs(round2(unit) - Number(m.unitCost || 0)) >= 0.01) {
+          await ds.query(`UPDATE stock_movements SET "unitCost"=$1, "totalCost"=$2 WHERE id=$3`, [round2(unit), total, m.id]);
+          changedMoves++;
+          if (m.sourceDocument) touchedSources.add(String(m.sourceDocument));
+        }
+      }
+      await ds.query(`UPDATE articles SET "averageCost"=$1 WHERE id::text=$2`, [Math.round(avg * 10000) / 10000, articleId]);
+      if (fifo) {
+        for (const l of layers) {
+          await ds.query(`INSERT INTO stock_cost_layers ("articleId","movementId",date,"qtyRemaining","unitCost") VALUES ($1,'RECALCULO',CURRENT_DATE,$2,$3)`, [articleId, l.qty, l.cost]);
+        }
+      }
+    }
+
+    // Ajustes contabilísticos pela diferença entre o novo custo e o já lançado
+    let adjustments = 0;
+    if (settings.enabled) {
+      const real = (code: string) => (code === INV ? settings.inventoryAccount : code);
+      const today = new Date().toISOString().slice(0, 10);
+      for (const src of touchedSources) {
+        if (src.endsWith(':VOID')) continue;
+        const found = await this.findSource(ds, src);
+        if (!found) continue;
+        const posted = await ds.query(`SELECT l."accountCode" AS code, l.debit, l.credit FROM journal_entries e JOIN journal_lines l ON l."journalEntryId" = e.id
+          WHERE e."sourceType"='STOCK' AND e.status='POSTED' AND (e."sourceDocument"=$1 OR e."sourceDocument" LIKE $2)`, [src, `${src}:AJ%`]);
+        if (!posted.length) continue; // nunca contabilizado: trata-se em "movimentos pendentes"
+        const lines: any[] = [];
+        for (const part of await this.computeParts(ds, settings, found.module, found.docType, src)) {
+          // mede-se pela conta que não é a de inventário (CMV, compras, ganhos, perdas)
+          const useDebit = part.rule.debitAccount !== INV;
+          const account = real(useDebit ? part.rule.debitAccount : part.rule.creditAccount);
+          const already = round2(posted.filter((x: any) => x.code === account).reduce((a: number, x: any) => a + (useDebit ? Number(x.debit) - Number(x.credit) : Number(x.credit) - Number(x.debit)), 0));
+          const diff = round2(part.value - already);
+          if (Math.abs(diff) < 0.01) continue;
+          const d = real(diff > 0 ? part.rule.debitAccount : part.rule.creditAccount);
+          const c = real(diff > 0 ? part.rule.creditAccount : part.rule.debitAccount);
+          const text = `Ajuste de valorização ${found.reference} (${part.rule.label})`;
+          lines.push({ id: `JL-STK-${Date.now()}-${lines.length}d`, accountId: d, description: text, debit: Math.abs(diff), credit: 0 });
+          lines.push({ id: `JL-STK-${Date.now()}-${lines.length}c`, accountId: c, description: text, debit: 0, credit: Math.abs(diff) });
+        }
+        if (!lines.length) continue;
+        await this.accounting.createJournalEntry({
+          id: `JE-STK-${Date.now()}-${Math.floor(Math.random() * 1000)}`, companyId, journalId: await this.journalId(companyId), date: today,
+          description: `Ajuste de valorização de stock — ${found.reference}`, reference: found.reference,
+          sourceDocument: `${src}:AJ${Date.now()}`, sourceType: 'STOCK', status: 'POSTED', createdBy: user || 'stock-integration', lines,
+        } as any);
+        adjustments++;
+      }
+    }
+    this.logger.log(`Revalorização (${settings.valuation}) em ${companyId}: ${changedMoves} movimento(s), ${adjustments} ajuste(s).`);
+    return { valuation: settings.valuation, articles: byArticle.size, changedMovements: changedMoves, adjustments };
   }
 
   /** Contabiliza os movimentos já existentes que ainda não têm lançamento de stock (ex.: ao ligar a integração). */

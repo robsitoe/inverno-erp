@@ -159,6 +159,12 @@ export class SalesService {
     sdRepo.merge(document, updateSalesDocumentDto);
     const savedDoc = await sdRepo.save(document);
 
+    // Documento anulado depois de ter movimentado stock: estorna os movimentos e o custo
+    if (savedDoc.status === 'REJECTED' && (oldStatus === 'APPROVED' || oldStatus === 'POSTED')) {
+      const fullDoc = await this.findOne(savedDoc.id, updateSalesDocumentDto.companyId);
+      await this.reverseStockMovementsForSales(fullDoc, updateSalesDocumentDto.companyId);
+    }
+
     // Trigger stock movements if status just changed to final
     if ((savedDoc.status === 'APPROVED' || savedDoc.status === 'POSTED') && oldStatus !== savedDoc.status) {
       console.log(`[SalesService] Direct update trigger for ${savedDoc.documentNumber} (${savedDoc.status})`);
@@ -225,6 +231,41 @@ export class SalesService {
     await this.inventoryService.postStockAccounting({
       companyId: companyId || document.companyId, module: 'SALES', docType: document.documentType,
       sourceDocument: document.id, reference: document.documentNumber, date: document.date,
+    });
+  }
+
+  /**
+   * Estorna o stock de um documento de venda anulado: movimentos inversos ao custo a que saíram
+   * e lançamento do custo espelhado (integração stock–contabilidade).
+   */
+  private async reverseStockMovementsForSales(document: SalesDocument, companyId?: string) {
+    const cid = companyId || document.companyId;
+    const all = await this.inventoryService.findAllStockMovements(cid);
+    if (!all.some(m => m.sourceDocument === `${document.id}:VOID`)) {
+      for (const m of all.filter(x => x.sourceDocument === document.id)) {
+        const inverse = m.movementType === 'IN' ? 'OUT' : m.movementType === 'OUT' ? 'IN' : null;
+        if (!inverse) continue;
+        await this.inventoryService.createStockMovement({
+          date: new Date().toISOString().slice(0, 10),
+          articleId: m.articleId,
+          companyId: cid,
+          articleCode: m.articleCode,
+          articleName: m.articleName,
+          warehouseId: m.warehouseId,
+          movementType: inverse as any,
+          quantity: Number(m.quantity),
+          // a mercadoria regressa ao custo a que saiu (entrada com custo: lote FIFO / custo médio)
+          unitCost: Number(m.unitCost) || 0,
+          totalCost: Number(m.totalCost) || 0,
+          reference: `Anulação ${document.documentNumber}`,
+          sourceDocument: `${document.id}:VOID`,
+          notes: `Estorno por anulação de ${document.documentNumber}`,
+        } as any);
+      }
+    }
+    await this.inventoryService.postStockAccounting({
+      companyId: cid, module: 'SALES', docType: document.documentType, sourceDocument: `${document.id}:VOID`,
+      reference: `Anulação ${document.documentNumber}`, date: new Date().toISOString().slice(0, 10), reverse: true,
     });
   }
 

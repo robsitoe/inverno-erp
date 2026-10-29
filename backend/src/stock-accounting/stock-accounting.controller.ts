@@ -32,6 +32,9 @@ export class StockAccountingController {
     return this.svc.saveSettings(this.admin(req, c), body || {}, req?.user?.username || null);
   }
 
+  @Post('revalue')
+  revalue(@Req() req: any, @Query('companyId') c?: string) { return this.svc.revalue(this.admin(req, c), req?.user?.username || null); }
+
   @Post('post-pending')
   postPending(@Req() req: any, @Query('companyId') c?: string) { return this.svc.postPending(this.admin(req, c)); }
 }

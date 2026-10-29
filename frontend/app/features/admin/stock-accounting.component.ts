@@ -95,6 +95,8 @@ const MODULE_LABEL: Record<string, string> = { SALES: 'Vendas', PURCHASES: 'Comp
       <button (click)="resetDefaults()" [disabled]="busy" class="px-4 py-2 text-xs font-semibold rounded border border-gray-300">Repor contas por omissão</button>
       <button (click)="postPending()" [disabled]="busy || !original?.enabled" class="px-4 py-2 text-xs font-semibold rounded border border-gray-300 disabled:opacity-50"
               title="Gera os lançamentos dos movimentos de stock que ainda não estão contabilizados">Contabilizar movimentos pendentes</button>
+      <button (click)="revalue()" [disabled]="busy || isDirty()" class="px-4 py-2 text-xs font-semibold rounded border border-gray-300 disabled:opacity-50"
+              title="Volta a calcular o custo de todos os movimentos com o método gravado e lança a diferença como ajuste">Recalcular custos</button>
       <span *ngIf="pendingResult" class="text-xs text-gray-600">{{ pendingResult }}</span>
     </div>
   </div>
@@ -153,6 +155,21 @@ export class StockAccountingComponent implements OnInit {
       if (saved.enabled) this.accounts = await firstValueFrom(this.http.get<any[]>(`${environment.apiUrl}/accounting/accounts`)).catch(() => this.accounts);
     } catch (e: any) {
       this.errors = e?.error?.errors || [e?.error?.message || 'Não foi possível gravar.'];
+    }
+    this.busy = false; this.cdr.detectChanges();
+  }
+
+  /** Há alterações por gravar (o recálculo usa sempre a configuração gravada). */
+  isDirty() { return JSON.stringify(this.s) !== JSON.stringify(this.original); }
+
+  async revalue() {
+    if (!confirm(`Recalcular o custo de todos os movimentos de stock pelo método «${this.original?.valuation === 'FIFO' ? 'FIFO' : 'Custo médio'}»?\n\nOs lançamentos já feitos não são alterados: a diferença de cada documento é lançada como ajuste com a data de hoje.`)) return;
+    this.busy = true; this.pendingResult = '';
+    try {
+      const r = await firstValueFrom(this.http.post<any>(`${this.api}/revalue`, {}));
+      this.pendingResult = `Recálculo concluído: ${r.changedMovements} movimento(s) revalorizado(s) em ${r.articles} artigo(s); ${r.adjustments} lançamento(s) de ajuste.`;
+    } catch (e: any) {
+      this.toaster.showError('Integração stock', e?.error?.message || 'Falhou.');
     }
     this.busy = false; this.cdr.detectChanges();
   }
