@@ -220,6 +220,15 @@ export class SalesService {
   }
 
   private async createStockMovementsForSales(document: SalesDocument, companyId?: string) {
+    await this.createStockMovementsForSalesOnly(document, companyId);
+    // Custo das mercadorias vendidas (integração stock–contabilidade; idempotente)
+    await this.inventoryService.postStockAccounting({
+      companyId: companyId || document.companyId, module: 'SALES', docType: document.documentType,
+      sourceDocument: document.id, reference: document.documentNumber, date: document.date,
+    });
+  }
+
+  private async createStockMovementsForSalesOnly(document: SalesDocument, companyId?: string) {
     // Check if movements already exist for this document to prevent doubles
     const targetId = companyId || document.companyId;
     const existing = await this.inventoryService.findAllStockMovements(targetId);

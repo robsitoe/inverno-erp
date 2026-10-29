@@ -7,6 +7,7 @@
   "/accounting": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
   "/licenses": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
   "/print-templates": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/stock-accounting": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
   "/users": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
   "/profiles": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
   "/companies": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },

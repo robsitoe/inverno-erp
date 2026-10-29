@@ -1,3 +1,5 @@
+import { environment } from './config';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 
@@ -172,7 +174,8 @@ export class AccountingService {
         private dataService: DataService,
 
 
-        private toasterService: ToasterService
+        private toasterService: ToasterService,
+        private http: HttpClient
 
 
     ) {
@@ -185,6 +188,7 @@ export class AccountingService {
 
 
                 this.activeCompanyId = company.id;
+                this.loadStockIntegration();
 
 
                 this.clearState();
@@ -2454,7 +2458,20 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
 
 
 
+    /** Integração stock–contabilidade ligada no servidor: o custo das vendas é lançado lá (ao custo do movimento). */
+    private stockPostedByServer = false;
+
+    private loadStockIntegration(): void {
+        this.stockPostedByServer = false;
+        if (this.dataService.isLocalBrowser()) return;
+        this.http.get<any>(`${environment.apiUrl}/stock-accounting/settings`).subscribe({
+            next: s => this.stockPostedByServer = !!s?.enabled,
+            error: () => this.stockPostedByServer = false,
+        });
+    }
+
     createCOGSEntry(salesDoc: SalesDocument, articles: Article[], forceRecreate: boolean = false): void {
+        if (this.stockPostedByServer) return; // evita lançar o custo duas vezes
 
 
         const docConfig = this.salesDocumentTypes.find(t => t.code === salesDoc.documentType) || {};

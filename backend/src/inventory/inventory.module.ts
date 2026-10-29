@@ -9,9 +9,10 @@ import { StockDocument, StockDocumentLine } from './entities/stock-document.enti
 import { Vehicle } from './entities/vehicle.entity';
 import { VehicleTrip } from './entities/vehicle-trip.entity';
 import { Warehouse } from './entities/warehouse.entity';
+import { StockAccountingModule } from '../stock-accounting/stock-accounting.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Article, StockMovement, StockDocument, StockDocumentLine, Vehicle, VehicleTrip, Warehouse])],
+  imports: [TypeOrmModule.forFeature([Article, StockMovement, StockDocument, StockDocumentLine, Vehicle, VehicleTrip, Warehouse]), StockAccountingModule],
   controllers: [InventoryController],
   providers: [InventoryService],
   exports: [InventoryService],

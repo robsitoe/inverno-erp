@@ -14,6 +14,8 @@ import { CreateStockDocumentDto } from './dto/create-stock-document.dto';
 import { Vehicle } from './entities/vehicle.entity';
 import { VehicleTrip } from './entities/vehicle-trip.entity';
 import { Warehouse } from './entities/warehouse.entity';
+import { DocumentType } from '../common-entities/entities/document-type.entity';
+import { StockAccountingService, ensureLayerTable } from '../stock-accounting/stock-accounting.service';
 
 @Injectable()
 export class InventoryService {
@@ -31,7 +33,13 @@ export class InventoryService {
     private readonly defaultVehicleTripRepo: Repository<VehicleTrip>,
     @InjectRepository(Warehouse)
     private readonly defaultWarehouseRepo: Repository<Warehouse>,
+    private readonly stockAccounting: StockAccountingService,
   ) { }
+
+  /** Lançamento contabilístico do custo de stock de um documento (se a integração estiver ligada). */
+  postStockAccounting(p: Parameters<StockAccountingService['postDocument']>[0]) {
+    return this.stockAccounting.postDocument(p);
+  }
 
   private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>, companyId?: string): Promise<Repository<T>> {
     const targetId = companyId || TenancyContext.getCompanyId();
@@ -125,17 +133,21 @@ export class InventoryService {
     // 2. Generate Movements for each line
     // Determine movement type logic (could be improved to use DocumentType configuration from DB if available)
     // For now, simple fallback mapping
+    // Tipo de movimento pela natureza configurada do tipo de documento (ENT = entrada, SAI = saída...);
+    // sem configuração, pelos códigos conhecidos. O inventário (ajuste) aceita quantidades negativas.
     let movementType = 'ADJUSTMENT';
     const type = dto.type;
-    const inTypes = ['FI', 'ES', 'SI', 'AIP', 'CP', 'LE'];
-    const outTypes = ['FS', 'SS', 'AIN', 'DP', 'LDN', 'LD'];
-
-    if (inTypes.includes(type)) movementType = 'IN';
-    else if (outTypes.includes(type)) movementType = 'OUT';
-    else if (['TA', 'TAV'].includes(type)) movementType = 'TRANSFER';
+    const inTypes = ['FI', 'ES', 'SI', 'AIP', 'CP', 'LE', 'ENT'];
+    const outTypes = ['FS', 'SS', 'AIN', 'DP', 'LDN', 'LD', 'SAI'];
+    const docType = await repo.manager.getRepository(DocumentType).findOne({ where: { code: type } }).catch(() => null);
+    const nature = String((docType as any)?.nature || '').toUpperCase();
+    if (nature === 'IN' || inTypes.includes(type)) movementType = 'IN';
+    else if (nature === 'OUT' || outTypes.includes(type)) movementType = 'OUT';
+    else if (nature === 'TRANSFER' || ['TA', 'TAV', 'TRA'].includes(type)) movementType = 'TRANSFER';
 
     for (const line of dto.lines) {
-      if (!line.articleCode || line.quantity <= 0) continue;
+      const q = Number(line.quantity) || 0;
+      if (!line.articleCode || q === 0 || (movementType !== 'ADJUSTMENT' && q < 0)) continue;
 
       // Resolve Article ID if missing
       let articleId = line.articleId;
@@ -163,6 +175,11 @@ export class InventoryService {
         });
       }
     }
+
+    await this.postStockAccounting({
+      companyId: dto.companyId || TenancyContext.getCompanyId() || undefined, module: 'STOCK', docType: dto.type,
+      sourceDocument: savedDoc.id, reference: `${dto.type} ${dto.series}/${dto.number}`, date: dto.date,
+    });
 
     return savedDoc;
   }
@@ -214,9 +231,41 @@ export class InventoryService {
       createStockMovementDto.unitCost = avgNow;
       createStockMovementDto.totalCost = Math.round(avgNow * qtyNum * 100) / 100;
     }
+    // FIFO: as entradas criam um lote ao seu custo; as saídas consomem os lotes mais antigos.
+    // O custo médio continua a ser mantido no artigo, para consulta.
+    const cid = companyId || TenancyContext.getCompanyId() || undefined;
+    const fifo = (isEntry || isExit) && (await this.stockAccounting.getValuation(cid)) === 'FIFO';
+    const layerDs = smRepo.manager.connection;
+    let entryLayerCost = 0;
+    if (fifo) {
+      await ensureLayerTable(layerDs);
+      if (isEntry) {
+        entryLayerCost = dtoCost > 0 ? dtoCost : avgNow;
+        createStockMovementDto.unitCost = entryLayerCost;
+        createStockMovementDto.totalCost = Math.round(entryLayerCost * qtyNum * 100) / 100;
+      } else {
+        let left = qtyNum, cost = 0;
+        const layers = await layerDs.query(
+          `SELECT id, "qtyRemaining", "unitCost" FROM stock_cost_layers WHERE "articleId"=$1 AND "qtyRemaining" > 0 ORDER BY date, id`, [articleId]);
+        for (const l of layers) {
+          if (left <= 0) break;
+          const take = Math.min(left, Number(l.qtyRemaining));
+          cost += take * Number(l.unitCost); left -= take;
+          await layerDs.query(`UPDATE stock_cost_layers SET "qtyRemaining" = "qtyRemaining" - $1 WHERE id=$2`, [take, l.id]);
+        }
+        if (left > 0) cost += left * avgNow; // sem lotes suficientes (stock negativo): custo médio
+        createStockMovementDto.totalCost = Math.round(cost * 100) / 100;
+        createStockMovementDto.unitCost = qtyNum > 0 ? Math.round((cost / qtyNum) * 10000) / 10000 : 0;
+      }
+    }
+
     // Create movement
     const movement = smRepo.create(createStockMovementDto);
     await smRepo.save(movement);
+    if (fifo && isEntry) {
+      await layerDs.query(`INSERT INTO stock_cost_layers ("articleId","movementId",date,"qtyRemaining","unitCost") VALUES ($1,$2,$3,$4,$5)`,
+        [articleId, (movement as any).id, String(createStockMovementDto.date).slice(0, 10), qtyNum, entryLayerCost]);
+    }
 
     // Update article stock
     const qty = Number(quantity);

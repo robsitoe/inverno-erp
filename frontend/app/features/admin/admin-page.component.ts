@@ -5,7 +5,8 @@ import { HttpClientModule } from '@angular/common/http';
 import { AdminToolsComponent } from './admin-tools.component';
 import { AdminSeriesComponent } from './admin-series.component';
 import { LicenseManagerComponent } from './license-manager.component';
-import { PrintTemplatesComponent } from './print-templates.component';
+import { PrintTemplatesComponent } from './print-templates.component';
+import { StockAccountingComponent } from './stock-accounting.component';
 import { PeriodService } from '../../shared/period.service';
 import { DataService } from '../../services/data.service';
 import { environment } from '../../shared/config';
@@ -32,7 +33,7 @@ interface FiscalYear {
 @Component({
   selector: 'app-admin-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule, AdminToolsComponent, AdminSeriesComponent, LicenseManagerComponent, PrintTemplatesComponent],
+  imports: [CommonModule, FormsModule, HttpClientModule, AdminToolsComponent, AdminSeriesComponent, LicenseManagerComponent, PrintTemplatesComponent, StockAccountingComponent],
   template: `
     <div class="flex flex-col h-full bg-[#F0F0F0]">
       <!-- Header -->
@@ -405,6 +406,11 @@ interface FiscalYear {
           <app-print-templates></app-print-templates>
         </div>
 
+        <!-- Tab: Integração Stock — Contabilidade -->
+        <div *ngIf="activeTab === 'stockacc'" class="max-w-6xl mx-auto">
+          <app-stock-accounting></app-stock-accounting>
+        </div>
+
         <!-- Tab: Sistema -->
         <div *ngIf="activeTab === 'system'" class="max-w-4xl mx-auto">
           <app-admin-tools></app-admin-tools>
@@ -459,6 +465,7 @@ export class AdminPageComponent implements OnInit {
     { id: 'series', label: 'Séries', icon: 'format_list_numbered' },
     { id: 'parameters', label: 'Parâmetros', icon: 'settings_applications' },
     { id: 'printing', label: 'Modelos de Impressão', icon: 'print' },
+    { id: 'stockacc', label: 'Integração Stock', icon: 'inventory' },
     { id: 'maintenance', label: 'Manutenção', icon: 'build_circle' },
     { id: 'system', label: 'Sistema', icon: 'settings_system_daydream' },
     { id: 'licenses', label: 'Licenças', icon: 'verified' }

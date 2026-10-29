@@ -204,6 +204,15 @@ export class PurchasesService {
   }
 
   private async createStockMovementsForPurchases(document: PurchaseDocument) {
+    await this.createStockMovementsForPurchasesOnly(document);
+    // Entrada em inventário ao custo (integração stock–contabilidade; idempotente)
+    await this.inventoryService.postStockAccounting({
+      companyId: document.companyId, module: 'PURCHASES', docType: document.type,
+      sourceDocument: document.id, reference: `${document.type} ${document.series}/${document.number}`, date: document.date,
+    });
+  }
+
+  private async createStockMovementsForPurchasesOnly(document: PurchaseDocument) {
     // Check if movements already exist for this document to prevent doubles
     const existing = await this.inventoryService.findAllStockMovements(document.companyId);
     const alreadyProcessed = existing.some(m => m.sourceDocument === document.id);
@@ -275,6 +284,11 @@ export class PurchasesService {
         notes: `Estorno por anulação de ${document.type} ${document.series}/${document.number}`
       } as any);
     }
+    // Estorno do lançamento de stock (contas trocadas)
+    await this.inventoryService.postStockAccounting({
+      companyId: document.companyId, module: 'PURCHASES', docType: document.type, sourceDocument: `${document.id}:VOID`,
+      reference: `Anulação ${document.type} ${document.series}/${document.number}`, date: new Date().toISOString().slice(0, 10), reverse: true,
+    });
   }
 
   async getWorkflowHistory(id: string) {
