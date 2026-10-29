@@ -3,6 +3,8 @@ import { Component, Output, EventEmitter, OnInit, OnDestroy, Input, ChangeDetect
 import { CommonModule } from '@angular/common';
 import { DataService } from '../services/data.service';
 import { NavigationService } from '../services/navigation.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../shared/config';
 
 @Component({
   selector: 'app-header',
@@ -55,10 +57,33 @@ import { NavigationService } from '../services/navigation.service';
           </span>
         </button>
 
-        <!-- Notifications -->
-        <button class="hover:bg-gray-100 p-1.5 rounded-lg transition-colors relative" title="Notificações">
-          <span class="material-symbols-outlined text-[18px] align-middle text-gray-500">notifications</span>
-        </button>
+        <!-- Notifications: prazos vencidos e a vencer -->
+        <div class="relative" data-notif-menu>
+          <button (click)="toggleNotifications()" class="hover:bg-gray-100 p-1.5 rounded-lg transition-colors relative" title="Notificações">
+            <span class="material-symbols-outlined text-[18px] align-middle" [class.text-red-500]="expiry?.expired" [class.text-gray-500]="!expiry?.expired">notifications</span>
+            <span *ngIf="alertCount" class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold text-white flex items-center justify-center"
+                  [class.bg-red-600]="expiry?.expired" [class.bg-amber-500]="!expiry?.expired">{{ alertCount > 99 ? '99+' : alertCount }}</span>
+          </button>
+          <div *ngIf="notifOpen" class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 text-xs">
+            <div class="px-3 py-2 border-b border-gray-100 font-bold text-gray-700 flex justify-between">
+              <span>Prazos</span>
+              <span class="font-normal text-gray-500">{{ expiry?.expired || 0 }} vencido(s) · {{ expiry?.due || 0 }} a vencer</span>
+            </div>
+            <div class="max-h-80 overflow-y-auto divide-y divide-gray-100">
+              <button *ngFor="let a of expiry?.alerts || []" (click)="openExpiry()" class="w-full text-left px-3 py-2 hover:bg-gray-50 flex gap-2">
+                <span class="material-symbols-outlined text-[16px]" [class.text-red-600]="a.state === 'EXPIRED'" [class.text-amber-500]="a.state !== 'EXPIRED'">
+                  {{ a.state === 'EXPIRED' ? 'error' : 'schedule' }}</span>
+                <span class="min-w-0 flex-1">
+                  <span class="block font-semibold text-gray-800 truncate">{{ a.description }}</span>
+                  <span class="block text-gray-500 truncate">{{ a.categoryLabel }}{{ a.location ? ' · ' + a.location : '' }}</span>
+                  <span class="block" [class.text-red-600]="a.daysLeft < 0" [class.text-amber-600]="a.daysLeft >= 0">{{ dueText(a.daysLeft) }}</span>
+                </span>
+              </button>
+              <div *ngIf="!alertCount" class="px-3 py-4 text-center text-gray-400">Sem prazos vencidos ou a vencer.</div>
+            </div>
+            <button (click)="openExpiry()" class="w-full px-3 py-2 border-t border-gray-100 text-blue-600 font-semibold hover:bg-gray-50">Abrir Controlo de Validades</button>
+          </div>
+        </div>
 
         <!-- Divider -->
         <div class="h-5 w-px bg-gray-200 mx-1"></div>
@@ -156,8 +181,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
   currentTime = '';
   currentDate = '';
   userMenuOpen = false;
+  notifOpen = false;
+  expiry: any = null;
 
   private clockInterval: any;
+  private expiryInterval: any;
 
   private moduleLabels: { [key: string]: string } = {
     'dashboard': 'Painel de Controlo',
@@ -220,13 +248,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
     'entity-management': 'Entidades',
     'license-manager': 'Gestão de Licenças',
     'mobile-approvals': 'Aprovações Mobile',
+    'expiry-control': 'Controlo de Validades',
+    'expiry-extinguishers': 'Extintores',
     'payment-gateway-settings': 'Configuração de Pagamentos',
   };
 
   constructor(
     private dataService: DataService,
     private navService: NavigationService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private http: HttpClient
   ) { }
 
   ngOnInit() {
@@ -242,18 +273,54 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
     this.updateClock();
     this.clockInterval = setInterval(() => this.updateClock(), 1000);
+    this.loadExpiry();
+    this.expiryInterval = setInterval(() => this.loadExpiry(), 5 * 60 * 1000);
+  }
+
+  get alertCount(): number { return (this.expiry?.expired || 0) + (this.expiry?.due || 0); }
+
+  /** Resumo dos prazos (vencidos e a vencer) para o sino. */
+  loadExpiry() {
+    if (this.mode === 'ADMIN' || !localStorage.getItem('erp_company_info')) return;
+    this.http.get<any>(`${environment.apiUrl}/expiry-control/summary`).subscribe({
+      next: s => { this.expiry = s; this.cdr.markForCheck(); },
+      error: () => { },
+    });
+  }
+
+  dueText(d: number): string {
+    return d < 0 ? `Venceu há ${-d} dia(s)` : d === 0 ? 'Vence hoje' : `Vence em ${d} dia(s)`;
+  }
+
+  toggleNotifications() {
+    this.notifOpen = !this.notifOpen;
+    if (this.notifOpen) this.loadExpiry();
+  }
+
+  openExpiry() {
+    this.notifOpen = false;
+    this.onNavigate.emit('expiry-control');
   }
 
   ngOnDestroy() {
     if (this.clockInterval) clearInterval(this.clockInterval);
+    if (this.expiryInterval) clearInterval(this.expiryInterval);
   }
 
   // Close dropdown when clicking outside
+  /** O ecrã de validades avisa quando algo muda, para o sino não esperar pelo intervalo. */
+  @HostListener('window:expiry-changed')
+  onExpiryChanged() { this.loadExpiry(); }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: Event) {
     const target = e.target as HTMLElement;
     if (!target.closest('[data-user-menu]') && this.userMenuOpen) {
       this.userMenuOpen = false;
+      this.cdr.markForCheck();
+    }
+    if (!target.closest('[data-notif-menu]') && this.notifOpen) {
+      this.notifOpen = false;
       this.cdr.markForCheck();
     }
   }

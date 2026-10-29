@@ -50,6 +50,21 @@ export class PettyCashVoucher {
     @Column({ nullable: true })
     observations: string;
 
+    /** Conta a débito (despesa, ou 4.5.1.2 nos adiantamentos ao pessoal). */
+    @Column({ nullable: true })
+    debitAccount: string;
+
+    /** Conta de caixa a crédito (por omissão 1.1). */
+    @Column({ nullable: true })
+    cashAccount: string;
+
+    /** Lançamento contabilístico do vale (e do estorno, quando anulado). */
+    @Column({ nullable: true })
+    journalEntryId: string;
+
+    @Column({ nullable: true })
+    reversalEntryId: string;
+
     @CreateDateColumn()
     createdAt: Date;
 

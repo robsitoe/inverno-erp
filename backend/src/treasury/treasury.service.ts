@@ -10,6 +10,7 @@ import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
 import { WorkflowService, WorkflowTarget } from '../common/workflow.service';
 import { PeriodControlService } from '../periods/period-control.service';
+import { AccountingService } from '../accounting/accounting.service';
 
 @Injectable()
 export class TreasuryService {
@@ -23,7 +24,29 @@ export class TreasuryService {
     @InjectRepository(PettyCashVoucher)
     private readonly defaultPettyCashVoucherRepo: Repository<PettyCashVoucher>,
     private readonly workflowService: WorkflowService,
+    private readonly accountingService: AccountingService,
   ) { }
+
+  /** Lançamento do vale: débito da despesa (ou adiantamento ao pessoal) e crédito da caixa. */
+  private async postVoucher(v: PettyCashVoucher, cid: string, reverse = false) {
+    const debit = reverse ? v.cashAccount : v.debitAccount;
+    const credit = reverse ? v.debitAccount : v.cashAccount;
+    const text = `${reverse ? 'Anulação do vale' : 'Vale de caixa'} Nº ${v.number} — ${v.titularName || ''}${v.reason ? ' — ' + v.reason : ''}`.slice(0, 250);
+    const amount = Math.round((Number(v.amount) || 0) * 100) / 100;
+    const ds = await this.tenancyService.getTenantDataSource(cid);
+    const journals = await ds.query(`SELECT id, type FROM journals`).catch(() => []);
+    const journal = journals.find((j: any) => j.type === 'CASH') || journals.find((j: any) => j.type === 'GENERAL') || journals[0];
+    return this.accountingService.createJournalEntry({
+      id: `JE-VAL-${Date.now()}-${Math.floor(Math.random() * 1000)}`, companyId: cid, journalId: journal?.id,
+      date: reverse ? new Date().toISOString().slice(0, 10) : String(v.date).slice(0, 10),
+      description: text, reference: `VALE ${v.number}`, sourceDocument: reverse ? `${v.id}:VOID` : v.id, sourceType: 'VOUCHER',
+      status: 'POSTED', createdBy: v.issuedBy || 'tesouraria', relatedEntryId: reverse ? v.journalEntryId : undefined,
+      lines: [
+        { id: `JL-VAL-${Date.now()}-d`, accountId: debit, description: text, debit: amount, credit: 0 },
+        { id: `JL-VAL-${Date.now()}-c`, accountId: credit, description: text, debit: 0, credit: amount },
+      ],
+    } as any);
+  }
 
   private async getRepo<T extends ObjectLiteral>(entity: EntityTarget<T>, defaultRepo: Repository<T>, companyId?: string): Promise<Repository<T>> {
     const targetId = companyId || TenancyContext.getCompanyId();
@@ -214,15 +237,30 @@ export class TreasuryService {
       const res = await this.getNextVoucherNumber(cid);
       const repo = await this.getPettyCashVoucherRepo(cid);
 
+      if (!(Number(data.amount) > 0)) throw new BadRequestException('O valor do vale tem de ser maior que zero.');
+      const debitAccount = String(data.debitAccount || (data.isPersonalAdvance ? '4.5.1.2' : '')).trim();
+      if (!debitAccount) throw new BadRequestException('Indique a conta da despesa (a débito) do vale.');
+
       const vId = `PCV-${Date.now()}-${cid}`;
       const voucher = repo.create({
         ...data,
         id: vId,
         number: res.number,
         companyId: cid,
+        debitAccount,
+        cashAccount: String(data.cashAccount || '1.1').trim(),
         issuedBy: user?.name || user?.username || 'Sistema'
       });
-      return await repo.save(voucher);
+      const saved = await repo.save(voucher) as unknown as PettyCashVoucher;
+      // Lançamento: se falhar (ex.: conta inválida), o vale não fica emitido sem contabilidade
+      try {
+        const je = await this.postVoucher(saved, cid);
+        saved.journalEntryId = je.id;
+        return await repo.save(saved);
+      } catch (e) {
+        await repo.delete(saved.id);
+        throw e;
+      }
     } catch (error) {
       console.error('[TreasuryService] Error creating voucher:', error);
       throw error;
@@ -243,25 +281,40 @@ export class TreasuryService {
   }
 
   async findOneVoucher(id: string) {
-    const cid = id.split('-')[2] || TenancyContext.getCompanyId();
+    const cid = id.split('-').slice(2).join('-') || TenancyContext.getCompanyId();
     const repo = await this.getPettyCashVoucherRepo(cid);
     return repo.findOne({ where: { id } });
   }
 
   async updateVoucher(id: string, data: any) {
-    const cid = data.companyId || id.split('-')[2] || TenancyContext.getCompanyId();
+    const cid = data.companyId || id.split('-').slice(2).join('-') || TenancyContext.getCompanyId();
     if (data.date) {
       await this.periodControlService.ensureDateInOpenPeriod(data.date, cid);
     }
     const repo = await this.getPettyCashVoucherRepo(cid);
     const doc = await repo.findOne({ where: { id } });
     if (!doc) throw new NotFoundException('Vale não encontrado');
+    const wasCancelled = String(doc.status).toUpperCase() === 'CANCELLED';
+    // Depois de lançado, o valor e as contas só se corrigem anulando e emitindo outro vale
+    if (doc.journalEntryId && ['amount', 'debitAccount', 'cashAccount', 'date'].some(k => data[k] !== undefined && String(data[k]) !== String((doc as any)[k]))) {
+      throw new BadRequestException('O vale já está lançado: o valor, a data e as contas não se alteram. Anule-o e emita um novo.');
+    }
     repo.merge(doc, data);
-    return repo.save(doc);
+    const saved = await repo.save(doc);
+    // Anulação: estorno do lançamento (uma única vez)
+    if (!wasCancelled && String(saved.status).toUpperCase() === 'CANCELLED' && saved.journalEntryId && !saved.reversalEntryId) {
+      const je = await this.postVoucher(saved, cid, true);
+      saved.reversalEntryId = je.id;
+      return repo.save(saved);
+    }
+    return saved;
   }
 
   async removeVoucher(id: string) {
-    const repo = await this.getPettyCashVoucherRepo();
+    const cid = id.split('-').slice(2).join('-') || TenancyContext.getCompanyId();
+    const repo = await this.getPettyCashVoucherRepo(cid);
+    const doc = await repo.findOne({ where: { id } });
+    if (doc?.journalEntryId) throw new BadRequestException('O vale já está lançado na contabilidade: não pode ser apagado. Anule-o.');
     return repo.delete(id);
   }
 }

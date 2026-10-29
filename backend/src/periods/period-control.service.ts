@@ -9,6 +9,7 @@ import { PurchaseDocument } from '../purchases/entities/purchase.entity';
 import { TreasuryDocument } from '../treasury/entities/treasury.entity';
 import { User } from '../users/entities/user.entity';
 import { PeriodAuditLog } from '../companies/entities/period-audit-log.entity';
+import { isMonthClosed } from './period-closures';
 
 @Injectable()
 export class PeriodControlService {
@@ -53,6 +54,9 @@ export class PeriodControlService {
 
     if ((year.status || '').toUpperCase() !== 'OPEN') {
       throw new BadRequestException(`O período fiscal ${year.year} está fechado. Não é possível lançar documentos nesta data.`);
+    }
+    if (await isMonthClosed(ds, targetDate)) {
+      throw new BadRequestException(`O mês ${targetDate.slice(5, 7)}/${targetDate.slice(0, 4)} está fechado. Reabra-o em Contabilidade > Fecho de Período para lançar nesta data.`);
     }
 
     return year;

@@ -1,3 +1,4 @@
+import { AccountingModule } from '../accounting/accounting.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TreasuryService } from './treasury.service';
@@ -10,7 +11,7 @@ import { PaymentMethod } from './entities/payment-method.entity';
 import { PettyCashVoucher } from './entities/petty-cash-voucher.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TreasuryDocument, TreasuryDocumentLine, PaymentMethod, PettyCashVoucher])],
+  imports: [TypeOrmModule.forFeature([TreasuryDocument, TreasuryDocumentLine, PaymentMethod, PettyCashVoucher]), AccountingModule],
   controllers: [TreasuryController, PaymentMethodsController, CurrentAccountsController],
   providers: [TreasuryService, CurrentAccountsService],
 })

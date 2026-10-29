@@ -75,6 +75,7 @@ import { PaymentGatewaysModule } from './payment-gateways/payment-gateways.modul
 import { AdminModule } from './admin/admin.module';
 import { PrintTemplatesModule } from './print-templates/print-templates.module';
 import { AssetsModule } from './assets/assets.module';
+import { ExpiryModule } from './expiry/expiry.module';
 
 @Module({
   imports: [
@@ -216,6 +217,7 @@ import { AssetsModule } from './assets/assets.module';
     AdminModule,
     PrintTemplatesModule,
     AssetsModule,
+    ExpiryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

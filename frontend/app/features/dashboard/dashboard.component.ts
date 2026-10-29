@@ -2,6 +2,8 @@
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
 import { LicenseService } from '../../services/license.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../shared/config';
 import { ChartOfAccountsSetupComponent } from '../accounting/chart-of-accounts-setup.component';
 
 interface KpiCard {
@@ -58,6 +60,22 @@ interface QuickAction {
               {{ getLicenseLabel() }}
             </span>
           </div>
+        </div>
+
+        <!-- Prazos vencidos / a vencer (Controlo de Validades) -->
+        <div *ngIf="expiry && (expiry.expired || expiry.due)" (click)="navigate('expiry-control')"
+             class="rounded-2xl p-4 border shadow-sm cursor-pointer flex items-start gap-3"
+             [ngClass]="expiry.expired ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'">
+          <span class="material-symbols-outlined text-[24px]" [ngClass]="expiry.expired ? 'text-red-600' : 'text-amber-600'">event_busy</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-bold" [ngClass]="expiry.expired ? 'text-red-800' : 'text-amber-800'">
+              {{ expiry.expired ? expiry.expired + ' prazo(s) vencido(s)' : '' }}{{ expiry.expired && expiry.due ? ' e ' : '' }}{{ expiry.due ? expiry.due + ' a vencer' : '' }}</p>
+            <p class="text-xs text-gray-600 truncate">
+              <span *ngFor="let c of expiry.byCategory; let last = last">{{ c.label }}: {{ c.expired + c.due }}{{ last ? '' : ' · ' }}</span></p>
+            <p class="text-xs text-gray-500 mt-1 truncate" *ngIf="expiry.alerts?.length">
+              Próximo: {{ expiry.alerts[0].description }}{{ expiry.alerts[0].location ? ' (' + expiry.alerts[0].location + ')' : '' }}</p>
+          </div>
+          <span class="text-xs font-semibold text-blue-600 whitespace-nowrap">Ver prazos →</span>
         </div>
 
         <!-- KPI Cards -->
@@ -183,11 +201,13 @@ export class DashboardComponent implements OnInit {
   kpiCards: KpiCard[] = [];
   quickActions: QuickAction[] = [];
   modules: any[] = [];
+  expiry: any = null;
 
   constructor(
     private dataService: DataService,
     public licenseService: LicenseService,
     private cdr: ChangeDetectorRef,
+    private http: HttpClient,
   ) {}
 
   ngOnInit() {
@@ -206,6 +226,10 @@ export class DashboardComponent implements OnInit {
     this.licenseStatus = lic?.status || 'ACTIVE';
 
     this.loadKpis();
+    this.http.get<any>(`${environment.apiUrl}/expiry-control/summary`).subscribe({
+      next: s => { this.expiry = s; this.cdr.detectChanges(); },
+      error: () => { },
+    });
     this.setupQuickActions();
     this.setupModules();
   }

@@ -7,7 +7,6 @@ import { SalesDocumentFormComponent } from '../features/sales/sales-document-for
 import { ChartOfAccountsComponent } from '../features/accounting/chart-of-accounts.component';
 import { JournalEntriesComponent } from '../features/accounting/journal-entries.component';
 import { TrialBalanceComponent } from '../features/accounting/trial-balance.component';
-import { AccountingPlaceholderComponent } from '../features/accounting/accounting-placeholder.component';
 import { AccountingExplorationComponent } from '../features/accounting/accounting-exploration.component';
 import { CostCentersComponent } from '../features/accounting/cost-centers.component';
 import { JournalsComponent } from '../features/accounting/journals.component';
@@ -16,6 +15,10 @@ import { JournalEntriesReviewComponent } from '../features/accounting/journal-en
 import { AdminToolsComponent } from '../features/admin/admin-tools.component';
 import { ArticleManagementComponent } from '../features/inventory/article-management.component';
 import { AssetsComponent } from '../features/assets/assets.component';
+import { ExpiryControlComponent } from '../features/expiry/expiry-control.component';
+import { VatComponent } from '../features/accounting/vat.component';
+import { PeriodCloseComponent } from '../features/accounting/period-close.component';
+import { AccountingUtilitiesComponent } from '../features/accounting/accounting-utilities.component';
 import { StockMovementsComponent } from '../features/inventory/stock-movements.component';
 import { TreasuryManagementComponent } from '../features/treasury/treasury-management.component';
 import { WarehouseManagementComponent } from '../features/inventory/warehouse-management.component';
@@ -67,12 +70,15 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
   imports: [
     CommonModule,
     AssetsComponent,
+    ExpiryControlComponent,
+    VatComponent,
+    PeriodCloseComponent,
+    AccountingUtilitiesComponent,
     SalesDocumentFormComponent,
     ChartOfAccountsComponent,
     LicenseManagerComponent,
     JournalEntriesComponent,
     TrialBalanceComponent,
-    AccountingPlaceholderComponent,
     AccountingExplorationComponent,
     CostCentersComponent,
     JournalsComponent,
@@ -210,17 +216,25 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
       <app-cost-centers class="w-full h-full flex flex-col"></app-cost-centers>
     </ng-container>
 
-    <!-- Accounting: Other features (placeholder) -->
-    <ng-container *ngIf="['vat', 'period-close', 'utilities'].includes(activeView)">
-      <div class="bg-yellow-100 border-b border-yellow-300 px-4 py-2 text-sm text-yellow-900 font-medium">
-        Módulo Beta: funcionalidades em validação de produção.
-      </div>
-      <app-accounting-placeholder [viewKey]="activeView" class="w-full h-full block"></app-accounting-placeholder>
+    <!-- Accounting: IVA, Fecho de Período, Utilitários -->
+    <ng-container *ngIf="activeView === 'vat'">
+      <app-vat class="w-full h-full block"></app-vat>
+    </ng-container>
+    <ng-container *ngIf="activeView === 'period-close'">
+      <app-period-close class="w-full h-full block"></app-period-close>
+    </ng-container>
+    <ng-container *ngIf="activeView === 'utilities'">
+      <app-accounting-utilities class="w-full h-full block"></app-accounting-utilities>
     </ng-container>
 
     <!-- Equipamentos e Ativos (imobilizado): todas as vistas no mesmo componente -->
     <ng-container *ngIf="activeView.startsWith('asset-')">
       <app-assets [view]="activeView" class="w-full h-full block"></app-assets>
+    </ng-container>
+
+    <!-- Controlo de validades e prazos -->
+    <ng-container *ngIf="activeView === 'expiry-control' || activeView === 'expiry-extinguishers'">
+      <app-expiry-control [view]="activeView" class="w-full h-full block"></app-expiry-control>
     </ng-container>
 
     <!-- Inventory: Article Management -->
@@ -544,7 +558,9 @@ export class MainContentComponent {
       'dashboard',
       'payment-gateway-settings',
       'vehicle-reconciliation',
-      'mobile-approvals'
+      'mobile-approvals',
+      'expiry-control',
+      'expiry-extinguishers'
     ];
     return knownViews.includes(this.activeView);
   }
