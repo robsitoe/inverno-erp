@@ -1,11 +1,15 @@
 
-import { Component, EventEmitter, Input, Output, OnInit, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MENU_ITEMS, ADMIN_MENU_ITEMS, MenuItem } from '../shared/constants';
 import { AppIconComponent } from '../shared/components/app-icon.component';
 import { LicenseService } from '../services/license.service';
 import { NavigationService, NavItem } from '../services/navigation.service';
 import { Subscription } from 'rxjs';
+
+interface TaskResult { item: MenuItem; label: string; path: string; icon: string; available: boolean; haystack: string }
+
+const norm = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
 @Component({
   selector: 'app-sidebar',
@@ -33,10 +37,73 @@ import { Subscription } from 'rxjs';
           <app-icon name="menu" [size]="20" color="#374151"></app-icon>
         </button>
       </div>
+      <button *ngIf="collapsed" (click)="showAllTasks()" class="mx-auto mt-2 p-1.5 rounded hover:bg-gray-100" title="Todas as tarefas (F3)">
+        <app-icon name="apps" [size]="20" color="#1d4ed8"></app-icon>
+      </button>
 
       <!-- Scrollable Content -->
       <div class="flex flex-col flex-1 min-h-0">
-        <div class="flex-1 overflow-y-auto overflow-x-hidden">
+        <div #scrollArea class="flex-1 overflow-y-auto overflow-x-hidden">
+          <!-- Resultados da pesquisa (todas as tarefas que contêm o texto) -->
+          <div *ngIf="!collapsed && searchQuery" class="py-1 text-xs">
+            <div class="px-3 py-1.5 flex items-center justify-between text-[10px] uppercase tracking-wide text-gray-500 font-bold">
+              <span>Resultados ({{ searchResults.length }})</span>
+              <button (click)="clearSearch()" class="normal-case font-semibold text-blue-600 hover:underline">Limpar</button>
+            </div>
+            <a *ngFor="let r of searchResults; let i = index" href="#" [attr.data-result]="i"
+               (click)="openTask($event, r)" (mouseenter)="activeResult = i"
+               class="flex items-start gap-2 px-3 py-1.5 border-l-2"
+               [ngClass]="i === activeResult ? 'bg-blue-50 border-blue-600' : 'border-transparent hover:bg-gray-50'"
+               [class.opacity-50]="!r.available">
+              <app-icon [name]="r.icon" [size]="16" color="#374151" class="mt-0.5 shrink-0"></app-icon>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-gray-800" [class.font-semibold]="i === activeResult" [innerHTML]="highlight(r.label)"></span>
+                <span class="block truncate text-[10px] text-gray-400">{{ r.path }}</span>
+              </span>
+              <span *ngIf="!r.available" class="text-[9px] uppercase bg-gray-200 text-gray-500 px-1 py-0.5 rounded shrink-0">Brevemente</span>
+            </a>
+            <p *ngIf="!searchResults.length" class="px-3 py-4 text-gray-400 italic">Nenhuma tarefa contém "{{ searchQuery }}".</p>
+          </div>
+
+          <!-- Todas as tarefas: árvore completa de todos os módulos -->
+          <div *ngIf="!collapsed && !searchQuery && panel === 'all'" class="py-1 text-xs">
+            <div class="px-3 py-1.5 flex items-center gap-2 border-b border-gray-200 mb-1">
+              <app-icon name="apps" [size]="18" color="#1d4ed8"></app-icon>
+              <span class="font-bold text-gray-800 flex-1">Todas as tarefas</span>
+              <button (click)="expandAll(true)" class="p-0.5 rounded hover:bg-gray-100" title="Expandir tudo"><app-icon name="unfold_more" [size]="16" color="#374151"></app-icon></button>
+              <button (click)="expandAll(false)" class="p-0.5 rounded hover:bg-gray-100" title="Recolher tudo"><app-icon name="unfold_less" [size]="16" color="#374151"></app-icon></button>
+              <button (click)="panel = 'menu'" class="p-0.5 rounded hover:bg-gray-100" title="Voltar ao Menu Principal"><app-icon name="close" [size]="16" color="#374151"></app-icon></button>
+            </div>
+            <ng-container *ngTemplateOutlet="taskTree; context: { $implicit: displayedMenuItems, depth: 0, path: '' }"></ng-container>
+          </div>
+
+          <ng-template #taskTree let-items let-depth="depth" let-path="path">
+            <ng-container *ngFor="let it of items">
+              <ng-container *ngIf="it.children?.length; else taskLeaf">
+                <button (click)="toggleTree(path + '/' + it.label)" class="w-full flex items-center gap-1.5 py-1 pr-2 hover:bg-gray-100 text-left"
+                        [style.padding-left.px]="8 + depth * 14">
+                  <app-icon name="chevron_right" [size]="14" color="#374151" class="transition-transform duration-150"
+                            [class.rotate-90]="!treeClosed.has(path + '/' + it.label)"></app-icon>
+                  <app-icon [name]="it.icon" [size]="16" [color]="depth === 0 ? getIconColor(it.label) : '#374151'"></app-icon>
+                  <span class="truncate" [ngClass]="depth === 0 ? 'font-bold text-gray-800' : 'font-semibold text-gray-700'">{{ it.label }}</span>
+                </button>
+                <ng-container *ngIf="!treeClosed.has(path + '/' + it.label)">
+                  <ng-container *ngTemplateOutlet="taskTree; context: { $implicit: it.children, depth: depth + 1, path: path + '/' + it.label }"></ng-container>
+                </ng-container>
+              </ng-container>
+              <ng-template #taskLeaf>
+                <a href="#" (click)="handleMenuItemClick($event, it)" class="flex items-center gap-1.5 py-1 pr-2 hover:bg-blue-50"
+                   [style.padding-left.px]="22 + depth * 14"
+                   [ngClass]="it.view === currentView ? 'text-blue-700 font-semibold bg-blue-50' : 'text-gray-600'" [class.opacity-50]="coming(it)">
+                  <app-icon [name]="it.icon" [size]="14" color="#374151"></app-icon>
+                  <span class="truncate">{{ it.label }}</span>
+                  <span *ngIf="coming(it)" class="ml-auto text-[9px] uppercase bg-gray-200 text-gray-500 px-1 py-0.5 rounded">Brevemente</span>
+                </a>
+              </ng-template>
+            </ng-container>
+          </ng-template>
+
+          <ng-container *ngIf="collapsed || (!searchQuery && panel === 'menu')">
           <!-- Favorites -->
           <div class="mb-2 mt-2" *ngIf="mode !== 'ADMIN'">
             <div [class]="'flex items-center gap-2 px-3 py-1 ' + (collapsed ? 'justify-center' : '')">
@@ -191,27 +258,38 @@ import { Subscription } from 'rxjs';
               </div>
             </div>
           </div>
+          </ng-container>
         </div>
       </div>
 
       <!-- Search Footer in Sidebar -->
-      <div *ngIf="!collapsed && mode !== 'ADMIN'" class="border-t border-gray-300 p-3 space-y-2 bg-gray-50 shrink-0">
-        <div class="flex items-center gap-2">
+      <div *ngIf="!collapsed" class="border-t border-gray-300 p-3 space-y-2 bg-gray-50 shrink-0">
+        <button (click)="panel === 'all' && !searchQuery ? panel = 'menu' : showAllTasks()"
+                class="w-full flex items-center gap-2 rounded -mx-1 px-1 py-0.5 text-left"
+                [ngClass]="panel === 'all' && !searchQuery ? 'bg-blue-100' : 'hover:bg-gray-100'"
+                [title]="panel === 'all' ? 'Voltar ao Menu Principal' : 'Ver todas as tarefas de todos os módulos (F3)'">
           <app-icon name="apps" [size]="20" color="#1d4ed8"></app-icon>
-          <h3 class="font-semibold text-xs text-gray-800">Todas as tarefas</h3>
-        </div>
+          <h3 class="font-semibold text-xs text-gray-800 flex-1">Todas as tarefas</h3>
+          <span class="text-[10px] text-gray-400">{{ taskCount }}</span>
+        </button>
         <div class="relative">
-          <input 
-              class="w-full pl-2 pr-7 py-1.5 text-xs border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-shadow" 
-              placeholder="Pesquisar..." 
+          <input #searchInput
+              class="w-full pl-2 pr-7 py-1.5 text-xs border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+              placeholder="Pesquisar tarefas..."
               type="text"
+              autocomplete="off"
+              [value]="searchQuery"
               (input)="onSearch($event)"
+              (keydown)="onSearchKey($event)"
           />
-          <app-icon 
-            name="search" 
-            [size]="18" 
-            color="#111827" 
-            class="absolute right-1.5 top-1/2 -translate-y-1/2"
+          <button *ngIf="searchQuery" (click)="clearSearch()" class="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-gray-100" title="Limpar (Esc)">
+            <app-icon name="close" [size]="16" color="#111827"></app-icon>
+          </button>
+          <app-icon *ngIf="!searchQuery"
+            name="search"
+            [size]="18"
+            color="#111827"
+            class="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none"
           ></app-icon>
         </div>
       </div>
@@ -233,8 +311,17 @@ export class SidebarComponent implements OnInit, OnDestroy {
   activeModule: string | null = null;
   activeSubModules = new Set<string>();
   activeSubSubModules = new Set<string>();
-  searchQuery = '';
   collapsed = false;
+  /** 'menu' = Menu Principal; 'all' = árvore de todas as tarefas. */
+  panel: 'menu' | 'all' = 'menu';
+  searchQuery = '';
+  searchResults: TaskResult[] = [];
+  activeResult = 0;
+  /** Nós da árvore "Todas as tarefas" recolhidos (por caminho). */
+  treeClosed = new Set<string>();
+
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('scrollArea') scrollArea?: ElementRef<HTMLDivElement>;
 
   private subs = new Subscription();
 
@@ -254,7 +341,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.subs.unsubscribe();
   }
 
-  get displayedMenuItems() {
+  get displayedMenuItems() { return this.visibleMenuItems; }
+
+  /** Menu filtrado pela licença e pelo modo de produção (é o mesmo que o painel de tarefas lista). */
+  get visibleMenuItems(): MenuItem[] {
     let items = this.mode === 'ADMIN' ? this.adminMenuItems : this.menuItems;
 
     if (this.mode !== 'ADMIN') {
@@ -275,29 +365,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
       })
       .filter((item): item is NonNullable<typeof item> => item !== null) as MenuItem[];
 
-    items = filterProduction(items);
-
-    if (!this.searchQuery) return items;
-
-    const query = this.searchQuery.toLowerCase();
-    return items
-      .map(item => {
-        const matchLabel = item.label.toLowerCase().includes(query);
-        const matchChildren = item.children?.filter(s => s.label.toLowerCase().includes(query)) || [];
-
-        if (matchLabel || matchChildren.length > 0) {
-          return {
-            ...item,
-            children: matchLabel ? item.children : matchChildren
-          };
-        }
-        return null;
-      })
-      .filter(item => item !== null) as MenuItem[];
+    return filterProduction(items);
   }
 
   isModuleOpen(label: string): boolean {
-    if (this.searchQuery) return true;
     return this.activeModule === label;
   }
 
@@ -309,13 +380,119 @@ export class SidebarComponent implements OnInit, OnDestroy {
     return this.activeSubSubModules.has(label);
   }
 
+  /** Todas as tarefas (folhas do menu) com o caminho, para a pesquisa. */
+  private allTasks(): TaskResult[] {
+    const out: TaskResult[] = [];
+    const walk = (items: MenuItem[], path: string[], icon: string) => {
+      for (const it of items) {
+        if (it.children?.length) { walk(it.children, [...path, it.label], it.icon || icon); continue; }
+        out.push({
+          item: it, label: it.label, path: path.join(' › ') || it.label, icon: it.icon || icon || 'task',
+          available: !this.coming(it), haystack: norm([...path, it.label].join(' ')),
+        });
+      }
+    };
+    walk(this.displayedMenuItems, [], '');
+    return out;
+  }
+
+  get taskCount() { return this.allTasks().filter(t => t.available).length; }
+
   onSearch(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.searchQuery = input.value;
+    this.searchQuery = (event.target as HTMLInputElement).value;
+    this.runSearch();
+  }
+
+  private runSearch() {
+    const words = norm(this.searchQuery).split(/\s+/).filter(Boolean);
+    this.activeResult = 0;
+    if (!words.length) { this.searchResults = []; return; }
+    const score = (t: TaskResult) => {
+      const label = norm(t.label);
+      let sc = 0;
+      for (const w of words) {
+        if (!t.haystack.includes(w)) return -1;
+        sc += label.startsWith(w) ? 30 : label.split(/\s+/).some(x => x.startsWith(w)) ? 20 : label.includes(w) ? 10 : 2;
+      }
+      return sc - (t.available ? 0 : 15);
+    };
+    this.searchResults = this.allTasks().map(t => ({ t, sc: score(t) })).filter(x => x.sc >= 0)
+      .sort((a, b) => b.sc - a.sc || a.t.label.localeCompare(b.t.label)).map(x => x.t);
+  }
+
+  /** Realça o texto pesquisado no nome da tarefa. */
+  highlight(label: string): string {
+    const esc = (x: string) => x.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' } as any)[c]);
+    const words = norm(this.searchQuery).split(/\s+/).filter(Boolean);
+    const n = norm(label);
+    const marks = new Array(label.length).fill(false);
+    for (const w of words) { let i = n.indexOf(w); while (i >= 0) { for (let k = i; k < i + w.length; k++) marks[k] = true; i = n.indexOf(w, i + w.length); } }
+    let html = '', open = false;
+    for (let i = 0; i < label.length; i++) {
+      if (marks[i] && !open) { html += '<mark class="bg-yellow-200 text-inherit rounded-sm">'; open = true; }
+      if (!marks[i] && open) { html += '</mark>'; open = false; }
+      html += esc(label[i]);
+    }
+    return html + (open ? '</mark>' : '');
+  }
+
+  clearSearch() {
+    this.searchQuery = '';
+    this.searchResults = [];
+    this.searchInput?.nativeElement.focus();
+  }
+
+  onSearchKey(e: KeyboardEvent) {
+    const n = this.searchResults.length;
+    if (e.key === 'Escape') { e.preventDefault(); if (this.searchQuery) this.clearSearch(); else this.searchInput?.nativeElement.blur(); return; }
+    if (!n) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); this.activeResult = (this.activeResult + 1) % n; this.scrollToActive(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); this.activeResult = (this.activeResult - 1 + n) % n; this.scrollToActive(); }
+    else if (e.key === 'Enter') { e.preventDefault(); this.openTask(e, this.searchResults[this.activeResult]); }
+  }
+
+  private scrollToActive() {
+    setTimeout(() => this.scrollArea?.nativeElement.querySelector(`[data-result="${this.activeResult}"]`)?.scrollIntoView({ block: 'nearest' }));
+  }
+
+  openTask(e: Event, r: TaskResult) {
+    e.preventDefault();
+    if (!r?.available) return;
+    this.handleMenuItemClick(e, r.item);
+  }
+
+  /** Mostra a árvore completa de todas as tarefas no painel. */
+  showAllTasks() {
+    if (this.collapsed) this.toggleCollapsed();
+    this.searchQuery = '';
+    this.searchResults = [];
+    this.panel = 'all';
+  }
+
+  toggleTree(key: string) {
+    this.treeClosed.has(key) ? this.treeClosed.delete(key) : this.treeClosed.add(key);
+  }
+
+  expandAll(open: boolean) {
+    this.treeClosed.clear();
+    if (open) return;
+    const walk = (items: MenuItem[], path: string) => {
+      for (const it of items) if (it.children?.length) { this.treeClosed.add(path + '/' + it.label); walk(it.children, path + '/' + it.label); }
+    };
+    walk(this.displayedMenuItems, '');
+  }
+
+  /** F3 ou Ctrl+K: vai para a pesquisa de tarefas, em qualquer ecrã. */
+  @HostListener('document:keydown', ['$event'])
+  onGlobalKey(e: KeyboardEvent) {
+    const ctrlK = (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k';
+    if (!ctrlK && e.key !== 'F3') return;
+    e.preventDefault();
+    if (this.collapsed) this.toggleCollapsed();
+    setTimeout(() => { const el = this.searchInput?.nativeElement; el?.focus(); el?.select(); });
   }
 
   toggleModule(label: string) {
-    if (this.searchQuery) return;
     this.activeModule = this.activeModule === label ? null : label;
   }
 
