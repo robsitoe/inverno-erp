@@ -174,8 +174,11 @@ export class PrintTemplatesService {
 
   async forDocType(companyId: string, module: any, docType: string): Promise<PrintTemplate | null> {
     const m = this.moduleOf(module);
-    const list = (await this.list(companyId)).filter(t => t.module === m && t.docTypes.includes(String(docType || '').toUpperCase()));
-    return list.find(t => t.isDefault) || list[0] || null;
+    const all = (await this.list(companyId)).filter(t => t.module === m);
+    // Um modelo escolhido para o tipo concreto ganha a um modelo "todos os documentos do módulo" (*)
+    const exact = all.filter(t => t.docTypes.includes(String(docType || '').toUpperCase()));
+    const wide = all.filter(t => t.docTypes.includes('*'));
+    return exact.find(t => t.isDefault) || exact[0] || wide.find(t => t.isDefault) || wide[0] || null;
   }
 
   // ---------------------------------------------------------------- documentos gravados -> campos

@@ -63,7 +63,7 @@ const MODULE_TABS: { id: PrintModule; label: string; docTypes: { code: string; l
                   class="w-full text-left px-2 py-2 rounded border text-xs"
                   [ngClass]="editing?.id === t.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
             <div class="font-semibold text-gray-800">{{ t.name }} <span *ngIf="t.isDefault" class="text-[10px] text-green-700">(padrão)</span></div>
-            <div class="text-gray-500">{{ t.docTypes.join(', ') }} · v{{ t.version }}</div>
+            <div class="text-gray-500">{{ docTypesLabel(t.docTypes) }} · v{{ t.version }}</div>
           </button>
         </div>
 
@@ -79,8 +79,19 @@ const MODULE_TABS: { id: PrintModule; label: string; docTypes: { code: string; l
             </label>
           </div>
           <div>
-            <span class="text-xs font-semibold text-gray-600">Usar para</span>
-            <div class="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-semibold text-gray-600">Usar para</span>
+              <label class="flex items-center gap-1 text-xs font-semibold text-blue-700">
+                <input type="checkbox" [checked]="allDocs" (change)="setAllDocs(!allDocs)"> Todos os documentos de {{ moduleLabel }}
+              </label>
+              <ng-container *ngIf="!allDocs">
+                <button type="button" (click)="selectAllTypes(true)" class="text-[11px] text-blue-600 hover:underline">Marcar todos</button>
+                <button type="button" (click)="selectAllTypes(false)" class="text-[11px] text-blue-600 hover:underline">Limpar</button>
+              </ng-container>
+            </div>
+            <p *ngIf="allDocs" class="text-[11px] text-gray-500 mt-1">Serve para todos os tipos deste módulo, incluindo os que forem criados depois.
+              Um modelo escolhido para um tipo em concreto tem prioridade sobre este.</p>
+            <div *ngIf="!allDocs" class="flex flex-wrap gap-x-4 gap-y-1 mt-1">
               <label *ngFor="let d of currentDocTypes" class="flex items-center gap-1 text-xs text-gray-700">
                 <input type="checkbox" [checked]="editing.docTypes.includes(d.code)" (change)="toggleDocType(d.code)"> {{ d.code }} — {{ d.label }}
               </label>
@@ -279,6 +290,24 @@ export class PrintTemplatesComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  get allDocs(): boolean { return !!this.editing?.docTypes.includes('*'); }
+  get moduleLabel(): string { return MODULE_TABS.find(m => m.id === this.module)?.label || ''; }
+
+  /** "Todos os documentos do módulo" guarda-se como '*': cobre também os tipos criados depois. */
+  setAllDocs(on: boolean) {
+    if (!this.editing) return;
+    this.editing.docTypes = on ? ['*'] : this.currentDocTypes.map(d => d.code);
+  }
+
+  selectAllTypes(on: boolean) {
+    if (!this.editing) return;
+    this.editing.docTypes = on ? this.currentDocTypes.map(d => d.code) : [];
+  }
+
+  docTypesLabel(types: string[]): string {
+    return types.includes('*') ? 'Todos os documentos' : types.join(', ');
+  }
+
   toggleDocType(code: string) {
     if (!this.editing) return;
     const i = this.editing.docTypes.indexOf(code);
@@ -376,10 +405,13 @@ export class PrintTemplatesComponent implements OnInit {
         if (j.formato !== 'inverno-modelo-impressao' || !j.html) throw new Error('formato');
         if (j.module && j.module !== this.module) await this.selectModule(j.module);
         // Importado entra como modelo novo e só fica ativo depois de gravado (e validado)
-        this.editing = { module: this.module, name: String(j.name || 'Modelo importado'), docTypes: Array.isArray(j.docTypes) ? j.docTypes : [], isDefault: !!j.isDefault, html: String(j.html), css: String(j.css || '') };
+        const known = this.currentDocTypes.map(d => d.code);
+        const types = (Array.isArray(j.docTypes) ? j.docTypes : []).map((t: any) => String(t).toUpperCase()).filter((t: string) => t === '*' || known.includes(t));
+        // Por omissão, o modelo importado serve para todos os documentos do módulo (pode restringir antes de gravar)
+        this.editing = { module: this.module, name: String(j.name || 'Modelo importado'), docTypes: types.length ? types : ['*'], isDefault: j.isDefault !== false, html: String(j.html), css: String(j.css || '') };
         this.versions = []; this.previewHtml = '';
         await this.check();
-        this.toaster.showSuccess('Importar', 'Modelo carregado. Reveja e clique em Gravar.');
+        this.toaster.showSuccess('Importar', `Modelo carregado para ${this.allDocs ? 'todos os documentos de ' + this.moduleLabel : this.editing!.docTypes.join(', ')}. Reveja e clique em Gravar.`);
       } catch {
         this.toaster.showError('Importar', 'O ficheiro não é um modelo de impressão do Inverno ERP.');
       }
