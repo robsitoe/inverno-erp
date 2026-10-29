@@ -74,6 +74,7 @@ import { PaymentGatewayConfig } from './payment-gateways/entities/payment-gatewa
 import { PaymentGatewaysModule } from './payment-gateways/payment-gateways.module';
 import { AdminModule } from './admin/admin.module';
 import { PrintTemplatesModule } from './print-templates/print-templates.module';
+import { AssetsModule } from './assets/assets.module';
 
 @Module({
   imports: [
@@ -214,6 +215,7 @@ import { PrintTemplatesModule } from './print-templates/print-templates.module';
     PaymentGatewaysModule,
     AdminModule,
     PrintTemplatesModule,
+    AssetsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -50,18 +50,17 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     label: "Equipamentos e Ativos",
     icon: "construction",
-    feature: "ASSETS",
-    comingSoon: true,
+    feature: "ACCOUNTING",
     children: [
-      { label: "Ficha do Ativo", icon: "inventory" },
-      { label: "Manutenções", icon: "build_circle" },
-      { label: "Depreciações", icon: "trending_down" },
-      { label: "Seguros", icon: "security" },
-      { label: "Transferências", icon: "swap_horiz" },
-      { label: "Abates", icon: "delete" },
-      { label: "Reavaliações", icon: "update" },
-      { label: "Exploração", icon: "explore" },
-      { label: "Utilitários", icon: "build" }
+      { label: "Ficha do Ativo", icon: "inventory", view: "asset-register" },
+      { label: "Manutenções", icon: "build_circle", view: "asset-maintenance" },
+      { label: "Depreciações", icon: "trending_down", view: "asset-depreciation" },
+      { label: "Seguros", icon: "security", view: "asset-insurance" },
+      { label: "Transferências", icon: "swap_horiz", view: "asset-transfers" },
+      { label: "Abates", icon: "delete", view: "asset-disposals" },
+      { label: "Reavaliações", icon: "update", view: "asset-revaluations" },
+      { label: "Exploração", icon: "explore", view: "asset-exploration" },
+      { label: "Utilitários", icon: "build", comingSoon: true }
     ]
   },
   {

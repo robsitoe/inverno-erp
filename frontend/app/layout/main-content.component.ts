@@ -15,6 +15,7 @@ import { FinancialStatementsComponent } from '../features/accounting/financial-s
 import { JournalEntriesReviewComponent } from '../features/accounting/journal-entries-review.component';
 import { AdminToolsComponent } from '../features/admin/admin-tools.component';
 import { ArticleManagementComponent } from '../features/inventory/article-management.component';
+import { AssetsComponent } from '../features/assets/assets.component';
 import { StockMovementsComponent } from '../features/inventory/stock-movements.component';
 import { TreasuryManagementComponent } from '../features/treasury/treasury-management.component';
 import { WarehouseManagementComponent } from '../features/inventory/warehouse-management.component';
@@ -65,6 +66,7 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
   standalone: true,
   imports: [
     CommonModule,
+    AssetsComponent,
     SalesDocumentFormComponent,
     ChartOfAccountsComponent,
     LicenseManagerComponent,
@@ -214,6 +216,11 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
         Módulo Beta: funcionalidades em validação de produção.
       </div>
       <app-accounting-placeholder [viewKey]="activeView" class="w-full h-full block"></app-accounting-placeholder>
+    </ng-container>
+
+    <!-- Equipamentos e Ativos (imobilizado): todas as vistas no mesmo componente -->
+    <ng-container *ngIf="activeView.startsWith('asset-')">
+      <app-assets [view]="activeView" class="w-full h-full block"></app-assets>
     </ng-container>
 
     <!-- Inventory: Article Management -->
