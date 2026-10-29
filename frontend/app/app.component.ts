@@ -49,6 +49,7 @@ import { AuthService } from './services/auth.service';
 
 import { LicenseService, LicenseInfo } from './services/license.service';
 import { EulaGateComponent } from './features/admin/eula-gate.component';
+import { SetupWizardComponent } from './features/admin/setup-wizard.component';
 
 
 import { NavigationService } from './services/navigation.service';
@@ -73,7 +74,7 @@ import { ToasterService } from './services/toaster.service';
   standalone: true,
 
 
-  imports: [CommonModule, HeaderComponent, SidebarComponent, FooterComponent, MainContentComponent, LoginComponent, ToasterComponent, EulaGateComponent],
+  imports: [CommonModule, HeaderComponent, SidebarComponent, FooterComponent, MainContentComponent, LoginComponent, ToasterComponent, EulaGateComponent, SetupWizardComponent],
 
 
   animations: [
@@ -166,6 +167,7 @@ import { ToasterService } from './services/toaster.service';
 
     <ng-container *ngIf="isLoggedIn; else loginTpl">
       <app-eula-gate></app-eula-gate>
+      <app-setup-wizard (finished)="onSetupFinished($event)"></app-setup-wizard>
 
 
       <div @fadeSlideIn class="flex flex-col h-screen w-screen overflow-hidden bg-[#F0F0F0]">
@@ -793,6 +795,12 @@ export class AppComponent {
 
 
 
+
+  // Assistente de configuração inicial concluído: entra no ERP com a empresa criada
+  onSetupFinished(company: any) {
+    if (company) this.dataService.setActiveCompany(company);
+    this.handleLogin({ mode: 'ERP' });
+  }
 
   handleLogout() {
 

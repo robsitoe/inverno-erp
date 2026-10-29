@@ -22,3 +22,14 @@ export const VENDOR_CONTACT = {
     phone: '849354296',   // ex.: '258841234567'
     email: 'roberto.manuelsitoe@gmail.com',   // ex.: 'suporte@inverno.co.mz'
 };
+
+/**
+ * Dados de pagamento da licença, mostrados no assistente de configuração inicial ("Comprar agora").
+ * Deixar vazio esconde a linha; sem nenhum preenchido, o cliente vê só os contactos do fornecedor.
+ */
+export const PAYMENT_INFO = {
+    holder: '',   // titular, ex.: 'Roberto Sitoe'
+    mpesa: '',    // ex.: '84 935 4296'
+    emola: '',    // ex.: '86 000 0000'
+    bank: '',     // ex.: 'BCI · NIB 0008 0000 1234 5678 9012 3'
+};

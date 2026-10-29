@@ -427,7 +427,11 @@ export class LoginComponent implements OnInit {
   loadAvailableCompanies() {
     this.dataService.getCompanies().subscribe(companies => {
       this.availableCompanies = companies;
-      if (this.availableCompanies.length === 1) {
+      if (!this.availableCompanies?.length && (this.currentUser?.isAdmin || this.currentUser?.isSuperAdmin)) {
+        // Instalação nova: entra na Administração, onde abre o assistente de configuração inicial
+        this.selectedMode = 'ADMIN';
+        this.finishLogin('admin-page');
+      } else if (this.availableCompanies.length === 1) {
         this.selectCompany(this.availableCompanies[0]);
       } else {
         this.step = 'COMPANY_SELECT';

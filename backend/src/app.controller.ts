@@ -98,6 +98,12 @@ export class AppController {
         }
       }
 
+      // Sem codigo (ex.: "Dados da Empresa" numa instalacao nova): proximo codigo livre, como no assistente (001, 002...)
+      if (!company.id) {
+        const ids = (await repo.find({ select: ['id'] })).map(c => parseInt(c.id, 10)).filter(n => !isNaN(n));
+        company.id = String((ids.length ? Math.max(...ids) : 0) + 1).padStart(3, '0');
+      }
+
       // 2. Save company info in main DB
       const savedCompany = await repo.save(company);
 
