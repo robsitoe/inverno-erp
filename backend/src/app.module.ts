@@ -73,6 +73,7 @@ import { RoutePoint } from './mobile/route-point.entity';
 import { PaymentGatewayConfig } from './payment-gateways/entities/payment-gateway-config.entity';
 import { PaymentGatewaysModule } from './payment-gateways/payment-gateways.module';
 import { AdminModule } from './admin/admin.module';
+import { PrintTemplatesModule } from './print-templates/print-templates.module';
 
 @Module({
   imports: [
@@ -212,6 +213,7 @@ import { AdminModule } from './admin/admin.module';
     MobileModule,
     PaymentGatewaysModule,
     AdminModule,
+    PrintTemplatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

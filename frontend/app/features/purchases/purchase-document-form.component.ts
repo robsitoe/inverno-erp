@@ -1,3 +1,5 @@
+import { PrintTemplatesService } from '../../services/print-templates.service';
+import { copyLabel } from '../../shared/print-copy';
 import { Component, Input, HostListener, ViewEncapsulation, ChangeDetectorRef, NgZone, OnDestroy } from '@angular/core';
 import { PermissionsService } from '../../services/permissions.service';
 
@@ -1803,7 +1805,8 @@ export class PurchaseDocumentFormComponent implements OnDestroy {
     private cdr: ChangeDetectorRef,
 
 
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private printTemplates: PrintTemplatesService
 
 
   ) { }
@@ -3443,10 +3446,7 @@ if (this.currentDoc.status === WorkflowStatus.REJECTED) return;
       if (confirm('A impressão irá bloquear o documento para edições futuras. Deseja continuar?')) {
 
 
-        this.saveDocument(true, false); // Post
-
-
-        setTimeout(() => window.print(), 500);
+        this.saveDocument(true, true); // Lança e imprime depois de gravado (o modelo precisa do documento gravado)
 
 
       }
@@ -3455,7 +3455,7 @@ if (this.currentDoc.status === WorkflowStatus.REJECTED) return;
     } else {
 
 
-      setTimeout(() => window.print(), 200);
+      this.printNow(200);
 
 
     }
@@ -3691,6 +3691,13 @@ if (this.currentDoc.status === WorkflowStatus.REJECTED) return;
 
 
 
+
+  /** Imprime com o modelo da empresa (conferido no servidor); sem modelo, usa o formato normal. */
+  private printNow(delay: number) {
+    this.printTemplates.printDocument('PURCHASES', this.currentDoc?.id, copyLabel(this.printSettings?.copies)).then(res => {
+      if (res === 'no-template') setTimeout(() => window.print(), delay);
+    });
+  }
 
   saveDocument(post: boolean = false, print: boolean = false) {
 
@@ -4199,7 +4206,7 @@ if (this.currentDoc.status === WorkflowStatus.REJECTED) return;
               alert('Documento processado e enviado para a impressora.');
 
 
-              setTimeout(() => window.print(), 500);
+              this.printNow(500);
 
 
             } else {

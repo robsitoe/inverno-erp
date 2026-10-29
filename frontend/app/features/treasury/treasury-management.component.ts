@@ -1,3 +1,5 @@
+import { PrintTemplatesService } from '../../services/print-templates.service';
+import { copyLabel } from '../../shared/print-copy';
 import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { PermissionsService } from '../../services/permissions.service';
 
@@ -2669,13 +2671,10 @@ export class TreasuryManagementComponent implements OnInit {
     // We just need to ensure it's rendered with the current document/settings
 
 
-    setTimeout(() => {
-
-
-      window.print();
-
-
-    }, 100);
+    // Modelo de impressão da empresa (conferido com a base de dados no servidor); sem modelo, formato normal
+    this.printTemplates.printDocument('TREASURY', (this.documentToPrint as any)?.id || this.currentDocId, copyLabel(settings?.copies)).then(res => {
+      if (res === 'no-template') setTimeout(() => window.print(), 100);
+    });
 
 
   }
@@ -3166,7 +3165,8 @@ export class TreasuryManagementComponent implements OnInit {
     private cdr: ChangeDetectorRef,
 
 
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private printTemplates: PrintTemplatesService
 
 
   ) { }

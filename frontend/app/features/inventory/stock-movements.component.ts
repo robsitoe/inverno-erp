@@ -1,3 +1,5 @@
+import { PrintTemplatesService } from '../../services/print-templates.service';
+import { copyLabel } from '../../shared/print-copy';
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -403,7 +405,8 @@ export class StockMovementsComponent implements OnInit {
   constructor(
     private inventoryService: InventoryService,
     private dataService: DataService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private printTemplates: PrintTemplatesService
   ) { }
 
   ngOnInit() {
@@ -934,18 +937,17 @@ export class StockMovementsComponent implements OnInit {
     if (this.currentDoc.status === 'DRAFT') {
       if (confirm('A impressão irá confirmar o documento. Deseja continuar?')) {
         this.currentDoc.status = 'POSTED';
-        this.saveDocument(false).then(() => {
-          setTimeout(() => {
-            window.print();
-            // Optional: after print, we could call newDocument()
-            // this.newDocument();
-          }, 500);
-        });
+        this.saveDocument(false).then(() => this.printNow(500));
       }
-    } else {
-      setTimeout(() => {
-        window.print();
-      }, 200);
-    }
+    } else {
+      this.printNow(200);
+    }
+  }
+
+  /** Imprime com o modelo da empresa (conferido no servidor); sem modelo, usa o formato normal. */
+  private printNow(delay: number) {
+    this.printTemplates.printDocument('STOCK', this.currentDoc?.id, copyLabel(this.printSettings?.copies)).then(res => {
+      if (res === 'no-template') setTimeout(() => window.print(), delay);
+    });
   }
 }

@@ -1,3 +1,5 @@
+import { PrintTemplatesService } from '../../services/print-templates.service';
+import { copyLabel } from '../../shared/print-copy';
 import { Component, Input, HostListener, ViewChild, ChangeDetectorRef, NgZone, OnDestroy } from '@angular/core';
 import { PermissionsService } from '../../services/permissions.service';
 
@@ -2559,7 +2561,8 @@ export class SalesDocumentFormComponent implements OnDestroy {
     private cdr: ChangeDetectorRef,
 
     private ngZone: NgZone,
-    private toaster: ToasterService
+    private toaster: ToasterService,
+    private printTemplates: PrintTemplatesService
   ) {
 
     this.initializeGrid();
@@ -2942,15 +2945,11 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
 
 
-    setTimeout(() => {
-
-      window.print();
-
-      // Reset after print
-
-      // this.documentToPrint = null; 
-
-    }, 500);
+    // Modelo de impressão da empresa (conferido com a base de dados no servidor); sem modelo, formato normal
+    this.printTemplates.printDocument('SALES', this.documentToPrint?.id, copyLabel(settings?.copies)).then(res => {
+      if (res !== 'no-template') return;
+      setTimeout(() => window.print(), 500);
+    });
 
   }
 

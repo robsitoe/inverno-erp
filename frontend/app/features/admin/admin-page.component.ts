@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { AdminToolsComponent } from './admin-tools.component';
 import { AdminSeriesComponent } from './admin-series.component';
-import { LicenseManagerComponent } from './license-manager.component';
+import { LicenseManagerComponent } from './license-manager.component';
+import { PrintTemplatesComponent } from './print-templates.component';
 import { PeriodService } from '../../shared/period.service';
 import { DataService } from '../../services/data.service';
 import { environment } from '../../shared/config';
@@ -31,7 +32,7 @@ interface FiscalYear {
 @Component({
   selector: 'app-admin-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule, AdminToolsComponent, AdminSeriesComponent, LicenseManagerComponent],
+  imports: [CommonModule, FormsModule, HttpClientModule, AdminToolsComponent, AdminSeriesComponent, LicenseManagerComponent, PrintTemplatesComponent],
   template: `
     <div class="flex flex-col h-full bg-[#F0F0F0]">
       <!-- Header -->
@@ -399,6 +400,11 @@ interface FiscalYear {
           </div>
         </div>
 
+        <!-- Tab: Modelos de Impressão -->
+        <div *ngIf="activeTab === 'printing'" class="max-w-6xl mx-auto">
+          <app-print-templates></app-print-templates>
+        </div>
+
         <!-- Tab: Sistema -->
         <div *ngIf="activeTab === 'system'" class="max-w-4xl mx-auto">
           <app-admin-tools></app-admin-tools>
@@ -452,6 +458,7 @@ export class AdminPageComponent implements OnInit {
     { id: 'years', label: 'Exercícios', icon: 'calendar_month' },
     { id: 'series', label: 'Séries', icon: 'format_list_numbered' },
     { id: 'parameters', label: 'Parâmetros', icon: 'settings_applications' },
+    { id: 'printing', label: 'Modelos de Impressão', icon: 'print' },
     { id: 'maintenance', label: 'Manutenção', icon: 'build_circle' },
     { id: 'system', label: 'Sistema', icon: 'settings_system_daydream' },
     { id: 'licenses', label: 'Licenças', icon: 'verified' }

@@ -44,11 +44,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
             ? (exception.getResponse() as any).message || exception.message
             : exception instanceof Error ? exception.message : 'Internal server error';
 
+        // Detalhes estruturados que o frontend usa (ex.: lista de problemas de um modelo de impressão)
+        const body = exception instanceof HttpException ? (exception.getResponse() as any) : null;
+        const extra: Record<string, any> = {};
+        if (body && typeof body === 'object') {
+            if (Array.isArray(body.errors)) extra.errors = body.errors;
+            if (body.useDefault !== undefined) extra.useDefault = body.useDefault;
+        }
+
         response.status(status).json({
             statusCode: status,
             timestamp: new Date().toISOString(),
             path: request.url,
             message: Array.isArray(message) ? message.join(', ') : message,
+            ...extra,
         });
     }
 }
