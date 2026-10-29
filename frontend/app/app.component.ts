@@ -314,7 +314,7 @@ import { ToasterService } from './services/toaster.service';
 
 
 
-        <app-header [activeView]="activeView" (onLogout)="handleLogout()" (onNavigate)="setActiveView($event)"></app-header>
+        <app-header [activeView]="activeView" [mode]="currentMode" [isAdmin]="isAdminUser" (onLogout)="handleLogout()" (onNavigate)="setActiveView($event)" (onSwitchMode)="switchMode($event)"></app-header>
 
 
         <div class="flex flex-1 overflow-hidden relative">
@@ -795,6 +795,15 @@ export class AppComponent {
 
 
 
+
+  // Menu da conta: entrar na Administração ou voltar ao ERP (precisa de uma empresa escolhida)
+  switchMode(mode: 'ADMIN' | 'ERP') {
+    if (mode === 'ERP' && !localStorage.getItem('erp_company_info')) {
+      this.handleLogout(); // sem empresa escolhida: volta ao login para escolher
+      return;
+    }
+    this.handleLogin({ mode, initialView: mode === 'ADMIN' ? 'admin-page' : undefined });
+  }
 
   // Assistente de configuração inicial concluído: entra no ERP com a empresa criada
   onSetupFinished(company: any) {

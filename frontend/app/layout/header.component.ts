@@ -105,6 +105,12 @@ import { NavigationService } from '../services/navigation.service';
                 <span>Painel de Controlo</span>
               </button>
 
+              <!-- Administração: só para administradores; dentro dela, regresso ao ERP -->
+              <button *ngIf="isAdmin" (click)="toggleMode()"
+                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left">
+                <span class="material-symbols-outlined text-[18px] text-indigo-500">{{ mode === 'ADMIN' ? 'storefront' : 'admin_panel_settings' }}</span>
+                <span>{{ mode === 'ADMIN' ? 'Voltar ao ERP' : 'Administração' }}</span>
+              </button>
               <button (click)="changeCompany()"
                       class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left">
                 <span class="material-symbols-outlined text-[18px] text-purple-500">business</span>
@@ -138,6 +144,10 @@ import { NavigationService } from '../services/navigation.service';
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   @Input() activeView: string = 'dashboard';
+  @Input() mode: string = 'ERP';
+  @Input() isAdmin = false;
+  /** Pede ao app para mudar entre o ERP e a Administração. */
+  @Output() onSwitchMode = new EventEmitter<'ADMIN' | 'ERP'>();
   @Output() onLogout = new EventEmitter<void>();
   @Output() onNavigate = new EventEmitter<string>();
 
@@ -254,6 +264,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
   goHome() {
     this.onNavigate.emit('dashboard');
     this.userMenuOpen = false;
+  }
+
+  toggleMode() {
+    this.userMenuOpen = false;
+    this.onSwitchMode.emit(this.mode === 'ADMIN' ? 'ERP' : 'ADMIN');
   }
 
   changeCompany() {
