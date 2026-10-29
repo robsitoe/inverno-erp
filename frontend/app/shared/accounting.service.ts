@@ -1428,6 +1428,21 @@ export class AccountingService {
 
 
 
+    /**
+     * Ids genéricos usados pela tesouraria (JNL-CSH, JNL-BNK, TREASURY...) não existem na empresa:
+     * os diários têm id JNL-<código>-<empresa>. Resolve pelo tipo para o lançamento ficar no diário certo.
+     */
+    resolveJournalId(id?: string): string {
+        if (id && this.journals.some(j => j.id === id)) return id;
+        const typeById: Record<string, string> = {
+            'JNL-CSH': 'CASH', 'JNL-BNK': 'BANK', 'TREASURY': 'CASH', 'JNL-SAL': 'SALES', 'JNL-VENDAS': 'SALES',
+            'JNL-PUR': 'PURCHASES', 'JNL-GEN': 'GENERAL', 'JNL-OPS': 'OPERATIONS',
+        };
+        const type = typeById[id || ''] || 'GENERAL';
+        const found = this.journals.find(j => j.type === type) || this.journals.find(j => j.type === 'GENERAL');
+        return found?.id || id || '';
+    }
+
     getJournal(id: string): Journal | undefined {
 
 
@@ -2904,8 +2919,7 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
 
 
     createJournalEntry(entry: JournalEntry): void {
-
-
+        entry.journalId = this.resolveJournalId(entry.journalId);
         this.createManualJournalEntry(entry);
 
 

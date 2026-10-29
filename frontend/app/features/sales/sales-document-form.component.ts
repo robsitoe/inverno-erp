@@ -1575,7 +1575,8 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
   financialDiscount = 0;
 
-  paymentCondition: 'PRONTO' | 'PRAZO' = 'PRONTO';
+  // FA (tipo por omissão) é a prazo: a pronto só VD/FR, senão o recibo contaria o mesmo valor duas vezes
+  paymentCondition: 'PRONTO' | 'PRAZO' = 'PRAZO';
 
 
 
@@ -1861,13 +1862,8 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
 
 
-    // Auto-select PRONTO for VD
-
-    if (this.selectedDocType === 'VD') {
-
-      this.paymentCondition = 'PRONTO';
-
-    }
+    // Venda a dinheiro e fatura-recibo são pagas no ato; os restantes documentos ficam a prazo
+    this.paymentCondition = ['VD', 'FR'].includes(this.selectedDocType) ? 'PRONTO' : 'PRAZO';
 
 
 
