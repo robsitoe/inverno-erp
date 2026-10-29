@@ -117,7 +117,38 @@ function Read-NewLines {
 }
 function Set-Busy($busy) {
   foreach ($c in @($btnInstalar, $btnDocker, $btnIniciar, $btnParar, $tbPorta)) { $c.Enabled = -not $busy }
-  if ($busy) { $bar.Style = 'Marquee'; $bar.MarqueeAnimationSpeed = 30 } else { $bar.Style = 'Continuous'; $bar.MarqueeAnimationSpeed = 0 }
+  # A instalacao mostra percentagem; iniciar/parar sao rapidos e ficam com a barra animada
+  if ($busy -and $script:mode -ne 'instalar') { $bar.Style = 'Marquee'; $bar.MarqueeAnimationSpeed = 30 } else { $bar.Style = 'Continuous'; $bar.MarqueeAnimationSpeed = 0 }
+}
+
+# ---------- progresso da instalacao ----------
+# Percentagem estimada pelas mensagens do instalar.ps1 e do docker; entre etapas avanca devagar ate ao limite.
+$script:etapas = @(
+  @{ re = '^(A gerar segredos|Instalacao existente|Configuracao da instalacao anterior)'; pct = 5; cap = 8 },
+  @{ re = '^A iniciar o sistema'; pct = 10; cap = 38 },
+  @{ re = 'db-1\s+(Started|Running)'; pct = 45; cap = 58 },
+  @{ re = '^Dados existentes encontrados'; pct = 60; cap = 64 },
+  @{ re = 'backend-1\s+(Started|Running)'; pct = 68; cap = 70 },
+  @{ re = 'frontend-1\s+(Started|Running)'; pct = 72; cap = 74 },
+  @{ re = '^A aguardar que o sistema fique pronto'; pct = 75; cap = 94 },
+  @{ re = 'Aplicacao Desktop instalada'; pct = 96; cap = 97 },
+  @{ re = 'INSTALACAO CONCLUIDA'; pct = 98; cap = 99 }
+)
+$script:pct = 0.0; $script:pctCap = 0.0; $script:imagens = 0; $script:estadoBase = ''
+function Show-Progress {
+  $bar.Value = [int][Math]::Min(100, $script:pct)
+  $lblEstado.Text = "$([int]$script:pct)%  -  $($script:estadoBase)"
+}
+function Update-Progress($line) {
+  foreach ($e in $script:etapas) {
+    if ($line -match $e.re) { $script:pct = [Math]::Max($script:pct, $e.pct); $script:pctCap = [Math]::Max($script:pctCap, $e.cap) }
+  }
+  # docker load: tres imagens (backend, frontend, postgres)
+  if ($line -match '^Loaded image') { $script:imagens++; $script:pct = [Math]::Max($script:pct, 10 + 10 * [Math]::Min(3, $script:imagens)); $script:pctCap = [Math]::Max($script:pctCap, 44) }
+}
+function Step-Progress {
+  if ($script:pct -lt $script:pctCap) { $script:pct += [Math]::Max(0.01, ($script:pctCap - $script:pct) * 0.004) }
+  Show-Progress
 }
 function Start-Cmd($cmdLine, $mode) {
   $script:mode = $mode; $script:logPos = 0; $script:partial = ''
@@ -140,6 +171,7 @@ function Get-Diagnostico($txt, $code) {
 
 $timer.Add_Tick({
   foreach ($line in (Read-NewLines)) {
+    if ($script:mode -eq 'instalar') { Update-Progress $line.Trim() }
     $color = $null
     if ($line -match '\[X\]|rror|Falha') { $color = [System.Drawing.Color]::FromArgb(255, 140, 130) }
     elseif ($line -match '^\s*(INSTALACAO|A iniciar|A gerar|A aguardar)') { $color = [System.Drawing.Color]::FromArgb(120, 190, 255) }
@@ -148,11 +180,13 @@ $timer.Add_Tick({
     if ($line -match 'ID da instalacao:\s+([0-9a-fA-F]{8,})') { $script:res.iid = $Matches[1] }
     Log $line $color
   }
+  if ($script:mode -eq 'instalar' -and $script:proc -and -not $script:proc.HasExited) { Step-Progress }
   if ($script:proc -and $script:proc.HasExited) {
     $timer.Stop(); foreach ($l2 in (Read-NewLines)) { Log $l2 $null }
     $code = $script:proc.ExitCode; $script:proc = $null; Set-Busy $false; Refresh-Status
     if ($code -eq 0) {
       if ($script:mode -eq 'instalar') {
+        $bar.Value = 100
         $tUrl.Text = $script:res.url; $tIid.Text = $script:res.iid
         $tPass.Text = $(if ($script:res.pass) { $script:res.pass } else { '(a definida na primeira instalação)' })
         $pnl.Visible = $true; $btnAbrir.Enabled = $true
@@ -162,7 +196,7 @@ $timer.Add_Tick({
     } else {
       $full = ''; try { $full = [System.IO.File]::ReadAllText($logFile) } catch {}
       $msg = Get-Diagnostico $full $code
-      $lblEstado.ForeColor = $cRed; $lblEstado.Text = 'Falhou. Veja a mensagem.'
+      $lblEstado.ForeColor = $cRed; $lblEstado.Text = 'Falhou. Veja a mensagem.'; $bar.Value = 0
       Log ''; Log ('DIAGNÓSTICO: ' + $msg) ([System.Drawing.Color]::FromArgb(255, 200, 100))
       [System.Windows.Forms.MessageBox]::Show($msg, 'Inverno ERP - Problema', 'OK', 'Warning') | Out-Null
     }
@@ -175,7 +209,9 @@ $btnInstalar.Add_Click({
     [System.Windows.Forms.MessageBox]::Show('Indique uma porta válida (1 a 65535). Normalmente 80.', 'Inverno ERP', 'OK', 'Warning') | Out-Null; return
   }
   $log.Clear(); $script:res = @{ url = ''; pass = ''; iid = '' }; $pnl.Visible = $false
-  $lblEstado.ForeColor = [System.Drawing.Color]::FromArgb(60, 70, 85); $lblEstado.Text = 'A instalar... na primeira vez pode demorar vários minutos. Não feche a janela.'
+  $lblEstado.ForeColor = [System.Drawing.Color]::FromArgb(60, 70, 85)
+  $script:estadoBase = 'A instalar... na primeira vez pode demorar vários minutos. Não feche a janela.'
+  $script:pct = 0.0; $script:pctCap = 4.0; $script:imagens = 0; $script:mode = 'instalar'; Show-Progress
   Start-Cmd "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$script`" -Silencioso -Porta $porta" 'instalar'
 })
 $btnDocker.Add_Click({

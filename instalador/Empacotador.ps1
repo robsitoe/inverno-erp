@@ -172,6 +172,51 @@ function Read-NewLines {
   return $out
 }
 
+# ---------- progresso ----------
+# Percentagem estimada pelas etapas do empacotar.ps1 e pelos passos [servico etapa n/total] do docker build.
+# Entre etapas avanca devagar ate ao limite da etapa atual, para a barra nunca parecer parada.
+$script:etapas = @(
+  @{ re = '^A compilar a aplicacao Desktop'; pct = 2; cap = 8 },
+  @{ re = '^A compilar imagens'; pct = 10; cap = 74 },
+  @{ re = '^A descarregar a imagem do Postgres'; pct = 76; cap = 79 },
+  @{ re = '^A exportar imagens'; pct = 80; cap = 87 },
+  @{ re = '^A incluir a aplicacao de secretaria'; pct = 88; cap = 90 },
+  @{ re = '^A criar o ZIP'; pct = 91; cap = 98 },
+  @{ re = 'PACOTE PRONTO'; pct = 99; cap = 99 }
+)
+$script:pct = 0.0; $script:pctCap = 0.0; $script:passos = @{}; $script:estadoBase = ''
+
+function Show-Progress {
+  $bar.Value = [int][Math]::Min(100, $script:pct)
+  $lblEstado.Text = "$([int]$script:pct)%  -  $($script:estadoBase)"
+}
+function Reset-Progress($texto) {
+  $script:pct = 0.0; $script:pctCap = 2.0; $script:passos = @{}; $script:estadoBase = $texto
+  Show-Progress
+}
+function Update-Progress($line) {
+  foreach ($e in $script:etapas) {
+    if ($line -match $e.re) { $script:pct = [Math]::Max($script:pct, $e.pct); $script:pctCap = [Math]::Max($script:pctCap, $e.cap) }
+  }
+  if ($line -match '\[(backend|frontend) ([\w-]+) (\d+)/(\d+)\]') {
+    $k = "$($Matches[1]) $($Matches[2])"; $r = ([int]$Matches[3] - 1) / [int]$Matches[4]
+    if (-not $script:passos.ContainsKey($k) -or $script:passos[$k] -lt $r) { $script:passos[$k] = $r }
+  }
+  if ($line -match 'naming to docker\.io/inverno/(backend|frontend)') {
+    $svc = $Matches[1]
+    foreach ($k in @($script:passos.Keys)) { if ($k -like "$svc *") { $script:passos[$k] = 1.0 } }
+  }
+  if ($script:passos.Count) {
+    # 4 etapas esperadas: builder e imagem final de backend e frontend
+    $sum = 0.0; foreach ($v in $script:passos.Values) { $sum += $v }
+    $script:pct = [Math]::Max($script:pct, 10 + 64 * $sum / [Math]::Max(4, $script:passos.Count))
+  }
+}
+function Step-Progress {
+  if ($script:pct -lt $script:pctCap) { $script:pct += [Math]::Max(0.01, ($script:pctCap - $script:pct) * 0.002) }
+  Show-Progress
+}
+
 $script:tentativa = 1
 $script:maxTentativas = 3
 $script:ultimaVersao = ''
@@ -221,6 +266,7 @@ function Start-Build {
   try { Get-ChildItem $env:TEMP -Filter 'inverno-empacotador*.log' | Remove-Item -Force -ErrorAction SilentlyContinue } catch {}
   $script:logFile = Join-Path $env:TEMP ("inverno-empacotador-{0:yyyyMMdd-HHmmss}.log" -f (Get-Date))
   $script:logPos = 0; $script:partial = ''
+  Reset-Progress $script:estadoBase
   $psi = New-Object System.Diagnostics.ProcessStartInfo
   $psi.FileName = 'cmd.exe'
   $psi.Arguments = "/c chcp 65001 >nul & powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$script`" -Versao $v$($script:desktopArg) > `"$($script:logFile)`" 2>&1"
@@ -234,11 +280,12 @@ function Start-Build {
 function Set-Busy($busy) {
   $btnGerar.Enabled = -not $busy; $btnVerif.Enabled = -not $busy
   $tbVersao.Enabled = -not $busy; $chkDesk.Enabled = -not $busy; $tbTel.Enabled = -not $busy; $tbMail.Enabled = -not $busy
-  if ($busy) { $bar.Style = 'Marquee'; $bar.MarqueeAnimationSpeed = 30 } else { $bar.Style = 'Continuous'; $bar.MarqueeAnimationSpeed = 0 }
+  $bar.Style = 'Continuous'; $bar.MarqueeAnimationSpeed = 0
 }
 
 $timer.Add_Tick({
   foreach ($line in (Read-NewLines)) {
+    Update-Progress $line
     $color = $null
     if ($line -match '\[X\]|rror|ERROR|Falha') { $color = [System.Drawing.Color]::FromArgb(255, 140, 130) }
     elseif ($line -match '^(A compilar|A descarregar|A exportar|A criar|PACOTE)') { $color = [System.Drawing.Color]::FromArgb(120, 190, 255) }
@@ -246,6 +293,7 @@ $timer.Add_Tick({
     if ($line -match '([A-Za-z]:\\[^\r\n]*\.zip)') { $script:zip = $Matches[1] }
     Log $line $color
   }
+  if ($script:proc -and -not $script:proc.HasExited) { Step-Progress }
   if ($script:proc -and $script:proc.HasExited) {
     $timer.Stop()
     foreach ($l2 in (Read-NewLines)) { Log $l2 $null }
@@ -265,7 +313,7 @@ $timer.Add_Tick({
         $script:tentativa++
         Log "" $null
         Log "[!] Falhou. A tentar de novo automaticamente (tentativa $($script:tentativa) de $($script:maxTentativas))..." ([System.Drawing.Color]::FromArgb(255, 200, 100))
-        $lblEstado.Text = "A tentar de novo ($($script:tentativa)/$($script:maxTentativas))..."
+        $script:estadoBase = "A tentar de novo ($($script:tentativa)/$($script:maxTentativas))..."
         Set-Busy $true
         Start-Sleep -Seconds 5
         Start-Build
@@ -309,7 +357,7 @@ $btnGerar.Add_Click({
 
   $log.Clear(); $script:sha = ''; $script:zip = ''
   $btnPasta.Enabled = $false; $btnCopiar.Enabled = $false
-  $lblEstado.ForeColor = [System.Drawing.Color]::FromArgb(20, 32, 46); $lblEstado.Text = 'A gerar o pacote... (vários minutos; não feche esta janela)'
+  $lblEstado.ForeColor = [System.Drawing.Color]::FromArgb(20, 32, 46); $script:estadoBase = 'A gerar o pacote... (vários minutos; não feche esta janela)'
   Log "Versão $v - contacto: $tel $mail" ([System.Drawing.Color]::FromArgb(120, 190, 255))
   Set-Busy $true
 

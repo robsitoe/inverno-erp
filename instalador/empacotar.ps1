@@ -91,6 +91,7 @@ $leia = $leia -join "`r`n"
 [System.IO.File]::WriteAllText("$dest\LEIA-ME.txt", $leia, (New-Object System.Text.UTF8Encoding $false))
 
 $zip = "$dest.zip"
+Say 'A criar o ZIP do pacote...' 'Cyan'
 if (Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path "$dest\*" -DestinationPath $zip
 $h = (Get-FileHash $zip -Algorithm SHA256).Hash
