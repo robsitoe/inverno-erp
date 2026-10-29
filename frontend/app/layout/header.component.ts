@@ -250,6 +250,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
     'license-manager': 'Gestão de Licenças',
     'mobile-approvals': 'Aprovações Mobile',
     'expiry-control': 'Controlo de Validades',
+    'treasury-cash': 'Caixas',
+    'treasury-banks': 'Bancos',
+    'treasury-cheques': 'Cheques',
+    'treasury-letters': 'Letras',
+    'treasury-forecast': 'Tesouraria Previsional',
+    'financial-calculators': 'Calculadoras Financeiras',
     'expiry-extinguishers': 'Extintores',
     'payment-gateway-settings': 'Configuração de Pagamentos',
   };

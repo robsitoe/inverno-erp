@@ -16,6 +16,10 @@ import { AdminToolsComponent } from '../features/admin/admin-tools.component';
 import { ArticleManagementComponent } from '../features/inventory/article-management.component';
 import { AssetsComponent } from '../features/assets/assets.component';
 import { ExpiryControlComponent } from '../features/expiry/expiry-control.component';
+import { TreasuryAccountsComponent } from '../features/treasury/treasury-accounts.component';
+import { TreasuryInstrumentsComponent } from '../features/treasury/treasury-instruments.component';
+import { TreasuryForecastComponent } from '../features/treasury/treasury-forecast.component';
+import { FinancialCalculatorsComponent } from '../features/treasury/financial-calculators.component';
 import { VatComponent } from '../features/accounting/vat.component';
 import { PeriodCloseComponent } from '../features/accounting/period-close.component';
 import { AccountingUtilitiesComponent } from '../features/accounting/accounting-utilities.component';
@@ -71,6 +75,10 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
     CommonModule,
     AssetsComponent,
     ExpiryControlComponent,
+    TreasuryAccountsComponent,
+    TreasuryInstrumentsComponent,
+    TreasuryForecastComponent,
+    FinancialCalculatorsComponent,
     VatComponent,
     PeriodCloseComponent,
     AccountingUtilitiesComponent,
@@ -230,6 +238,20 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
     <!-- Equipamentos e Ativos (imobilizado): todas as vistas no mesmo componente -->
     <ng-container *ngIf="activeView.startsWith('asset-')">
       <app-assets [view]="activeView" class="w-full h-full block"></app-assets>
+    </ng-container>
+
+    <!-- Tesouraria: caixas, bancos, cheques, letras, previsional e calculadoras -->
+    <ng-container *ngIf="activeView === 'treasury-cash' || activeView === 'treasury-banks'">
+      <app-treasury-accounts [type]="activeView === 'treasury-banks' ? 'BANK' : 'CASH'" class="w-full h-full block"></app-treasury-accounts>
+    </ng-container>
+    <ng-container *ngIf="activeView === 'treasury-cheques' || activeView === 'treasury-letters'">
+      <app-treasury-instruments [kind]="activeView === 'treasury-letters' ? 'LETRA' : 'CHEQUE'" class="w-full h-full block"></app-treasury-instruments>
+    </ng-container>
+    <ng-container *ngIf="activeView === 'treasury-forecast'">
+      <app-treasury-forecast class="w-full h-full block"></app-treasury-forecast>
+    </ng-container>
+    <ng-container *ngIf="activeView === 'financial-calculators'">
+      <app-financial-calculators class="w-full h-full block"></app-financial-calculators>
     </ng-container>
 
     <!-- Controlo de validades e prazos -->
@@ -566,6 +588,12 @@ export class MainContentComponent {
       'vehicle-reconciliation',
       'mobile-approvals',
       'expiry-control',
+      'treasury-cash',
+      'treasury-banks',
+      'treasury-cheques',
+      'treasury-letters',
+      'treasury-forecast',
+      'financial-calculators',
       'expiry-extinguishers'
     ];
     return knownViews.includes(this.activeView);
