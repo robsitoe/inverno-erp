@@ -44,7 +44,17 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # 2. Configuracao (.env) - criada UMA vez, com segredos aleatorios. Nunca e substituida.
+# Os dados (volume com nome fixo) sobrevivem a uma reinstalacao noutra pasta; por isso guarda-se
+# uma copia do .env fora da pasta de instalacao, para a reinstalacao usar os mesmos segredos.
 $envFile = Join-Path $root '.env'
+$envBackupDir = Join-Path $env:LOCALAPPDATA 'Inverno ERP'
+$envBackup = Join-Path $envBackupDir 'instalacao.env'
+docker volume inspect inverno-erp_postgres_data *> $null
+$dataExists = ($LASTEXITCODE -eq 0)
+if (-not (Test-Path $envFile) -and $dataExists -and (Test-Path $envBackup)) {
+  Copy-Item $envBackup $envFile -Force
+  Say 'Configuracao da instalacao anterior recuperada.' 'Green'
+}
 $firstInstall = -not (Test-Path $envFile)
 if ($firstInstall) {
   Say 'A gerar segredos de seguranca...'
@@ -73,6 +83,11 @@ if ($firstInstall) {
     [System.IO.File]::WriteAllText($envFile, ($lines -join "`r`n") + "`r`n", (New-Object System.Text.UTF8Encoding $false))
   }
 }
+try {
+  New-Item -ItemType Directory -Path $envBackupDir -Force | Out-Null
+  Copy-Item $envFile $envBackup -Force
+  icacls $envBackup /inheritance:r /grant:r "$($env:USERNAME):(R,W)" | Out-Null
+} catch {}
 $cfg = @{}
 Get-Content $envFile | ForEach-Object { if ($_ -match '^\s*([A-Z_]+)\s*=\s*(.*)$') { $cfg[$Matches[1]] = $Matches[2].Trim() } }
 $port = if ($cfg['APP_PORT']) { $cfg['APP_PORT'] } else { '80' }
@@ -81,12 +96,30 @@ $url = if ($port -eq '80') { 'http://localhost' } else { "http://localhost:$port
 # 3. Imagens: pre-compiladas (se fornecidas) ou construcao local
 $tar = Join-Path $root 'imagens\inverno-imagens.tar'
 Say 'A iniciar o sistema (pode demorar alguns minutos na primeira vez)...'
-if (Test-Path $tar) {
-  docker load -i $tar
-  docker compose -f docker-compose.prod.yml --env-file .env up -d --no-build
-} else {
-  docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+$buildArg = '--build'
+if (Test-Path $tar) { docker load -i $tar; $buildArg = '--no-build' }
+
+# Base de dados primeiro: com dados de uma instalacao anterior, o Postgres mantem a palavra-passe
+# antiga (POSTGRES_PASSWORD so conta na primeira vez). Alinha-a com o .env antes de arrancar o backend.
+docker compose -f docker-compose.prod.yml --env-file .env up -d $buildArg db
+if ($LASTEXITCODE -ne 0) { Say '[X] Falha ao iniciar a base de dados. Verifique o Docker Desktop e tente de novo.' 'Red'; exit 1 }
+$dbUser = if ($cfg['DB_USERNAME']) { $cfg['DB_USERNAME'] } else { 'postgres' }
+$dbReady = $false
+for ($i = 0; $i -lt 40; $i++) {
+  docker compose -f docker-compose.prod.yml --env-file .env exec -T db pg_isready -U $dbUser *> $null
+  if ($LASTEXITCODE -eq 0) { $dbReady = $true; break }
+  Start-Sleep -Seconds 3
 }
+if (-not $dbReady) { Say '[X] A base de dados nao arrancou. Veja: docker compose -f docker-compose.prod.yml logs db' 'Red'; exit 1 }
+if ($dataExists) {
+  # Ligacao local dentro do container (sem palavra-passe); os segredos sao hexadecimais
+  "ALTER USER `"$dbUser`" WITH PASSWORD '$($cfg['DB_PASSWORD'])';" |
+    docker compose -f docker-compose.prod.yml --env-file .env exec -T db psql -q -U $dbUser -d postgres -v ON_ERROR_STOP=1 *> $null
+  if ($LASTEXITCODE -eq 0) { Say 'Dados existentes encontrados: acesso a base de dados atualizado.' 'Green' }
+  else { Say '[!] Nao foi possivel alinhar a palavra-passe da base de dados existente.' 'Yellow' }
+}
+
+docker compose -f docker-compose.prod.yml --env-file .env up -d $buildArg
 if ($LASTEXITCODE -ne 0) { Say '[X] Falha ao iniciar. Verifique o Docker Desktop e tente de novo.' 'Red'; exit 1 }
 
 # 4. Esperar pelo sistema e obter o ID desta instalacao
@@ -103,7 +136,9 @@ if (-not $iid) { Say '[!] O sistema ainda nao respondeu. Veja: docker compose -f
 # 5. Resumo
 $out = Join-Path $root 'INSTALACAO-CONCLUIDA.txt'
 $lines = @('INVERNO ERP - dados da instalacao', '', "Endereco:        $url", 'Utilizador:      admin')
-if ($firstInstall) { $lines += "Palavra-passe:   $($cfg['INITIAL_ADMIN_PASSWORD'])   (altere-a no primeiro acesso)" }
+$showPass = $firstInstall -and -not $dataExists
+if ($showPass) { $lines += "Palavra-passe:   $($cfg['INITIAL_ADMIN_PASSWORD'])   (altere-a no primeiro acesso)" }
+if ($firstInstall -and $dataExists) { $lines += "Palavra-passe:   a da instalacao anterior (os dados existentes foram mantidos)" }
 $lines += "ID da instalacao: $iid", '', 'Envie o ID da instalacao ao fornecedor para receber a chave de licenca.',
           'GUARDE estes dados num local seguro e APAGUE este ficheiro.'
 [System.IO.File]::WriteAllText($out, ($lines -join "`r`n"), (New-Object System.Text.UTF8Encoding $false))
@@ -132,7 +167,7 @@ Say ''
 Say '  INSTALACAO CONCLUIDA' 'Green'
 Say "  Endereco:     $url"
 Say '  Utilizador:   admin'
-if ($firstInstall) { Say "  Palavra-passe: $($cfg['INITIAL_ADMIN_PASSWORD'])" 'Yellow' }
+if ($showPass) { Say "  Palavra-passe: $($cfg['INITIAL_ADMIN_PASSWORD'])" 'Yellow' }
 Say "  ID da instalacao: $iid" 'Cyan'
 Say '  (dados guardados em INSTALACAO-CONCLUIDA.txt - guarde e apague)'
 Say ''
