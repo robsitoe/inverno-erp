@@ -3584,24 +3584,12 @@ if (missingAccounts.length > 0) {
             if (account) {
 
 
-                const amount = (account.type === 'ASSET' || account.type === 'EXPENSE')
-
-
-                    ? (line.debit - line.credit)
-
-
-                    : (line.credit - line.debit);
-
-
-
-
-
-                // Update this account and walk up the tree
-
-
+                // Update this account and walk up the tree; each account uses its OWN nature
+                // (debit-nature accounts sit under credit-nature parents, e.g. 4.4.3.2 IVA dedutível under 4.4)
                 while (account) {
-
-
+                    const amount = (account.type === 'ASSET' || account.type === 'EXPENSE')
+                        ? (line.debit - line.credit)
+                        : (line.credit - line.debit);
                     account.balance += amount;
 
 

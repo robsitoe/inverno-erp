@@ -259,12 +259,15 @@ export class AccountingService {
         continue;
       }
 
-      const upperType = (account.type || '').toUpperCase();
-      const isAssetSide = ['ASSET', 'EXPENSE', 'ATIVO', 'GASTO', 'CUSTO'].includes(upperType);
-      const amount = isAssetSide ? (delta.debit - delta.credit) : (delta.credit - delta.debit);
+      // Cada conta usa a SUA natureza: há contas devedoras sob mães credoras (ex.: 4.4.3.2 IVA dedutível
+      // em 4.4 Estado). Usar o sinal da conta lançada nos pais desequilibrava o balanço em 2x o valor.
+      const signedFor = (type: string) => {
+        const isAssetSide = ['ASSET', 'EXPENSE', 'ATIVO', 'GASTO', 'CUSTO'].includes((type || '').toUpperCase());
+        return isAssetSide ? (delta.debit - delta.credit) : (delta.credit - delta.debit);
+      };
 
       // Atualizar conta atual
-      account.balance = Number(account.balance) + amount;
+      account.balance = Number(account.balance) + signedFor(account.type);
       await accRepo.save(account);
 
       // Atualizar pais recursivamente
@@ -272,7 +275,7 @@ export class AccountingService {
       while (parentId) {
         const parent = await accRepo.findOne({ where: { id: parentId } });
         if (!parent) break;
-        parent.balance = Number(parent.balance) + amount;
+        parent.balance = Number(parent.balance) + signedFor(parent.type);
         await accRepo.save(parent);
         parentId = parent.parentId;
       }
