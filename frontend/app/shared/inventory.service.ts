@@ -991,6 +991,18 @@ export class InventoryService {
     // Articles
 
 
+    /** Volta a carregar os artigos da empresa ativa a partir do servidor e avisa os ecrãs. */
+    async refreshArticles(): Promise<void> {
+        if (!this.activeCompanyId) return;
+        try {
+            this.allArticles = await lastValueFrom(this.dataService.getArticles());
+        } catch {
+            return; // servidor indisponível: mantém o que já estava carregado
+        }
+        this.articles = this.filterByCompany(this.allArticles);
+        this.articlesUpdated$.next();
+    }
+
     getArticles(): Article[] {
 
 

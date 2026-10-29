@@ -354,6 +354,9 @@ export class ArticleManagementComponent implements OnInit, OnDestroy {
         this.loadArticles();
       })
     );
+    // A lista em memória pode ter ficado vazia (ex.: servidor a reiniciar quando a empresa foi carregada):
+    // ao abrir o ecrã, volta sempre a pedir os artigos ao servidor.
+    this.inventoryService.refreshArticles();
   }
 
   ngOnDestroy() {

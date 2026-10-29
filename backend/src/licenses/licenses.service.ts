@@ -359,35 +359,41 @@ export class LicensesService {
     }
 
     async getStatus(companyId: string): Promise<LicenseStatusResponse> {
-        // Licença da empresa, ou licença da INSTALAÇÃO (companyId '*') que cobre todas as empresas.
-        const license = (await this.licenseRepo.findOne({ where: { companyId } }))
-            || (await this.licenseRepo.findOne({ where: { companyId: '*' } }));
+        // Licença da empresa e licença da INSTALAÇÃO (companyId '*') que cobre todas as empresas.
+        // Ambas são consideradas: uma chave antiga/inválida da empresa não pode esconder uma chave
+        // válida da instalação (era o que fazia a licença "voltar a DEMO" depois de ativada).
+        const candidates = [
+            await this.licenseRepo.findOne({ where: { companyId } }),
+            companyId !== '*' ? await this.licenseRepo.findOne({ where: { companyId: '*' } }) : null,
+        ].filter((l): l is License => !!l);
 
-        if (!license) {
-            return this.buildDemoStatus(companyId);
-        }
-
-        // A validade vem SEMPRE do token assinado — a tabela pode ser editada pelo cliente.
-        try {
-            const p = verifyLicenseToken<any>(license.licenseToken || '', true);
-            if (p.cid !== '*' && p.cid !== companyId) throw new Error('empresa diferente');
-            if (p.iid) {
-                const here = await this.getInstallationId();
-                if (here && here !== p.iid) throw new Error('instalação diferente');
+        let fallback: LicenseStatusResponse | null = null;
+        for (const license of candidates) {
+            // A validade vem SEMPRE do token assinado — a tabela pode ser editada pelo cliente.
+            try {
+                const p = verifyLicenseToken<any>(license.licenseToken || '', true);
+                if (p.cid !== '*' && p.cid !== companyId) throw new Error('empresa diferente');
+                if (p.iid) {
+                    const here = await this.getInstallationId();
+                    if (here && here !== p.iid) throw new Error('instalação diferente');
+                }
+                license.expiresAt = new Date(p.exp * 1000);
+                license.gracePeriodHours = p.gracePeriodHours ?? license.gracePeriodHours;
+                if (p.plan) license.plan = p.plan;
+                if (Array.isArray(p.features) && p.features.length) license.features = p.features;
+            } catch (e: any) {
+                this.logger.warn(`Licença ${license.companyId} sem assinatura válida para ${companyId} (${e?.message || 'token inválido'}) — ignorada.`);
+                continue;
             }
-            license.expiresAt = new Date(p.exp * 1000);
-            license.gracePeriodHours = p.gracePeriodHours ?? license.gracePeriodHours;
-            if (p.plan) license.plan = p.plan;
-            if (Array.isArray(p.features) && p.features.length) license.features = p.features;
-        } catch {
-            this.logger.warn(`Licença sem assinatura válida para ${companyId} — a tratar como não licenciado.`);
-            return this.buildDemoStatus(companyId);
+
+            // Sync status based on current time (server time — tamper-proof)
+            await this.syncStatus(license);
+            const status = this.buildStatusResponse(license);
+            if (status.valid) return status;
+            fallback = fallback || status; // expirada/revogada: só se nenhuma outra for válida
         }
 
-        // Sync status based on current time (server time — tamper-proof)
-        await this.syncStatus(license);
-
-        return this.buildStatusResponse(license);
+        return fallback || this.buildDemoStatus(companyId);
     }
 
     // ─── REVOKE (Admin only) ──────────────────────────────────────────────────
