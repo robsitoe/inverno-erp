@@ -150,6 +150,11 @@ export interface LicensePlanDefinition {
 
 
     isPopular?: boolean;
+    monthly?: number;
+    maxUsers?: number | null;
+    maxCompanies?: number | null;
+    notIncluded?: string[];
+    support?: string;
 
 
 }

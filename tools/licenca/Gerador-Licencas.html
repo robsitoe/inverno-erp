@@ -109,11 +109,11 @@ h3{font-size:14px;margin:18px 0 8px}
         <div>
           <label for="plano">Plano</label>
           <select id="plano">
-            <option value="LITE">LITE — Vendas e Inventário</option>
-            <option value="STANDARD">STANDARD — + Compras, Tesouraria</option>
-            <option value="PRO" selected>PRO — + Contabilidade, RH</option>
-            <option value="ENTERPRISE">ENTERPRISE — Todos os módulos</option>
-            <option value="DEMO">DEMO — Avaliação</option>
+            <option value="LITE">Essencial — Vendas, Inventário/Gás, Tesouraria (7.500 MT/ano)</option>
+            <option value="STANDARD" selected>Negócio — + Compras, RH e salários (18.000 MT/ano)</option>
+            <option value="PRO">Profissional — + Contabilidade (36.000 MT/ano)</option>
+            <option value="ENTERPRISE">Empresarial — Tudo, sem limites (72.000 MT/ano)</option>
+            <option value="DEMO">Avaliação — todos os módulos</option>
           </select>
         </div>
         <div>
@@ -133,8 +133,8 @@ h3{font-size:14px;margin:18px 0 8px}
           <div id="iidErr" class="err" hidden>O ID tem 32 caracteres (0-9 e a-f).</div>
           <label class="check" style="margin-top:8px"><input type="checkbox" id="semIid"> Ainda não tenho o ID — a chave servirá em qualquer instalação (menos segura)</label>
         </div>
-        <div><label for="maxUsers">Utilizadores máx. (opcional)</label><input id="maxUsers" type="number" min="1"></div>
-        <div><label for="maxEmpresas">Empresas máx. (opcional)</label><input id="maxEmpresas" type="number" min="1"></div>
+        <div><label for="maxUsers">Utilizadores máx. (do plano; +1 = +2.400 MT/ano)</label><input id="maxUsers" type="number" min="1"></div>
+        <div><label for="maxEmpresas">Empresas máx. (do plano)</label><input id="maxEmpresas" type="number" min="1"></div>
         <div><label for="preco">Valor pago (MZN)</label><input id="preco" type="number" min="0" step="0.01"></div>
         <div><label for="ref">Referência do pagamento</label><input id="ref" autocomplete="off" placeholder="M-Pesa / e-Mola / transferência"></div>
       </div>
@@ -269,6 +269,17 @@ h3{font-size:14px;margin:18px 0 8px}
 const PUB_SPKI_B64 = 'MCowBQYDK2VwAyEATge7c/+ZR+E7S8PvUIUhsJU3Vc663ZzLV1UOL0GfiDU=';
 const STORE = 'inverno_licencas_v1';
 const $ = id => document.getElementById(id);
+/* Mesma tabela de backend/src/licenses/license-plans.ts: limites e preço anual de cada plano (vazio = sem limite). */
+const PLANOS = {
+  LITE: { users: 2, empresas: 1, preco: 7500 }, STANDARD: { users: 5, empresas: 1, preco: 18000 },
+  PRO: { users: 10, empresas: 3, preco: 36000 }, ENTERPRISE: { users: '', empresas: '', preco: 72000 }, DEMO: { users: '', empresas: '', preco: 0 },
+};
+const PRECO_UTILIZADOR_EXTRA = 2400;
+function aplicarPlano() {
+  const p = PLANOS[$('plano').value]; if (!p) return;
+  $('maxUsers').value = p.users; $('maxEmpresas').value = p.empresas; $('preco').value = p.preco || '';
+}
+document.addEventListener('DOMContentLoaded', () => { $('plano').addEventListener('change', aplicarPlano); if (!$('maxUsers').value) aplicarPlano(); });
 let privKey = null, lastSelectedClient = '', prevLicense = null;
 let db = { clientes: [], licencas: [], pacotes: [], entregas: [] };
 

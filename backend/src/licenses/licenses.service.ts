@@ -14,6 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import { License, LicensePlan, LicenseStatus } from './entities/license.entity';
 import { GenerateLicenseDto } from './dto/generate-license.dto';
 import { ListLicensesQueryDto } from './dto/manage-license.dto';
+import { LICENSE_PLANS, LicensePlanDefinition, planDefinition, featuresForPlan, DEMO_FEATURES } from './license-plans';
 
 export const EULA_VERSION = '1.0';
 
@@ -75,66 +76,7 @@ const PROMO_CODES: PromoCode[] = [
     }
 ];
 
-export interface LicensePlanDefinition {
-    id: LicensePlan;
-    name: string;
-    description: string;
-    price: number;
-    billing: string;
-    features: string[];
-    benefitSummary: string[];
-    icon: string;
-    color: string;
-    isPopular?: boolean;
-}
-
-const LICENSE_PLANS_CONFIG: LicensePlanDefinition[] = [
-    {
-        id: LicensePlan.LITE,
-        name: 'PLAN LOJA / GÁS',
-        description: 'Foco em Vendas e Stock',
-        price: 3500,
-        billing: 'Anual por Empresa',
-        features: ['SALES', 'INVENTORY', 'BASIC'],
-        benefitSummary: ['Vendas de Balcão', 'Controlo de Stock Simples', '1 Empresa + 1 Utilizador'],
-        icon: 'store',
-        color: 'green'
-    },
-    {
-        id: LicensePlan.STANDARD,
-        name: 'PLAN ARMAZÉM',
-        description: 'Foco em Distribuição',
-        price: 8500,
-        billing: 'Anual por Empresa',
-        features: ['SALES', 'INVENTORY', 'PURCHASES', 'TREASURY', 'BASIC'],
-        benefitSummary: ['Compras e Fornecedores', 'Gestão de Armazém', '3 Utilizadores'],
-        icon: 'warehouse',
-        color: 'blue'
-    },
-    {
-        id: LicensePlan.PRO,
-        name: 'PLAN INDÚSTRIA',
-        description: 'Contabilidade Completa',
-        price: 15000,
-        billing: 'Anual por Empresa',
-        features: ['ACCOUNTING', 'INVENTORY', 'SALES', 'PURCHASES', 'TREASURY', 'HR'],
-        benefitSummary: ['Contabilidade e Fiscal', 'Tesouraria Avançada', '5 Utilizadores'],
-        icon: 'business',
-        color: 'purple',
-        isPopular: true
-    },
-    {
-        id: LicensePlan.ENTERPRISE,
-        name: 'PLAN ENTERPRISE',
-        description: 'Gestão VIP',
-        price: 50000,
-        billing: 'Anual com Suporte VIP',
-        features: ['ALL'],
-        benefitSummary: ['Utilizadores ILIMITADOS', 'Multi-Empresa', 'Suporte VIP 24/7'],
-        icon: 'corporate_fare',
-        color: 'amber'
-    }
-];
+export type { LicensePlanDefinition } from './license-plans';
 
 @Injectable()
 export class LicensesService {
@@ -150,7 +92,7 @@ export class LicensesService {
     ) { }
 
     async getAvailablePlans(): Promise<LicensePlanDefinition[]> {
-        return LICENSE_PLANS_CONFIG;
+        return LICENSE_PLANS;
     }
 
     async validatePromoCode(code: string): Promise<PromoCode | null> {
@@ -168,6 +110,9 @@ export class LicensesService {
     async generate(dto: GenerateLicenseDto, issuedBy: string): Promise<{ token: string; license: License }> {
         const now = new Date();
         const features = dto.features ?? this.defaultFeaturesForPlan(dto.plan);
+        const planDef = planDefinition(dto.plan);
+        if (dto.maxUsers === undefined && planDef?.maxUsers) dto.maxUsers = planDef.maxUsers;
+        if (dto.maxCompanies === undefined && planDef?.maxCompanies) dto.maxCompanies = planDef.maxCompanies;
         const gracePeriodHours = dto.gracePeriodHours ?? 72;
 
         // Upsert: if company already has a license, update it without losing validity history
@@ -245,7 +190,7 @@ export class LicensesService {
     async subscribe(companyId: string, plan: LicensePlan): Promise<LicenseStatusResponse> {
         this.logger.log(`Auto-subscribing company ${companyId} to plan ${plan}`);
 
-        const planConfig = LICENSE_PLANS_CONFIG.find(p => p.id === plan);
+        const planConfig = planDefinition(plan);
         if (!planConfig && plan !== LicensePlan.DEMO) {
             throw new BadRequestException('Plano de licença inválido.');
         }
@@ -262,6 +207,8 @@ export class LicensesService {
             plan,
             durationDays: plan === LicensePlan.DEMO ? 30 : 365,
             features: planConfig?.features || this.defaultFeaturesForPlan(plan),
+            maxUsers: planConfig?.maxUsers ?? undefined,
+            maxCompanies: planConfig?.maxCompanies ?? undefined,
             price: planConfig?.price || 0,
         };
 
@@ -308,8 +255,8 @@ export class LicensesService {
         license.status = LicenseStatus.ACTIVE;
         license.expiresAt = new Date((payload.exp as number) * 1000);
         license.features = payload.features?.length ? payload.features : this.defaultFeaturesForPlan(payload.plan);
-        license.maxUsers = payload.maxUsers;
-        license.maxCompanies = payload.maxCompanies;
+        license.maxUsers = payload.maxUsers ?? planDefinition(payload.plan)?.maxUsers ?? undefined;
+        license.maxCompanies = payload.maxCompanies ?? planDefinition(payload.plan)?.maxCompanies ?? undefined;
         license.gracePeriodHours = payload.gracePeriodHours ?? 168;
 
         // Update activation IP
@@ -329,6 +276,7 @@ export class LicensesService {
         const rows = await this.licenseRepo.find();
         let maxUsers: number | undefined;
         let maxCompanies: number | undefined;
+        let unlimitedUsers = false, unlimitedCompanies = false;
         for (const r of rows) {
             try {
                 const p = verifyLicenseToken<any>(r.licenseToken || '', true);
@@ -337,11 +285,14 @@ export class LicensesService {
                     const here = await this.getInstallationId();
                     if (here && here !== p.iid) continue;
                 }
-                if (p.maxUsers) maxUsers = Math.max(maxUsers ?? 0, p.maxUsers);
-                if (p.maxCompanies) maxCompanies = Math.max(maxCompanies ?? 0, p.maxCompanies);
+                const def = planDefinition(p.plan);
+                const u = p.maxUsers ?? def?.maxUsers ?? null;
+                const c = p.maxCompanies ?? def?.maxCompanies ?? null;
+                if (u === null) unlimitedUsers = true; else maxUsers = Math.max(maxUsers ?? 0, u);
+                if (c === null) unlimitedCompanies = true; else maxCompanies = Math.max(maxCompanies ?? 0, c);
             } catch { /* ignora licenças inválidas */ }
         }
-        return { maxUsers, maxCompanies };
+        return { maxUsers: unlimitedUsers ? undefined : maxUsers, maxCompanies: unlimitedCompanies ? undefined : maxCompanies };
     }
 
     async assertCanAddUser(currentUsers: number): Promise<void> {
@@ -616,7 +567,7 @@ export class LicensesService {
             companyName: companyId,
             expiresAt: expires,
             daysRemaining: Math.max(0, Math.ceil(msLeft / 86400000)),
-            features: ['SALES', 'PURCHASES', 'BASIC', 'HR'],
+            features: DEMO_FEATURES,
             inGracePeriod: false,
             gracePeriodEndsAt: expires,
         };
@@ -640,19 +591,6 @@ export class LicensesService {
     }
 
     private defaultFeaturesForPlan(plan: LicensePlan): string[] {
-        switch (plan) {
-            case LicensePlan.DEMO:
-                return ['SALES', 'PURCHASES', 'BASIC', 'HR'];
-            case LicensePlan.LITE:
-                return ['SALES', 'INVENTORY', 'BASIC'];
-            case LicensePlan.STANDARD:
-                return ['SALES', 'INVENTORY', 'PURCHASES', 'TREASURY', 'BASIC'];
-            case LicensePlan.PRO:
-                return ['ACCOUNTING', 'INVENTORY', 'SALES', 'PURCHASES', 'TREASURY', 'HR'];
-            case LicensePlan.ENTERPRISE:
-                return ['ALL'];
-            default:
-                return ['BASIC'];
-        }
+        return featuresForPlan(plan);
     }
 }

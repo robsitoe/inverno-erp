@@ -184,7 +184,7 @@ import { LicenseService } from '../../services/license.service';
             </div>
 
             <div *ngIf="licenseChoice === 'TRIAL'" class="rounded-lg bg-amber-50 border border-amber-200 p-4 text-amber-900 text-xs leading-relaxed">
-              Tem <b>{{ trialDays }} dias</b> de avaliação com os módulos principais. No fim do período, o sistema
+              Tem <b>{{ trialDays }} dias</b> de avaliação com todos os módulos. No fim do período, o sistema
               exige uma chave de licença válida para continuar. Pode ativar ou comprar a qualquer momento em
               Administração &gt; Licença.
             </div>
@@ -196,7 +196,8 @@ import { LicenseService } from '../../services/license.service';
                         [ngClass]="selectedPlan?.id === p.id ? 'border-blue-600 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300'">
                   <div class="text-xs font-bold text-gray-800">{{ p.name }}</div>
                   <div class="text-lg font-bold text-blue-700">{{ p.price | number:'1.0-0' }} MT</div>
-                  <div class="text-[11px] text-gray-500">{{ p.billing }}</div>
+                  <div class="text-[11px] text-gray-500">{{ p.billing }}<span *ngIf="p.monthly"> · {{ p.monthly | number:'1.0-0' }} MT/mês</span></div>
+                  <div class="text-[11px] text-gray-600 mt-1">{{ p.description }}</div>
                   <ul class="mt-2 text-[11px] text-gray-600 space-y-0.5">
                     <li *ngFor="let b of p.benefitSummary">• {{ b }}</li>
                   </ul>
