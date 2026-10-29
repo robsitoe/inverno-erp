@@ -403,15 +403,19 @@ export class PrintTemplatesComponent implements OnInit {
       try {
         const j = JSON.parse(String(reader.result));
         if (j.formato !== 'inverno-modelo-impressao' || !j.html) throw new Error('formato');
-        if (j.module && j.module !== this.module) await this.selectModule(j.module);
-        // Importado entra como modelo novo e só fica ativo depois de gravado (e validado)
+        // Importa para o módulo aberto (o mesmo ficheiro pode servir em Vendas e em Compras);
+        // os tipos do ficheiro só contam se existirem neste módulo. Entra como modelo novo e só fica ativo depois de gravado (e validado).
+        const fromOther = !!j.module && j.module !== this.module;
         const known = this.currentDocTypes.map(d => d.code);
-        const types = (Array.isArray(j.docTypes) ? j.docTypes : []).map((t: any) => String(t).toUpperCase()).filter((t: string) => t === '*' || known.includes(t));
+        const types = fromOther ? [] : (Array.isArray(j.docTypes) ? j.docTypes : []).map((t: any) => String(t).toUpperCase()).filter((t: string) => t === '*' || known.includes(t));
         // Por omissão, o modelo importado serve para todos os documentos do módulo (pode restringir antes de gravar)
         this.editing = { module: this.module, name: String(j.name || 'Modelo importado'), docTypes: types.length ? types : ['*'], isDefault: j.isDefault !== false, html: String(j.html), css: String(j.css || '') };
         this.versions = []; this.previewHtml = '';
         await this.check();
-        this.toaster.showSuccess('Importar', `Modelo carregado para ${this.allDocs ? 'todos os documentos de ' + this.moduleLabel : this.editing!.docTypes.join(', ')}. Reveja e clique em Gravar.`);
+        const origin = fromOther ? ` (o ficheiro era de ${MODULE_TABS.find(m => m.id === j.module)?.label || j.module})` : '';
+        const target = this.allDocs ? 'todos os documentos de ' + this.moduleLabel : this.editing!.docTypes.join(', ');
+        if (this.errors.length) this.toaster.showError('Importar', `Modelo carregado em ${this.moduleLabel}${origin}, mas precisa de ajustes para este módulo: veja os erros indicados.`);
+        else this.toaster.showSuccess('Importar', `Modelo carregado para ${target}${origin}. Reveja e clique em Gravar.`);
       } catch {
         this.toaster.showError('Importar', 'O ficheiro não é um modelo de impressão do Inverno ERP.');
       }
