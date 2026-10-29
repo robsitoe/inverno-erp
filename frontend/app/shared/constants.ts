@@ -199,6 +199,7 @@ export const MENU_ITEMS: MenuItem[] = [
     children: [
       { label: "Movimento Geral Diário", icon: "edit_note", view: "gas-movement" },
       { label: "Mapa de Inventário", icon: "inventory_2", view: "gas-inventory" },
+      { label: "Análises", icon: "rule", view: "gas-analysis" },
       { label: "Planeamento de Entregas", icon: "local_shipping", view: "delivery-planning" },
       { label: "Carga & Descarga", icon: "forklift", view: "vehicle-load" },
       { label: "Reconciliação de Viaturas", icon: "fact_check", view: "vehicle-reconciliation" },

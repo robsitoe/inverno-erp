@@ -94,7 +94,7 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
       <!-- Interaction Blanket for NOT_STRTED -->
 
 
-      <div *ngIf="!control || control?.status === 'NOT_STRTED'" class="fixed inset-0 z-[150] bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center animate-in fade-in duration-500 no-print">
+      <div *ngIf="(activeTab === 'MOVEMENT' || activeTab === 'INVENTORY') && (!control || control?.status === 'NOT_STRTED')" class="fixed inset-0 z-[150] bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center animate-in fade-in duration-500 no-print">
 
 
          <div class="bg-white p-10 rounded-3xl shadow-2xl border border-blue-200 text-center max-w-md space-y-6 transform animate-in zoom-in-95 duration-300">
@@ -150,7 +150,7 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
              <div class="p-1.5 bg-blue-600 rounded text-white italic font-black text-sm tracking-tighter shadow-inner">GESt-GS</div>
               <div class="flex flex-col">
                  <h1 class="text-xs font-black text-gray-600 uppercase tracking-widest leading-none">
-                    {{ activeTab === 'MOVEMENT' ? 'Movimento Geral Diário' : (activeTab === 'INVENTORY' ? 'Mapa de Inventário Global' : 'Relatórios e Estatísticas') }}
+                    {{ activeTab === 'MOVEMENT' ? 'Movimento Geral Diário' : (activeTab === 'INVENTORY' ? 'Mapa de Inventário Global' : activeTab === 'ANALYSIS' ? 'Análise Diária' : 'Relatórios e Estatísticas') }}
                  </h1>
                  <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter mt-0.5">Gestão de Armazém e Caixa</span>
               </div>
@@ -173,6 +173,9 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
               </button>
               <button (click)="activeTab = 'STATS'; loadStatistics()" [class]="activeTab === 'STATS' ? 'bg-blue-600 text-white shadow-md scale-105' : 'text-gray-500 hover:text-blue-600 hover:bg-white/80'" class="px-4 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all transform duration-200 flex items-center gap-1.5">
                  <app-icon name="trending_up" [size]="14"></app-icon> Estatísticas
+              </button>
+              <button (click)="activeTab = 'ANALYSIS'; loadAnalysis()" [class]="activeTab === 'ANALYSIS' ? 'bg-blue-600 text-white shadow-md scale-105' : 'text-gray-500 hover:text-blue-600 hover:bg-white/80'" class="px-4 py-1.5 text-[9px] font-black uppercase rounded-lg transition-all transform duration-200 flex items-center gap-1.5 border-l border-gray-100">
+                 <app-icon name="rule" [size]="14"></app-icon> Análises
               </button>
            </div>
 
@@ -455,7 +458,7 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
                         </div>
                      </div>
                      <div class="flex justify-between items-center border-t border-gray-100 pt-2 px-1">
-                        <span class="text-[9px] font-bold uppercase text-gray-500">Moedas</span>
+                        <span class="text-[9px] font-bold uppercase text-gray-500" title="Valor das moedas e notas que não estão na lista acima">Outras moedas (valor)</span>
                         <input type="number" [(ngModel)]="cashCoins" (change)="saveStocks()" class="w-20 text-right font-black font-mono text-[10px] border-none p-0 bg-transparent">
                      </div>
                      <div class="bg-amber-100 p-2 rounded-lg border border-amber-200">
@@ -473,6 +476,12 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
                            <span class="text-[8px] font-black uppercase text-blue-500 ml-1">Vendas POS</span>
                            <input type="number" [(ngModel)]="cashPOS" (change)="saveStocks()" class="w-full text-right font-black font-mono text-[11px] bg-blue-50 border border-blue-100 rounded-lg p-1.5 focus:bg-white text-blue-700">
                         </div>
+                        <div class="grid grid-cols-3 gap-1">
+                           <div *ngFor="let w of mobileWallets" class="flex flex-col">
+                              <span class="text-[8px] font-black uppercase text-violet-500 ml-1">{{ w.label }}</span>
+                              <input type="number" [(ngModel)]="cashMobile[w.key]" (change)="saveStocks()" class="w-full text-right font-black font-mono text-[10px] bg-violet-50 border border-violet-100 rounded-lg p-1 focus:bg-white text-violet-700">
+                           </div>
+                        </div>
                      </div>
                   </div>
               </div>
@@ -489,7 +498,9 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
                            <th class="p-1 border-r border-gray-50 text-left">Item</th>
                            <th class="p-1 border-r border-gray-50 w-8">Sai.</th>
                            <th class="p-1 border-r border-gray-50 w-8">Ent.</th>
-                           <th class="p-1 w-8">Vnd.</th>
+                           <th class="p-1 border-r border-gray-50 w-8">Vnd.</th>
+                           <th class="p-1 border-r border-gray-50 w-14">Valor</th>
+                           <th class="p-1 w-10">Doc.</th>
                         </tr>
                      </thead>
                      <tbody class="divide-y divide-gray-50">
@@ -503,8 +514,16 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
                            <td class="p-0 border-r border-gray-50">
                               <input type="number" [(ngModel)]="k.ing" (change)="saveStocks()" class="w-full border-none p-1.5 bg-transparent text-center text-blue-600 font-bold focus:bg-white">
                            </td>
-                           <td class="p-0 relative">
+                           <td class="p-0 border-r border-gray-50">
                               <input type="number" [(ngModel)]="k.sale" (change)="saveStocks()" class="w-full border-none p-1.5 bg-transparent text-center text-emerald-600 font-black focus:bg-white">
+                           </td>
+                           <td class="p-0 border-r border-gray-50">
+                              <input type="number" [(ngModel)]="k.value" (change)="saveStocks()" class="w-full border-none p-1.5 bg-transparent text-right font-mono focus:bg-white" title="Valor da venda (MT)">
+                           </td>
+                           <td class="p-0 relative">
+                              <select [(ngModel)]="k.doc" (change)="saveStocks()" class="w-full border-none p-1 bg-transparent text-[8px] font-bold focus:bg-white" title="VD = venda a dinheiro (entra na caixa); FT = fatura; GR = guia">
+                                 <option value="VD">VD</option><option value="FT">FT</option><option value="GR">GR</option>
+                              </select>
                               <button (click)="removeKit(i); saveStocks()" class="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-rose-500"><app-icon name="close" [size]="10"></app-icon></button>
                            </td>
                         </tr>
@@ -514,12 +533,35 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
                            <td class="p-2 border-r border-emerald-100 text-left uppercase text-[8px]">TOTAIS</td>
                            <td class="p-2 border-r border-emerald-100">{{ getKitSum('out') }}</td>
                            <td class="p-2 border-r border-emerald-100">{{ getKitSum('ing') }}</td>
-                           <td class="p-2">{{ getKitSum('sale') }}</td>
+                           <td class="p-2 border-r border-emerald-100">{{ getKitSum('sale') }}</td>
+                           <td class="p-2 border-r border-emerald-100 text-right font-mono">{{ getKitSum('value') | number:'1.2-2' }}</td>
+                           <td class="p-2"></td>
                         </tr>
                      </tfoot>
                   </table>
               </div>
             </div>
+
+           <!-- NOTAS DO DIA -->
+           <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden no-print -mt-6 mb-10">
+              <div class="bg-gray-100 p-2 font-black text-[10px] border-b border-gray-200 uppercase text-slate-800 flex items-center gap-2">
+                 <app-icon name="sticky_note_2" [size]="14"></app-icon> Observações do Dia
+                 <span class="font-bold normal-case text-gray-400">(ex.: "Edmilson levou 1x9 e deixou 1x14")</span>
+              </div>
+              <div class="p-2 space-y-1">
+                 <div *ngFor="let n of dayNotes; let i = index" class="flex items-start gap-2 text-[10px] bg-slate-50 border border-slate-100 rounded p-1.5 group">
+                    <span class="font-mono text-gray-400 shrink-0">{{ n.time }}</span>
+                    <span class="font-bold text-gray-500 shrink-0">{{ n.user }}</span>
+                    <span class="flex-1 text-gray-800">{{ n.text }}</span>
+                    <button *ngIf="control?.status !== 'CLOSED'" (click)="removeNote(i)" class="opacity-0 group-hover:opacity-100 text-rose-500"><app-icon name="close" [size]="10"></app-icon></button>
+                 </div>
+                 <div *ngIf="control?.status !== 'CLOSED'" class="flex gap-2">
+                    <input [(ngModel)]="newNote" (keydown.enter)="addNote()" placeholder="Escreva uma observação e prima Enter..." class="flex-1 border border-gray-200 rounded px-2 py-1 text-[10px] focus:ring-1 focus:ring-blue-500 outline-none">
+                    <button (click)="addNote()" class="bg-blue-600 text-white px-3 rounded text-[9px] font-black uppercase">Adicionar</button>
+                 </div>
+                 <p *ngIf="!dayNotes.length && control?.status === 'CLOSED'" class="text-[10px] text-gray-400 italic">Sem observações.</p>
+              </div>
+           </div>
          </div>
 <ng-container *ngIf="activeTab === 'INVENTORY'">
              <div class="print-a4 bg-white p-4 font-sans text-black overflow-auto min-h-screen">
@@ -839,6 +881,86 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
                 </div>
              </div>
           </ng-container>
+
+    <!-- ===== TAB: ANÁLISES (como a folha "Analises" do mapa) ===== -->
+    <ng-container *ngIf="activeTab === 'ANALYSIS'">
+      <div class="p-4 space-y-4">
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-wrap items-end gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">De</label>
+            <input type="date" [(ngModel)]="analysisRange.from" class="h-8 px-2 border border-gray-300 rounded-lg text-xs">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Até</label>
+            <input type="date" [(ngModel)]="analysisRange.to" class="h-8 px-2 border border-gray-300 rounded-lg text-xs">
+          </div>
+          <button (click)="loadAnalysis()" [disabled]="analysisLoading" class="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg disabled:bg-blue-300">
+            {{ analysisLoading ? 'A analisar...' : 'Analisar' }}</button>
+          <label class="flex items-center gap-1.5 text-xs text-gray-600 h-8"><input type="checkbox" [(ngModel)]="analysisOnlyIssues"> Só dias com problemas</label>
+          <button *ngIf="analysis" (click)="exportAnalysisCsv()" class="h-8 px-3 border border-gray-300 rounded-lg text-xs font-bold bg-white hover:bg-gray-50 ml-auto">Exportar CSV</button>
+        </div>
+
+        <div *ngIf="analysis" class="grid grid-cols-2 lg:grid-cols-6 gap-3">
+          <div class="bg-white rounded-xl border border-gray-200 p-3"><div class="text-[10px] font-bold text-gray-500 uppercase">Dias registados</div>
+            <div class="text-xl font-black text-gray-800">{{ analysis.totals.days }}</div><div class="text-[10px] text-gray-400">{{ analysis.totals.closed }} fechados</div></div>
+          <div class="bg-white rounded-xl border p-3" [ngClass]="analysis.totals.withIssues ? 'border-rose-300' : 'border-gray-200'"><div class="text-[10px] font-bold text-gray-500 uppercase">Dias com problemas</div>
+            <div class="text-xl font-black" [ngClass]="analysis.totals.withIssues ? 'text-rose-600' : 'text-emerald-600'">{{ analysis.totals.withIssues }}</div>
+            <div class="text-[10px] text-gray-400">{{ analysis.totals.continuityBreaks }} quebra(s) de continuidade</div></div>
+          <div class="bg-white rounded-xl border p-3" [ngClass]="analysis.missing.length ? 'border-amber-300' : 'border-gray-200'"><div class="text-[10px] font-bold text-gray-500 uppercase">Dias sem registo</div>
+            <div class="text-xl font-black" [ngClass]="analysis.missing.length ? 'text-amber-600' : 'text-emerald-600'">{{ analysis.missing.length }}</div><div class="text-[10px] text-gray-400">sem contar domingos</div></div>
+          <div class="bg-white rounded-xl border border-gray-200 p-3"><div class="text-[10px] font-bold text-gray-500 uppercase">Garrafas vendidas</div>
+            <div class="text-xl font-black text-gray-800">{{ analysis.totals.cylindersSold }}</div>
+            <div class="text-[10px] text-gray-400 truncate"><span *ngFor="let k of keysOf(analysis.totals.salesByType); let last = last">{{ k }}: {{ analysis.totals.salesByType[k] }}{{ last ? '' : ' · ' }}</span></div></div>
+          <div class="bg-white rounded-xl border border-gray-200 p-3"><div class="text-[10px] font-bold text-gray-500 uppercase">VD · Faturas</div>
+            <div class="text-base font-black text-gray-800">{{ analysis.totals.vds | number:'1.0-0' }}</div><div class="text-[10px] text-gray-400">Faturas {{ analysis.totals.invoices | number:'1.0-0' }} · Banco {{ analysis.totals.bank | number:'1.0-0' }}</div></div>
+          <div class="bg-white rounded-xl border p-3" [ngClass]="analysis.totals.cashDifference ? 'border-rose-300' : 'border-gray-200'"><div class="text-[10px] font-bold text-gray-500 uppercase">Diferença de caixa acumulada</div>
+            <div class="text-xl font-black" [ngClass]="analysis.totals.cashDifference < 0 ? 'text-rose-600' : analysis.totals.cashDifference > 0 ? 'text-amber-600' : 'text-emerald-600'">{{ analysis.totals.cashDifference | number:'1.2-2' }}</div></div>
+        </div>
+
+        <div *ngIf="analysis?.missing?.length" class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+          <b>Dias úteis sem movimento registado:</b>
+          <button *ngFor="let d of analysis.missing" (click)="goToDay(d)" class="ml-1 underline hover:text-amber-950">{{ d | date:'dd/MM' }}</button>
+        </div>
+
+        <div *ngIf="analysis" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-x-auto">
+          <table class="w-full text-[11px]">
+            <thead class="bg-gray-50 text-gray-600 text-[10px] uppercase">
+              <tr><th class="p-2 text-left">Data</th><th class="p-2 text-left">Estado</th><th class="p-2 text-left">Vendidas</th>
+                <th class="p-2 text-right">VD</th><th class="p-2 text-right">Faturas</th><th class="p-2 text-right">Banco</th><th class="p-2 text-right">Despesas</th>
+                <th class="p-2 text-right">Dif. caixa</th><th class="p-2 text-left">Continuidade do stock</th><th class="p-2 text-left">Fundo de maneio</th><th class="p-2"></th></tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr *ngFor="let d of analysisRows" class="hover:bg-blue-50/40 align-top">
+                <td class="p-2 font-bold whitespace-nowrap"><span class="text-gray-400 font-normal">{{ weekday(d.date) }}</span> {{ d.date | date:'dd/MM/yyyy' }}</td>
+                <td class="p-2"><span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase"
+                    [ngClass]="d.status === 'CLOSED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'">{{ d.status === 'CLOSED' ? 'Fechado' : 'Aberto' }}</span>
+                  <div class="text-[9px] text-gray-400">{{ d.closedBy || d.openedBy }}</div></td>
+                <td class="p-2"><span *ngFor="let k of keysOf(d.salesByType)" class="inline-block mr-1 mb-0.5 px-1 rounded bg-gray-100 text-[10px]">{{ k }}: <b>{{ d.salesByType[k] }}</b></span>
+                  <span *ngIf="!d.cylindersSold" class="text-gray-300">—</span></td>
+                <td class="p-2 text-right font-mono">{{ d.vds | number:'1.2-2' }}</td>
+                <td class="p-2 text-right font-mono">{{ d.invoices | number:'1.2-2' }}</td>
+                <td class="p-2 text-right font-mono">{{ d.bank | number:'1.2-2' }}</td>
+                <td class="p-2 text-right font-mono">{{ d.expenses | number:'1.2-2' }}</td>
+                <td class="p-2 text-right font-mono font-bold" [ngClass]="d.cashDifference === null ? 'text-gray-300' : (d.cashDifference | number:'1.2-2') === '0.00' ? 'text-emerald-600' : 'text-rose-600'"
+                    [title]="d.cashDifference === null ? 'Dia gravado antes desta versão: grave-o de novo para calcular' : 'Esperado ' + (d.expected | number:'1.2-2') + ' · Em gaveta ' + (d.physical | number:'1.2-2')">
+                  {{ d.cashDifference === null ? 'n/d' : (d.cashDifference | number:'1.2-2') }}</td>
+                <td class="p-2">
+                  <span *ngIf="!d.previousDate" class="text-gray-300">primeiro dia</span>
+                  <span *ngIf="d.previousDate && !d.continuity.length" class="text-emerald-600 font-bold">✓ igual ao fecho de {{ d.previousDate | date:'dd/MM' }}</span>
+                  <div *ngFor="let c of d.continuity" class="text-rose-600">{{ c.type }} {{ c.field }}: fecho {{ c.expected }} → abertura {{ c.found }}</div></td>
+                <td class="p-2">
+                  <span *ngIf="!keysOf(d.maneioDiff).length" class="text-emerald-600 font-bold">✓</span>
+                  <div *ngFor="let k of keysOf(d.maneioDiff)" class="text-rose-600">{{ k }}: {{ d.maneioDiff[k] > 0 ? '+' : '' }}{{ d.maneioDiff[k] }}</div></td>
+                <td class="p-2 text-right whitespace-nowrap">
+                  <span *ngIf="d.notes" class="text-[9px] text-gray-500 mr-1" title="Observações do dia">📝 {{ d.notes }}</span>
+                  <button (click)="goToDay(d.date)" class="text-blue-600 font-bold text-[10px] hover:underline">Abrir</button></td>
+              </tr>
+              <tr *ngIf="!analysisRows.length"><td colspan="11" class="p-6 text-center text-gray-400">{{ analysisOnlyIssues ? 'Nenhum dia com problemas neste período.' : 'Sem dias registados neste período.' }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
 
     <!-- ===== TAB: ESTATÍSTICAS ===== -->
     <ng-container *ngIf="activeTab === 'STATS'">
@@ -1178,7 +1300,14 @@ export class GasControlComponent implements OnInit, OnDestroy {
    control: any = null;
 
 
-   @Input() activeTab: 'MOVEMENT' | 'INVENTORY' | 'STATS' = 'MOVEMENT';
+   @Input() activeTab: 'MOVEMENT' | 'INVENTORY' | 'STATS' | 'ANALYSIS' = 'MOVEMENT';
+   analysis: any = null;
+   analysisLoading = false;
+   analysisOnlyIssues = false;
+   analysisRange: { from: string, to: string } = {
+      from: new Date(new Date().setDate(1)).toLocaleDateString('en-CA'),
+      to: new Date().toLocaleDateString('en-CA')
+   };
    statsData: any = null;
    statsLoading = false;
    statsRange: { from: string, to: string } = {
@@ -1216,10 +1345,17 @@ export class GasControlComponent implements OnInit, OnDestroy {
    extraIncome: number = 0;
 
 
-   denominations = [1000, 500, 200, 100, 50, 20];
+   denominations = [1000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
 
 
-   cashNotes: { [val: number]: number } = { 1000: 0, 500: 0, 200: 0, 100: 0, 50: 0, 20: 0 };
+   cashNotes: { [val: number]: number } = { 1000: 0, 500: 0, 200: 0, 100: 0, 50: 0, 20: 0, 10: 0, 5: 0, 2: 0, 1: 0 };
+
+   /** Recebimentos por carteira móvel (contam como dinheiro recebido, como o POS). */
+   mobileWallets = [{ key: 'mpesa', label: 'M-Pesa' }, { key: 'emola', label: 'e-Mola' }, { key: 'mkesh', label: 'mKesh' }];
+   cashMobile: { [key: string]: number } = { mpesa: 0, emola: 0, mkesh: 0 };
+
+   dayNotes: { time: string, user: string, text: string }[] = [];
+   newNote = '';
 
 
    cashCoins: number = 0;
@@ -1239,7 +1375,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
    dailyExpenses: { description: string, value: number }[] = [];
 
-   kitMovements: { name: string, out: number, ing: number, sale: number }[] = [];
+   kitMovements: { name: string, out: number, ing: number, sale: number, value?: number, doc?: string }[] = [];
 
 
    cautionPrev: { [typeName: string]: number } = {};
@@ -1329,6 +1465,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
                this.lastInitializedCompanyId = company.id;
                this.initModule();
                this.loadEntities();
+               if (this.activeTab === 'ANALYSIS') this.loadAnalysis();
             }
          })
 
@@ -1598,7 +1735,9 @@ export class GasControlComponent implements OnInit, OnDestroy {
             this.openingCash = footers.openingCash || this.openingCash;
 
 
-            this.cashNotes = footers.cashNotes || { 1000: 0, 500: 0, 200: 0, 100: 0, 50: 0, 20: 0 };
+            this.cashNotes = { 1000: 0, 500: 0, 200: 0, 100: 0, 50: 0, 20: 0, 10: 0, 5: 0, 2: 0, 1: 0, ...(footers.cashNotes || {}) };
+            this.cashMobile = { mpesa: 0, emola: 0, mkesh: 0, ...(footers.cashMobile || {}) };
+            this.dayNotes = footers.notes || [];
 
 
             this.cashCoins = footers.cashCoins || 0;
@@ -1719,6 +1858,8 @@ export class GasControlComponent implements OnInit, OnDestroy {
          dailyExpenses: this.dailyExpenses,
 
          kitMovements: this.kitMovements,
+         cashMobile: this.cashMobile,
+         notes: this.dayNotes,
 
          externalEmpties: this.externalEmpties,
          cautionIn: this.cautionIn,
@@ -1734,7 +1875,19 @@ export class GasControlComponent implements OnInit, OnDestroy {
          openingCash: this.openingCash,
          extraIncome: this.extraIncome,
 
-         closingBalance: drawerCash // Saldo que herda para amanhã (gaveta)
+         closingBalance: drawerCash, // Saldo que herda para amanhã (gaveta)
+
+         // Resumo do fecho, usado pela Análise Diária
+         summary: {
+            expected: this.getExpectedBalance(),
+            physical: this.getPhysicalTotal(),
+            discrepancy: this.getDiscrepancy(),
+            maneioDiff: this.cylinderTypes.reduce((acc: any, t: any) => {
+               // Só os tamanhos com contagem física do fundo de maneio (sem contagem não há diferença a apurar)
+               if (Number(this.physicalManeio[t.name]) > 0) acc[t.name] = this.getManeioDifference(t.name);
+               return acc;
+            }, {})
+         }
 
       };
 
@@ -2107,7 +2260,8 @@ export class GasControlComponent implements OnInit, OnDestroy {
    getPhysicalTotal(): number {
 
 
-      const digital = (Number(this.cashPOS) || 0) + this.getBankTotal();
+      // O depósito no banco sai da gaveta (já é descontado no Esperado); aqui só entram os meios digitais
+      const digital = (Number(this.cashPOS) || 0) + this.getMobileTotal();
 
 
       return this.getCashOnlyTotal() + digital;
@@ -2121,7 +2275,7 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
    getExpectedBalance() {
 
-      const recpt = (this.getGlobalTotal() + this.getCollectionsTotal() + (Number(this.extraIncome) || 0));
+      const recpt = (this.getGlobalTotal() + this.getCollectionsTotal() + this.getKitCashSales() + (Number(this.extraIncome) || 0));
       return (Number(this.openingCash) || 0) + recpt - this.getExpensesTotal() - this.getBankTotal() - (Number(this.cashHandover) || 0);
 
    }
@@ -2139,7 +2293,65 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
    removeKit(i: number) { this.kitMovements.splice(i, 1); }
 
-   getKitSum(field: 'out' | 'ing' | 'sale') { return this.kitMovements.reduce((acc, k) => acc + (Number(k[field]) || 0), 0); }
+   getKitSum(field: 'out' | 'ing' | 'sale' | 'value') { return this.kitMovements.reduce((acc, k) => acc + (Number(k[field]) || 0), 0); }
+
+   /** Kits vendidos a dinheiro (VD) entram na caixa. */
+   getKitCashSales() { return this.kitMovements.filter(k => (k.doc || 'VD') === 'VD').reduce((acc, k) => acc + (Number(k.value) || 0), 0); }
+
+   getMobileTotal() { return this.mobileWallets.reduce((acc, w) => acc + (Number(this.cashMobile[w.key]) || 0), 0); }
+
+   addNote() {
+      const text = this.newNote.trim();
+      if (!text) return;
+      const user = JSON.parse(localStorage.getItem('erp_current_user') || '{}');
+      this.dayNotes.push({ time: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }), user: user.username || user.name || '', text });
+      this.newNote = '';
+      this.saveStocks();
+   }
+
+   removeNote(i: number) { this.dayNotes.splice(i, 1); this.saveStocks(); }
+
+   keysOf(o: any): string[] { return Object.keys(o || {}); }
+
+   weekday(date: string): string { return ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][new Date(date + 'T12:00:00').getDay()]; }
+
+   get analysisRows(): any[] {
+      const days = this.analysis?.days || [];
+      if (!this.analysisOnlyIssues) return days;
+      return days.filter((d: any) => d.continuity.length || (d.cashDifference !== null && Math.abs(d.cashDifference) >= 0.01) || Object.keys(d.maneioDiff || {}).length);
+   }
+
+   loadAnalysis() {
+      const cid = this.dataService.getCompanyId();
+      if (!cid) return;
+      this.analysisLoading = true;
+      this.gasService.getAnalysis(this.analysisRange.from, this.analysisRange.to, cid).subscribe({
+         next: (data) => { this.analysis = data; this.analysisLoading = false; this.cdr.detectChanges(); },
+         error: () => { this.analysisLoading = false; this.toaster.showError('Erro', 'Não foi possível calcular a análise.'); this.cdr.detectChanges(); }
+      });
+   }
+
+   /** Abre o Movimento Geral Diário desse dia. */
+   goToDay(date: string) {
+      this.selectedDate = date;
+      this.activeTab = 'MOVEMENT';
+      this.loadData();
+   }
+
+   exportAnalysisCsv() {
+      const esc = (v: any) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      const head = ['Data', 'Estado', 'Garrafas vendidas', ...this.analysis.types.map((t: string) => 'Vendidas ' + t), 'VD', 'Faturas', 'Guias', 'Banco', 'Despesas', 'Esperado', 'Em gaveta', 'Diferença caixa', 'Continuidade', 'Fundo de maneio', 'Observações'];
+      const rows = this.analysisRows.map((d: any) => [d.date, d.status === 'CLOSED' ? 'Fechado' : 'Aberto', d.cylindersSold, ...this.analysis.types.map((t: string) => d.salesByType[t] || 0),
+         d.vds, d.invoices, d.guides, d.bank, d.expenses, d.expected ?? '', d.physical ?? '', d.cashDifference ?? '',
+         d.continuity.map((c: any) => c.type + ' ' + c.field + ': ' + c.expected + '→' + c.found).join('; ') || 'OK',
+         Object.entries(d.maneioDiff || {}).map(([k, v]) => k + ': ' + v).join('; ') || 'OK', d.notes]);
+      const csv = '\uFEFF' + [head, ...rows].map(l => l.map(esc).join(';')).join('\r\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      a.download = 'analise-gas-' + this.analysisRange.from + '-a-' + this.analysisRange.to + '.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+   }
 
 
    addDamagedLog() { this.damagedLog.unshift({ typeName: this.cylinderTypes[0]?.name, fault: '', qty: 0 }); }

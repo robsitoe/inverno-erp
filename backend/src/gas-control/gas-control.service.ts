@@ -434,6 +434,113 @@ export class GasControlService {
     return stats;
   }
 
+  /**
+   * Análise diária (como a folha "Analises" do mapa): continuidade do stock entre dias,
+   * vendas por tamanho, valores e diferenças de caixa e do fundo de maneio, e dias sem registo.
+   */
+  async getAnalysis(from: string, to: string, companyId?: string) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const controlRepo = await this.getRepo(GasDailyControl, this.defaultControlRepo, cid);
+    const entryRepo = await this.getRepo(GasDailyEntry, this.defaultEntryRepo, cid);
+    const iso = (d: any) => (d instanceof Date ? d.toISOString() : String(d)).slice(0, 10);
+
+    const controls = (await controlRepo.createQueryBuilder('c')
+      .where('c.date >= :from AND c.date <= :to AND c.companyId = :cid', { from, to, cid })
+      .orderBy('c.date', 'ASC').getMany()).map(c => ({ ...c, date: iso(c.date) }));
+    const before = await controlRepo.createQueryBuilder('c')
+      .where('c.date < :from AND c.companyId = :cid', { from, cid })
+      .orderBy('c.date', 'DESC').getOne();
+
+    const types = await this.getCylinderTypes(cid as string);
+    const typeName = new Map(types.map(t => [t.id, t.name]));
+    const entries = controls.length ? await entryRepo.createQueryBuilder('e')
+      .where('e.controlId IN (:...ids) AND e.companyId = :cid', { ids: controls.map(c => c.id), cid }).getMany() : [];
+
+    const num = (v: any) => Number(v) || 0;
+    const sum = (list: any[], f: (x: any) => number) => list.reduce((a, x) => a + f(x), 0);
+    const fields: [string, string][] = [['gpl', 'Cheias'], ['empty', 'Vazias'], ['damaged', 'Avariadas']];
+
+    let prev: any = before ? { ...before, date: iso(before.date) } : null;
+    const days = controls.map(c => {
+      const dayEntries = entries.filter(e => e.controlId === c.id && !e.isAdj);
+      const customer = dayEntries.filter(e => e.entryType === 'CUSTOMER');
+      const footers = c.finalStock?.footers || {};
+
+      // Continuidade: o stock inicial de hoje tem de ser o final do último dia registado
+      const continuity: { type: string; field: string; expected: number; found: number }[] = [];
+      if (prev?.finalStock) {
+        for (const t of types) {
+          for (const [f, label] of fields) {
+            const expected = num(prev.finalStock?.[t.name]?.[f]);
+            const found = num(c.initialStock?.[t.name]?.[f]);
+            if (expected !== found) continuity.push({ type: t.name, field: label, expected, found });
+          }
+        }
+      }
+
+      const salesByType: Record<string, number> = {};
+      for (const t of types) {
+        const q = sum(customer.filter(e => e.cylinderTypeId === t.id), e => num(e.s_gpl) + num(e.vz_vend));
+        if (q) salesByType[t.name] = q;
+      }
+      const s = footers.summary || {};
+      const maneioDiff: Record<string, number> = {};
+      for (const [k, v] of Object.entries(s.maneioDiff || {})) if (num(v)) maneioDiff[k] = num(v);
+
+      const day = {
+        date: c.date, status: c.status, openedBy: c.openedBy || null, closedBy: c.closedBy || null,
+        previousDate: prev?.date || null,
+        continuity,
+        salesByType,
+        cylindersSold: Object.values(salesByType).reduce((a, b) => a + b, 0),
+        vds: sum(customer.filter(e => !e.invoice && !e.gr), e => num(e.totalAmount)),
+        invoices: sum(customer.filter(e => e.invoice), e => num(e.totalAmount)),
+        guides: sum(customer.filter(e => e.gr), e => num(e.totalAmount)),
+        bank: sum(footers.bankDeposits || [], (b: any) => num(b.value)),
+        expenses: sum(footers.dailyExpenses || [], (x: any) => num(x.value)),
+        // Só existe nos dias gravados depois desta versão (o ecrã guarda o resumo do fecho de caixa)
+        expected: s.expected ?? null,
+        physical: s.physical ?? null,
+        cashDifference: s.discrepancy ?? null,
+        maneioDiff,
+        notes: (footers.notes || []).length,
+      };
+      prev = c;
+      return day;
+    });
+
+    // Dias úteis sem registo (domingos não contam)
+    const registered = new Set(controls.map(c => c.date));
+    const missing: string[] = [];
+    const end = new Date(to + 'T12:00:00Z');
+    for (let d = new Date(from + 'T12:00:00Z'); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+      const k = d.toISOString().slice(0, 10);
+      if (d.getUTCDay() !== 0 && !registered.has(k) && k <= new Date().toISOString().slice(0, 10)) missing.push(k);
+    }
+
+    const issues = (d: any) => d.continuity.length > 0 || (d.cashDifference !== null && Math.abs(d.cashDifference) >= 0.01) || Object.keys(d.maneioDiff).length > 0;
+    return {
+      period: { from, to },
+      types: types.map(t => t.name),
+      days,
+      missing,
+      totals: {
+        days: days.length,
+        closed: days.filter(d => d.status === 'CLOSED').length,
+        withIssues: days.filter(issues).length,
+        continuityBreaks: days.filter(d => d.continuity.length).length,
+        cylindersSold: sum(days, d => d.cylindersSold),
+        vds: sum(days, d => d.vds),
+        invoices: sum(days, d => d.invoices),
+        guides: sum(days, d => d.guides),
+        bank: sum(days, d => d.bank),
+        expenses: sum(days, d => d.expenses),
+        cashDifference: sum(days, d => num(d.cashDifference)),
+        salesByType: types.reduce((acc, t) => { const q = sum(days, d => num(d.salesByType[t.name])); if (q) acc[t.name] = q; return acc; }, {} as Record<string, number>),
+      },
+    };
+  }
+
   private async propagateStockToFollowingDays(date: string, finalStock: any, companyId: string, repo: any) {
     let currentDate = new Date(date);
     currentDate.setUTCHours(12, 0, 0, 0);

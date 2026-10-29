@@ -75,6 +75,16 @@ export class GasControlController {
         return this.gasService.getStatistics(from, to, companyId);
     }
 
+    @Get('analysis')
+    @ApiOperation({ summary: 'Análise diária: continuidade do stock, vendas e diferenças' })
+    getAnalysis(
+        @Query('from') from: string,
+        @Query('to') to: string,
+        @Query('companyId') companyId?: string,
+    ) {
+        return this.gasService.getAnalysis(from, to, companyId);
+    }
+
     @Post('daily/resync-all')
     @ApiOperation({ summary: 'Resync all past gas control days with inventory' })
     reSyncAllDays(@Query('companyId') companyId?: string) {

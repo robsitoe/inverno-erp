@@ -222,6 +222,10 @@ export class GasService {
     getStatistics(from: string, to: string, companyId: string): Observable<any> {
         return this.http.get<any>(`${this.apiUrl}/statistics?from=${from}&to=${to}&companyId=${companyId}`);
     }
+
+    getAnalysis(from: string, to: string, companyId: string): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/analysis?from=${from}&to=${to}&companyId=${companyId}`);
+    }
 }
 
 

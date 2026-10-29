@@ -382,6 +382,11 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
       <app-gas-control activeTab="INVENTORY" class="w-full h-full block"></app-gas-control>
     </ng-container>
 
+    <!-- GESt - GAS Análise diária -->
+    <ng-container *ngIf="activeView === 'gas-analysis'">
+      <app-gas-control activeTab="ANALYSIS" class="w-full h-full block"></app-gas-control>
+    </ng-container>
+
     <!-- GESt - GAS Control -->
     <ng-container *ngIf="activeView === 'gas-control'">
       <app-gas-control class="w-full h-full block"></app-gas-control>
@@ -551,6 +556,7 @@ export class MainContentComponent {
       'hr-utilities',
       'gas-movement',
       'gas-inventory',
+      'gas-analysis',
       'gas-control',
       'delivery-planning',
       'vehicle-load',

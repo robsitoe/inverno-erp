@@ -219,6 +219,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     'fleet-map': 'Frota de Viaturas',
     'gas-movement': 'Controlo de Gás',
     'gas-inventory': 'Inventário de Gás',
+    'gas-analysis': 'Análise Diária do Gás',
     'gas-control': 'Gestão de Gás',
     'chart-of-accounts': 'Plano de Contas',
     'journal-entries': 'Lançamentos',
