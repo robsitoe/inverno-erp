@@ -498,7 +498,7 @@ interface GridRow {
              <div class="px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Resumo</div>
              <div class="px-3 space-y-1.5">
                <div class="flex justify-between text-gray-600"><span>Mercadoria / serviços</span><span class="tabular-nums text-gray-900">{{ merchandiseTotal | number:'1.2-2' }}</span></div>
-               <div class="flex justify-between text-gray-600"><span>Descontos</span><span class="tabular-nums" [ngClass]="discountValue ? 'text-red-600' : 'text-gray-400'">{{ discountValue ? '−' : '' }}{{ discountValue | number:'1.2-2' }}</span></div>
+               <div class="flex justify-between text-gray-600"><span>Descontos</span><span class="tabular-nums" [ngClass]="+discountValue ? 'text-red-600' : 'text-gray-400'">{{ +discountValue ? '−' : '' }}{{ discountValue | number:'1.2-2' }}</span></div>
                <div class="flex justify-between text-gray-600"><span>IVA</span><span class="tabular-nums text-gray-900">{{ totalIva | number:'1.2-2' }}</span></div>
                <div class="flex justify-between text-gray-700 font-medium border-t border-gray-100 pt-1"><span>Subtotal</span><span class="tabular-nums text-gray-900">{{ subtotal | number:'1.2-2' }}</span></div>
              </div>

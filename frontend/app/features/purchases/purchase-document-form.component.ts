@@ -184,13 +184,17 @@ interface CompanyInfo {
   ],
 
 
+  styles: [`
+    .doc-header input:not([type=checkbox]):not([type=radio]), .doc-header select { border-color: #d1d5db; transition: border-color .15s, box-shadow .15s; }
+    .doc-header input:not([readonly]):not(:disabled):hover, .doc-header select:not(:disabled):hover { border-color: #9ca3af; }
+    .doc-header input:focus, .doc-header select:focus { outline: none; border-color: #16a34a; box-shadow: 0 0 0 2px rgba(22, 163, 74, .18); }
+    .doc-header input:disabled, .doc-header select:disabled, .doc-header input[readonly] { background-color: #f9fafb; color: #374151; }
+  `],
   template: `
-
 
     <ng-container *ngIf="currentDoc; else loading">
 
-
-      <div class="flex flex-col h-full w-full bg-[#F0F0F0] text-xs overflow-hidden relative">
+      <div class="flex flex-col h-full w-full bg-[#F7F8FA] text-xs overflow-hidden relative">
 
 
         <div class="flex flex-col h-full w-full no-print">
@@ -205,7 +209,7 @@ interface CompanyInfo {
           <ng-container *ngFor="let item of toolbarItems; let i = index">
 
 
-            <button 
+            <button
 
 
               (click)="handleToolbarClick(item.label)"
@@ -304,10 +308,29 @@ interface CompanyInfo {
 
 
 
+        <!-- Identificação do documento (nome, número, estado, fornecedor e total sempre à vista) -->
+        <div class="flex items-center gap-4 px-4 py-2 bg-white border-b border-gray-200 shrink-0">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h2 class="text-[15px] font-semibold text-gray-900 truncate">{{ getDocTypeDescription() || 'Novo documento' }}
+                <span class="ml-1 font-normal text-gray-500 tabular-nums">{{ currentDoc.type }} {{ currentDoc.series }}/{{ currentDoc.number }}</span></h2>
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset" [ngClass]="statusPill.cls">
+                <span class="w-1.5 h-1.5 rounded-full" [ngClass]="statusPill.dot"></span>{{ statusPill.label }}</span>
+            </div>
+            <div class="text-xs text-gray-500 truncate mt-0.5">
+              {{ currentDoc.supplierName || 'Sem fornecedor' }}<span *ngIf="currentDoc.supplierNif"> · NUIT {{ currentDoc.supplierNif }}</span>
+              <span *ngIf="currentDoc.date"> · {{ currentDoc.date | date:'dd/MM/yyyy' }}</span><span *ngIf="currentDoc.dueDate && currentDoc.dueDate !== currentDoc.date"> · vence {{ currentDoc.dueDate | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+          <div class="ml-auto text-right shrink-0">
+            <div class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Total</div>
+            <div class="text-xl font-semibold tabular-nums text-gray-900 leading-tight">{{ currentDoc.totalValue | number:'1.2-2' }} <span class="text-xs font-medium text-gray-500">MT</span></div>
+          </div>
+        </div>
+
         <!-- Tabs -->
 
-
-        <div class="flex items-end px-1 pt-2 border-b border-gray-300 bg-[#E0E0E0] shrink-0 gap-1 overflow-x-auto">
+        <div class="flex items-end px-4 border-b border-gray-200 bg-white shrink-0 gap-5 overflow-x-auto">
 
 
           <ng-container *ngFor="let tab of tabs; let i = index"><button *ngIf="implementedTabs.includes(i)"
@@ -316,10 +339,8 @@ interface CompanyInfo {
             (click)="activeTab = i"
 
 
-            [class]="'px-3 py-1 border-t-2 border-x border-b-0 rounded-t-sm text-[11px] font-medium transition-colors relative -mb-px cursor-pointer ' + 
-
-
-              (i === activeTab ? 'bg-[#F0F0F0] border-t-green-600 border-x-gray-300 text-black pb-1.5 z-10' : 'bg-[#D4D4D4] border-t-transparent border-x-transparent hover:bg-[#E8E8E8] text-gray-600')">
+            [class]="'py-2 border-b-2 -mb-px text-xs font-semibold transition-colors cursor-pointer ' +
+              (i === activeTab ? 'border-green-600 text-green-700' : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300')">
 
 
             {{ tab }}
@@ -338,64 +359,43 @@ interface CompanyInfo {
         <!-- Form Header Area (Aba Geral) -->
 
 
-        <div class="bg-[#F0F0F0] border-b border-gray-300 shrink-0 h-64 overflow-y-auto relative">
+        <div class="doc-header bg-[#F7F8FA] border-b border-gray-200 shrink-0 h-56 overflow-y-auto relative">
 
 
-          <!-- Locked Overlay -->
-
-
-          <div *ngIf="isLocked" class="absolute inset-0 bg-gray-100/50 z-20 flex items-center justify-center pointer-events-none">
-
-
-            <div class="bg-red-600 text-white px-4 py-2 rounded shadow-lg font-bold text-lg transform -rotate-12 opacity-80 border-4 border-white">
-
-
-              {{ currentDoc.status === 'POSTED' ? 'LANÇADO' : currentDoc.status === 'APPROVED' ? 'APROVADO' : currentDoc.status === 'REJECTED' ? 'REJEITADO' : 'BLOQUEADO' }}
-
-
-            </div>
-
-
-          </div>
-
-
-
-
-
-          <div *ngIf="activeTab === 0" class="flex flex-row h-full p-2 gap-2">
+          <div *ngIf="activeTab === 0" class="flex flex-row h-full px-4 py-3 gap-4">
 
 
             <!-- Left Inputs -->
 
 
-            <div class="flex-1 flex flex-col gap-1.5">
+            <div class="flex-1 flex flex-col gap-2 min-w-0">
 
 
               <div class="flex items-center gap-1">
 
 
-                <label class="w-24 text-green-600 font-medium text-right text-[11px] cursor-pointer hover:underline" (click)="!isReadOnly && openConfigModal()">Documento:</label>
+                <label class="w-24 text-green-600 font-medium text-right text-xs cursor-pointer hover:underline" (click)="!isReadOnly && openConfigModal()">Documento:</label>
 
 
-                <div class="flex items-center border border-gray-300 bg-white rounded-sm h-5 w-16 relative">
+                <div class="flex items-center border border-gray-300 bg-white rounded h-7 w-16 relative">
 
 
-                  <input class="w-full h-full px-1 focus:outline-none text-[11px]" [(ngModel)]="currentDoc.type" readonly [disabled]="isReadOnly" />
+                  <input class="w-full h-full px-1 focus:outline-none text-xs" [(ngModel)]="currentDoc.type" readonly [disabled]="isReadOnly" />
 
 
-                  <button (click)="!isReadOnly && openDocTypeModal()" [disabled]="isReadOnly" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-green-600 text-[9px] font-bold cursor-pointer">F4</button>
+                  <button (click)="!isReadOnly && openDocTypeModal()" [disabled]="isReadOnly" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-green-600 text-[10px] font-bold cursor-pointer">F4</button>
 
 
                 </div>
 
 
-                <input class="flex-1 h-5 border border-gray-300 px-1 bg-[#FDFDFD] rounded-sm focus:outline-none text-[11px]" [value]="getDocTypeDescription()" disabled />
+                <input class="flex-1 h-7 border border-gray-300 px-1 bg-gray-50 rounded focus:outline-none text-xs" [value]="getDocTypeDescription()" disabled />
 
 
                 <div class="flex items-center gap-1 ml-2">
 
 
-                  <select [(ngModel)]="currentDoc.series" (change)="loadNextNumber(); validateSeriesDate()" [disabled]="isReadOnly" class="h-5 border border-gray-300 bg-white rounded-sm text-[11px] w-16">
+                  <select [(ngModel)]="currentDoc.series" (change)="loadNextNumber(); validateSeriesDate()" [disabled]="isReadOnly" class="h-7 border border-gray-300 bg-white rounded text-xs w-16">
 
 
                     <option *ngFor="let s of availableSeries" [value]="s.code">{{ s.code }}</option>
@@ -404,7 +404,7 @@ interface CompanyInfo {
                   </select>
 
 
-                  <input type="number" [ngModel]="currentDoc.number" (ngModelChange)="onNumberChange($event)" class="h-5 border border-gray-300 px-1 w-16 rounded-sm text-right text-[11px]" min="1" />
+                  <input type="number" [ngModel]="currentDoc.number" (ngModelChange)="onNumberChange($event)" class="h-7 border border-gray-300 px-1 w-16 rounded text-right text-xs" min="1" />
 
 
                 </div>
@@ -413,10 +413,10 @@ interface CompanyInfo {
                 <div class="flex items-center gap-1 ml-2">
 
 
-                  <label class="font-medium text-[11px]">Data Doc.:</label>
+                  <label class="font-medium text-xs">Data Doc.:</label>
 
 
-                  <input type="date" [(ngModel)]="currentDoc.date" (change)="validateSeriesDate()" [disabled]="isReadOnly" class="h-5 border border-gray-300 px-1 w-24 rounded-sm text-[11px]" />
+                  <input type="date" [(ngModel)]="currentDoc.date" (change)="validateSeriesDate()" [disabled]="isReadOnly" class="h-7 border border-gray-300 px-1 w-24 rounded text-xs" />
 
 
                 </div>
@@ -434,31 +434,31 @@ interface CompanyInfo {
               <div class="flex items-center gap-1">
 
 
-                <label class="w-24 text-green-600 font-medium text-right text-[11px]">Fornecedor:</label>
+                <label class="w-24 text-green-600 font-medium text-right text-xs">Fornecedor:</label>
 
 
-                <div class="flex items-center border border-gray-300 bg-white rounded-sm h-5 w-24 relative">
+                <div class="flex items-center border border-gray-300 bg-white rounded h-7 w-24 relative">
 
 
-                  <input class="w-full h-full px-1 focus:outline-none text-[11px]" [(ngModel)]="currentDoc.supplierCode" readonly [disabled]="isReadOnly" />
+                  <input class="w-full h-full px-1 focus:outline-none text-xs" [(ngModel)]="currentDoc.supplierCode" readonly [disabled]="isReadOnly" />
 
 
-                  <button (click)="!isReadOnly && openSupplierModal()" [disabled]="isReadOnly" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-green-600 text-[9px] font-bold cursor-pointer">F4</button>
+                  <button (click)="!isReadOnly && openSupplierModal()" [disabled]="isReadOnly" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-green-600 text-[10px] font-bold cursor-pointer">F4</button>
 
 
                 </div>
 
 
-                <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm focus:outline-none text-[11px]" [(ngModel)]="currentDoc.supplierName" readonly [disabled]="isReadOnly" />
+                <input class="flex-1 h-7 border border-gray-300 px-1 bg-white rounded focus:outline-none text-xs" [(ngModel)]="currentDoc.supplierName" readonly [disabled]="isReadOnly" />
 
 
                 <div class="flex items-center gap-1 ml-2">
 
 
-                  <label class="font-medium text-green-600 text-[11px]">Data Venc.:</label>
+                  <label class="font-medium text-green-600 text-xs">Data Venc.:</label>
 
 
-                  <input type="date" [(ngModel)]="currentDoc.dueDate" [disabled]="isReadOnly" class="h-5 border border-gray-300 px-1 w-24 rounded-sm text-[11px]" />
+                  <input type="date" [(ngModel)]="currentDoc.dueDate" [disabled]="isReadOnly" class="h-7 border border-gray-300 px-1 w-24 rounded text-xs" />
 
 
                 </div>
@@ -476,7 +476,7 @@ interface CompanyInfo {
                 <div class="w-24"></div>
 
 
-                <input class="flex-1 h-5 border border-gray-300 px-1 bg-[#F8F8F8] text-gray-500 rounded-sm text-[11px]" [(ngModel)]="currentDoc.supplierAddress" readonly />
+                <input class="flex-1 h-7 border border-gray-300 px-1 bg-gray-50 text-gray-500 rounded text-xs" [(ngModel)]="currentDoc.supplierAddress" readonly />
 
 
               </div>
@@ -488,16 +488,16 @@ interface CompanyInfo {
               <div class="flex items-center gap-1 mt-1">
 
 
-                <label class="w-24 font-medium text-right text-[11px]">Contribuinte:</label>
+                <label class="w-24 font-medium text-right text-xs">Contribuinte:</label>
 
 
-                <input class="w-32 h-5 border border-gray-300 px-1 bg-white rounded-sm text-[11px]" [(ngModel)]="currentDoc.supplierNif" readonly [disabled]="isReadOnly" />
+                <input class="w-32 h-7 border border-gray-300 px-1 bg-white rounded text-xs" [(ngModel)]="currentDoc.supplierNif" readonly [disabled]="isReadOnly" />
 
 
-                <label class="ml-4 font-medium text-gray-500 text-[11px]">Referência:</label>
+                <label class="ml-4 font-medium text-gray-500 text-xs">Referência:</label>
 
 
-                <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm text-[11px]" [(ngModel)]="currentDoc.reference" [disabled]="isReadOnly" />
+                <input class="flex-1 h-7 border border-gray-300 px-1 bg-white rounded text-xs" [(ngModel)]="currentDoc.reference" [disabled]="isReadOnly" />
 
 
               </div>
@@ -511,33 +511,21 @@ interface CompanyInfo {
 
             <!-- Totals Panel -->
 
-
-            <div class="w-64 bg-[#FDFDFD] border border-gray-300 p-2 shadow-sm flex flex-col gap-0.5 text-[11px]">
-
-
-              <div class="flex justify-between text-gray-700"><span>Merc./Serv.:</span><span class="font-mono">{{ currentDoc.merchandiseTotal | number:'1.2-2' }}</span></div>
-
-
-              <div class="flex justify-between text-gray-700"><span>Descontos:</span><span class="font-mono">{{ currentDoc.discountValue | number:'1.2-2' }}</span></div>
-
-
-              <div class="flex justify-between text-gray-700"><span>IVA:</span><span class="font-mono">{{ currentDoc.taxTotal | number:'1.2-2' }}</span></div>
-
-
-              <div class="flex justify-between text-gray-700 font-medium mt-1"><span>Subtotal:</span><span class="font-mono">{{ (currentDoc.merchandiseTotal - currentDoc.discountValue) | number:'1.2-2' }}</span></div>
-
-
-              <div class="mt-auto flex justify-between font-bold text-black text-sm pt-2"><span>Total MT:</span><span class="font-mono text-green-600">{{ currentDoc.totalValue | number:'1.2-2' }}</span></div>
-
-
+            <div class="w-72 shrink-0 bg-white border border-gray-200 rounded-lg shadow-sm flex flex-col text-xs overflow-hidden">
+              <div class="px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Resumo</div>
+              <div class="px-3 space-y-1.5">
+                <div class="flex justify-between text-gray-600"><span>Mercadoria / serviços</span><span class="tabular-nums text-gray-900">{{ currentDoc.merchandiseTotal | number:'1.2-2' }}</span></div>
+                <div class="flex justify-between text-gray-600"><span>Descontos</span><span class="tabular-nums" [ngClass]="+currentDoc.discountValue ? 'text-red-600' : 'text-gray-400'">{{ +currentDoc.discountValue ? '−' : '' }}{{ currentDoc.discountValue | number:'1.2-2' }}</span></div>
+                <div class="flex justify-between text-gray-600"><span>IVA</span><span class="tabular-nums text-gray-900">{{ currentDoc.taxTotal | number:'1.2-2' }}</span></div>
+                <div class="flex justify-between text-gray-700 font-medium border-t border-gray-100 pt-1"><span>Subtotal</span><span class="tabular-nums text-gray-900">{{ (currentDoc.merchandiseTotal - currentDoc.discountValue) | number:'1.2-2' }}</span></div>
+              </div>
+              <div class="mt-auto flex items-baseline justify-between bg-slate-50 border-t border-gray-200 px-3 py-2.5">
+                <span class="text-xs font-semibold text-gray-600">Total a pagar</span>
+                <span class="text-lg font-bold tabular-nums text-gray-900">{{ currentDoc.totalValue | number:'1.2-2' }} <span class="text-[11px] font-semibold text-gray-500">MT</span></span>
+              </div>
             </div>
 
-
           </div>
-
-
-
-
 
           <!-- Aba Condições -->
 
@@ -635,7 +623,7 @@ interface CompanyInfo {
                <span class="font-bold text-gray-700 text-xs">Estado Atual:</span>
 
 
-               <span class="px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider" 
+               <span class="px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider"
 
 
                  [class.bg-gray-100]="currentDoc.status === 'DRAFT'"
@@ -674,7 +662,7 @@ interface CompanyInfo {
              </div>
 
 
-             
+
 
 
              <div class="flex-1 overflow-auto border border-gray-300 rounded shadow-sm bg-white">
@@ -781,7 +769,7 @@ interface CompanyInfo {
         <!-- Data Grid -->
 
 
-        <div class="flex-1 overflow-auto bg-white relative border-t border-gray-300">
+        <div class="flex-1 overflow-auto bg-white relative border-t border-gray-200">
 
 
           <div *ngIf="isLocked" class="absolute inset-0 bg-gray-100/30 z-20 pointer-events-none"></div>
@@ -790,55 +778,55 @@ interface CompanyInfo {
           <table class="w-full border-collapse table-fixed">
 
 
-            <thead class="bg-gray-50 sticky top-0 z-10 shadow-sm text-[10px] uppercase">
+            <thead class="sticky top-0 z-10 shadow-[0_1px_0_#e5e7eb] text-[10px] uppercase">
 
 
               <tr>
 
 
-                <th class="px-2 py-1 border-r border-b border-l border-gray-300 text-green-600 font-bold text-left w-[120px]">Artigo</th>
+                <th class="px-2 py-2 border-r border-b border-l border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left w-[120px]">Artigo</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left w-[60px]">Arm.</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left w-[60px]">Arm.</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left w-[80px]">Localização</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left w-[80px]">Localização</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left w-[80px]">Lote</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left w-[80px]">Lote</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left min-w-[300px]">Descrição</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left min-w-[300px]">Descrição</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left w-[50px]">CIVA</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left w-[50px]">CIVA</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left w-[50px]">IVA %</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-right w-[50px]">IVA %</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left w-[90px]">Pr. Unit.</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-right w-[90px]">Pr. Unit.</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left w-[60px]">Desc.</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-right w-[60px]">Desc.</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left w-[40px]">UN</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left w-[40px]">UN</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left w-[70px]">Qtd.</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-right w-[70px]">Qtd.</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left w-[90px]">Total Liq.</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-right w-[90px]">Total Liq.</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left w-[80px]">C. Custo</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left w-[80px]">C. Custo</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left w-[80px]">Projeto</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left w-[80px]">Projeto</th>
 
 
-                <th class="px-2 py-1 border-r border-b border-gray-300 text-green-600 font-bold text-left w-[90px]">Valor Total</th>
+                <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-right w-[90px]">Valor Total</th>
 
 
               </tr>
@@ -847,10 +835,10 @@ interface CompanyInfo {
             </thead>
 
 
-            <tbody>
+            <tbody class="text-xs text-gray-800">
 
 
-              <tr *ngFor="let line of currentDoc.lines; let i = index; trackBy: trackByIndex" (contextmenu)="onContextMenu($event, i)" class="border-b border-gray-200 hover:bg-blue-50 h-6 group">
+              <tr *ngFor="let line of currentDoc.lines; let i = index; trackBy: trackByIndex" (contextmenu)="onContextMenu($event, i)" class="border-b border-gray-200 even:bg-slate-50/70 hover:bg-green-50/60 h-7 group">
 
 
                 <td class="border-r border-b border-l border-gray-200 h-6 p-0 relative overflow-hidden">
@@ -859,25 +847,25 @@ interface CompanyInfo {
                   <div class="flex h-full items-center bg-white group/cell focus-within:ring-1 focus-within:ring-green-500 overflow-hidden">
 
 
-                    <input type="text" [(ngModel)]="line.articleCode" 
+                    <input type="text" [(ngModel)]="line.articleCode"
 
 
                       (keydown)="onArticleKeydown(i, $event)"
 
 
-                      (dblclick)="!isReadOnly && openArticleSearch(i)" 
+                      (dblclick)="!isReadOnly && openArticleSearch(i)"
 
 
-                      (change)="onArticleCodeChange(i, line.articleCode)" 
+                      (change)="onArticleCodeChange(i, line.articleCode)"
 
 
-                      [disabled]="isReadOnly" 
+                      [disabled]="isReadOnly"
 
 
                       class="flex-1 w-0 h-full px-1 border-none bg-transparent focus:outline-none text-[11px]" />
 
 
-                    <button *ngIf="!isLocked" (click)="openArticleSearch(i)" 
+                    <button *ngIf="!isLocked" (click)="openArticleSearch(i)"
 
 
                       class="w-5 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-green-600 transition-all opacity-0 group-hover/cell:opacity-100">
@@ -901,10 +889,10 @@ interface CompanyInfo {
                   <div class="flex h-full items-center bg-white group/cell focus-within:ring-1 focus-within:ring-blue-400 overflow-hidden">
 
 
-                    <input class="flex-1 w-0 h-full border-none px-1 text-center bg-transparent focus:outline-none text-[11px]" 
+                    <input class="flex-1 w-0 h-full border-none px-1 text-center bg-transparent focus:outline-none text-[11px]"
 
 
-                      [(ngModel)]="line.warehouse" 
+                      [(ngModel)]="line.warehouse"
 
 
                       (keydown)="onWarehouseKeydown(i, $event)"
@@ -913,7 +901,7 @@ interface CompanyInfo {
                       [disabled]="isReadOnly" />
 
 
-                    <button *ngIf="!isReadOnly && line.articleCode" (click)="openWarehouseSearch(i)" 
+                    <button *ngIf="!isReadOnly && line.articleCode" (click)="openWarehouseSearch(i)"
 
 
                       class="w-4 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-blue-600 opacity-0 group-hover/cell:opacity-100 transition-all">
@@ -937,10 +925,10 @@ interface CompanyInfo {
                   <div class="flex h-full items-center bg-white group/cell focus-within:ring-1 focus-within:ring-blue-400 overflow-hidden">
 
 
-                    <input class="flex-1 w-0 h-full border-none px-1 text-center bg-transparent focus:outline-none text-[11px]" 
+                    <input class="flex-1 w-0 h-full border-none px-1 text-center bg-transparent focus:outline-none text-[11px]"
 
 
-                      [(ngModel)]="line.location" 
+                      [(ngModel)]="line.location"
 
 
                       (keydown)="onLocationKeydown(i, $event)"
@@ -949,7 +937,7 @@ interface CompanyInfo {
                       [disabled]="isReadOnly" />
 
 
-                    <button *ngIf="!isReadOnly && line.articleCode" (click)="openLocationSearch(i)" 
+                    <button *ngIf="!isReadOnly && line.articleCode" (click)="openLocationSearch(i)"
 
 
                       class="w-4 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-blue-600 opacity-0 group-hover/cell:opacity-100 transition-all">
@@ -973,10 +961,10 @@ interface CompanyInfo {
                   <div class="flex h-full items-center bg-white group/cell focus-within:ring-1 focus-within:ring-blue-400 overflow-hidden">
 
 
-                    <input class="flex-1 w-0 h-full border-none px-1 text-center bg-transparent focus:outline-none text-[11px]" 
+                    <input class="flex-1 w-0 h-full border-none px-1 text-center bg-transparent focus:outline-none text-[11px]"
 
 
-                      [(ngModel)]="line.batch" 
+                      [(ngModel)]="line.batch"
 
 
                       (keydown)="onBatchKeydown(i, $event)"
@@ -985,7 +973,7 @@ interface CompanyInfo {
                       [disabled]="isReadOnly" />
 
 
-                    <button *ngIf="!isReadOnly && line.articleCode" (click)="openBatchSearch(i)" 
+                    <button *ngIf="!isReadOnly && line.articleCode" (click)="openBatchSearch(i)"
 
 
                       class="w-4 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-blue-600 opacity-0 group-hover/cell:opacity-100 transition-all">
@@ -1012,10 +1000,10 @@ interface CompanyInfo {
                   <div class="flex h-full items-center bg-white group/cell focus-within:ring-1 focus-within:ring-blue-400 overflow-hidden">
 
 
-                    <input class="flex-1 w-0 h-full border-none px-1 text-center bg-transparent focus:outline-none text-[11px]" 
+                    <input class="flex-1 w-0 h-full border-none px-1 text-center bg-transparent focus:outline-none text-[11px]"
 
 
-                      [(ngModel)]="line.taxCode" 
+                      [(ngModel)]="line.taxCode"
 
 
                       (keydown)="onTaxKeydown(i, $event)"
@@ -1024,7 +1012,7 @@ interface CompanyInfo {
                       [disabled]="isReadOnly" />
 
 
-                    <button *ngIf="!isReadOnly && line.articleCode" (click)="openTaxSearch(i)" 
+                    <button *ngIf="!isReadOnly && line.articleCode" (click)="openTaxSearch(i)"
 
 
                       class="w-4 shrink-0 h-full flex items-center justify-center text-gray-400 hover:text-blue-600 opacity-0 group-hover/cell:opacity-100 transition-all">
@@ -1114,7 +1102,7 @@ interface CompanyInfo {
           <!-- Context Menu -->
 
 
-          <div *ngIf="contextMenuVisible" 
+          <div *ngIf="contextMenuVisible"
 
 
             class="fixed z-50 bg-white shadow-lg border border-gray-200 rounded-sm py-1 w-64 text-xs"
@@ -1449,6 +1437,18 @@ interface CompanyInfo {
 
 export class PurchaseDocumentFormComponent implements OnDestroy {
 
+  /** Selo do estado na faixa do documento. */
+  get statusPill(): { label: string; cls: string; dot: string } {
+    switch (String(this.currentDoc?.status)) {
+      case 'SUBMITTED': return { label: 'Submetido', cls: 'bg-amber-50 text-amber-700 ring-amber-200', dot: 'bg-amber-500' };
+      case 'APPROVED': return { label: 'Aprovado', cls: 'bg-green-50 text-green-700 ring-green-200', dot: 'bg-green-500' };
+      case 'POSTED': return { label: 'Lançado', cls: 'bg-blue-50 text-blue-700 ring-blue-200', dot: 'bg-blue-500' };
+      case 'REJECTED': return { label: 'Anulado / rejeitado', cls: 'bg-red-50 text-red-700 ring-red-200', dot: 'bg-red-500' };
+      default: return { label: 'Rascunho', cls: 'bg-gray-50 text-gray-600 ring-gray-200', dot: 'bg-gray-400' };
+    }
+  }
+
+
 
   private destroy$ = new Subject<void>();
 
@@ -1511,13 +1511,13 @@ export class PurchaseDocumentFormComponent implements OnDestroy {
         { label: "Procurar", icon: "search" },
 
 
-        
 
 
-        
 
 
-        
+
+
+
 
 
         { label: "Ajuda", icon: "help_outline" },
@@ -1556,13 +1556,13 @@ export class PurchaseDocumentFormComponent implements OnDestroy {
         { label: "Procurar", icon: "search" },
 
 
-        
 
 
-        
 
 
-        
+
+
+
 
 
         { label: "Ajuda", icon: "help_outline" },
@@ -3327,7 +3327,7 @@ export class PurchaseDocumentFormComponent implements OnDestroy {
   voidDocument() {
 
 
-    
+
     if (this.isLocked) { this.proposeCreditNote(); return; }
 if (this.currentDoc.status === WorkflowStatus.REJECTED) return;
 
