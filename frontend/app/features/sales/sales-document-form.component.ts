@@ -145,9 +145,16 @@ interface GridRow {
 
   ],
 
+  styles: [`
+    .doc-header input:not([type=checkbox]):not([type=radio]), .doc-header select { border-color: #d1d5db; transition: border-color .15s, box-shadow .15s; }
+    .doc-header input:not([readonly]):not(:disabled):hover, .doc-header select:not(:disabled):hover { border-color: #9ca3af; }
+    .doc-header input:focus, .doc-header select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, .18); }
+    .doc-header input:disabled, .doc-header select:disabled, .doc-header input[readonly] { background-color: #f9fafb; color: #374151; }
+    .doc-header label { color: #4b5563; }
+  `],
   template: `
 
-    <div class="flex flex-col h-full w-full bg-[#F0F0F0] text-xs overflow-hidden relative">
+    <div class="flex flex-col h-full w-full bg-[#F7F8FA] text-xs overflow-hidden relative">
 
       <div class="flex flex-col h-full w-full no-print overflow-hidden">
 
@@ -157,7 +164,7 @@ interface GridRow {
 
         <ng-container *ngFor="let item of toolbarItems; let i = index">
 
-          <button 
+          <button
 
             (click)="handleToolbarClick(item.label)"
             [disabled]="isToolbarDisabled(item.label)"
@@ -222,17 +229,36 @@ interface GridRow {
 
 
 
+      <!-- Identificação do documento (nome, número, estado, entidade e total sempre à vista) -->
+      <div class="flex items-center gap-4 px-4 py-2 bg-white border-b border-gray-200 shrink-0">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <h2 class="text-[15px] font-semibold text-gray-900 truncate">{{ selectedDocDescription || 'Novo documento' }}
+              <span class="ml-1 font-normal text-gray-500 tabular-nums">{{ selectedDocType || defaultDocValue }} {{ currentSeries }}/{{ currentSeriesNumber }}</span></h2>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset" [ngClass]="statusPill.cls">
+              <span class="w-1.5 h-1.5 rounded-full" [ngClass]="statusPill.dot"></span>{{ statusPill.label }}</span>
+          </div>
+          <div class="text-xs text-gray-500 truncate mt-0.5">
+            {{ selectedEntityName || 'Sem entidade' }}<span *ngIf="selectedEntityNif"> · NUIT {{ selectedEntityNif }}</span>
+            <span *ngIf="documentDate"> · {{ documentDate | date:'dd/MM/yyyy' }}</span><span *ngIf="dueDate && dueDate !== documentDate"> · vence {{ dueDate | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+        <div class="ml-auto text-right shrink-0">
+          <div class="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Total</div>
+          <div class="text-xl font-semibold tabular-nums text-gray-900 leading-tight">{{ totalValue | number:'1.2-2' }} <span class="text-xs font-medium text-gray-500">MT</span></div>
+        </div>
+      </div>
+
       <!-- Tabs -->
 
-      <div class="flex items-end px-1 pt-2 border-b border-gray-300 bg-[#E0E0E0] shrink-0 gap-1 overflow-x-auto">
+      <div class="flex items-end px-4 border-b border-gray-200 bg-white shrink-0 gap-5 overflow-x-auto">
 
         <button *ngFor="let tab of tabs; let i = index"
 
           (click)="activeTab = i"
 
-          [class]="'px-3 py-1 border-t-2 border-x border-b-0 rounded-t-sm text-[11px] font-medium transition-colors relative -mb-px cursor-pointer ' + 
-
-            (i === activeTab ? 'bg-[#F0F0F0] border-t-primary border-x-gray-300 text-black pb-1.5 z-10' : 'bg-[#D4D4D4] border-t-transparent border-x-transparent hover:bg-[#E8E8E8] text-gray-600')"
+          [class]="'py-2 border-b-2 -mb-px text-xs font-semibold transition-colors cursor-pointer ' +
+            (i === activeTab ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300')"
 
         >
 
@@ -246,28 +272,17 @@ interface GridRow {
 
       <!-- Form Header - Altura fixa para manter grid na mesma posição -->
 
-      <div class="bg-white border-b border-gray-200 shrink-0 h-64 overflow-y-auto relative">
-
-        <!-- Locked Overlay -->
-
-        <div *ngIf="isLocked" class="absolute bottom-2 left-3 z-20 pointer-events-none flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-semibold uppercase tracking-wide bg-white"
-             [ngClass]="status === 'POSTED' ? 'border-blue-300 text-blue-700' : status === 'APPROVED' ? 'border-green-300 text-green-700' : status === 'REJECTED' ? 'border-red-300 text-red-700' : 'border-gray-300 text-gray-600'">
-          <span class="inline-block w-1.5 h-1.5 rounded-full"
-                [ngClass]="status === 'POSTED' ? 'bg-blue-500' : status === 'APPROVED' ? 'bg-green-500' : status === 'REJECTED' ? 'bg-red-500' : 'bg-gray-400'"></span>
-          {{ status === 'POSTED' ? 'Lançado' : status === 'APPROVED' ? 'Aprovado' : status === 'REJECTED' ? 'Rejeitado' : 'Bloqueado' }}
-        </div>
-
-
+      <div class="doc-header bg-[#F7F8FA] border-b border-gray-200 shrink-0 h-56 overflow-y-auto relative">
 
         <!-- Aba Geral -->
 
-        <div *ngIf="activeTab === 0" class="flex flex-row h-full p-2 gap-2">
+        <div *ngIf="activeTab === 0" class="flex flex-row h-full px-4 py-3 gap-4">
 
-          
+
 
           <!-- Left Inputs Area -->
 
-          <div class="flex-1 flex flex-col gap-1.5">
+          <div class="flex-1 flex flex-col gap-2 min-w-0">
 
             <!-- Linha 1: Documento -->
 
@@ -275,41 +290,41 @@ interface GridRow {
 
             <div class="flex items-center gap-1">
 
-              <label class="w-20 text-blue-600 font-medium text-right text-[11px] cursor-pointer hover:underline" (click)="!isReadOnly && openDocConfigModal()">Documento:</label>
+              <label class="w-24 text-blue-600 font-medium text-right text-xs cursor-pointer hover:underline" (click)="!isReadOnly && openDocConfigModal()">Documento:</label>
 
-              <div class="flex items-center border border-gray-300 bg-white rounded-sm h-5 w-16 relative">
+              <div class="flex items-center border border-gray-300 bg-white rounded h-7 w-16 relative">
 
-                 <input class="w-full h-full px-1 focus:outline-none text-[11px]" [value]="selectedDocType || defaultDocValue" [readOnly]="!isInternal" [disabled]="isReadOnly" (keydown)="onDocTypeKeydown($event)" />
+                 <input class="w-full h-full px-1 focus:outline-none text-xs" [value]="selectedDocType || defaultDocValue" [readOnly]="!isInternal" [disabled]="isReadOnly" (keydown)="onDocTypeKeydown($event)" />
 
-                 <button (click)="!isReadOnly && openDocTypeModal()" [disabled]="isReadOnly" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50">F4</button>
+                 <button (click)="!isReadOnly && openDocTypeModal()" [disabled]="isReadOnly" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[10px] font-bold cursor-pointer disabled:opacity-50">F4</button>
 
               </div>
 
-              <input class="flex-1 h-5 border border-gray-300 px-1 bg-[#FDFDFD] rounded-sm focus:outline-none text-[11px]" [value]="selectedDocDescription" disabled />
+              <input class="flex-1 h-7 border border-gray-300 px-1 bg-gray-50 rounded focus:outline-none text-xs" [value]="selectedDocDescription" disabled />
 
-              
+
 
               <!-- Série e Número -->
 
               <div class="flex items-center gap-1 ml-2">
 
-                <select [(ngModel)]="currentSeries" (change)="loadNextNumber(); validateSeriesDate()" class="h-5 border border-gray-300 bg-white rounded-sm text-[11px] w-16 disabled:bg-gray-100">
+                <select [(ngModel)]="currentSeries" (change)="loadNextNumber(); validateSeriesDate()" class="h-7 border border-gray-300 bg-white rounded text-xs w-16 disabled:bg-gray-100">
 
                   <option *ngFor="let s of availableSeries" [value]="s.code">{{ s.code }}</option>
 
                 </select>
 
-                <input 
+                <input
 
-                  type="number" 
+                  type="number"
 
-                  class="h-5 border border-gray-300 px-1 w-16 rounded-sm text-right text-[11px] disabled:bg-gray-100" 
+                  class="h-7 border border-gray-300 px-1 w-16 rounded text-right text-xs disabled:bg-gray-100"
 
                   [ngModel]="currentSeriesNumber"
 
                   (ngModelChange)="onNumberChange($event)"
 
-                  min="1" 
+                  min="1"
 
                 />
 
@@ -321,9 +336,9 @@ interface GridRow {
 
               <div class="flex items-center gap-1 ml-2">
 
-                 <label class="font-medium text-[11px]">Data Doc.:</label>
+                 <label class="font-medium text-xs">Data Doc.:</label>
 
-                 <input type="date" class="h-5 border border-gray-300 px-1 w-24 rounded-sm text-[11px] disabled:bg-gray-100" [(ngModel)]="documentDate" (change)="validateSeriesDate()" [disabled]="isReadOnly" />
+                 <input type="date" class="h-7 border border-gray-300 px-1 w-24 rounded text-xs disabled:bg-gray-100" [(ngModel)]="documentDate" (change)="validateSeriesDate()" [disabled]="isReadOnly" />
 
               </div>
 
@@ -335,27 +350,27 @@ interface GridRow {
 
             <div class="flex items-center gap-1">
 
-              <label class="w-20 text-blue-600 font-medium text-right text-[11px]">Entidade:</label>
+              <label class="w-24 text-blue-600 font-medium text-right text-xs">Entidade:</label>
 
-              <div class="flex items-center border border-gray-300 bg-white rounded-sm h-5 w-24 relative">
+              <div class="flex items-center border border-gray-300 bg-white rounded h-7 w-24 relative">
 
-                 <input class="w-full h-full px-1 focus:outline-none text-[11px] disabled:bg-gray-100" [value]="selectedEntityCode" [disabled]="isReadOnly" (keydown)="onEntityKeydown($event)" (change)="onEntityCodeChange($any($event.target))" />
+                 <input class="w-full h-full px-1 focus:outline-none text-xs disabled:bg-gray-100" [value]="selectedEntityCode" [disabled]="isReadOnly" (keydown)="onEntityKeydown($event)" (change)="onEntityCodeChange($any($event.target))" />
 
-                 <button (click)="!isReadOnly && openEntityModal()" [disabled]="isReadOnly" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50">F4</button>
+                 <button (click)="!isReadOnly && openEntityModal()" [disabled]="isReadOnly" class="absolute right-0 top-0 bottom-0 px-0.5 bg-gray-100 border-l hover:bg-gray-200 text-blue-600 text-[10px] font-bold cursor-pointer disabled:opacity-50">F4</button>
 
               </div>
 
-              <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm focus:outline-none text-[11px] disabled:bg-gray-100" [value]="selectedEntityName" [disabled]="isReadOnly" />
+              <input class="flex-1 h-7 border border-gray-300 px-1 bg-white rounded focus:outline-none text-xs disabled:bg-gray-100" [value]="selectedEntityName" [disabled]="isReadOnly" />
 
-              
+
 
               <!-- Data Vencimento -->
 
               <div class="flex items-center gap-1 ml-2">
 
-                 <label class="font-medium text-blue-600 text-[11px]">Data Venc.:</label>
+                 <label class="font-medium text-blue-600 text-xs">Data Venc.:</label>
 
-                 <input type="date" class="h-5 border border-gray-300 px-1 w-24 rounded-sm text-[11px] disabled:bg-gray-100" [(ngModel)]="dueDate" [disabled]="isReadOnly" />
+                 <input type="date" class="h-7 border border-gray-300 px-1 w-24 rounded text-xs disabled:bg-gray-100" [(ngModel)]="dueDate" [disabled]="isReadOnly" />
 
               </div>
 
@@ -367,25 +382,25 @@ interface GridRow {
 
              <div class="flex items-center gap-1">
 
-               <div class="w-20"></div> <!-- Spacer -->
+               <div class="w-24"></div> <!-- Spacer -->
 
-               <input class="flex-1 h-5 border border-gray-300 px-1 bg-[#F8F8F8] text-gray-500 rounded-sm text-[11px]" [value]="selectedEntityAddress" readonly />
+               <input class="flex-1 h-7 border border-gray-300 px-1 bg-gray-50 text-gray-500 rounded text-xs" [value]="selectedEntityAddress" readonly />
 
-               
+
 
                <!-- Desc. Cli. -->
 
                <div class="flex items-center gap-1 ml-2">
 
-                 <label class="font-medium w-[58px] text-right text-[11px]">Desc. Cl.</label>
+                 <label class="font-medium w-[58px] text-right text-xs">Desc. Cl.</label>
 
-                 <input 
+                 <input
 
-                    type="number" 
+                    type="number"
 
-                    class="h-5 border border-gray-300 px-1 w-16 text-right rounded-sm text-[11px] disabled:bg-gray-100" 
+                    class="h-7 border border-gray-300 px-1 w-16 text-right rounded text-xs disabled:bg-gray-100"
 
-                    [(ngModel)]="clientDiscount" 
+                    [(ngModel)]="clientDiscount"
 
                     (ngModelChange)="calculateTotals()"
 
@@ -403,43 +418,43 @@ interface GridRow {
 
              <div class="flex items-center gap-1">
 
-               <div class="w-20"></div> <!-- Spacer -->
+               <div class="w-24"></div> <!-- Spacer -->
 
                <div class="flex-1 flex gap-1">
 
                    <div class="relative flex-1">
 
-                     <input class="w-full h-5 border border-gray-300 px-1 bg-[#F8F8F8] text-gray-500 rounded-sm text-[11px]" readonly />
+                     <input class="w-full h-7 border border-gray-300 px-1 bg-gray-50 text-gray-500 rounded text-xs" readonly />
 
-                     <button class="absolute right-0 top-0 bottom-0 px-0.5 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50" [disabled]="isReadOnly">F4</button>
+                     <button class="absolute right-0 top-0 bottom-0 px-0.5 text-blue-600 text-[10px] font-bold cursor-pointer disabled:opacity-50" [disabled]="isReadOnly">F4</button>
 
                    </div>
 
                    <div class="relative flex-1">
 
-                     <input class="w-full h-full border border-gray-300 px-1 bg-[#F8F8F8] text-gray-500 rounded-sm text-[11px]" readonly />
+                     <input class="w-full h-full border border-gray-300 px-1 bg-gray-50 text-gray-500 rounded text-xs" readonly />
 
-                     <button class="absolute right-0 top-0 bottom-0 px-0.5 text-blue-600 text-[9px] font-bold cursor-pointer disabled:opacity-50" [disabled]="isReadOnly">F4</button>
+                     <button class="absolute right-0 top-0 bottom-0 px-0.5 text-blue-600 text-[10px] font-bold cursor-pointer disabled:opacity-50" [disabled]="isReadOnly">F4</button>
 
                    </div>
 
                </div>
 
-               
+
 
                <!-- Desc. Financ. -->
 
                <div class="flex items-center gap-1 ml-2">
 
-                 <label class="font-medium w-[58px] text-right text-[11px]">Desc. Fin.</label>
+                 <label class="font-medium w-[58px] text-right text-xs">Desc. Fin.</label>
 
-                 <input 
+                 <input
 
-                    type="number" 
+                    type="number"
 
-                    class="h-5 border border-gray-300 px-1 w-16 text-right rounded-sm text-[11px] disabled:bg-gray-100" 
+                    class="h-7 border border-gray-300 px-1 w-16 text-right rounded text-xs disabled:bg-gray-100"
 
-                    [(ngModel)]="financialDiscount" 
+                    [(ngModel)]="financialDiscount"
 
                     (ngModelChange)="calculateTotals()"
 
@@ -459,15 +474,15 @@ interface GridRow {
 
              <div class="flex items-center gap-1 mt-1">
 
-               <label class="w-20 font-medium text-right text-[11px]">Contribuinte:</label>
+               <label class="w-24 font-medium text-right text-xs">Contribuinte:</label>
 
-               <input class="w-32 h-5 border border-gray-300 px-1 bg-white rounded-sm text-[11px] disabled:bg-gray-100" [value]="selectedEntityNif" [disabled]="isReadOnly" />
+               <input class="w-32 h-7 border border-gray-300 px-1 bg-white rounded text-xs disabled:bg-gray-100" [value]="selectedEntityNif" [disabled]="isReadOnly" />
 
-               
 
-               <label class="ml-4 font-medium text-gray-500 text-[11px]">{{ documentRefLabel }}</label>
 
-               <input class="flex-1 h-5 border border-gray-300 px-1 bg-white rounded-sm text-[11px] disabled:bg-gray-100" [disabled]="isReadOnly" />
+               <label class="ml-4 font-medium text-gray-500 text-xs">{{ documentRefLabel }}</label>
+
+               <input class="flex-1 h-7 border border-gray-300 px-1 bg-white rounded text-xs disabled:bg-gray-100" [disabled]="isReadOnly" />
 
                <span class="material-symbols-outlined text-[16px] text-gray-400 cursor-pointer">search</span>
 
@@ -479,74 +494,18 @@ interface GridRow {
 
           <!-- Right Side Summary Panel (Totais) -->
 
-          <div class="w-64 bg-[#FDFDFD] border border-gray-300 p-2 shadow-sm flex flex-col gap-0.5 text-[11px]">
-
-             <div class="flex justify-between text-gray-700">
-
-                 <span>Merc./Serv.:</span>
-
-                 <span class="font-mono">{{ merchandiseTotal | number:'1.2-2' }}</span>
-
+          <div class="w-72 shrink-0 bg-white border border-gray-200 rounded-lg shadow-sm flex flex-col text-xs overflow-hidden">
+             <div class="px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Resumo</div>
+             <div class="px-3 space-y-1.5">
+               <div class="flex justify-between text-gray-600"><span>Mercadoria / serviços</span><span class="tabular-nums text-gray-900">{{ merchandiseTotal | number:'1.2-2' }}</span></div>
+               <div class="flex justify-between text-gray-600"><span>Descontos</span><span class="tabular-nums" [ngClass]="discountValue ? 'text-red-600' : 'text-gray-400'">{{ discountValue ? '−' : '' }}{{ discountValue | number:'1.2-2' }}</span></div>
+               <div class="flex justify-between text-gray-600"><span>IVA</span><span class="tabular-nums text-gray-900">{{ totalIva | number:'1.2-2' }}</span></div>
+               <div class="flex justify-between text-gray-700 font-medium border-t border-gray-100 pt-1"><span>Subtotal</span><span class="tabular-nums text-gray-900">{{ subtotal | number:'1.2-2' }}</span></div>
              </div>
-
-             <div class="flex justify-between text-gray-700">
-
-                 <span>Descontos:</span>
-
-                 <span class="font-mono">{{ discountValue | number:'1.2-2' }}</span>
-
+             <div class="mt-auto flex items-baseline justify-between bg-slate-50 border-t border-gray-200 px-3 py-2.5">
+               <span class="text-xs font-semibold text-gray-600">Total a pagar</span>
+               <span class="text-lg font-bold tabular-nums text-gray-900">{{ totalValue | number:'1.2-2' }} <span class="text-[11px] font-semibold text-gray-500">MT</span></span>
              </div>
-
-             <div class="flex justify-between text-gray-700">
-
-                 <span>IVA:</span>
-
-                 <span class="font-mono">{{ totalIva | number:'1.2-2' }}</span>
-
-             </div>
-
-             <div class="flex justify-between text-gray-700">
-
-                 <span>Outros:</span>
-
-                 <span class="font-mono">0,00</span>
-
-             </div>
-
-             <div class="flex justify-between text-gray-700 font-medium mt-1">
-
-                 <span>Subtotal:</span>
-
-                 <span class="font-mono">{{ subtotal | number:'1.2-2' }}</span>
-
-             </div>
-
-             <div class="flex justify-between text-gray-700">
-
-                 <span>Acerto:</span>
-
-                 <span class="font-mono">0,00</span>
-
-             </div>
-
-             <div class="flex justify-between text-gray-700">
-
-                 <span>Ecovalor:</span>
-
-                 <span class="font-mono">0,00</span>
-
-             </div>
-
-             
-
-             <div class="mt-auto flex justify-between font-bold text-black text-sm pt-2">
-
-               <span>Total MT:</span>
-
-               <span class="font-mono text-red-600">{{ totalValue | number:'1.2-2' }}</span>
-
-             </div>
-
           </div>
 
        </div>
@@ -561,7 +520,7 @@ interface GridRow {
 
            <h3 class="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-200">Condições de Pagamento</h3>
 
-           
+
 
            <div class="grid grid-cols-2 gap-4">
 
@@ -631,7 +590,7 @@ interface GridRow {
 
            <h3 class="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-200">Outras Condições</h3>
 
-           
+
 
            <div class="grid grid-cols-2 gap-4">
 
@@ -667,7 +626,7 @@ interface GridRow {
          <textarea [(ngModel)]="documentNotes" [disabled]="isReadOnly" rows="8" placeholder="Notas internas ou a imprimir no documento..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
        </div>
 
-         
+
 
 
      </div>
@@ -676,7 +635,7 @@ interface GridRow {
 
      <!-- Grid Section -->
 
-     <div class="flex-1 overflow-auto bg-white border-t border-gray-300 relative">
+     <div class="flex-1 overflow-auto bg-white border-t border-gray-200 relative">
 
        <!-- Locked Overlay for Grid -->
 
@@ -686,58 +645,58 @@ interface GridRow {
 
        <table class="min-w-full w-max border-collapse table-fixed">
 
-          <thead class="bg-gray-50 sticky top-0 z-10 shadow-sm text-[10px] uppercase">
+          <thead class="sticky top-0 z-10 shadow-[0_1px_0_#e5e7eb] text-[10px] uppercase">
 
             <tr>
 
-              <th class="px-2 py-1 border-r border-b border-l border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[120px]">Artigo</th>
+              <th class="px-2 py-2 border-r border-b border-l border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[120px]">Artigo</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[60px]">Arm.</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[60px]">Arm.</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[80px]">Localização</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[80px]">Localização</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[80px]">Lote</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[80px]">Lote</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[300px]">Descrição</th>
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[220px]">Notas</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[300px]">Descrição</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[220px]">Notas</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[50px]">CIVA</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[50px]">CIVA</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[50px]">IVA %</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-right whitespace-nowrap w-[50px]">IVA %</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[90px]">Pr. Unit.</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-right whitespace-nowrap w-[90px]">Pr. Unit.</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[60px]">Desc.</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-right whitespace-nowrap w-[60px]">Desc.</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[40px]">UN</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[40px]">UN</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[70px]">Qtd.</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-right whitespace-nowrap w-[70px]">Qtd.</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[90px]">Total Liq.</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-right whitespace-nowrap w-[90px]">Total Liq.</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[80px]">Projeto</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[80px]">Projeto</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[80px]">Elem. PEP</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[80px]">Elem. PEP</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[100px]">Cód. Barras</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[100px]">Cód. Barras</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[120px]">IVA - Regra Cálculo</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[120px]">IVA - Regra Cálculo</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[90px]">Valor Total</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-right whitespace-nowrap w-[90px]">Valor Total</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[80px]">Contrato</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[80px]">Contrato</th>
 
-              <th class="px-2 py-1 border-r border-b border-gray-200 bg-slate-700 text-white font-semibold text-left whitespace-nowrap w-[80px]">N.º Processo</th>
+              <th class="px-2 py-2 border-r border-b border-gray-200 bg-slate-100 text-slate-600 font-semibold tracking-wide text-left whitespace-nowrap w-[80px]">N.º Processo</th>
 
             </tr>
 
           </thead>
 
-          <tbody class="text-[11px]">
+          <tbody class="text-xs text-gray-800">
 
-             <tr *ngFor="let row of rows; let i = index; trackBy: trackByIndex" 
+             <tr *ngFor="let row of rows; let i = index; trackBy: trackByIndex"
 
-                 class="hover:bg-blue-50 cursor-pointer group h-6"
+                 class="even:bg-slate-50/70 hover:bg-blue-50 cursor-pointer group h-7"
 
                  [class.bg-blue-100]="i === activeRowIndex"
 
@@ -747,11 +706,11 @@ interface GridRow {
 
                <td class="border-r border-b border-gray-200 h-6 px-1 relative p-0 overflow-hidden">
 
-                 <input 
+                 <input
 
-                    type="text" 
+                    type="text"
 
-                    [(ngModel)]="row.articleCode" 
+                    [(ngModel)]="row.articleCode"
 
                     (blur)="onArticleBlur(i)"
 
@@ -767,7 +726,7 @@ interface GridRow {
 
                </td>
 
-               
+
 
                <!-- Other Columns (Read-only for now or simple inputs) -->
 
@@ -777,7 +736,7 @@ interface GridRow {
 
                  <div class="flex h-full">
 
-                   <input [(ngModel)]="row.warehouse" 
+                   <input [(ngModel)]="row.warehouse"
 
                      (keydown)="!isReadOnly && onWarehouseKeydown(i, $event)"
 
@@ -785,7 +744,7 @@ interface GridRow {
 
                      class="flex-1 px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50 disabled:bg-transparent" />
 
-                   <button (click)="!isReadOnly && openWarehouseSearch(i)" 
+                   <button (click)="!isReadOnly && openWarehouseSearch(i)"
 
                      [disabled]="isReadOnly"
 
@@ -807,7 +766,7 @@ interface GridRow {
 
                  <div class="flex h-full">
 
-                   <input [(ngModel)]="row.location" 
+                   <input [(ngModel)]="row.location"
 
                      (keydown)="!isReadOnly && onLocationKeydown(i, $event)"
 
@@ -815,7 +774,7 @@ interface GridRow {
 
                      class="flex-1 px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50 disabled:bg-transparent" />
 
-                    <button (click)="!isReadOnly && openLocationSearch(i)" 
+                    <button (click)="!isReadOnly && openLocationSearch(i)"
 
                       [disabled]="isReadOnly"
 
@@ -837,7 +796,7 @@ interface GridRow {
 
                  <div class="flex h-full">
 
-                   <input [(ngModel)]="row.batch" 
+                   <input [(ngModel)]="row.batch"
 
                      (keydown)="!isReadOnly && onBatchKeydown(i, $event)"
 
@@ -845,7 +804,7 @@ interface GridRow {
 
                      class="flex-1 px-1 border-none bg-transparent focus:outline-none focus:bg-blue-50 disabled:bg-transparent" />
 
-                    <button (click)="!isReadOnly && openBatchSearch(i)" 
+                    <button (click)="!isReadOnly && openBatchSearch(i)"
 
                       [disabled]="isReadOnly"
 
@@ -867,11 +826,11 @@ interface GridRow {
 
                <td class="border-r border-b border-gray-200 h-6 px-1 relative p-0 group/civa">
 
-                 <input 
+                 <input
 
-                    type="text" 
+                    type="text"
 
-                    [(ngModel)]="row.civa" 
+                    [(ngModel)]="row.civa"
 
                     (keydown)="!isReadOnly && onCivaKeydown(i, $event)"
 
@@ -895,19 +854,19 @@ interface GridRow {
 
                <td class="border-r border-b border-gray-200 h-6 px-1 text-right">
 
-                  <input 
+                  <input
 
                     *ngIf="row.articleCode"
 
-                    type="number" 
+                    type="number"
 
-                    [(ngModel)]="row.quantity" 
+                    [(ngModel)]="row.quantity"
 
                     (ngModelChange)="calculateRow(i)"
 
                     [disabled]="isReadOnly"
 
-                    class="w-full h-full px-1 border-none bg-transparent focus:outline-none text-right disabled:bg-transparent" 
+                    class="w-full h-full px-1 border-none bg-transparent focus:outline-none text-right disabled:bg-transparent"
 
                   />
 
@@ -939,9 +898,9 @@ interface GridRow {
 
       </div>
 
-      <app-document-type-modal 
+      <app-document-type-modal
 
-        *ngIf="showDocTypeModal" 
+        *ngIf="showDocTypeModal"
 
         [module]="'SALES'"
 
@@ -1115,7 +1074,7 @@ interface GridRow {
       </div>
       <!-- Context Menu -->
 
-      <div *ngIf="contextMenuVisible" 
+      <div *ngIf="contextMenuVisible"
 
            class="fixed z-50 bg-white shadow-lg border border-gray-200 rounded-sm py-1 w-72 text-xs"
 
@@ -1123,7 +1082,7 @@ interface GridRow {
 
            [style.top.px]="contextMenuPosition.y">
 
-        
+
 
         <button (click)="insertLine()" class="w-full text-left px-4 py-1.5 hover:bg-blue-50 flex items-center gap-2 text-gray-700">
 
@@ -1141,11 +1100,11 @@ interface GridRow {
 
         </button>
 
-        
+
 
         <div class="h-px bg-gray-200 my-1"></div>
 
-        
+
 
         <button class="w-full text-left px-4 py-1 hover:bg-blue-50 text-gray-700 pl-10">Preços de Venda</button>
 
@@ -1243,7 +1202,7 @@ interface GridRow {
 
         <div class="h-px bg-gray-200 my-1"></div>
 
-        
+
 
         <button class="w-full text-left px-4 py-1 hover:bg-blue-50 flex justify-between text-gray-700 pl-10">
 
@@ -2650,6 +2609,17 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
 
   status: WorkflowStatus = WorkflowStatus.DRAFT;
+
+  /** Selo do estado na faixa do documento. */
+  get statusPill(): { label: string; cls: string; dot: string } {
+    switch (String(this.status)) {
+      case 'SUBMITTED': return { label: 'Submetido', cls: 'bg-amber-50 text-amber-700 ring-amber-200', dot: 'bg-amber-500' };
+      case 'APPROVED': return { label: 'Aprovado', cls: 'bg-green-50 text-green-700 ring-green-200', dot: 'bg-green-500' };
+      case 'POSTED': return { label: 'Lançado', cls: 'bg-blue-50 text-blue-700 ring-blue-200', dot: 'bg-blue-500' };
+      case 'REJECTED': return { label: 'Anulado / rejeitado', cls: 'bg-red-50 text-red-700 ring-red-200', dot: 'bg-red-500' };
+      default: return { label: 'Rascunho', cls: 'bg-gray-50 text-gray-600 ring-gray-200', dot: 'bg-gray-400' };
+    }
+  }
 
 
 
