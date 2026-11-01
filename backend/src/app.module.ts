@@ -74,6 +74,7 @@ import { PaymentGatewayConfig } from './payment-gateways/entities/payment-gatewa
 import { PaymentGatewaysModule } from './payment-gateways/payment-gateways.module';
 import { AdminModule } from './admin/admin.module';
 import { PrintTemplatesModule } from './print-templates/print-templates.module';
+import { FiscalExportModule } from './fiscal-export/fiscal-export.module';
 import { AssetsModule } from './assets/assets.module';
 import { ExpiryModule } from './expiry/expiry.module';
 
@@ -216,6 +217,7 @@ import { ExpiryModule } from './expiry/expiry.module';
     PaymentGatewaysModule,
     AdminModule,
     PrintTemplatesModule,
+    FiscalExportModule,
     AssetsModule,
     ExpiryModule,
   ],

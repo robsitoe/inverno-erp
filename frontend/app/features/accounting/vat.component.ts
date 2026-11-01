@@ -47,6 +47,23 @@ import { ToasterService } from '../../services/toaster.service';
         </div>
         <p class="text-[11px] text-gray-500">O apuramento salda as contas de IVA liquidado, dedutível e regularizações do período e regista o resultado em 4.4.3.7 (a pagar) ou 4.4.3.8 (a recuperar), com a data do fim do período.</p>
 
+        <div class="bg-white border border-gray-200 rounded shadow-sm p-3 text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="font-bold text-gray-700">Ficheiro mensal de faturas para a AT (e-Declaração) — {{ exportMonthLabel }}</div>
+              <div class="text-[11px] text-gray-500">Faturas, notas de crédito e de débito emitidas (ou recebidas) e anuladas no mês, com linhas, IVA e motivo de isenção. Estrutura provisória ao estilo SAF-T, até a AT publicar o formato oficial.</div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button *ngFor="let b of exportButtons" (click)="exportAT(b.kind, b.format)" [disabled]="busy" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50">{{ b.label }}</button>
+            </div>
+          </div>
+          <div *ngIf="lastExport" class="mt-2 text-[11px] text-gray-600">
+            {{ lastExport.fileName }}: {{ lastExport.summary.documents }} documento(s){{ lastExport.summary.voided ? ', ' + lastExport.summary.voided + ' anulado(s)' : '' }} ·
+            base {{ lastExport.summary.netTotal | number:'1.2-2' }} · IVA {{ lastExport.summary.taxTotal | number:'1.2-2' }} · total {{ lastExport.summary.grossTotal | number:'1.2-2' }}
+            <span *ngIf="lastExport.summary.withoutTaxId" class="text-amber-700"> · {{ lastExport.summary.withoutTaxId }} sem NUIT do cliente/fornecedor</span>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div *ngFor="let side of sides" class="bg-white border border-gray-200 rounded shadow-sm">
             <div class="px-3 py-2 border-b border-gray-200 text-xs font-bold text-gray-700">{{ side.label }} — por taxa</div>
@@ -136,6 +153,32 @@ export class VatComponent implements OnInit {
       this.s = await firstValueFrom(this.http.post<any>(`${this.api}/vat/settle`, { from: this.from, to: this.to }));
       this.toaster.showSuccess('IVA', 'Apuramento lançado.');
     } catch (e: any) { this.toaster.showError('IVA', e?.error?.message || 'Falhou.'); }
+    this.busy = false; this.cdr.detectChanges();
+  }
+
+  lastExport: any = null;
+  readonly exportButtons = [
+    { kind: 'SALES', format: 'xml', label: 'Emitidas XML' }, { kind: 'SALES', format: 'csv', label: 'Emitidas CSV' },
+    { kind: 'PURCHASES', format: 'xml', label: 'Recebidas XML' }, { kind: 'PURCHASES', format: 'csv', label: 'Recebidas CSV' },
+  ];
+
+  /** O ficheiro da AT é sempre de um mês: o do período escolhido (no personalizado, o mês da data inicial). */
+  private get exportYm(): [number, number] {
+    const [y, m] = (this.mode === 'custom' ? this.from.slice(0, 7) : this.month).split('-').map(Number);
+    return [y, m];
+  }
+  get exportMonthLabel() { const [y, m] = this.exportYm; return `${String(m).padStart(2, '0')}/${y}`; }
+
+  async exportAT(kind: string, format: string) {
+    const [year, month] = this.exportYm;
+    this.busy = true;
+    try {
+      const r = await firstValueFrom(this.http.get<any>(`${environment.apiUrl}/accounting/fiscal-export/invoices`, { params: { kind, format, year, month } }));
+      this.lastExport = r;
+      const blob = new Blob([r.content], { type: `${r.mimeType};charset=utf-8` });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = r.fileName; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    } catch (e: any) { this.toaster.showError('Ficheiro para a AT', e?.error?.message || 'Não foi possível gerar o ficheiro.'); }
     this.busy = false; this.cdr.detectChanges();
   }
 
