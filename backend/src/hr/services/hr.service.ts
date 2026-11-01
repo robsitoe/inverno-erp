@@ -102,6 +102,7 @@ export class HRService {
       }
     }
 
+    this.applyDependentsList(createEmployeeDto);
     const employee = repo.create({
       ...createEmployeeDto,
       id: `EMP-${createEmployeeDto.code}-${companyId}`
@@ -126,6 +127,7 @@ export class HRService {
     const companyId = updateEmployeeDto.companyId || TenancyContext.getCompanyId();
     const repo = await this.getEmployeeRepo(companyId);
     const employee = await this.findOne(id, companyId);
+    this.applyDependentsList(updateEmployeeDto);
 
     // Detect Salary/Financial changes for history
     const hasFinancialChanges =
@@ -164,6 +166,26 @@ export class HRService {
 
     repo.merge(employee, updateEmployeeDto);
     return await repo.save(employee);
+  }
+
+  /**
+   * Com a lista de dependentes preenchida, o número para o IRPS sai dela (os que contam).
+   * Sem lista, mantém-se o número escrito à mão, como antes.
+   */
+  private applyDependentsList(dto: { dependents?: number; dependentsList?: any[] }) {
+    if (!Array.isArray(dto.dependentsList)) return;
+    dto.dependentsList = dto.dependentsList
+      .filter(d => d && String(d.name || '').trim())
+      .map((d, i) => ({
+        ...d,
+        id: d.id || `DEP-${Date.now()}-${i}`,
+        name: String(d.name).trim(),
+        relationship: d.relationship || 'FILHO',
+        countsForIrps: d.countsForIrps !== false,
+      }));
+    if (dto.dependentsList.length) {
+      dto.dependents = dto.dependentsList.filter(d => d.countsForIrps).length;
+    }
   }
 
   async getSalaryHistory(employeeId: string, companyId?: string) {

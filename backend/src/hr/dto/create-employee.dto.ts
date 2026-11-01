@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, IsEmail, IsEnum, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsEmail, IsEnum, IsBoolean, IsArray } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { ContractType } from '../entities/employee.entity';
 
@@ -92,6 +92,11 @@ export class CreateEmployeeDto {
   @IsNumber()
   @IsOptional()
   dependents?: number;
+
+  @ApiProperty({ required: false, description: 'Dependentes com os seus dados (nome, parentesco, nascimento...)' })
+  @IsArray()
+  @IsOptional()
+  dependentsList?: any[];
 
   @ApiProperty()
   @IsNumber()

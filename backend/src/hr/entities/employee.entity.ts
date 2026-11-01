@@ -24,6 +24,22 @@ export interface EmployeeDocument {
     url: string;
 }
 
+/** Dependente do funcionário (agregado familiar). */
+export interface EmployeeDependent {
+    id: string;
+    name: string;
+    relationship: 'FILHO' | 'CONJUGE' | 'ASCENDENTE' | 'OUTRO';
+    birthDate?: string;
+    gender?: 'M' | 'F';
+    documentNumber?: string;
+    nuit?: string;
+    student?: boolean;
+    disability?: boolean;
+    /** Conta para a parcela a abater do IRPS. */
+    countsForIrps: boolean;
+    notes?: string;
+}
+
 @Entity('employees')
 @Unique(['companyId', 'code'])
 export class Employee {
@@ -97,6 +113,10 @@ export class Employee {
 
     @Column({ type: 'int', default: 0 })
     dependents: number;
+
+    /** Lista dos dependentes; quando preenchida, "dependents" passa a ser o número dos que contam para o IRPS. */
+    @Column({ type: 'simple-json', nullable: true })
+    dependentsList: EmployeeDependent[];
 
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     salaryBase: number;

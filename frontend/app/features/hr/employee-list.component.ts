@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 
 import { FormsModule } from '@angular/forms';
 
-import { HRService, Employee, EmployeeDocument } from '../../shared/hr.service';
+import { HRService, Employee, EmployeeDocument, EmployeeDependent } from '../../shared/hr.service';
 
 import { DataService } from '../../services/data.service';
 
@@ -280,6 +280,11 @@ const MOZAMBIQUE_BANKS = [
 
                   </button>
 
+                  <button (click)="setTab('dependents')" [class.border-blue-600]="activeTab === 'dependents'" [class.text-blue-600]="activeTab === 'dependents'"
+                    class="px-4 py-2 border-b-2 border-transparent text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-blue-600 whitespace-nowrap transition-all">
+                    Dependentes <span *ngIf="dependentsList.length" class="ml-1 px-1.5 rounded-full bg-gray-100 text-gray-600 text-[10px]">{{ dependentsList.length }}</span>
+                  </button>
+
                   <button *ngIf="selectedEmployee.id" (click)="setTab('history')" [class.border-blue-600]="activeTab === 'history'" [class.text-blue-600]="activeTab === 'history'"
 
                     class="px-4 py-2 border-b-2 border-transparent text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-blue-600 whitespace-nowrap transition-all">
@@ -481,7 +486,12 @@ const MOZAMBIQUE_BANKS = [
 
                       <label class="block text-[11px] font-black text-orange-900 uppercase mb-1">Dependentes (IRPS)</label>
 
-                      <select [(ngModel)]="selectedEmployee.dependents" class="w-full px-3 py-2 border-2 border-orange-200 rounded text-lg bg-white shadow-sm">
+                      <div *ngIf="dependentsList.length" class="w-full px-3 py-2 border-2 border-orange-200 rounded text-lg bg-white shadow-sm flex items-center justify-between">
+                        <span>{{ irpsDependents }} {{ irpsDependents === 1 ? 'Dependente' : 'Dependentes' }}</span>
+                        <button type="button" (click)="setTab('dependents')" class="text-[11px] text-orange-700 hover:underline">ver lista</button>
+                      </div>
+
+                      <select *ngIf="!dependentsList.length" [(ngModel)]="selectedEmployee.dependents" class="w-full px-3 py-2 border-2 border-orange-200 rounded text-lg bg-white shadow-sm">
 
                         <option [ngValue]="0">0 Dependentes</option>
 
@@ -546,6 +556,88 @@ const MOZAMBIQUE_BANKS = [
                           </button>
                        </div>
                        <p class="text-[9px] text-gray-400 uppercase tracking-tighter">* Use o botão acima para registar aumentos ou alterações de forma profissional com justificativo e anexo.</p>
+                    </div>
+                  </ng-container>
+
+                  <!-- Panel: Dependentes (agregado familiar) -->
+                  <ng-container *ngIf="activeTab === 'dependents'">
+                    <div class="col-span-2">
+                      <div class="flex items-center justify-between mb-2">
+                        <div>
+                          <h3 class="text-[11px] font-bold uppercase tracking-wide text-gray-700">Agregado familiar</h3>
+                          <p class="text-[11px] text-gray-500">Registe cada dependente com os seus dados. O número para o IRPS é calculado a partir dos que estão marcados como «Conta IRPS».</p>
+                        </div>
+                        <button type="button" (click)="addDependent()" class="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 shadow-sm whitespace-nowrap">
+                          <app-icon name="add" [size]="14" color="white"></app-icon> Adicionar dependente
+                        </button>
+                      </div>
+
+                      <div *ngIf="!dependentsList.length" class="border border-dashed rounded p-6 text-center text-xs text-gray-500">
+                        Sem dependentes registados.
+                        <span *ngIf="selectedEmployee.dependents">Está a ser usado o número indicado no separador Financeiro ({{ selectedEmployee.dependents }}).</span>
+                      </div>
+
+                      <div *ngIf="dependentsList.length" class="space-y-3">
+                        <div *ngFor="let d of dependentsList; let i = index" class="border rounded-lg bg-white shadow-sm p-3">
+                          <div class="flex items-center justify-between mb-2">
+                            <div class="text-xs font-semibold text-gray-700">
+                              {{ d.name?.trim() || 'Novo dependente' }}
+                              <span class="font-normal text-gray-500">· {{ ageOf(d.birthDate) !== null ? ageOf(d.birthDate) + ' anos' : 'sem data de nascimento' }}</span>
+                              <span *ngIf="d.countsForIrps && d.name?.trim()" class="ml-1 px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-700 ring-1 ring-inset ring-orange-200 text-[10px]">Conta IRPS</span>
+                            </div>
+                            <button type="button" (click)="removeDependent(i)" title="Remover dependente" class="p-1 rounded hover:bg-red-50">
+                              <app-icon name="delete" [size]="15" color="#dc2626"></app-icon>
+                            </button>
+                          </div>
+                          <div class="grid grid-cols-4 gap-x-3 gap-y-2">
+                            <div class="col-span-2">
+                              <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nome completo *</label>
+                              <input type="text" [(ngModel)]="d.name" (ngModelChange)="syncDependents()" placeholder="Nome do dependente" [class.border-red-300]="!d.name?.trim()" class="w-full px-2 py-1.5 border rounded text-xs bg-gray-50 focus:bg-white">
+                            </div>
+                            <div>
+                              <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Parentesco</label>
+                              <select [(ngModel)]="d.relationship" class="w-full px-2 py-1.5 border rounded text-xs bg-gray-50 focus:bg-white">
+                                <option *ngFor="let r of relationships" [ngValue]="r.value">{{ r.label }}</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Sexo</label>
+                              <select [(ngModel)]="d.gender" class="w-full px-2 py-1.5 border rounded text-xs bg-gray-50 focus:bg-white">
+                                <option [ngValue]="undefined">—</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Feminino</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Data de nascimento</label>
+                              <input type="date" [(ngModel)]="d.birthDate" class="w-full px-2 py-1.5 border rounded text-xs bg-gray-50 focus:bg-white">
+                            </div>
+                            <div>
+                              <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">BI / Cédula</label>
+                              <input type="text" [(ngModel)]="d.documentNumber" class="w-full px-2 py-1.5 border rounded text-xs bg-gray-50 focus:bg-white">
+                            </div>
+                            <div>
+                              <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">NUIT</label>
+                              <input type="text" [(ngModel)]="d.nuit" class="w-full px-2 py-1.5 border rounded text-xs bg-gray-50 focus:bg-white">
+                            </div>
+                            <div class="flex flex-col justify-end gap-1 text-xs text-gray-700">
+                              <label class="flex items-center gap-1.5"><input type="checkbox" [(ngModel)]="d.student"> Estudante</label>
+                              <label class="flex items-center gap-1.5"><input type="checkbox" [(ngModel)]="d.disability"> Incapacidade</label>
+                            </div>
+                            <div class="col-span-4 flex items-center justify-between border-t border-gray-100 pt-2">
+                              <label class="flex items-center gap-1.5 text-xs font-semibold text-orange-800">
+                                <input type="checkbox" [(ngModel)]="d.countsForIrps" (ngModelChange)="syncDependents()"> Conta para o IRPS (parcela a abater)
+                              </label>
+                              <span *ngIf="needsCheck(d)" class="text-[11px] text-amber-700">Maior de idade: confirme se ainda conta para o IRPS.</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div *ngIf="dependentsList.length" class="mt-2 text-xs text-gray-600">
+                        {{ dependentsList.length }} dependente(s) registado(s) · <b>{{ irpsDependents }}</b> conta(m) para o IRPS.
+                        As alterações ficam guardadas quando clicar em Gravar.
+                      </div>
                     </div>
                   </ng-container>
 
@@ -770,7 +862,14 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
   nibStatus: 'idle' | 'checking' | 'available' | 'taken' = 'idle';
   nibConflictName = '';
 
-  activeTab: 'basic' | 'contract' | 'salary' | 'history' = 'basic';
+  activeTab: 'basic' | 'contract' | 'salary' | 'dependents' | 'history' = 'basic';
+
+  readonly relationships = [
+    { value: 'FILHO', label: 'Filho(a)' },
+    { value: 'CONJUGE', label: 'Cônjuge' },
+    { value: 'ASCENDENTE', label: 'Pai / Mãe' },
+    { value: 'OUTRO', label: 'Outro' },
+  ];
   salaryHistory: any[] = [];
   changeReason: string = '';
 
@@ -891,7 +990,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
 
   selectEmployee(emp: Employee) {
     // Clone to avoid direct mutation
-    this.selectedEmployee = { ...emp };
+    this.selectedEmployee = { ...emp, dependentsList: (emp.dependentsList || []).map(d => ({ ...d })) };
     this.activeTab = 'basic';
     this.salaryHistory = [];
     this.changeReason = '';
@@ -928,11 +1027,54 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
       subsidyHousing: 0,
       contractType: 'INDETERMINADO',
       weeklyHours: 44,
+      dependents: 0,
+      dependentsList: [],
       isActive: true
     } as Employee;
     this.codeStatus = 'idle';
     this.nibStatus = 'idle';
     this.nibConflictName = '';
+  }
+
+  // ── Dependentes ──
+
+  get dependentsList(): EmployeeDependent[] {
+    return this.selectedEmployee?.dependentsList || [];
+  }
+
+  get irpsDependents(): number {
+    return this.dependentsList.filter(d => d.countsForIrps && d.name?.trim()).length;
+  }
+
+  addDependent() {
+    if (!this.selectedEmployee) return;
+    this.selectedEmployee.dependentsList = [...this.dependentsList, { name: '', relationship: 'FILHO', countsForIrps: true }];
+  }
+
+  removeDependent(i: number) {
+    if (!this.selectedEmployee) return;
+    this.selectedEmployee.dependentsList = this.dependentsList.filter((_, idx) => idx !== i);
+    this.syncDependents();
+  }
+
+  /** Chamado a cada alteração da lista: o número para o IRPS acompanha os dependentes que contam. */
+  syncDependents() {
+    if (this.selectedEmployee) this.selectedEmployee.dependents = this.irpsDependents;
+  }
+
+  ageOf(birthDate?: string): number | null {
+    if (!birthDate) return null;
+    const b = new Date(birthDate), t = new Date();
+    if (isNaN(b.getTime())) return null;
+    let age = t.getFullYear() - b.getFullYear();
+    if (t.getMonth() < b.getMonth() || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) age--;
+    return age;
+  }
+
+  /** Filho maior de idade que ainda conta para o IRPS: lembrar de confirmar (estudante ou incapacidade). */
+  needsCheck(d: EmployeeDependent): boolean {
+    const age = this.ageOf(d.birthDate);
+    return d.countsForIrps && d.relationship === 'FILHO' && age !== null && age >= 18 && !d.student && !d.disability;
   }
 
   onCodeChange(val: string) {
@@ -949,6 +1091,13 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
       this.toaster.showError('Erro', 'Código e Nome são obrigatórios.');
       return;
     }
+    if (this.dependentsList.some(d => !d.name?.trim())) {
+      this.activeTab = 'dependents';
+      this.toaster.showError('Dependentes', 'Indique o nome de cada dependente (ou remova a linha vazia).');
+      return;
+    }
+    // Sem lista mantém-se o número escrito à mão (funcionários já existentes)
+    if (this.dependentsList.length) this.syncDependents();
 
     this.isSaving = true;
     const cid = this.getCompanyId();

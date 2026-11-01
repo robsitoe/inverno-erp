@@ -35,6 +35,20 @@ export interface EmployeeDocument {
 
 
 
+export interface EmployeeDependent {
+  id?: string;
+  name: string;
+  relationship: 'FILHO' | 'CONJUGE' | 'ASCENDENTE' | 'OUTRO';
+  birthDate?: string;
+  gender?: 'M' | 'F';
+  documentNumber?: string;
+  nuit?: string;
+  student?: boolean;
+  disability?: boolean;
+  countsForIrps: boolean; // Conta para a parcela a abater do IRPS
+  notes?: string;
+}
+
 export interface Employee {
 
   id: string;
@@ -85,6 +99,8 @@ export interface Employee {
   vacationBalance?: number;
 
   dependents?: number;
+
+  dependentsList?: EmployeeDependent[]; // Dependentes com os seus dados
 
   isActive: boolean;
 
