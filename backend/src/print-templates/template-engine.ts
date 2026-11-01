@@ -55,7 +55,7 @@ export const FIELDS: FieldDef[] = [
   { key: 'documento.copia', label: 'Via (Original, Duplicado...)', fiscal: false, scope: 'doc' },
   { key: 'linha.codigo', label: 'Código do artigo', fiscal: false, scope: 'linha', modules: ART },
   { key: 'linha.descricao', label: 'Descrição', fiscal: false, scope: 'linha' },
-  { key: 'linha.unidade', label: 'Unidade', fiscal: false, scope: 'linha', modules: ['PURCHASES', 'STOCK'] },
+  { key: 'linha.unidade', label: 'Unidade', fiscal: false, scope: 'linha', modules: ['SALES', 'PURCHASES', 'STOCK'] },
   { key: 'linha.documento', label: 'Documento liquidado (ex.: FA 2026/1)', fiscal: true, scope: 'linha', modules: ['TREASURY'], requiredIn: ['TREASURY'] },
   { key: 'linha.valorOriginal', label: 'Valor original do documento liquidado', fiscal: true, scope: 'linha', modules: ['TREASURY'] },
   { key: 'linha.pendente', label: 'Pendente após liquidação', fiscal: true, scope: 'linha', modules: ['TREASURY'] },

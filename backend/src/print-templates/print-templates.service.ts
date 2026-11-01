@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { createHmac, randomUUID } from 'crypto';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { Company } from '../companies/entities/company.entity';
@@ -8,6 +8,7 @@ import { PurchaseDocument } from '../purchases/entities/purchase.entity';
 import { TreasuryDocument } from '../treasury/entities/treasury.entity';
 import { StockDocument } from '../inventory/entities/stock-document.entity';
 import { DocumentType } from '../common-entities/entities/document-type.entity';
+import { Article } from '../inventory/entities/article.entity';
 import {
   MODULES, PrintModule, RenderData, checkRendered, expectedValues, fieldsFor, fmtDate, fmtMoney, fmtQty, renderTemplate, validateTemplate,
 } from './template-engine';
@@ -349,8 +350,12 @@ export class PrintTemplatesService {
     if (module === 'SALES') {
       const d = await ds.getRepository(SalesDocument).findOne({ where: { id }, relations: ['lines'] });
       if (!d) throw notFound();
+      // As linhas de venda não guardam a unidade: vem da ficha do artigo (pelo id ou pelo código)
+      const keys = [...new Set((d.lines || []).flatMap(l => [l.articleId, l.articleCode]).filter(Boolean))];
+      const arts = keys.length ? await ds.getRepository(Article).find({ where: [{ id: In(keys) }, { code: In(keys) }] }).catch(() => []) : [];
+      const unitOf = (l: any) => (arts.find(a => a.id === l.articleId) || arts.find(a => a.code === l.articleCode))?.unit || '';
       const { linhas, resumoIva } = this.commercialLines((d.lines || []).map(l => ({
-        codigo: l.articleCode, descricao: l.articleName, q: +l.quantity || 0, p: +l.unitPrice || 0, d: +l.discount || 0, r: +l.ivaRate || 0,
+        codigo: l.articleCode, descricao: l.articleName, unidade: unitOf(l), q: +l.quantity || 0, p: +l.unitPrice || 0, d: +l.discount || 0, r: +l.ivaRate || 0,
         liquid: l.subtotal, iva: l.ivaAmount, total: l.total,
       })));
       return {
