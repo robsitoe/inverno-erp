@@ -133,6 +133,40 @@ export class PayrollService {
     return payRepo.find({ where: { companyId: cid, year, month }, order: { employeeCode: 'ASC' } });
   }
 
+  private static readonly MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+  /**
+   * Ordem dos meses: com histórico de folhas, não se salta um mês.
+   * missing  = primeiro mês anterior que nunca foi processado (bloqueia);
+   * previousOpen = o mês imediatamente anterior existe mas ainda não foi lançado/pago (só aviso).
+   */
+  async getSequenceStatus(year: number, month: number, companyId?: string) {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const payRepo = await this.getPayrollRepo(cid);
+    const target = year * 12 + (month - 1);
+    const rows: { year: number; month: number; status: string }[] = await payRepo.createQueryBuilder('p')
+      .select('p.year', 'year').addSelect('p.month', 'month').addSelect('p.status', 'status')
+      .where('p.companyId = :cid', { cid })
+      .andWhere('(p.year * 12 + p.month - 1) < :target', { target })
+      .getRawMany();
+    const label = (k: number) => ({ year: Math.floor(k / 12), month: (k % 12) + 1, label: `${PayrollService.MONTHS[k % 12]}/${Math.floor(k / 12)}` });
+    if (!rows.length) return { ok: true, missing: null, previousOpen: null };
+
+    const done = new Set(rows.map(r => Number(r.year) * 12 + Number(r.month) - 1));
+    const first = Math.min(...done);
+    let missing: any = null;
+    for (let k = first; k < target; k++) {
+      if (!done.has(k)) { missing = label(k); break; }
+    }
+    let previousOpen: any = null;
+    const prev = target - 1;
+    if (!missing && done.has(prev)) {
+      const open = rows.filter(r => Number(r.year) * 12 + Number(r.month) - 1 === prev && r.status !== PayrollStatus.POSTED && r.status !== PayrollStatus.PAID);
+      if (open.length) previousOpen = { ...label(prev), status: open[0].status };
+    }
+    return { ok: !missing, missing, previousOpen };
+  }
+
   /**
    * Gera (ou recalcula) a folha do mês. Só mexe em registos em rascunho ou rejeitados;
    * horas extra e bónus lançados à mão são mantidos ao recalcular.
@@ -142,6 +176,14 @@ export class PayrollService {
 
     if (!targetCompanyId) {
       throw new Error('Company ID não identificado. Verifique a sessão.');
+    }
+
+    // Não se salta meses: o mês em falta tem de ser processado primeiro
+    if (!onlyEmployeeId) {
+      const seq = await this.getSequenceStatus(year, month, targetCompanyId);
+      if (seq.missing) {
+        throw new BadRequestException(`Ainda não foi processada a folha de ${seq.missing.label}. Processe primeiro esse mês: os salários são processados por ordem, sem saltar meses.`);
+      }
     }
 
     const empRepo = await this.getEmployeeRepo(targetCompanyId);
@@ -443,6 +485,10 @@ export class PayrollService {
   /** RH submete a folha gerada para aprovação. */
   async submitPayroll(year: number, month: number, companyId: string | undefined, user: any) {
     const cid = companyId || TenancyContext.getCompanyId();
+    const seq = await this.getSequenceStatus(year, month, cid);
+    if (seq.missing) {
+      return { success: false, message: `Ainda não foi processada a folha de ${seq.missing.label}. Processe e submeta primeiro esse mês.` };
+    }
     const payRepo = await this.getPayrollRepo(cid);
     const records = await payRepo.find({
       where: [

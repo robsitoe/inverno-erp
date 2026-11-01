@@ -35,6 +35,14 @@ export interface EmployeeDocument {
 
 
 
+export interface PayrollPeriodRef { year: number; month: number; label: string; status?: string; }
+
+export interface PayrollSequenceStatus {
+  ok: boolean;
+  missing: PayrollPeriodRef | null;      // mês anterior nunca processado: tem de ser feito primeiro
+  previousOpen: PayrollPeriodRef | null; // mês anterior gerado mas ainda não lançado/pago
+}
+
 export interface EmployeeDependent {
   id?: string;
   name: string;
@@ -453,6 +461,11 @@ export class HRService {
   /** Folha já gerada de um período (sem recalcular). */
   getPayroll(year: number, month: number, companyId: string): Observable<PayrollRecord[]> {
     return this.http.get<PayrollRecord[]>(`${this.apiUrl}/payroll?year=${year}&month=${month}&companyId=${companyId}`);
+  }
+
+  /** Meses anteriores por processar (bloqueia) ou ainda não lançados (aviso). */
+  getPayrollSequenceStatus(year: number, month: number, companyId: string): Observable<PayrollSequenceStatus> {
+    return this.http.get<PayrollSequenceStatus>(`${this.apiUrl}/payroll/sequence-status?year=${year}&month=${month}&companyId=${companyId}`);
   }
 
   /** Horas extra / bónus do mês de um registo em rascunho (o servidor recalcula o registo). */

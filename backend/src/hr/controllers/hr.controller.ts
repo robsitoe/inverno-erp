@@ -305,6 +305,14 @@ export class HRController {
     return this.payrollService.getPayroll(Number(year), Number(month), companyId);
   }
 
+  @Get('payroll/sequence-status')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Whether earlier months were processed before this one' })
+  getPayrollSequenceStatus(@Query('year') year: number, @Query('month') month: number, @Query('companyId') companyId?: string) {
+    if (!year || !month) throw new BadRequestException('Indique o ano e o mês.');
+    return this.payrollService.getSequenceStatus(Number(year), Number(month), companyId);
+  }
+
   @Patch('payroll/:id/variables')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermission('hr.payroll.generate')

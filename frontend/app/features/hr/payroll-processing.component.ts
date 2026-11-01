@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HRService, PayrollRecord } from '../../shared/hr.service';
+import { HRService, PayrollRecord, PayrollSequenceStatus } from '../../shared/hr.service';
 import { AppIconComponent } from '../../shared/components/app-icon.component';
 import { ToasterService } from '../../services/toaster.service';
 import { DataService } from '../../services/data.service';
@@ -46,7 +46,7 @@ import { Subscription, firstValueFrom } from 'rxjs';
                 <span>{{ processing ? 'A PROCESSAR...' : (payrollData.length ? 'RECALCULAR FOLHA' : 'GERAR FOLHA') }}</span>
               </button>
               <button
-                *ngIf="payrollData.length > 0 && hasDraftRecords && perms.hasPerm('hr.payroll.generate')"
+                *ngIf="payrollData.length > 0 && hasDraftRecords && !sequence?.missing && perms.hasPerm('hr.payroll.generate')"
                 (click)="submitPayroll()"
                 [disabled]="submitting"
                 class="bg-orange-500 text-white px-5 py-2 rounded text-xs font-bold hover:bg-orange-600 shadow-lg flex items-center gap-2 disabled:bg-gray-400 font-black">
@@ -110,6 +110,28 @@ import { Subscription, firstValueFrom } from 'rxjs';
               <p class="text-xl font-black">{{ totals.employerCost | number:'1.2-2' }} MT</p>
               <p class="text-[10px] text-slate-400 mt-0.5">Salários + INSS patronal + subsídios/extras</p>
            </div>
+        </div>
+
+        <!-- Ordem dos meses: mês anterior em falta (bloqueia) ou ainda aberto (aviso) -->
+        <div *ngIf="sequence?.missing" class="bg-red-50 border border-red-300 rounded p-3 flex items-center gap-3 text-xs text-red-800">
+          <app-icon name="block" [size]="18" class="shrink-0"></app-icon>
+          <div class="flex-1">
+            <b>Falta processar {{ sequence!.missing!.label }}.</b>
+            Os salários são processados por ordem: gere primeiro a folha desse mês e só depois a de {{ months[selectedMonth - 1] }}/{{ selectedYear }}.
+          </div>
+          <button type="button" (click)="goToPeriod(sequence!.missing!)" class="px-3 py-1.5 rounded bg-red-600 text-white font-bold hover:bg-red-700 whitespace-nowrap">
+            Ir para {{ sequence!.missing!.label }}
+          </button>
+        </div>
+        <div *ngIf="!sequence?.missing && sequence?.previousOpen && !payrollData.length" class="bg-amber-50 border border-amber-300 rounded p-3 flex items-center gap-3 text-xs text-amber-800">
+          <app-icon name="warning" [size]="18" class="shrink-0"></app-icon>
+          <div class="flex-1">
+            A folha de <b>{{ sequence!.previousOpen!.label }}</b> ainda não foi lançada na contabilidade ({{ statusLabel(sequence!.previousOpen!.status || '') }}).
+            Recomenda-se fechá-la antes de processar este mês.
+          </div>
+          <button type="button" (click)="goToPeriod(sequence!.previousOpen!)" class="px-3 py-1.5 rounded border border-amber-400 font-bold hover:bg-amber-100 whitespace-nowrap">
+            Ver {{ sequence!.previousOpen!.label }}
+          </button>
         </div>
 
         <!-- Rejeição: motivo indicado pelo aprovador -->
@@ -250,6 +272,22 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   approving = false;
 
   rejectionNote = '';
+  sequence: PayrollSequenceStatus | null = null;
+
+  goToPeriod(p: { year: number; month: number }) {
+    this.selectedYear = p.year;
+    this.selectedMonth = p.month;
+    if (!this.years.includes(p.year)) this.years = [...this.years, p.year].sort();
+    this.loadPeriod();
+  }
+
+  private checkSequence() {
+    const cid = this.dataService.getCompanyId(); if (!cid) return;
+    this.sub.add(this.hrService.getPayrollSequenceStatus(this.selectedYear, this.selectedMonth, cid).subscribe({
+      next: (st) => { this.sequence = st; this.cdr.detectChanges(); },
+      error: () => { this.sequence = null; }
+    }));
+  }
 
   /** Remuneração sujeita a INSS/IRPS (igual à do servidor). */
   taxableOf(r: PayrollRecord): number {
@@ -269,6 +307,7 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   loadPeriod() {
     const cid = this.dataService.getCompanyId();
     if (!cid) return;
+    this.checkSequence();
     this.sub.add(this.hrService.getPayroll(this.selectedYear, this.selectedMonth, cid).subscribe({
       next: (data) => { this.setData(data || []); if (data?.length) this.loadEmployeesList(); },
       error: () => { this.setData([]); }
@@ -408,8 +447,33 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
 
   processPayroll() {
     const cid = this.dataService.getCompanyId();
-    if (!cid) return;
+    if (!cid || this.processing) return;
     this.processing = true;
+    this.sub.add(this.hrService.getPayrollSequenceStatus(this.selectedYear, this.selectedMonth, cid).subscribe({
+      next: (st) => {
+        this.sequence = st;
+        const here = this.months[this.selectedMonth - 1] + '/' + this.selectedYear;
+        if (st.missing) {
+          this.processing = false;
+          this.cdr.detectChanges();
+          if (confirm(`Ainda não foi processada a folha de ${st.missing.label}.\n\nOs salários são processados por ordem: não é possível gerar ${here} sem antes processar ${st.missing.label}.\n\nAbrir ${st.missing.label} agora?`)) {
+            this.goToPeriod(st.missing);
+          }
+          return;
+        }
+        if (st.previousOpen && !this.payrollData.length
+          && !confirm(`A folha de ${st.previousOpen.label} ainda não foi lançada na contabilidade (${this.statusLabel(st.previousOpen.status || '')}).\n\nO recomendado é fechar primeiro esse mês.\n\nGerar mesmo assim a folha de ${here}?`)) {
+          this.processing = false;
+          this.cdr.detectChanges();
+          return;
+        }
+        this.runProcess(cid);
+      },
+      error: () => this.runProcess(cid)
+    }));
+  }
+
+  private runProcess(cid: string) {
 
     this.sub.add(this.hrService.processPayroll(this.selectedYear, this.selectedMonth, cid).subscribe({
       next: (data) => {
@@ -422,6 +486,7 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
         const msg = e?.error?.message || e?.message || 'Erro desconhecido';
         this.toaster.showError('Erro ao processar folha', msg);
         this.processing = false;
+        this.checkSequence(); // ex.: outro utilizador apagou/criou folhas entretanto
         this.cdr.detectChanges();
       }
     }));
