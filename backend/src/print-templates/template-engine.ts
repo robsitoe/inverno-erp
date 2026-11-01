@@ -331,7 +331,8 @@ export function renderTemplate(html: string, css: string, data: RenderData, opts
     ? `<div data-sys="marca" style="border:2px solid #b91c1c;color:#b91c1c;font-weight:bold;text-align:center;padding:6px;margin-bottom:8px;letter-spacing:2px">${esc(opts.watermark)}</div>`
     : '';
   return `<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>${esc(opts.title)}</title>`
-    + `<style>@page{size:A4;margin:12mm}body{font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#111;margin:0}table{border-collapse:collapse}</style>`
+    // print-color-adjust: imprime as cores de fundo do modelo mesmo com "Gráficos de fundo" desligado no navegador
+    + `<style>@page{size:A4;margin:12mm}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#111;margin:0}table{border-collapse:collapse}</style>`
     + `<style>${css || ''}</style></head><body>${watermark}<div data-sys="corpo">${body}</div>`
     + `<div data-sys="rodape" style="${PROTECT}display:block !important;margin-top:14px;border-top:1px solid #999;padding-top:4px;font-size:9px">${esc(opts.footer)}</div>`
     + `</body></html>`;
