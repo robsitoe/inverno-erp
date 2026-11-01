@@ -104,6 +104,13 @@ export class SalesDocument {
   @Column({ nullable: true })
   treasuryAccountId: string;
 
+  /** Anulação (definitiva): quando e por quem. Um documento anulado fica no sistema e na numeração. */
+  @Column({ type: 'timestamp', nullable: true })
+  voidedAt: Date;
+
+  @Column({ nullable: true })
+  voidedBy: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -169,4 +169,9 @@ export class CreatePurchaseDto {
     @ValidateNested({ each: true })
     @Type(() => CreatePurchaseLineDto)
     lines: CreatePurchaseLineDto[];
+
+    @ApiProperty({ required: false, description: 'Motivo da anulação' })
+    @IsString()
+    @IsOptional()
+    voidReason?: string;
 }

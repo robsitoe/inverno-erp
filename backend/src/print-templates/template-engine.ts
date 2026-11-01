@@ -84,6 +84,7 @@ export const FIELDS: FieldDef[] = [
   { key: 'iva.taxa', label: 'Resumo IVA: taxa (%)', fiscal: true, scope: 'iva', modules: COM },
   { key: 'iva.base', label: 'Resumo IVA: base tributável', fiscal: true, scope: 'iva', modules: COM },
   { key: 'iva.valor', label: 'Resumo IVA: valor do imposto', fiscal: true, scope: 'iva', modules: COM },
+  { key: 'iva.motivo', label: 'Resumo IVA: motivo de isenção (linhas a 0%)', fiscal: false, scope: 'iva', modules: COM },
 ];
 
 export const fieldsFor = (m: PrintModule) => FIELDS.filter(f => !f.modules || f.modules.includes(m));

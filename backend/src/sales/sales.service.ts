@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityTarget, ObjectLiteral } from 'typeorm';
+import { Repository, EntityTarget, ObjectLiteral, LessThan, MoreThan } from 'typeorm';
 import { CreateSalesDocumentDto } from './dto/create-sales-document.dto';
 import { UpdateSalesDocumentDto } from './dto/update-sales-document.dto';
 import { SalesDocument, SalesDocumentLine } from './entities/sales-document.entity';
@@ -8,6 +8,9 @@ import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
 import { WorkflowService, WorkflowTarget } from '../common/workflow.service';
 import { PeriodControlService } from '../periods/period-control.service';
+import { WorkflowStatus } from '../common/enums/workflow-status.enum';
+import { AccountingService } from '../accounting/accounting.service';
+import { assertDateBetween, isIssued, issuedLockError, isUniqueViolation, reverseJournalEntriesOf } from '../common/document-integrity';
 
 import { InventoryService } from '../inventory/inventory.service';
 import { CreateStockMovementDto } from '../inventory/dto/create-stock-movement.dto';
@@ -22,7 +25,8 @@ export class SalesService {
     @InjectRepository(SalesDocumentLine)
     private readonly defaultSalesLineRepo: Repository<SalesDocumentLine>,
     private readonly workflowService: WorkflowService,
-    private readonly inventoryService: InventoryService
+    private readonly inventoryService: InventoryService,
+    private readonly accountingService: AccountingService,
   ) { }
 
   // ... (getRepo methods remain same) ...
@@ -38,21 +42,12 @@ export class SalesService {
   private async getSalesDocRepo(companyId?: string) { return this.getRepo(SalesDocument, this.defaultSalesDocumentRepo, companyId); }
   private async getSalesLineRepo(companyId?: string) { return this.getRepo(SalesDocumentLine, this.defaultSalesLineRepo, companyId); }
 
-  async create(createSalesDocumentDto: CreateSalesDocumentDto) {
-    // ... (existing create logic) ...
-    await this.periodControlService.ensureDateInOpenPeriod(createSalesDocumentDto.date, createSalesDocumentDto.companyId);
-    const { lines, ...documentData } = createSalesDocumentDto;
-    const companyId = documentData.companyId;
-
-    const sdRepo = await this.getSalesDocRepo(companyId);
-    const slRepo = await this.getSalesLineRepo(companyId);
-
-    // Calculate totals
+  /** Linhas e totais calculados a partir das linhas (o servidor não confia nos totais enviados). */
+  private buildLines(slRepo: Repository<SalesDocumentLine>, lines: any[]) {
     let subtotal = 0;
     let totalIva = 0;
     let discounts = 0;
-
-    const documentLines = lines.map(line => {
+    const documentLines = (lines || []).map(line => {
       const quantity = Number(line.quantity);
       const unitPrice = Number(line.unitPrice);
       const discount = Number(line.discount || 0);
@@ -68,58 +63,66 @@ export class SalesService {
       totalIva += ivaAmount;
       discounts += discountAmount;
 
-      return slRepo.create({
-        ...line,
-        total,
+      return slRepo.create({ ...line, total } as Partial<SalesDocumentLine>) as SalesDocumentLine;
+    });
+    return { documentLines, subtotal, totalIva, discounts, total: subtotal + totalIva };
+  }
+
+  async create(createSalesDocumentDto: CreateSalesDocumentDto, user?: any) {
+    const companyId = createSalesDocumentDto.companyId || TenancyContext.getCompanyId();
+    const sdRepo = await this.getSalesDocRepo(companyId);
+
+    // O ecrã grava por aqui também os documentos que já existem: aplicam-se as regras de alteração
+    if (createSalesDocumentDto.id) {
+      const existing = await sdRepo.findOne({ where: { id: createSalesDocumentDto.id }, relations: ['lines'] });
+      if (existing) return this.saveExisting(existing, createSalesDocumentDto, user);
+    }
+
+    await this.periodControlService.ensureDateInOpenPeriod(createSalesDocumentDto.date, companyId);
+    const { lines, ...documentData } = createSalesDocumentDto;
+    const slRepo = await this.getSalesLineRepo(companyId);
+    const { documentLines, subtotal, totalIva, discounts, total } = this.buildLines(slRepo, lines);
+
+    // Numeração sempre pelo servidor: o número seguinte da empresa, tipo e série (o número enviado pelo ecrã é ignorado).
+    // Se dois postos gravarem ao mesmo tempo, o índice único recusa o repetido e usa-se o número seguinte.
+    let savedDoc: SalesDocument | null = null;
+    for (let attempt = 0; attempt < 5 && !savedDoc; attempt++) {
+      const last = await sdRepo.findOne({
+        where: { documentType: documentData.documentType, series: documentData.series, companyId },
+        order: { seriesNumber: 'DESC' } as any,
       });
-    });
-
-    const total = subtotal + totalIva;
-
-    let seriesNumber = documentData.seriesNumber;
-    let documentNumber = documentData.documentNumber;
-
-    // If it's a new document (no ID), we usually want to auto-generate the number
-    if (!documentData.id) {
-      if (!seriesNumber) {
-        const lastDoc = await sdRepo.findOne({
-          where: {
-            documentType: documentData.documentType,
-            series: documentData.series,
-            companyId: documentData.companyId
-          },
-          order: { seriesNumber: 'DESC' } as any,
-        });
-        seriesNumber = (lastDoc?.seriesNumber || 0) + 1;
-      }
-
-      // Enforce documentNumber format
-      if (!documentNumber || documentNumber.includes('undefined')) {
-        documentNumber = `${documentData.documentType} ${documentData.series}/${seriesNumber}`;
+      if (attempt === 0) assertDateBetween(documentData.date, last);
+      const seriesNumber = (last?.seriesNumber || 0) + 1;
+      const document = sdRepo.create({
+        ...documentData,
+        companyId,
+        seriesNumber,
+        documentNumber: `${documentData.documentType} ${documentData.series}/${seriesNumber}`,
+        subtotal,
+        totalIva,
+        discounts,
+        total,
+        lines: documentLines,
+      });
+      try {
+        savedDoc = await sdRepo.save(document);
+      } catch (e) {
+        if (!isUniqueViolation(e) || attempt === 4) throw e;
       }
     }
 
-    const document = sdRepo.create({
-      ...documentData,
-      documentNumber,
-      seriesNumber,
-      subtotal,
-      totalIva,
-      discounts,
-      total,
-      lines: documentLines,
-    });
-
-    const savedDoc = await sdRepo.save(document);
-
-    // Trigger stock movements if doc is created with final status
-    if (savedDoc.status === 'APPROVED' || savedDoc.status === 'POSTED') {
-      console.log(`[SalesService] Document saved in tenant database. ID: ${savedDoc.id}, Company: ${companyId || 'default'}. Triggering stock movements...`);
-      const fullDoc = await this.findOne(savedDoc.id, companyId);
+    // Emitido logo ao gravar: movimenta o stock e fica no histórico
+    if (isIssued(savedDoc!.status)) {
+      console.log(`[SalesService] Document saved in tenant database. ID: ${savedDoc!.id}, Company: ${companyId || 'default'}. Triggering stock movements...`);
+      const fullDoc = await this.findOne(savedDoc!.id, companyId);
       await this.createStockMovementsForSales(fullDoc, companyId);
+      await this.workflowService.recordHistory({
+        documentId: savedDoc!.id, documentType: 'SALES', fromStatus: 'DRAFT', toStatus: savedDoc!.status,
+        user: user || { id: 'system', name: 'Sistema' }, notes: 'Emitido ao gravar', companyId,
+      });
     }
 
-    return savedDoc;
+    return savedDoc!;
   }
 
   // ... (findAll, findOne, update, findByNumber, remove remain same) ...
@@ -145,34 +148,94 @@ export class SalesService {
   }
 
   async update(id: string, updateSalesDocumentDto: UpdateSalesDocumentDto, user?: any) {
-    if (updateSalesDocumentDto.date) {
-      await this.periodControlService.ensureDateInOpenPeriod(updateSalesDocumentDto.date, updateSalesDocumentDto.companyId);
+    const existing = await this.findOne(id, (updateSalesDocumentDto as any).companyId);
+    return this.saveExisting(existing, updateSalesDocumentDto, user);
+  }
+
+  /**
+   * Gravar um documento que já existe. Emitido (aprovado/lançado): só se pode anular. Anulado: não muda.
+   * Rascunho/submetido/rejeitado: pode mudar, mas o tipo, a série e o número ficam os que o servidor atribuiu.
+   */
+  private async saveExisting(existing: SalesDocument, dto: any, user?: any) {
+    const companyId = existing.companyId || dto.companyId || TenancyContext.getCompanyId();
+    if (existing.voidedAt) {
+      throw new BadRequestException(`O documento ${existing.documentNumber} está anulado e não pode ser alterado.`);
     }
-    const sdRepo = await this.getSalesDocRepo();
-    const document = await this.findOne(id, updateSalesDocumentDto.companyId);
+    // Pedido de anulação: o ecrã envia o documento com o estado REJECTED
+    if (dto.status === WorkflowStatus.REJECTED && existing.status !== WorkflowStatus.REJECTED) {
+      return this.voidDocument(existing, user, dto.statusNotes || dto.voidReason);
+    }
+    if (isIssued(existing.status)) throw issuedLockError(existing.documentNumber);
 
-    if (user) {
-      this.workflowService.checkEditLock(document.status, user);
+    const sdRepo = await this.getSalesDocRepo(companyId);
+    const slRepo = await this.getSalesLineRepo(companyId);
+    if (dto.date) {
+      await this.periodControlService.ensureDateInOpenPeriod(dto.date, companyId);
+      // A data tem de ficar entre o documento anterior e o seguinte da série
+      const same = { companyId, documentType: existing.documentType, series: existing.series };
+      const [prev, next] = await Promise.all([
+        sdRepo.findOne({ where: { ...same, seriesNumber: LessThan(existing.seriesNumber) }, order: { seriesNumber: 'DESC' } as any }),
+        sdRepo.findOne({ where: { ...same, seriesNumber: MoreThan(existing.seriesNumber) }, order: { seriesNumber: 'ASC' } as any }),
+      ]);
+      assertDateBetween(dto.date, prev, next);
     }
 
-    const oldStatus = document.status;
-    sdRepo.merge(document, updateSalesDocumentDto);
-    const savedDoc = await sdRepo.save(document);
-
-    // Documento anulado depois de ter movimentado stock: estorna os movimentos e o custo
-    if (savedDoc.status === 'REJECTED' && (oldStatus === 'APPROVED' || oldStatus === 'POSTED')) {
-      const fullDoc = await this.findOne(savedDoc.id, updateSalesDocumentDto.companyId);
-      await this.reverseStockMovementsForSales(fullDoc, updateSalesDocumentDto.companyId);
+    const oldStatus = existing.status;
+    // O número, a série e o tipo não mudam depois de atribuídos; os totais vêm das linhas
+    const {
+      lines, id: _id, companyId: _c, documentType: _t, series: _s, seriesNumber: _n, documentNumber: _d,
+      voidedAt: _va, voidedBy: _vb, subtotal: _st, totalIva: _ti, discounts: _di, total: _to, ...changes
+    } = dto;
+    sdRepo.merge(existing, changes);
+    if (Array.isArray(lines)) {
+      const built = this.buildLines(slRepo, lines);
+      await slRepo.createQueryBuilder().delete().from(SalesDocumentLine).where('"documentId" = :id', { id: existing.id }).execute();
+      existing.lines = built.documentLines;
+      Object.assign(existing, { subtotal: built.subtotal, totalIva: built.totalIva, discounts: built.discounts, total: built.total });
     }
+    const savedDoc = await sdRepo.save(existing);
 
-    // Trigger stock movements if status just changed to final
-    if ((savedDoc.status === 'APPROVED' || savedDoc.status === 'POSTED') && oldStatus !== savedDoc.status) {
+    // Emitido agora: movimenta o stock e fica no histórico
+    if (isIssued(savedDoc.status) && oldStatus !== savedDoc.status) {
       console.log(`[SalesService] Direct update trigger for ${savedDoc.documentNumber} (${savedDoc.status})`);
-      const fullDoc = await this.findOne(savedDoc.id, updateSalesDocumentDto.companyId);
-      await this.createStockMovementsForSales(fullDoc, updateSalesDocumentDto.companyId);
+      const fullDoc = await this.findOne(savedDoc.id, companyId);
+      await this.createStockMovementsForSales(fullDoc, companyId);
+      await this.workflowService.recordHistory({
+        documentId: savedDoc.id, documentType: 'SALES', fromStatus: oldStatus, toStatus: savedDoc.status,
+        user: user || { id: 'system', name: 'Sistema' }, notes: 'Emitido ao gravar', companyId,
+      });
     }
-
     return savedDoc;
+  }
+
+  /**
+   * Anulação definitiva: o documento fica no sistema e na numeração, com quem e quando anulou.
+   * Se já estava emitido, o servidor estorna a contabilidade e o stock (antes de o marcar como anulado).
+   */
+  private async voidDocument(existing: SalesDocument, user: any, reason?: string) {
+    const companyId = (existing.companyId || TenancyContext.getCompanyId()) as string;
+    const motivo = String(reason || '').trim() || 'Anulação';
+    const who = user?.username || user?.name || 'Sistema';
+    if (isIssued(existing.status)) {
+      const ds = await this.tenancyService.getTenantDataSource(companyId);
+      await reverseJournalEntriesOf(ds, this.accountingService, {
+        companyId, documentId: existing.id, sourceType: 'SALE', documentNumber: existing.documentNumber, reason: motivo, user,
+      });
+      const fullDoc = await this.findOne(existing.id, companyId);
+      await this.reverseStockMovementsForSales(fullDoc, companyId);
+    }
+    const sdRepo = await this.getSalesDocRepo(companyId);
+    const oldStatus = existing.status;
+    existing.status = WorkflowStatus.REJECTED;
+    existing.voidedAt = new Date();
+    existing.voidedBy = who;
+    existing.statusNotes = `Anulado por ${who}: ${motivo}`;
+    const saved = await sdRepo.save(existing);
+    await this.workflowService.recordHistory({
+      documentId: existing.id, documentType: 'SALES', fromStatus: oldStatus, toStatus: WorkflowStatus.REJECTED,
+      user: user || { id: 'system', name: 'Sistema' }, notes: `Anulação: ${motivo}`, companyId,
+    });
+    return saved;
   }
 
   async findByNumber(companyId: string, type: string, series: string, number: number) {
@@ -194,12 +257,23 @@ export class SalesService {
     const document = await this.findOne(id);
 
     this.workflowService.checkDeleteLock(document.status);
+    if (document.voidedAt) {
+      throw new BadRequestException(`O documento ${document.documentNumber} está anulado: fica guardado para a numeração não ter falhas.`);
+    }
+    // Só o último da série se pode apagar: apagar outro deixaria uma falha na numeração
+    const later = await sdRepo.count({
+      where: { companyId: document.companyId, documentType: document.documentType, series: document.series, seriesNumber: MoreThan(document.seriesNumber) },
+    });
+    if (later > 0) {
+      throw new BadRequestException(`Só se pode apagar o último documento da série. ${document.documentNumber} já tem documentos a seguir: anule-o em vez de o apagar (fica registado e a numeração continua sem falhas).`);
+    }
 
     return sdRepo.remove(document);
   }
 
   async processWorkflow(id: string, action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST', user: any, notes?: string) {
     const document = await this.findOne(id);
+    if (document.voidedAt) throw new BadRequestException(`O documento ${document.documentNumber} está anulado.`);
     const sdRepo = await this.getSalesDocRepo();
 
     const result = await this.workflowService.transition(

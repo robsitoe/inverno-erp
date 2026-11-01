@@ -1,13 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityTarget, ObjectLiteral } from 'typeorm';
+import { Repository, EntityTarget, ObjectLiteral, MoreThan } from 'typeorm';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { UpdatePurchaseDto } from './dto/update-purchase.dto';
-import { PurchaseDocument } from './entities/purchase.entity';
+import { PurchaseDocument, PurchaseDocumentLine } from './entities/purchase.entity';
 import { TenancyService } from '../tenancy/tenancy.service';
 import { TenancyContext } from '../tenancy/tenancy.context';
 import { WorkflowService, WorkflowTarget } from '../common/workflow.service';
 import { PeriodControlService } from '../periods/period-control.service';
+import { WorkflowStatus } from '../common/enums/workflow-status.enum';
+import { AccountingService } from '../accounting/accounting.service';
+import { isIssued, issuedLockError, isUniqueViolation, reverseJournalEntriesOf } from '../common/document-integrity';
 
 import { InventoryService } from '../inventory/inventory.service';
 import { CreateStockMovementDto } from '../inventory/dto/create-stock-movement.dto';
@@ -20,7 +23,8 @@ export class PurchasesService {
     @InjectRepository(PurchaseDocument)
     private readonly defaultPurchaseRepo: Repository<PurchaseDocument>,
     private readonly workflowService: WorkflowService,
-    private readonly inventoryService: InventoryService
+    private readonly inventoryService: InventoryService,
+    private readonly accountingService: AccountingService,
   ) { }
 
   // ... (getRepo methods remain same) ...
@@ -34,21 +38,18 @@ export class PurchasesService {
 
   private async getPurchaseRepo(companyId?: string) { return this.getRepo(PurchaseDocument, this.defaultPurchaseRepo, companyId); }
 
-  async create(createPurchaseDto: CreatePurchaseDto) {
-    // ... existing create logic ...
-    await this.periodControlService.ensureDateInOpenPeriod(createPurchaseDto.date, createPurchaseDto.companyId);
-    const { lines, ...documentData } = createPurchaseDto;
-    const repo = await this.getPurchaseRepo();
+  /** Número do documento como se mostra: TIPO SÉRIE/N.º */
+  private numberOf(d: PurchaseDocument) { return `${d.type} ${d.series}/${d.number}`; }
 
-    // Totais calculados a partir das linhas (mesma fórmula do formulário de compras),
-    // para não depender dos totais enviados pelo cliente.
+  /** Linhas e totais calculados a partir das linhas (mesma fórmula do formulário de compras). */
+  private buildLines(lines: any[]) {
     let merchandiseTotal = 0;
     let discountValue = 0;
     let taxTotal = 0;
-    const documentLines = lines.map(line => {
+    const documentLines = (lines || []).map(line => {
       const quantity = Number(line.quantity);
       const unitPrice = Number(line.unitPrice);
-      const taxRate = Number(line.ivaRate || 0);
+      const taxRate = Number(line.ivaRate ?? line.taxRate ?? 0);
       const gross = quantity * unitPrice;
       const discount = gross * (Number(line.discount || 0) / 100);
       const liquid = gross - discount;
@@ -61,18 +62,32 @@ export class PurchasesService {
         totalLiquid: liquid,
         totalValue: liquid + tax,
         taxRate,
-        taxCode: line.ivaCode || 'IVA'
+        taxCode: line.ivaCode || line.taxCode || 'IVA'
       };
     });
+    return { documentLines, merchandiseTotal, discountValue, taxTotal, totalValue: merchandiseTotal - discountValue + taxTotal };
+  }
+
+  async create(createPurchaseDto: CreatePurchaseDto, user?: any) {
+    const repo = await this.getPurchaseRepo();
+
+    // O ecrã grava por aqui também os documentos que já existem: aplicam-se as regras de alteração
+    if (createPurchaseDto.id) {
+      const existing = await repo.findOne({ where: { id: createPurchaseDto.id }, relations: ['lines'] });
+      if (existing) return this.saveExisting(existing, createPurchaseDto, user);
+    }
+
+    await this.periodControlService.ensureDateInOpenPeriod(createPurchaseDto.date, createPurchaseDto.companyId);
+    const { lines, ...documentData } = createPurchaseDto;
+    const { documentLines, merchandiseTotal, discountValue, taxTotal, totalValue } = this.buildLines(lines);
 
     const entityData: any = {
       ...documentData,
       type: documentData.documentType,
-      number: documentData.seriesNumber,
       merchandiseTotal,
       discountValue,
       taxTotal,
-      totalValue: merchandiseTotal - discountValue + taxTotal,
+      totalValue,
       lines: documentLines
     };
 
@@ -84,33 +99,33 @@ export class PurchasesService {
     delete entityData.totalIva;
     delete entityData.total;
 
-    if (!entityData.number) {
+    // Numeração sempre pelo servidor (o número enviado pelo ecrã é ignorado); repetido em simultâneo -> número seguinte
+    let savedDoc: PurchaseDocument | null = null;
+    for (let attempt = 0; attempt < 5 && !savedDoc; attempt++) {
       const lastDoc = await repo.findOne({
-        where: {
-          type: entityData.type,
-          series: entityData.series,
-          companyId: entityData.companyId
-        },
+        where: { type: entityData.type, series: entityData.series, companyId: entityData.companyId },
         order: { number: 'DESC' } as any,
       });
       entityData.number = (lastDoc?.number || 0) + 1;
+      try {
+        savedDoc = await repo.save(repo.create(entityData)) as unknown as PurchaseDocument;
+      } catch (e) {
+        if (!isUniqueViolation(e) || attempt === 4) throw e;
+      }
     }
 
-    if (!entityData.documentNumber || entityData.documentNumber.includes('undefined')) {
-      entityData.documentNumber = `${entityData.type} ${entityData.series}/${entityData.number}`;
-    }
-
-    const purchase = repo.create(entityData);
-    const savedDoc = await repo.save(purchase) as unknown as PurchaseDocument;
-
-    // Trigger stock movements if doc is created with final status
-    if (savedDoc.status === 'APPROVED' || savedDoc.status === 'POSTED') {
-      console.log(`[PurchasesService] Direct create trigger for ${savedDoc.type} ${savedDoc.series}/${savedDoc.number} (${savedDoc.status})`);
-      const fullDoc = await this.findOne(savedDoc.id);
+    // Emitido logo ao gravar: movimenta o stock e fica no histórico
+    if (isIssued(savedDoc!.status)) {
+      console.log(`[PurchasesService] Direct create trigger for ${savedDoc!.type} ${savedDoc!.series}/${savedDoc!.number} (${savedDoc!.status})`);
+      const fullDoc = await this.findOne(savedDoc!.id);
       await this.createStockMovementsForPurchases(fullDoc);
+      await this.workflowService.recordHistory({
+        documentId: savedDoc!.id, documentType: 'PURCHASES', fromStatus: 'DRAFT', toStatus: savedDoc!.status,
+        user: user || { id: 'system', name: 'Sistema' }, notes: 'Emitido ao gravar', companyId: savedDoc!.companyId,
+      });
     }
 
-    return savedDoc;
+    return savedDoc!;
   }
 
   async findAll(companyId?: string) {
@@ -127,33 +142,79 @@ export class PurchasesService {
   }
 
   async update(id: string, updatePurchaseDto: UpdatePurchaseDto, user?: any) {
-    if ((updatePurchaseDto as any).date) {
-      await this.periodControlService.ensureDateInOpenPeriod((updatePurchaseDto as any).date, (updatePurchaseDto as any).companyId);
+    const existing = await this.findOne(id);
+    return this.saveExisting(existing, updatePurchaseDto, user);
+  }
+
+  /**
+   * Gravar um documento que já existe. Emitido (aprovado/lançado): só se pode anular. Anulado: não muda.
+   * Rascunho/submetido/rejeitado: pode mudar, mas o tipo, a série e o número ficam os que o servidor atribuiu.
+   */
+  private async saveExisting(existing: PurchaseDocument, dto: any, user?: any) {
+    if (existing.voidedAt) {
+      throw new BadRequestException(`O documento ${this.numberOf(existing)} está anulado e não pode ser alterado.`);
     }
+    if (dto.status === WorkflowStatus.REJECTED && existing.status !== WorkflowStatus.REJECTED) {
+      return this.voidDocument(existing, user, dto.statusNotes || dto.voidReason);
+    }
+    if (isIssued(existing.status)) throw issuedLockError(this.numberOf(existing));
+
+    if (dto.date) await this.periodControlService.ensureDateInOpenPeriod(dto.date, existing.companyId || dto.companyId);
     const repo = await this.getPurchaseRepo();
-    const document = await this.findOne(id);
-
-    if (user) {
-      this.workflowService.checkEditLock(document.status as any, user);
+    const oldStatus = existing.status;
+    // O número, a série e o tipo não mudam depois de atribuídos; os totais vêm das linhas
+    const {
+      lines, id: _id, companyId: _c, documentType: _dt, type: _t, series: _s, seriesNumber: _sn, number: _n, documentNumber: _d,
+      voidedAt: _va, voidedBy: _vb, subtotal: _st, discounts: _di, totalIva: _ti, total: _to,
+      merchandiseTotal: _mt, discountValue: _dv, taxTotal: _tt, totalValue: _tv, ...changes
+    } = dto;
+    repo.merge(existing, changes);
+    if (Array.isArray(lines)) {
+      const built = this.buildLines(lines);
+      await repo.manager.createQueryBuilder().delete().from(PurchaseDocumentLine).where('"documentId" = :id', { id: existing.id }).execute();
+      existing.lines = built.documentLines as any;
+      Object.assign(existing, { merchandiseTotal: built.merchandiseTotal, discountValue: built.discountValue, taxTotal: built.taxTotal, totalValue: built.totalValue });
     }
+    const savedDoc = await repo.save(existing) as unknown as PurchaseDocument;
 
-    const oldStatus = document.status;
-    repo.merge(document, updatePurchaseDto as any);
-    const savedDoc = await repo.save(document) as unknown as PurchaseDocument;
-
-    // Documento anulado depois de ter movimentado stock: estorna os movimentos
-    if (savedDoc.status === 'REJECTED' && (oldStatus === 'APPROVED' || oldStatus === 'POSTED')) {
-      const fullDoc = await this.findOne(savedDoc.id);
-      await this.reverseStockMovementsForPurchases(fullDoc);
-    }
-    // Trigger stock movements if status just changed to final
-    if ((savedDoc.status === 'APPROVED' || savedDoc.status === 'POSTED') && oldStatus !== savedDoc.status) {
+    if (isIssued(savedDoc.status) && oldStatus !== savedDoc.status) {
       console.log(`[PurchasesService] Direct update trigger for ${savedDoc.type} ${savedDoc.series}/${savedDoc.number} (${savedDoc.status})`);
       const fullDoc = await this.findOne(savedDoc.id);
       await this.createStockMovementsForPurchases(fullDoc);
+      await this.workflowService.recordHistory({
+        documentId: savedDoc.id, documentType: 'PURCHASES', fromStatus: oldStatus, toStatus: savedDoc.status,
+        user: user || { id: 'system', name: 'Sistema' }, notes: 'Emitido ao gravar', companyId: savedDoc.companyId,
+      });
     }
-
     return savedDoc;
+  }
+
+  /** Anulação definitiva; se já estava emitido, o servidor estorna a contabilidade e o stock. */
+  private async voidDocument(existing: PurchaseDocument, user: any, reason?: string) {
+    const companyId = (existing.companyId || TenancyContext.getCompanyId()) as string;
+    const numero = this.numberOf(existing);
+    const motivo = String(reason || '').trim() || 'Anulação';
+    const who = user?.username || user?.name || 'Sistema';
+    if (isIssued(existing.status)) {
+      const ds = await this.tenancyService.getTenantDataSource(companyId);
+      await reverseJournalEntriesOf(ds, this.accountingService, {
+        companyId, documentId: existing.id, sourceType: 'PURCHASE', documentNumber: numero, reason: motivo, user,
+      });
+      const fullDoc = await this.findOne(existing.id);
+      await this.reverseStockMovementsForPurchases(fullDoc);
+    }
+    const repo = await this.getPurchaseRepo();
+    const oldStatus = existing.status;
+    existing.status = WorkflowStatus.REJECTED as any;
+    existing.voidedAt = new Date();
+    existing.voidedBy = who;
+    existing.statusNotes = `Anulado por ${who}: ${motivo}`;
+    const saved = await repo.save(existing);
+    await this.workflowService.recordHistory({
+      documentId: existing.id, documentType: 'PURCHASES', fromStatus: oldStatus, toStatus: WorkflowStatus.REJECTED,
+      user: user || { id: 'system', name: 'Sistema' }, notes: `Anulação: ${motivo}`, companyId,
+    });
+    return saved;
   }
 
   async findByNumber(companyId: string, type: string, series: string, number: number) {
@@ -174,12 +235,22 @@ export class PurchasesService {
     const document = await this.findOne(id);
 
     this.workflowService.checkDeleteLock(document.status as any);
+    const numero = this.numberOf(document);
+    if (document.voidedAt) {
+      throw new BadRequestException(`O documento ${numero} está anulado: fica guardado para a numeração não ter falhas.`);
+    }
+    // Só o último da série se pode apagar: apagar outro deixaria uma falha na numeração
+    const later = await repo.count({ where: { companyId: document.companyId, type: document.type, series: document.series, number: MoreThan(document.number) } });
+    if (later > 0) {
+      throw new BadRequestException(`Só se pode apagar o último documento da série. ${numero} já tem documentos a seguir: anule-o em vez de o apagar (fica registado e a numeração continua sem falhas).`);
+    }
 
     return repo.remove(document);
   }
 
   async processWorkflow(id: string, action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST', user: any, notes?: string) {
     const document = await this.findOne(id);
+    if (document.voidedAt) throw new BadRequestException(`O documento ${this.numberOf(document)} está anulado.`);
     const repo = await this.getPurchaseRepo();
 
     const result = await this.workflowService.transition(

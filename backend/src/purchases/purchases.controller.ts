@@ -11,8 +11,8 @@ export class PurchasesController {
   constructor(private readonly purchasesService: PurchasesService) { }
 
   @Post('documents')
-  create(@Body() createPurchaseDto: CreatePurchaseDto) {
-    return this.purchasesService.create(createPurchaseDto);
+  create(@Body() createPurchaseDto: CreatePurchaseDto, @Req() req: any) {
+    return this.purchasesService.create(createPurchaseDto, req.user);
   }
 
   @Get('documents')
@@ -37,13 +37,13 @@ export class PurchasesController {
   }
 
   @Patch('documents/:id')
-  update(@Param('id') id: string, @Body() updatePurchaseDto: UpdatePurchaseDto) {
-    return this.purchasesService.update(id, updatePurchaseDto);
+  update(@Param('id') id: string, @Body() updatePurchaseDto: UpdatePurchaseDto, @Req() req: any) {
+    return this.purchasesService.update(id, updatePurchaseDto, req.user);
   }
 
   @Delete('documents/:id')
-  remove(@Param('id') id: string) {
-    return this.purchasesService.remove(id);
+  remove(@Param('id') id: string, @Req() req: any) {
+    return this.purchasesService.remove(id, req.user);
   }
 
   @Patch('documents/:id/workflow')

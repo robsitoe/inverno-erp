@@ -70,6 +70,13 @@ export class PurchaseDocument {
     @Column({ nullable: true })
     statusNotes: string;
 
+    /** Anulação (definitiva): quando e por quem. */
+    @Column({ type: 'timestamp', nullable: true })
+    voidedAt: Date;
+
+    @Column({ nullable: true })
+    voidedBy: string;
+
     @OneToMany(() => PurchaseDocumentLine, (line) => line.document, { cascade: true })
     lines: PurchaseDocumentLine[];
 

@@ -3343,10 +3343,16 @@ if (this.currentDoc.status === WorkflowStatus.REJECTED) return;
     }
 
 
-    if (confirm('Tem a certeza que deseja anular este documento?')) {
+    const reason = (prompt('Motivo da anulação (obrigatório):') || '').trim();
+
+
+      if (reason) {
 
 
       this.currentDoc.status = WorkflowStatus.REJECTED;
+
+
+      (this.currentDoc as any).voidReason = reason;
 
 
       this.dataService.savePurchaseDocument(this.currentDoc).subscribe(() => {

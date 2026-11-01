@@ -2925,28 +2925,25 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
 
 
-  cancelDocument() {
+  /** Motivo indicado na anulação (fica no documento e no histórico). */
+  private voidReason = '';
 
-    if (this.status === WorkflowStatus.REJECTED) return; // Allow cancelling rejected docs? Or maybe REJECTED is already a stop.
-
-    // Cancellation confirmed
-
-
-
-    this.status = WorkflowStatus.REJECTED; // Using REJECTED as CANCELLED for now or we could add CANCELLED
-    // Se o documento já tinha lançamentos contabilísticos activos, estorna-os (senão a contabilidade
-    // fica com vendas que já não existem).
-    try {
-      const all = this.accountingService.getJournalEntries();
-      const reversed = new Set(all.filter((e: any) => e.sourceType === 'REVERSAL' && e.relatedEntryId).map((e: any) => e.relatedEntryId));
-      all.filter((e: any) => e.sourceDocument === this.currentId && e.sourceType === 'SALE' && e.status === 'POSTED' && !reversed.has(e.id))
-        .forEach((e: any) => this.accountingService.reverseJournalEntry(e.id, `Anulação de ${this.currentDocLabel()}`, 'user'));
-    } catch (err) { console.warn('[cancelDocument] estorno contabilístico falhou:', err); }
-
-    this.saveDocument(false, true); // Save as cancelled
-
+  /**
+   * Anulação: o documento fica no sistema e na numeração. O servidor estorna o stock e a contabilidade
+   * e regista quem anulou, quando e porquê. Devolve false se o utilizador desistir.
+   */
+  cancelDocument(): boolean {
+    if (this.status === WorkflowStatus.REJECTED) return false;
+    const reason = (prompt(`Motivo da anulação de ${this.currentDocLabel()} (obrigatório):`) || '').trim();
+    if (!reason) {
+      this.toaster.showWarning('Anulação', 'Indique o motivo da anulação.');
+      return false;
+    }
+    this.voidReason = reason;
+    this.status = WorkflowStatus.REJECTED;
+    this.saveDocument(false, true); // grava como anulado (o estorno é feito no servidor)
+    return true;
   }
-
 
 
   openSearchModal() {
@@ -3435,7 +3432,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
     if (true) { // Cancel and duplicate
 
-      this.cancelDocument();
+      if (!this.cancelDocument()) return;
 
       // Wait for save to complete? cancelDocument calls saveDocument with subscription
 
@@ -3784,6 +3781,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
       clientDiscount: this.clientDiscount,
       financialDiscount: this.financialDiscount,
       exchangeRate: this.exchangeRate,
+      voidReason: isCancelling ? this.voidReason : undefined,
 
     };
 
@@ -3822,6 +3820,8 @@ export class SalesDocumentFormComponent implements OnDestroy {
               this.status = newStatus;
 
               this.currentId = savedDoc?.id || this.currentId;
+              // O número é atribuído pelo servidor: o ecrã passa a mostrar (e a usar) o número gravado
+              if (savedDoc?.seriesNumber) this.currentSeriesNumber = savedDoc.seriesNumber;
               this.markClean();
 
               this.loadWorkflowHistory();
@@ -3830,7 +3830,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
               this.inventoryService.loadData().then(() => {
 
-                this.processPostSaveActions(savedDoc || salesDoc, this.currentId || '', documentNumber, isPrinting, isCancelling, confirmedJournalEntry);
+                this.processPostSaveActions(savedDoc || salesDoc, this.currentId || '', savedDoc?.documentNumber || documentNumber, isPrinting, isCancelling, confirmedJournalEntry);
 
                 this.cdr.detectChanges();
 

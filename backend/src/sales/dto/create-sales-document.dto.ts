@@ -210,4 +210,9 @@ export class CreateSalesDocumentDto {
     @ValidateNested({ each: true })
     @Type(() => CreateSalesDocumentLineDto)
     lines: CreateSalesDocumentLineDto[];
+
+    @ApiProperty({ required: false, description: 'Motivo da anulação' })
+    @IsString()
+    @IsOptional()
+    voidReason?: string;
 }

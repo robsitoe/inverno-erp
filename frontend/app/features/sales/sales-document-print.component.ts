@@ -1,4 +1,5 @@
 ﻿import { Component, Input, ViewEncapsulation } from '@angular/core';
+import { DataService } from '../../services/data.service';
 import { CommonModule } from '@angular/common';
 import { SalesDocument } from '../../shared/models';
 import { PrintSettings } from '../../shared/components/print-settings-modal.component';
@@ -141,7 +142,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
                    <td>{{ vat.rate | number:'1.2-2' }}</td>
                    <td>{{ vat.base | number:'1.2-2' }}</td>
                    <td>{{ (+vat.amount || 0) | number:'1.2-2' }}</td>
-                   <td>{{ vat.rate === 0 ? 'Isento Art. 9' : '' }}</td>
+                   <td>{{ vat.motivo }}</td>
                  </tr>
                </tbody>
              </table>
@@ -451,9 +452,17 @@ export class SalesDocumentPrintComponent {
 
   companyInfo: any = null;
   currentUser: any = null;
+  /** Código de imposto -> descrição (motivo de isenção impresso nas linhas a 0%). */
+  private taxDescriptions = new Map<string, string>();
+
+  constructor(private dataService: DataService) { }
 
   ngOnInit() {
     this.refreshCompanyInfo();
+    this.dataService.getTaxes(this.companyInfo?.id).subscribe({
+      next: (taxes: any[]) => { this.taxDescriptions = new Map((taxes || []).map(t => [String(t.code), String(t.description || '')])); },
+      error: () => { /* sem tabela de impostos: o motivo fica "Isento" */ },
+    });
   }
 
   refreshCompanyInfo() {
@@ -509,19 +518,22 @@ export class SalesDocumentPrintComponent {
   getVatSummary() {
     if (!this.document) return [];
 
-    const summary = new Map<number, { rate: number, base: number, amount: number }>();
+    const summary = new Map<number, { rate: number, base: number, amount: number, motivos: Set<string> }>();
 
     this.document.lines.forEach(line => {
-      const rate = line.ivaRate;
-      const current = summary.get(rate) || { rate, base: 0, amount: 0 };
+      const rate = Number(line.ivaRate) || 0;
+      const current = summary.get(rate) || { rate, base: 0, amount: 0, motivos: new Set<string>() };
 
-      current.base += line.subtotal;
-      current.amount += line.ivaAmount;
+      current.base += Number(line.subtotal) || 0;
+      current.amount += Number(line.ivaAmount) || 0;
+      // Linhas sem IVA: o motivo é a descrição do código de imposto da linha (ex.: "Regime de isenção")
+      if (rate === 0) current.motivos.add(this.taxDescriptions.get(String((line as any).ivaCode || '')) || 'Isento');
 
       summary.set(rate, current);
     });
 
-    return Array.from(summary.values()).sort((a, b) => a.rate - b.rate);
+    return Array.from(summary.values()).sort((a, b) => a.rate - b.rate)
+      .map(v => ({ rate: v.rate, base: v.base, amount: v.amount, motivo: [...v.motivos].join('; ') }));
   }
 
   getEmptyRows(): number[] {

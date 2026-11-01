@@ -9,11 +9,13 @@ import { CampaignController } from './campaign.controller';
 import { CampaignService } from './campaign.service';
 
 import { InventoryModule } from '../inventory/inventory.module';
+import { AccountingModule } from '../accounting/accounting.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([SalesDocument, SalesDocumentLine, SalesCampaign, SalesCampaignItem]),
-    InventoryModule
+    InventoryModule,
+    AccountingModule,
   ],
   controllers: [SalesController, CampaignController],
   providers: [SalesService, CampaignService],

@@ -98,6 +98,23 @@ export class TenancyService implements OnModuleDestroy {
     }
   }
 
+  /**
+   * Numeração fiscal: nunca dois documentos com o mesmo tipo, série e número na mesma empresa.
+   * Uma base antiga com números repetidos não fica bloqueada: o índice não é criado e fica o aviso.
+   */
+  private async ensureFiscalNumberIndexes(ds: DataSource, dbName: string) {
+    for (const [name, table, cols] of [
+      ['UQ_sales_documents_number', 'sales_documents', '"companyId", "documentType", "series", "seriesNumber"'],
+      ['UQ_purchase_documents_number', 'purchase_documents', '"companyId", "type", "series", "number"'],
+    ] as const) {
+      try {
+        await ds.query(`CREATE UNIQUE INDEX IF NOT EXISTS "${name}" ON "${table}" (${cols})`);
+      } catch (e: any) {
+        console.warn(`[Tenancy] ${dbName}: não foi possível garantir a numeração única em ${table} (números repetidos?): ${e.message}`);
+      }
+    }
+  }
+
   private async initializeTenantConnection(
     companyId: string,
   ): Promise<DataSource> {
@@ -276,6 +293,9 @@ export class TenancyService implements OnModuleDestroy {
       }
 
       this.dataSources.set(companyId, tenantDS);
+
+      // Numeração fiscal única (bases novas e existentes)
+      await this.ensureFiscalNumberIndexes(tenantDS, targetDbName);
 
       // Seed initial data for new tenant
       await this.seedTenantData(tenantDS, companyId);

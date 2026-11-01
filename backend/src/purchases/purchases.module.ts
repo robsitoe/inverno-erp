@@ -5,11 +5,12 @@ import { PurchasesController } from './purchases.controller';
 import { PurchaseDocument, PurchaseDocumentLine } from './entities/purchase.entity';
 
 import { InventoryModule } from '../inventory/inventory.module';
+import { AccountingModule } from '../accounting/accounting.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([PurchaseDocument, PurchaseDocumentLine]),
-    InventoryModule
+    InventoryModule, AccountingModule
   ],
   controllers: [PurchasesController],
   providers: [PurchasesService],

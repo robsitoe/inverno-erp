@@ -15,8 +15,8 @@ export class SalesController {
   @Post('documents')
   @ApiOperation({ summary: 'Create a new sales document' })
   @ApiResponse({ status: 201, description: 'The sales document has been successfully created.' })
-  create(@Body() createSalesDocumentDto: CreateSalesDocumentDto) {
-    return this.salesService.create(createSalesDocumentDto);
+  create(@Body() createSalesDocumentDto: CreateSalesDocumentDto, @Req() req: any) {
+    return this.salesService.create(createSalesDocumentDto, req.user);
   }
 
   @Get('documents')
@@ -50,14 +50,14 @@ export class SalesController {
 
   @Patch('documents/:id')
   @ApiOperation({ summary: 'Update a sales document' })
-  update(@Param('id') id: string, @Body() updateSalesDocumentDto: UpdateSalesDocumentDto) {
-    return this.salesService.update(id, updateSalesDocumentDto);
+  update(@Param('id') id: string, @Body() updateSalesDocumentDto: UpdateSalesDocumentDto, @Req() req: any) {
+    return this.salesService.update(id, updateSalesDocumentDto, req.user);
   }
 
   @Delete('documents/:id')
   @ApiOperation({ summary: 'Delete a sales document' })
-  remove(@Param('id') id: string) {
-    return this.salesService.remove(id);
+  remove(@Param('id') id: string, @Req() req: any) {
+    return this.salesService.remove(id, req.user);
   }
 
   @Patch('documents/:id/workflow')

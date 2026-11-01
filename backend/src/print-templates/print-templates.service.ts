@@ -9,6 +9,7 @@ import { TreasuryDocument } from '../treasury/entities/treasury.entity';
 import { StockDocument } from '../inventory/entities/stock-document.entity';
 import { DocumentType } from '../common-entities/entities/document-type.entity';
 import { Article } from '../inventory/entities/article.entity';
+import { TaxRate } from '../taxes/entities/tax-rate.entity';
 import {
   MODULES, PrintModule, RenderData, checkRendered, expectedValues, fieldsFor, fmtDate, fmtMoney, fmtQty, renderTemplate, validateTemplate,
 } from './template-engine';
@@ -320,17 +321,19 @@ export class PrintTemplatesService {
   }
 
   /** Linhas comerciais (vendas/compras): valores da linha e resumo de IVA. */
-  private commercialLines(rows: { codigo: string; descricao: string; unidade?: string; q: number; p: number; d: number; r: number; liquid?: number | null; iva?: number | null; total?: number | null }[]) {
+  private commercialLines(rows: { codigo: string; descricao: string; unidade?: string; q: number; p: number; d: number; r: number; motivo?: string; liquid?: number | null; iva?: number | null; total?: number | null }[]) {
     const vals = rows.map(x => {
       const liquid = x.liquid != null ? Number(x.liquid) : x.q * x.p * (1 - x.d / 100);
       const iva = x.iva != null ? Number(x.iva) : liquid * x.r / 100;
       const total = x.total != null ? Number(x.total) : liquid + iva;
       return { ...x, liquid, iva, total };
     });
-    const groups = new Map<number, { base: number; valor: number }>();
+    const groups = new Map<number, { base: number; valor: number; motivos: Set<string> }>();
     for (const v of vals) {
-      const g = groups.get(v.r) || { base: 0, valor: 0 };
-      g.base += v.liquid; g.valor += v.iva; groups.set(v.r, g);
+      const g = groups.get(v.r) || { base: 0, valor: 0, motivos: new Set<string>() };
+      g.base += v.liquid; g.valor += v.iva;
+      if (v.r === 0) g.motivos.add(v.motivo || 'Isento');
+      groups.set(v.r, g);
     }
     return {
       linhas: vals.map(v => ({
@@ -340,8 +343,15 @@ export class PrintTemplatesService {
       })),
       resumoIva: [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([taxa, g]) => ({
         'iva.taxa': fmtMoney(taxa), 'iva.base': fmtMoney(g.base), 'iva.valor': fmtMoney(g.valor),
+        'iva.motivo': [...g.motivos].join('; '),
       })),
     };
+  }
+
+  /** Descrição de cada código de imposto da empresa (é o motivo de isenção impresso nas linhas a 0%). */
+  private async taxDescriptions(ds: DataSource): Promise<Map<string, string>> {
+    const taxes = await ds.getRepository(TaxRate).find().catch(() => [] as TaxRate[]);
+    return new Map(taxes.map(t => [String(t.code), String(t.description || '')]));
   }
 
   private async loadDocument(companyId: string, module: PrintModule, id: string, copia: string): Promise<LoadedDoc> {
@@ -358,8 +368,10 @@ export class PrintTemplatesService {
       const keys = [...new Set((d.lines || []).flatMap(l => [l.articleId, l.articleCode]).filter(Boolean))];
       const arts = keys.length ? await ds.getRepository(Article).find({ where: [{ id: In(keys) }, { code: In(keys) }] }).catch(() => []) : [];
       const unitOf = (l: any) => (arts.find(a => a.id === l.articleId) || arts.find(a => a.code === l.articleCode))?.unit || '';
+      const taxes = await this.taxDescriptions(ds);
       const { linhas, resumoIva } = this.commercialLines((d.lines || []).map(l => ({
         codigo: l.articleCode, descricao: l.articleName, unidade: unitOf(l), q: +l.quantity || 0, p: +l.unitPrice || 0, d: +l.discount || 0, r: +l.ivaRate || 0,
+        motivo: taxes.get(String(l.ivaCode || '')) || '',
         liquid: l.subtotal, iva: l.ivaAmount, total: l.total,
       })));
       return {
@@ -382,9 +394,10 @@ export class PrintTemplatesService {
       const d = await ds.getRepository(PurchaseDocument).findOne({ where: { id }, relations: ['lines'] }).catch(() => null); // id inválido = não encontrado
       if (!d) throw notFound();
       const numero = `${d.type} ${d.series}/${d.number}`;
+      const taxes = await this.taxDescriptions(ds);
       const { linhas, resumoIva } = this.commercialLines((d.lines || []).map(l => ({
         codigo: l.articleCode, descricao: l.articleName || l.description, unidade: l.unit, q: +l.quantity || 0, p: +l.unitPrice || 0,
-        d: +l.discount || 0, r: +l.taxRate || 0, liquid: l.totalLiquid, total: l.totalValue,
+        d: +l.discount || 0, r: +l.taxRate || 0, motivo: taxes.get(String(l.taxCode || '')) || '', liquid: l.totalLiquid, total: l.totalValue,
         iva: l.totalValue != null && l.totalLiquid != null ? Number(l.totalValue) - Number(l.totalLiquid) : null,
       })));
       return {
