@@ -1343,8 +1343,7 @@ interface CompanyInfo {
 
 
       <app-print-settings-modal
-
-
+        module="PURCHASES" [docType]="currentDoc?.type"
         [isOpen]="isPrintSettingsOpen"
 
 
@@ -3694,7 +3693,7 @@ if (this.currentDoc.status === WorkflowStatus.REJECTED) return;
 
   /** Imprime com o modelo da empresa (conferido no servidor); sem modelo, usa o formato normal. */
   private printNow(delay: number) {
-    this.printTemplates.printDocument('PURCHASES', this.currentDoc?.id, copyLabel(this.printSettings?.copies)).then(res => {
+    this.printTemplates.printDocument('PURCHASES', this.currentDoc?.id, copyLabel(this.printSettings?.copies), this.printSettings?.template || '').then(res => {
       if (res === 'no-template') setTimeout(() => window.print(), delay);
     });
   }

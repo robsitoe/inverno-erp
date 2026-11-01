@@ -1,12 +1,15 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { PrintModule, PrintOptions, PrintTemplatesService } from '../../services/print-templates.service';
 
 export interface PrintSettings {
     copies: number;
     showBankingInfo: boolean;
     showObservations: boolean;
     paperSize: 'A4';
+    /** '' = automático (modelo em uso, ou formato normal); 'NONE' = formato normal do sistema; id = esse modelo. */
+    template?: string;
 }
 
 @Component({
@@ -26,6 +29,16 @@ export interface PrintSettings {
 
         <!-- Body -->
         <div class="p-4 space-y-4">
+          <!-- Modelo: só aparece quando há modelos para este tipo de documento -->
+          <div *ngIf="options?.templates?.length">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Modelo</label>
+            <select [(ngModel)]="settings.template" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Automático — {{ options!.auto ? options!.auto.name : 'formato normal do sistema' }}</option>
+              <option value="NONE">Formato normal do sistema (sem modelo)</option>
+              <option *ngFor="let t of options!.templates" [value]="t.id">Modelo: {{ t.name }}{{ t.inUse ? ' (em uso)' : '' }}</option>
+            </select>
+          </div>
+
           <!-- Copies -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Cópias</label>
@@ -71,8 +84,26 @@ export interface PrintSettings {
     }
   `]
 })
-export class PrintSettingsModalComponent {
+export class PrintSettingsModalComponent implements OnChanges {
     @Input() isOpen = false;
+    /** Com módulo e tipo de documento, a janela deixa escolher o modelo (ou o formato normal do sistema). */
+    @Input() module?: PrintModule;
+    @Input() docType?: string;
+    options: PrintOptions | null = null;
+
+    constructor(private printTemplates: PrintTemplatesService, private cdr: ChangeDetectorRef) { }
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes['isOpen'] && this.isOpen) {
+            this.settings.template = '';
+            this.options = null;
+            if (this.module) {
+                this.printTemplates.options(this.module, this.docType || '')
+                    .then(o => { this.options = o; this.cdr.detectChanges(); })
+                    .catch(() => { this.options = null; });
+            }
+        }
+    }
     @Output() closeEvent = new EventEmitter<void>();
     @Output() confirmEvent = new EventEmitter<PrintSettings>();
 
@@ -80,7 +111,8 @@ export class PrintSettingsModalComponent {
         copies: 1,
         showBankingInfo: true,
         showObservations: true,
-        paperSize: 'A4'
+        paperSize: 'A4',
+        template: ''
     };
 
     close() {

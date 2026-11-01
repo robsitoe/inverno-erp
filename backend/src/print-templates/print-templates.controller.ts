@@ -40,6 +40,18 @@ export class PrintTemplatesController {
     return this.svc.verify(this.company(c), numero, codigo);
   }
 
+  /** Janela de impressão: modelo automático e modelos disponíveis para o tipo de documento. */
+  @Get('options')
+  options(@Query('module') module: string, @Query('docType') docType: string, @Query('companyId') c?: string) {
+    return this.svc.options(this.company(c), module || 'SALES', docType || '');
+  }
+
+  /** Deixa o módulo sem modelo em uso: imprime no formato normal do sistema. */
+  @Post('use-normal')
+  useNormal(@Req() req: any, @Body() body: any, @Query('companyId') c?: string) {
+    return this.svc.useNormalFormat(this.admin(req, c), body?.module || 'SALES');
+  }
+
   @Get('for/:module/:docType')
   async forDocType(@Param('module') module: string, @Param('docType') docType: string, @Query('companyId') c?: string) {
     const t = await this.svc.forDocType(this.company(c), module, docType);
@@ -60,7 +72,7 @@ export class PrintTemplatesController {
   @Post('render')
   render(@Req() req: any, @Body() body: any, @Query('companyId') c?: string) {
     if (!body?.documentId) throw new BadRequestException('documentId é obrigatório.');
-    return this.svc.renderDocument(this.company(c), body.module || 'SALES', String(body.documentId), String(body.copia || ''), this.user(req));
+    return this.svc.renderDocument(this.company(c), body.module || 'SALES', String(body.documentId), String(body.copia || ''), this.user(req), body.templateId ? String(body.templateId) : undefined);
   }
 
   @Post()

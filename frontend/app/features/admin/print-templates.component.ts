@@ -59,10 +59,17 @@ const MODULE_TABS: { id: PrintModule; label: string; docTypes: { code: string; l
             <input type="file" accept=".json,application/json" class="hidden" (change)="importFile($event)">
           </label>
           <div *ngIf="!moduleTemplates.length" class="text-xs text-gray-400 pt-2">Sem modelos. Sem modelo, a impressão usa o formato normal do programa.</div>
+          <div *ngIf="moduleTemplates.length" class="rounded border p-2 text-[11px]" [ngClass]="inUseTemplates.length ? 'border-green-200 bg-green-50 text-green-800' : 'border-gray-200 bg-gray-50 text-gray-600'">
+            <ng-container *ngIf="inUseTemplates.length; else normalFmt">
+              <b>Em uso:</b> {{ inUseLabel }}.<span *ngIf="!inUseCoversAll"> Os outros documentos saem no formato normal do sistema.</span>
+              <button type="button" (click)="useNormalFormat()" class="mt-1 block w-full px-2 py-1 rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 font-semibold">Usar o formato normal do sistema</button>
+            </ng-container>
+            <ng-template #normalFmt><b>Formato normal do sistema</b> em todos os documentos de {{ moduleLabel }}. Os modelos ficam guardados: marque um como «Em uso» para o usar.</ng-template>
+          </div>
           <button *ngFor="let t of moduleTemplates" (click)="open(t)"
                   class="w-full text-left px-2 py-2 rounded border text-xs"
                   [ngClass]="editing?.id === t.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
-            <div class="font-semibold text-gray-800">{{ t.name }} <span *ngIf="t.isDefault" class="text-[10px] text-green-700">(padrão)</span></div>
+            <div class="font-semibold text-gray-800">{{ t.name }} <span *ngIf="t.isDefault" class="text-[10px] text-green-700">(em uso)</span><span *ngIf="!t.isDefault" class="text-[10px] text-gray-400">(guardado)</span></div>
             <div class="text-gray-500">{{ docTypesLabel(t.docTypes) }} · v{{ t.version }}</div>
           </button>
         </div>
@@ -75,7 +82,7 @@ const MODULE_TABS: { id: PrintModule; label: string; docTypes: { code: string; l
               <input [(ngModel)]="editing.name" class="mt-1 w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
             </label>
             <label class="flex items-center gap-2 text-xs text-gray-700 mt-5">
-              <input type="checkbox" [(ngModel)]="editing.isDefault"> Modelo padrão para os tipos escolhidos
+              <input type="checkbox" [(ngModel)]="editing.isDefault"> Em uso (imprimir com este modelo os tipos escolhidos)
             </label>
           </div>
           <div>
@@ -244,6 +251,21 @@ export class PrintTemplatesComponent implements OnInit {
   }
 
   get moduleTemplates() { return this.templates.filter(t => t.module === this.module); }
+  get inUseTemplates() { return this.moduleTemplates.filter(t => t.isDefault); }
+  get inUseCoversAll(): boolean { return this.inUseTemplates.some(t => t.docTypes.includes('*')); }
+  get inUseLabel(): string { return this.inUseTemplates.map(t => `«${t.name}» (${this.docTypesLabel(t.docTypes)})`).join(', '); }
+
+  /** Nenhum modelo em uso neste módulo: imprime no formato normal do sistema (os modelos ficam guardados). */
+  async useNormalFormat() {
+    if (!confirm(`Imprimir os documentos de ${this.moduleLabel} no formato normal do sistema?\n\nOs modelos ficam guardados e pode voltar a usá-los quando quiser.`)) return;
+    try {
+      await this.svc.useNormalFormat(this.module);
+      this.toaster.showSuccess('Modelos de impressão', `${this.moduleLabel}: formato normal do sistema.`);
+      await this.reload();
+      if (this.editing?.id) { const t = this.templates.find(x => x.id === this.editing!.id); if (t) this.editing.isDefault = t.isDefault; }
+    } catch (e: any) { this.toaster.showError('Modelos de impressão', e?.error?.message || 'Não foi possível alterar.'); }
+    this.cdr.detectChanges();
+  }
   get currentDocTypes() { return MODULE_TABS.find(m => m.id === this.module)!.docTypes; }
   get blocks() {
     const list = [{ code: '{{#linhas}}\n\n{{/linhas}}', label: 'Bloco das linhas (repete por linha)' }];
@@ -368,7 +390,7 @@ export class PrintTemplatesComponent implements OnInit {
   }
 
   async remove() {
-    if (!this.editing?.id || !confirm(`Eliminar o modelo «${this.editing.name}»? Os documentos passam a usar o formato normal.`)) return;
+    if (!this.editing?.id || !confirm(`Eliminar o modelo «${this.editing.name}»? Os documentos passam a usar o formato normal.\n\nSe só quer deixar de o usar, desmarque «Em uso» e grave (o modelo fica guardado).`)) return;
     await this.svc.remove(this.editing.id);
     this.editing = null;
     await this.reload();

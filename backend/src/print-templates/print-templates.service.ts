@@ -76,9 +76,28 @@ export class PrintTemplatesService {
           id BIGSERIAL PRIMARY KEY, "companyId" VARCHAR(80), module VARCHAR(20), "documentId" VARCHAR(80), "documentNumber" VARCHAR(80),
           "templateId" VARCHAR(40), version INT, "userName" VARCHAR(80), "controlCode" VARCHAR(20),
           result VARCHAR(10) NOT NULL, reason TEXT, "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now())`);
+        await this.main.query(`CREATE TABLE IF NOT EXISTS print_meta (key VARCHAR(60) PRIMARY KEY, "doneAt" TIMESTAMPTZ NOT NULL DEFAULT now())`);
+        await this.migrateImplicitDefaults();
       })().catch(e => { this.ready = null; throw e; });
     }
     return this.ready;
+  }
+
+  /**
+   * Antes, sem nenhum modelo marcado, a impressão usava o primeiro modelo do módulo. Agora só o modelo "em uso"
+   * é automático (sem nenhum, sai o formato normal do sistema). Para não mudar o que já imprimia, nos módulos sem
+   * modelo em uso o primeiro modelo passa a estar marcado — uma única vez.
+   */
+  private async migrateImplicitDefaults() {
+    const done = await this.main.query(`SELECT 1 FROM print_meta WHERE key='implicit-default-v1'`);
+    if (done.length) return;
+    const rows = await this.main.query(`SELECT id, "companyId", module, "isDefault" FROM print_templates WHERE active ORDER BY "companyId", module, name`);
+    const groups = new Map<string, any[]>();
+    for (const r of rows) { const k = r.companyId + '|' + r.module; groups.set(k, [...(groups.get(k) || []), r]); }
+    for (const list of groups.values()) {
+      if (!list.some(r => r.isDefault)) await this.main.query(`UPDATE print_templates SET "isDefault"=true WHERE id=$1`, [list[0].id]);
+    }
+    await this.main.query(`INSERT INTO print_meta (key) VALUES ('implicit-default-v1') ON CONFLICT DO NOTHING`);
   }
 
   private moduleOf(m: any): PrintModule {
@@ -172,13 +191,49 @@ export class PrintTemplatesService {
     return this.save(companyId, { id, module: t.module, name: v.name, docTypes: String(v.docTypes || '').split(',').filter(Boolean), isDefault: t.isDefault, html: v.html, css: v.css }, user);
   }
 
-  async forDocType(companyId: string, module: any, docType: string): Promise<PrintTemplate | null> {
+  /** Modelos do módulo que servem para este tipo de documento (o do tipo concreto primeiro, depois os "todos os documentos"). */
+  private async applicable(companyId: string, module: PrintModule, docType: string): Promise<PrintTemplate[]> {
+    const type = String(docType || '').toUpperCase();
+    const all = (await this.list(companyId)).filter(t => t.module === module);
+    return [...all.filter(t => t.docTypes.includes(type)), ...all.filter(t => t.docTypes.includes('*') && !t.docTypes.includes(type))];
+  }
+
+  /**
+   * Modelo a usar. choice: vazio = automático (o modelo "em uso"; o do tipo concreto ganha ao de todos os documentos);
+   * 'NONE' = formato normal do sistema; um id = esse modelo (tem de servir para o tipo).
+   * Sem nenhum modelo em uso, o automático é o formato normal do sistema.
+   */
+  async forDocType(companyId: string, module: any, docType: string, choice?: string): Promise<PrintTemplate | null> {
     const m = this.moduleOf(module);
-    const all = (await this.list(companyId)).filter(t => t.module === m);
-    // Um modelo escolhido para o tipo concreto ganha a um modelo "todos os documentos do módulo" (*)
-    const exact = all.filter(t => t.docTypes.includes(String(docType || '').toUpperCase()));
-    const wide = all.filter(t => t.docTypes.includes('*'));
-    return exact.find(t => t.isDefault) || exact[0] || wide.find(t => t.isDefault) || wide[0] || null;
+    const c = String(choice || '').trim();
+    if (c.toUpperCase() === 'NONE') return null;
+    const list = await this.applicable(companyId, m, docType);
+    if (c) {
+      const t = list.find(x => x.id === c);
+      if (!t) throw new BadRequestException('O modelo escolhido não existe ou não serve para este tipo de documento.');
+      return t;
+    }
+    const type = String(docType || '').toUpperCase();
+    return list.find(t => t.isDefault && t.docTypes.includes(type)) || list.find(t => t.isDefault && t.docTypes.includes('*')) || null;
+  }
+
+  /** Para a janela de impressão: o que sai em automático e os modelos que se podem escolher. */
+  async options(companyId: string, module: any, docType: string) {
+    const m = this.moduleOf(module);
+    const list = await this.applicable(companyId, m, docType);
+    const auto = await this.forDocType(companyId, m, docType);
+    return {
+      auto: auto ? { id: auto.id, name: auto.name, version: auto.version } : null,
+      templates: list.map(t => ({ id: t.id, name: t.name, version: t.version, inUse: t.isDefault, allDocs: t.docTypes.includes('*') })),
+    };
+  }
+
+  /** Nenhum modelo em uso no módulo: os documentos voltam ao formato normal do sistema (os modelos ficam guardados). */
+  async useNormalFormat(companyId: string, module: any) {
+    const m = this.moduleOf(module);
+    await this.ensureTables();
+    const r = await this.main.query(`UPDATE print_templates SET "isDefault"=false WHERE "companyId"=$1 AND module=$2 AND active AND "isDefault" RETURNING id`, [companyId, m]);
+    return { ok: true, cleared: Array.isArray(r?.[0]) ? r[0].length : (Array.isArray(r) ? r.length : 0) };
   }
 
   // ---------------------------------------------------------------- documentos gravados -> campos
@@ -378,11 +433,11 @@ export class PrintTemplatesService {
     return { html: rendered, errors };
   }
 
-  async renderDocument(companyId: string, moduleIn: any, documentId: string, copia: string, user: string | null) {
+  async renderDocument(companyId: string, moduleIn: any, documentId: string, copia: string, user: string | null, choice?: string) {
     await this.ensureTables();
     const module = this.moduleOf(moduleIn);
     const d = await this.loadDocument(companyId, module, documentId, copia);
-    const template = await this.forDocType(companyId, module, d.docType);
+    const template = await this.forDocType(companyId, module, d.docType, choice);
     if (!template) throw new NotFoundException({ message: 'Sem modelo para este tipo de documento.', useDefault: true });
 
     const log = async (result: 'OK' | 'BLOCKED', reason: string | null, code: string | null) => {

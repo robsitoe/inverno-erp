@@ -1841,8 +1841,7 @@ interface PendingDocRow {
 
 
       <app-print-settings-modal
-
-
+        module="TREASURY" [docType]="printDocType"
         [isOpen]="isPrintSettingsOpen"
 
 
@@ -2650,6 +2649,12 @@ export class TreasuryManagementComponent implements OnInit {
 
 
 
+  /** Tipo do documento a imprimir (para a escolha do modelo): o do documento, ou RE/PA pelo tipo. */
+  get printDocType(): string {
+    const d: any = this.documentToPrint || {};
+    return d.docType || (String(d.type || '').toUpperCase() === 'RECEIPT' ? 'RE' : 'PA');
+  }
+
   onPrintConfirm(settings: PrintSettings) {
 
 
@@ -2672,7 +2677,7 @@ export class TreasuryManagementComponent implements OnInit {
 
 
     // Modelo de impressão da empresa (conferido com a base de dados no servidor); sem modelo, formato normal
-    this.printTemplates.printDocument('TREASURY', (this.documentToPrint as any)?.id || this.currentDocId, copyLabel(settings?.copies)).then(res => {
+    this.printTemplates.printDocument('TREASURY', (this.documentToPrint as any)?.id || this.currentDocId, copyLabel(settings?.copies), settings?.template || '').then(res => {
       if (res === 'no-template') setTimeout(() => window.print(), 100);
     });
 

@@ -1239,7 +1239,7 @@ interface GridRow {
 
 
       <app-print-settings-modal
-
+        module="SALES" [docType]="documentToPrint?.documentType || selectedDocType"
         [isOpen]="isPrintSettingsOpen"
 
         (closeEvent)="onPrintSettingsClose()"
@@ -2916,7 +2916,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
 
     // Modelo de impressão da empresa (conferido com a base de dados no servidor); sem modelo, formato normal
-    this.printTemplates.printDocument('SALES', this.documentToPrint?.id, copyLabel(settings?.copies)).then(res => {
+    this.printTemplates.printDocument('SALES', this.documentToPrint?.id, copyLabel(settings?.copies), settings?.template || '').then(res => {
       if (res !== 'no-template') return;
       setTimeout(() => window.print(), 500);
     });

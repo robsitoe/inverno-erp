@@ -19,6 +19,12 @@ export interface PrintTemplate {
   updatedAt?: string;
 }
 
+/** Janela de impressão: o que sai em automático e os modelos que servem para o tipo de documento. */
+export interface PrintOptions {
+  auto: { id: string; name: string; version: number } | null;
+  templates: { id: string; name: string; version: number; inUse: boolean; allDocs: boolean }[];
+}
+
 export interface PrintField { key: string; label: string; fiscal: boolean; scope: 'doc' | 'linha' | 'iva'; requiredIn?: string[]; }
 
 /** Resultado de uma tentativa de impressão com modelo. */
@@ -44,16 +50,22 @@ export class PrintTemplatesService {
   versions(id: string) { return firstValueFrom(this.http.get<any[]>(`${this.api}/${id}/versions`)); }
   restore(id: string, version: number) { return firstValueFrom(this.http.post<PrintTemplate>(`${this.api}/${id}/restore/${version}`, {})); }
   logs() { return firstValueFrom(this.http.get<any[]>(`${this.api}/logs`)); }
+  options(module: PrintModule, docType: string) { return firstValueFrom(this.http.get<PrintOptions>(`${this.api}/options`, { params: { module, docType: docType || '' } })); }
+  /** O módulo deixa de ter modelo em uso: imprime no formato normal do sistema. */
+  useNormalFormat(module: PrintModule) { return firstValueFrom(this.http.post<{ ok: boolean; cleared: number }>(`${this.api}/use-normal`, { module })); }
   verify(numero: string, codigo: string) { return firstValueFrom(this.http.get<any>(`${this.api}/verify`, { params: { numero, codigo } })); }
 
   /**
    * Imprime o documento gravado com o modelo da empresa para o seu tipo.
    * 'no-template' => o chamador usa a impressão normal; 'blocked' => a impressão foi recusada (já avisado).
+   * templateChoice: vazio = automático (modelo em uso, ou formato normal se não houver); 'NONE' = formato normal do sistema; id = esse modelo.
    */
-  async printDocument(module: PrintModule, documentId: string | undefined | null, copia = ''): Promise<TemplatePrintResult> {
-    if (!documentId) return 'no-template';
+  async printDocument(module: PrintModule, documentId: string | undefined | null, copia = '', templateChoice = ''): Promise<TemplatePrintResult> {
+    if (!documentId || templateChoice === 'NONE') return 'no-template';
     try {
-      const r = await firstValueFrom(this.http.post<{ html: string; controlCode: string }>(`${this.api}/render`, { module, documentId, copia }));
+      const body: any = { module, documentId, copia };
+      if (templateChoice) body.templateId = templateChoice;
+      const r = await firstValueFrom(this.http.post<{ html: string; controlCode: string }>(`${this.api}/render`, body));
       this.printHtml(r.html);
       return 'printed';
     } catch (e: any) {

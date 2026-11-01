@@ -371,6 +371,7 @@ import { StockDocumentPrintComponent } from './stock-document-print.component';
 
     <!-- Print Components -->
     <app-print-settings-modal
+      module="STOCK" [docType]="currentDoc?.type"
       [isOpen]="isPrintSettingsOpen"
       (closeEvent)="isPrintSettingsOpen = false"
       (confirmEvent)="onPrintConfirm($event)">
@@ -946,7 +947,7 @@ export class StockMovementsComponent implements OnInit {
 
   /** Imprime com o modelo da empresa (conferido no servidor); sem modelo, usa o formato normal. */
   private printNow(delay: number) {
-    this.printTemplates.printDocument('STOCK', this.currentDoc?.id, copyLabel(this.printSettings?.copies)).then(res => {
+    this.printTemplates.printDocument('STOCK', this.currentDoc?.id, copyLabel(this.printSettings?.copies), this.printSettings?.template || '').then(res => {
       if (res === 'no-template') setTimeout(() => window.print(), delay);
     });
   }
