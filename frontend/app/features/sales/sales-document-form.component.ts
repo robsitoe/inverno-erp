@@ -3630,6 +3630,11 @@ export class SalesDocumentFormComponent implements OnDestroy {
 
 
 
+      // Sem linhas não há o que confirmar: avisa em vez de abrir um lançamento vazio que não se consegue gravar
+      if (this.suggestedJournalEntry && !(this.suggestedJournalEntry.lines?.length)) {
+        this.toaster.showError('Contabilidade', 'Não foi possível preparar o lançamento contabilístico deste documento. Verifique as contas do cliente e dos artigos.');
+        return;
+      }
       if (this.suggestedJournalEntry) {
 
         this.confirmationDocInfo = {

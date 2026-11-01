@@ -1542,13 +1542,22 @@ export class AccountingService {
         console.warn(`[AccountingService] Lançamento ${ref} desequilibrado em ${diff.toFixed(2)}; linha ${a.accountCode} ajustada.`);
     }
 
+    /** Lançamento de venda em vigor de um documento: venda ou correção, não anulado, com linhas (o CMV é à parte). */
+    private isActiveSaleEntry(e: JournalEntry, docId: string): boolean {
+        return e.sourceDocument === docId && (e.sourceType === 'SALE' || e.sourceType === 'CORRECTION')
+            && !e.description?.includes('CMV') && !['CANCELLED', 'REVERSED', 'CORRECTED', 'VOIDED'].includes(e.status)
+            && (e.lines?.length || 0) > 0;
+    }
+
     createSalesJournalEntry(salesDoc: SalesDocument, customer: any, articles: Article[], paymentCondition: 'PRONTO' | 'PRAZO' = 'PRONTO', paymentAccountId?: string, isPreview: boolean = false, forceRecreate: boolean = false): JournalEntry {
 
 
         // Use company-filtered list to avoid picking up entries from other companies
 
 
-        const existing = this.journalEntries.find(e => e.sourceDocument === salesDoc.id && e.sourceType === 'SALE' && !e.description?.includes('CMV'));
+        // Só conta o lançamento de venda ainda ativo (ou a correção que o substituiu): os cancelados, estornados
+        // e corrigidos ficam no histórico e não podem ser propostos de novo (sairia um lançamento vazio)
+        const existing = this.journalEntries.find(e => this.isActiveSaleEntry(e, salesDoc.id));
 
 
 
@@ -2070,7 +2079,9 @@ const customerAcc = this.findLeafAccount(paymentAccountId || customer?.receivabl
             e.id === commitEntry.id ||
 
 
-            (e.sourceDocument === commitEntry.sourceDocument && e.sourceType === commitEntry.sourceType && !e.description?.includes('CMV'))
+            (commitEntry.sourceType === 'SALE'
+                ? this.isActiveSaleEntry(e, commitEntry.sourceDocument as string)
+                : e.sourceDocument === commitEntry.sourceDocument && e.sourceType === commitEntry.sourceType && !e.description?.includes('CMV'))
 
 
         );
