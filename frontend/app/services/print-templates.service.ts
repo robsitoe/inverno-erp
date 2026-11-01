@@ -22,8 +22,14 @@ export interface PrintTemplate {
 /** Janela de impressão: o que sai em automático e os modelos que servem para o tipo de documento. */
 export interface PrintOptions {
   auto: { id: string; name: string; version: number } | null;
+  /** O administrador deixa escolher na janela de impressão (senão, sai sempre o automático, sem lista). */
+  choose: boolean;
+  allowNormal: boolean;
   templates: { id: string; name: string; version: number; inUse: boolean; allDocs: boolean }[];
 }
+
+/** Regra da janela de impressão de um módulo. */
+export interface PrintPrefs { module: PrintModule; mode: 'FIXED' | 'CHOOSE'; allowNormal: boolean; templateIds: string[]; }
 
 export interface PrintField { key: string; label: string; fiscal: boolean; scope: 'doc' | 'linha' | 'iva'; requiredIn?: string[]; }
 
@@ -51,6 +57,10 @@ export class PrintTemplatesService {
   restore(id: string, version: number) { return firstValueFrom(this.http.post<PrintTemplate>(`${this.api}/${id}/restore/${version}`, {})); }
   logs() { return firstValueFrom(this.http.get<any[]>(`${this.api}/logs`)); }
   options(module: PrintModule, docType: string) { return firstValueFrom(this.http.get<PrintOptions>(`${this.api}/options`, { params: { module, docType: docType || '' } })); }
+  printPrefs(module: PrintModule) { return firstValueFrom(this.http.get<PrintPrefs>(`${this.api}/print-prefs`, { params: { module } })); }
+  savePrintPrefs(p: PrintPrefs) { return firstValueFrom(this.http.post<PrintPrefs>(`${this.api}/print-prefs`, p)); }
+  /** Um clique: modelo usado no módulo (null = formato normal do sistema). */
+  useTemplate(module: PrintModule, templateId: string | null) { return firstValueFrom(this.http.post<any>(`${this.api}/use`, { module, templateId })); }
   /** O módulo deixa de ter modelo em uso: imprime no formato normal do sistema. */
   useNormalFormat(module: PrintModule) { return firstValueFrom(this.http.post<{ ok: boolean; cleared: number }>(`${this.api}/use-normal`, { module })); }
   verify(numero: string, codigo: string) { return firstValueFrom(this.http.get<any>(`${this.api}/verify`, { params: { numero, codigo } })); }

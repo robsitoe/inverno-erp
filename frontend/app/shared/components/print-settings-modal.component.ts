@@ -29,13 +29,15 @@ export interface PrintSettings {
 
         <!-- Body -->
         <div class="p-4 space-y-4">
-          <!-- Modelo: só aparece quando há modelos para este tipo de documento -->
-          <div *ngIf="options?.templates?.length">
+          <!-- Modelo: só quando o administrador deixa escolher (Administrador > Modelos de Impressão) -->
+          <div *ngIf="options?.choose && (options!.templates.length || options!.allowNormal)">
             <label class="block text-sm font-medium text-gray-700 mb-1">Modelo</label>
             <select [(ngModel)]="settings.template" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Automático — {{ options!.auto ? options!.auto.name : 'formato normal do sistema' }}</option>
-              <option value="NONE">Formato normal do sistema (sem modelo)</option>
-              <option *ngFor="let t of options!.templates" [value]="t.id">Modelo: {{ t.name }}{{ t.inUse ? ' (em uso)' : '' }}</option>
+              <option value="">{{ options!.auto ? options!.auto.name : 'Formato normal do sistema' }} (habitual)</option>
+              <option *ngIf="options!.allowNormal && options!.auto" value="NONE">Formato normal do sistema</option>
+              <ng-container *ngFor="let t of options!.templates">
+                <option *ngIf="t.id !== options!.auto?.id" [value]="t.id">{{ t.name }}</option>
+              </ng-container>
             </select>
           </div>
 

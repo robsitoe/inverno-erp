@@ -77,6 +77,11 @@ export class PrintTemplatesService {
           "templateId" VARCHAR(40), version INT, "userName" VARCHAR(80), "controlCode" VARCHAR(20),
           result VARCHAR(10) NOT NULL, reason TEXT, "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now())`);
         await this.main.query(`CREATE TABLE IF NOT EXISTS print_meta (key VARCHAR(60) PRIMARY KEY, "doneAt" TIMESTAMPTZ NOT NULL DEFAULT now())`);
+        // Janela de impressão por módulo: FIXED = usa sempre o modelo em uso (sem lista); CHOOSE = lista autorizada pelo administrador
+        await this.main.query(`CREATE TABLE IF NOT EXISTS print_module_prefs (
+          "companyId" VARCHAR(80) NOT NULL, module VARCHAR(20) NOT NULL, mode VARCHAR(10) NOT NULL DEFAULT 'FIXED',
+          "allowNormal" BOOLEAN NOT NULL DEFAULT false, "templateIds" TEXT NOT NULL DEFAULT '',
+          "updatedBy" VARCHAR(80), "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY ("companyId", module))`);
         await this.migrateImplicitDefaults();
       })().catch(e => { this.ready = null; throw e; });
     }
@@ -198,6 +203,58 @@ export class PrintTemplatesService {
     return [...all.filter(t => t.docTypes.includes(type)), ...all.filter(t => t.docTypes.includes('*') && !t.docTypes.includes(type))];
   }
 
+  // ---------------------------------------------------------------- janela de impressão (preferências por módulo)
+
+  async getPrintPrefs(companyId: string, module: any): Promise<{ module: PrintModule; mode: 'FIXED' | 'CHOOSE'; allowNormal: boolean; templateIds: string[] }> {
+    const m = this.moduleOf(module);
+    await this.ensureTables();
+    const r = (await this.main.query(`SELECT * FROM print_module_prefs WHERE "companyId"=$1 AND module=$2`, [companyId, m]))[0];
+    return {
+      module: m,
+      mode: r?.mode === 'CHOOSE' ? 'CHOOSE' : 'FIXED',
+      allowNormal: !!r?.allowNormal,
+      templateIds: String(r?.templateIds || '').split(',').filter(Boolean),
+    };
+  }
+
+  async savePrintPrefs(companyId: string, body: any, user: string | null) {
+    const m = this.moduleOf(body?.module);
+    await this.ensureTables();
+    const mode = body?.mode === 'CHOOSE' ? 'CHOOSE' : 'FIXED';
+    const own = new Set((await this.list(companyId)).filter(t => t.module === m).map(t => t.id));
+    const templateIds: string[] = (Array.isArray(body?.templateIds) ? body.templateIds : []).map(String).filter((id: string) => own.has(id));
+    const allowNormal = !!body?.allowNormal;
+    if (mode === 'CHOOSE' && !templateIds.length && !allowNormal) {
+      throw new BadRequestException('Para deixar escolher, marque pelo menos um modelo ou o formato normal do sistema.');
+    }
+    await this.main.query(`INSERT INTO print_module_prefs ("companyId",module,mode,"allowNormal","templateIds","updatedBy","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,now())
+      ON CONFLICT ("companyId",module) DO UPDATE SET mode=EXCLUDED.mode,"allowNormal"=EXCLUDED."allowNormal","templateIds"=EXCLUDED."templateIds","updatedBy"=EXCLUDED."updatedBy","updatedAt"=now()`,
+      [companyId, m, mode, allowNormal, templateIds.join(','), user]);
+    return this.getPrintPrefs(companyId, m);
+  }
+
+  /** Um clique: este modelo passa a ser o usado no módulo (os outros ficam guardados). Sem modelo = formato normal do sistema. */
+  async useTemplate(companyId: string, module: any, templateId: string | null) {
+    const m = this.moduleOf(module);
+    if (!templateId) return this.useNormalFormat(companyId, m);
+    const t = await this.get(companyId, templateId);
+    if (t.module !== m || !t.active) throw new BadRequestException('O modelo não pertence a este módulo.');
+    await this.main.query(`UPDATE print_templates SET "isDefault"=(id=$3) WHERE "companyId"=$1 AND module=$2 AND active`, [companyId, m, templateId]);
+    return { ok: true, templateId };
+  }
+
+  /** Sem lista na impressão (FIXED) a escolha é ignorada; com lista (CHOOSE) só passa o que o administrador marcou. */
+  private async authorizedChoice(companyId: string, module: PrintModule, choice?: string): Promise<string> {
+    const c = String(choice || '').trim();
+    if (!c) return '';
+    const prefs = await this.getPrintPrefs(companyId, module);
+    if (prefs.mode !== 'CHOOSE') return '';
+    if (c.toUpperCase() === 'NONE' ? !prefs.allowNormal : !prefs.templateIds.includes(c)) {
+      throw new BadRequestException('Esta opção de impressão não está autorizada pelo administrador.');
+    }
+    return c;
+  }
+
   /**
    * Modelo a usar. choice: vazio = automático (o modelo "em uso"; o do tipo concreto ganha ao de todos os documentos);
    * 'NONE' = formato normal do sistema; um id = esse modelo (tem de servir para o tipo).
@@ -205,7 +262,7 @@ export class PrintTemplatesService {
    */
   async forDocType(companyId: string, module: any, docType: string, choice?: string): Promise<PrintTemplate | null> {
     const m = this.moduleOf(module);
-    const c = String(choice || '').trim();
+    const c = await this.authorizedChoice(companyId, m, choice);
     if (c.toUpperCase() === 'NONE') return null;
     const list = await this.applicable(companyId, m, docType);
     if (c) {
@@ -217,13 +274,20 @@ export class PrintTemplatesService {
     return list.find(t => t.isDefault && t.docTypes.includes(type)) || list.find(t => t.isDefault && t.docTypes.includes('*')) || null;
   }
 
-  /** Para a janela de impressão: o que sai em automático e os modelos que se podem escolher. */
+  /**
+   * Para a janela de impressão: o que sai em automático e, só se o administrador o permitir,
+   * as opções autorizadas (modelos marcados e/ou formato normal do sistema).
+   */
   async options(companyId: string, module: any, docType: string) {
     const m = this.moduleOf(module);
-    const list = await this.applicable(companyId, m, docType);
+    const prefs = await this.getPrintPrefs(companyId, m);
     const auto = await this.forDocType(companyId, m, docType);
+    const choose = prefs.mode === 'CHOOSE';
+    const list = choose ? (await this.applicable(companyId, m, docType)).filter(t => prefs.templateIds.includes(t.id)) : [];
     return {
       auto: auto ? { id: auto.id, name: auto.name, version: auto.version } : null,
+      choose,
+      allowNormal: choose && prefs.allowNormal,
       templates: list.map(t => ({ id: t.id, name: t.name, version: t.version, inUse: t.isDefault, allDocs: t.docTypes.includes('*') })),
     };
   }
@@ -436,8 +500,10 @@ export class PrintTemplatesService {
   async renderDocument(companyId: string, moduleIn: any, documentId: string, copia: string, user: string | null, choice?: string) {
     await this.ensureTables();
     const module = this.moduleOf(moduleIn);
+    // A escolha feita na janela de impressão tem de estar autorizada (verificado antes de abrir o documento)
+    const c = await this.authorizedChoice(companyId, module, choice);
     const d = await this.loadDocument(companyId, module, documentId, copia);
-    const template = await this.forDocType(companyId, module, d.docType, choice);
+    const template = await this.forDocType(companyId, module, d.docType, c);
     if (!template) throw new NotFoundException({ message: 'Sem modelo para este tipo de documento.', useDefault: true });
 
     const log = async (result: 'OK' | 'BLOCKED', reason: string | null, code: string | null) => {

@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@an
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { PrintField, PrintModule, PrintTemplate, PrintTemplatesService } from '../../services/print-templates.service';
+import { PrintField, PrintModule, PrintPrefs, PrintTemplate, PrintTemplatesService } from '../../services/print-templates.service';
 import { ToasterService } from '../../services/toaster.service';
 
 const MODULE_TABS: { id: PrintModule; label: string; docTypes: { code: string; label: string }[] }[] = [
@@ -50,6 +50,38 @@ const MODULE_TABS: { id: PrintModule; label: string; docTypes: { code: string; l
         </div>
       </div>
 
+      <!-- Impressão do módulo: modelo usado (um clique) e o que aparece na janela de impressão -->
+      <div class="px-4 py-3 border-b border-gray-200 bg-slate-50 grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
+        <div>
+          <div class="font-semibold text-gray-700 mb-1">Modelo usado na impressão de {{ moduleLabel }}</div>
+          <select [ngModel]="usedTemplateId" (ngModelChange)="setUsedTemplate($event)" class="w-full border border-gray-300 rounded px-2 py-1.5 bg-white text-sm">
+            <option value="">Formato normal do sistema</option>
+            <option *ngFor="let t of moduleTemplates" [value]="t.id">{{ t.name }} — {{ docTypesLabel(t.docTypes) }}</option>
+            <option *ngIf="usedTemplateId === '__MULTI'" value="__MULTI" disabled>Vários modelos, conforme o tipo de documento</option>
+          </select>
+          <p class="text-[11px] text-gray-500 mt-1">É este que sai ao imprimir. Os outros modelos ficam guardados.</p>
+        </div>
+        <div>
+          <div class="font-semibold text-gray-700 mb-1">Na janela de impressão</div>
+          <label class="flex items-start gap-2 mb-1">
+            <input type="radio" name="printMode" value="FIXED" [(ngModel)]="prefs.mode" (ngModelChange)="prefsDirty = true" class="mt-0.5">
+            <span><b>Não mostrar lista</b> — imprime sempre com o modelo usado.</span>
+          </label>
+          <label class="flex items-start gap-2">
+            <input type="radio" name="printMode" value="CHOOSE" [(ngModel)]="prefs.mode" (ngModelChange)="prefsDirty = true" class="mt-0.5">
+            <span><b>Deixar escolher</b>, só entre:</span>
+          </label>
+          <div *ngIf="prefs.mode === 'CHOOSE'" class="ml-6 mt-1 space-y-0.5">
+            <label class="flex items-center gap-2"><input type="checkbox" [(ngModel)]="prefs.allowNormal" (ngModelChange)="prefsDirty = true"> Formato normal do sistema</label>
+            <label *ngFor="let t of moduleTemplates" class="flex items-center gap-2">
+              <input type="checkbox" [checked]="prefs.templateIds.includes(t.id)" (change)="togglePrefTemplate(t.id)"> {{ t.name }}
+            </label>
+            <div *ngIf="!moduleTemplates.length" class="text-gray-400">Ainda não há modelos neste módulo.</div>
+          </div>
+          <button *ngIf="prefsDirty" type="button" (click)="savePrefs()" class="mt-2 px-3 py-1.5 rounded bg-blue-600 text-white font-bold">Gravar</button>
+        </div>
+      </div>
+
       <div class="flex min-h-[560px]">
         <!-- Lista -->
         <div class="w-56 border-r border-gray-200 p-3 space-y-2 shrink-0">
@@ -59,13 +91,6 @@ const MODULE_TABS: { id: PrintModule; label: string; docTypes: { code: string; l
             <input type="file" accept=".json,application/json" class="hidden" (change)="importFile($event)">
           </label>
           <div *ngIf="!moduleTemplates.length" class="text-xs text-gray-400 pt-2">Sem modelos. Sem modelo, a impressão usa o formato normal do programa.</div>
-          <div *ngIf="moduleTemplates.length" class="rounded border p-2 text-[11px]" [ngClass]="inUseTemplates.length ? 'border-green-200 bg-green-50 text-green-800' : 'border-gray-200 bg-gray-50 text-gray-600'">
-            <ng-container *ngIf="inUseTemplates.length; else normalFmt">
-              <b>Em uso:</b> {{ inUseLabel }}.<span *ngIf="!inUseCoversAll"> Os outros documentos saem no formato normal do sistema.</span>
-              <button type="button" (click)="useNormalFormat()" class="mt-1 block w-full px-2 py-1 rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 font-semibold">Usar o formato normal do sistema</button>
-            </ng-container>
-            <ng-template #normalFmt><b>Formato normal do sistema</b> em todos os documentos de {{ moduleLabel }}. Os modelos ficam guardados: marque um como «Em uso» para o usar.</ng-template>
-          </div>
           <button *ngFor="let t of moduleTemplates" (click)="open(t)"
                   class="w-full text-left px-2 py-2 rounded border text-xs"
                   [ngClass]="editing?.id === t.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
@@ -242,30 +267,61 @@ export class PrintTemplatesComponent implements OnInit {
   verifyResult: any = null;
   showLogs = false;
   logs: any[] = [];
+  /** Regra da janela de impressão do módulo aberto. */
+  prefs: PrintPrefs = { module: 'SALES', mode: 'FIXED', allowNormal: false, templateIds: [] };
+  prefsDirty = false;
 
   constructor(private svc: PrintTemplatesService, private toaster: ToasterService, private cdr: ChangeDetectorRef, private sanitizer: DomSanitizer) { }
 
   async ngOnInit() {
     await this.reload();
     await this.loadFields();
+    await this.loadPrefs();
   }
 
   get moduleTemplates() { return this.templates.filter(t => t.module === this.module); }
   get inUseTemplates() { return this.moduleTemplates.filter(t => t.isDefault); }
-  get inUseCoversAll(): boolean { return this.inUseTemplates.some(t => t.docTypes.includes('*')); }
-  get inUseLabel(): string { return this.inUseTemplates.map(t => `«${t.name}» (${this.docTypesLabel(t.docTypes)})`).join(', '); }
 
-  /** Nenhum modelo em uso neste módulo: imprime no formato normal do sistema (os modelos ficam guardados). */
-  async useNormalFormat() {
-    if (!confirm(`Imprimir os documentos de ${this.moduleLabel} no formato normal do sistema?\n\nOs modelos ficam guardados e pode voltar a usá-los quando quiser.`)) return;
+  /** '' = formato normal; id = o modelo em uso; '__MULTI' = vários em uso (um por tipo de documento). */
+  get usedTemplateId(): string {
+    const used = this.inUseTemplates;
+    return used.length === 0 ? '' : used.length === 1 ? used[0].id! : '__MULTI';
+  }
+
+  /** Um clique: este passa a ser o modelo usado no módulo (os outros ficam guardados). */
+  async setUsedTemplate(id: string) {
+    if (id === '__MULTI') return;
     try {
-      await this.svc.useNormalFormat(this.module);
-      this.toaster.showSuccess('Modelos de impressão', `${this.moduleLabel}: formato normal do sistema.`);
+      await this.svc.useTemplate(this.module, id || null);
+      const name = id ? this.moduleTemplates.find(t => t.id === id)?.name : 'Formato normal do sistema';
+      this.toaster.showSuccess('Modelos de impressão', `${this.moduleLabel}: ${name}.`);
       await this.reload();
       if (this.editing?.id) { const t = this.templates.find(x => x.id === this.editing!.id); if (t) this.editing.isDefault = t.isDefault; }
-    } catch (e: any) { this.toaster.showError('Modelos de impressão', e?.error?.message || 'Não foi possível alterar.'); }
+    } catch (e: any) { this.toaster.showError('Modelos de impressão', e?.error?.message || 'Não foi possível alterar.'); await this.reload(); }
     this.cdr.detectChanges();
   }
+
+  async loadPrefs() {
+    try { this.prefs = await this.svc.printPrefs(this.module); } catch { this.prefs = { module: this.module, mode: 'FIXED', allowNormal: false, templateIds: [] }; }
+    this.prefsDirty = false;
+    this.cdr.detectChanges();
+  }
+
+  togglePrefTemplate(id: string) {
+    const i = this.prefs.templateIds.indexOf(id);
+    this.prefs.templateIds = i >= 0 ? this.prefs.templateIds.filter(x => x !== id) : [...this.prefs.templateIds, id];
+    this.prefsDirty = true;
+  }
+
+  async savePrefs() {
+    try {
+      this.prefs = await this.svc.savePrintPrefs({ ...this.prefs, module: this.module });
+      this.prefsDirty = false;
+      this.toaster.showSuccess('Janela de impressão', this.prefs.mode === 'FIXED' ? `${this.moduleLabel}: sem lista, imprime sempre com o modelo usado.` : `${this.moduleLabel}: pode escolher entre as opções marcadas.`);
+    } catch (e: any) { this.toaster.showError('Janela de impressão', e?.error?.message || 'Não foi possível gravar.'); }
+    this.cdr.detectChanges();
+  }
+
   get currentDocTypes() { return MODULE_TABS.find(m => m.id === this.module)!.docTypes; }
   get blocks() {
     const list = [{ code: '{{#linhas}}\n\n{{/linhas}}', label: 'Bloco das linhas (repete por linha)' }];
@@ -288,6 +344,7 @@ export class PrintTemplatesComponent implements OnInit {
   async selectModule(m: PrintModule) {
     this.module = m; this.editing = null; this.errors = []; this.previewHtml = ''; this.okMessage = '';
     await this.loadFields();
+    await this.loadPrefs();
   }
 
   async newTemplate() {

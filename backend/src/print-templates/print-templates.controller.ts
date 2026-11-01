@@ -46,6 +46,23 @@ export class PrintTemplatesController {
     return this.svc.options(this.company(c), module || 'SALES', docType || '');
   }
 
+  /** Preferências da janela de impressão do módulo (administrador). */
+  @Get('print-prefs')
+  printPrefs(@Req() req: any, @Query('module') module: string, @Query('companyId') c?: string) {
+    return this.svc.getPrintPrefs(this.admin(req, c), module || 'SALES');
+  }
+
+  @Post('print-prefs')
+  savePrintPrefs(@Req() req: any, @Body() body: any, @Query('companyId') c?: string) {
+    return this.svc.savePrintPrefs(this.admin(req, c), body || {}, this.user(req));
+  }
+
+  /** Um clique: modelo usado na impressão do módulo (templateId vazio = formato normal do sistema). */
+  @Post('use')
+  use(@Req() req: any, @Body() body: any, @Query('companyId') c?: string) {
+    return this.svc.useTemplate(this.admin(req, c), body?.module || 'SALES', body?.templateId ? String(body.templateId) : null);
+  }
+
   /** Deixa o módulo sem modelo em uso: imprime no formato normal do sistema. */
   @Post('use-normal')
   useNormal(@Req() req: any, @Body() body: any, @Query('companyId') c?: string) {
