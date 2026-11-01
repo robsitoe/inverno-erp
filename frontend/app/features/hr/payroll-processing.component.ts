@@ -27,11 +27,11 @@ import { Subscription, firstValueFrom } from 'rxjs';
               <div class="flex flex-col">
                 <label class="text-[10px] text-gray-400 font-bold uppercase">Mês/Ano</label>
                 <div class="flex gap-2">
-                  <select [(ngModel)]="selectedMonth" class="px-2 py-1 border rounded text-xs">
-                    <option *ngFor="let m of months; let i = index" [value]="i+1">{{ m }}</option>
+                  <select [(ngModel)]="selectedMonth" (ngModelChange)="loadPeriod()" class="px-2 py-1 border rounded text-xs">
+                    <option *ngFor="let m of months; let i = index" [ngValue]="i+1">{{ m }}</option>
                   </select>
-                  <select [(ngModel)]="selectedYear" class="px-2 py-1 border rounded text-xs">
-                    <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+                  <select [(ngModel)]="selectedYear" (ngModelChange)="loadPeriod()" class="px-2 py-1 border rounded text-xs">
+                    <option *ngFor="let y of years" [ngValue]="y">{{ y }}</option>
                   </select>
                 </div>
               </div>
@@ -43,7 +43,7 @@ import { Subscription, firstValueFrom } from 'rxjs';
                 class="bg-blue-600 text-white px-6 py-2 rounded text-xs font-bold hover:bg-blue-700 shadow-lg flex items-center gap-2 disabled:bg-gray-400 font-black transition-all"
               >
                 <app-icon name="sync" [size]="18" [class.animate-spin]="processing"></app-icon>
-                <span>{{ processing ? 'A PROCESSAR...' : 'GERAR FOLHA' }}</span>
+                <span>{{ processing ? 'A PROCESSAR...' : (payrollData.length ? 'RECALCULAR FOLHA' : 'GERAR FOLHA') }}</span>
               </button>
               <button
                 *ngIf="payrollData.length > 0 && hasDraftRecords && perms.hasPerm('hr.payroll.generate')"
@@ -73,9 +73,8 @@ import { Subscription, firstValueFrom } from 'rxjs';
                 <span>{{ posting ? 'A LANÇAR...' : 'LANÇAR NA CONTABILIDADE' }}</span>
               </button>
               <div *ngIf="hasPostedRecords && perms.hasPerm('hr.payroll.pay')" class="flex items-center gap-2">
-                <select [(ngModel)]="paymentAccountCode" class="px-2 py-2 border rounded text-xs">
-                  <option value="1.2">Banco (1.2)</option>
-                  <option value="1.1">Caixa (1.1)</option>
+                <select [(ngModel)]="paymentAccountCode" class="px-2 py-2 border rounded text-xs" title="Conta de onde sai o pagamento">
+                  <option *ngFor="let a of paymentAccounts" [ngValue]="a.code">{{ a.code }} · {{ a.name }}</option>
                 </select>
                 <button (click)="paySalaries()" [disabled]="paying || salariesPaid"
                   class="bg-indigo-600 text-white px-5 py-2 rounded text-xs font-bold hover:bg-indigo-700 shadow-lg flex items-center gap-2 disabled:bg-gray-400 font-black">
@@ -89,18 +88,18 @@ import { Subscription, firstValueFrom } from 'rxjs';
         <!-- Dashboard / Summary -->
         <div *ngIf="payrollData.length > 0" class="grid grid-cols-5 gap-3">
            <div class="bg-white p-4 rounded shadow-sm border-b-2 border-gray-100">
-              <p class="text-[10px] text-gray-400 font-bold uppercase">Total Bruto</p>
+              <p class="text-[10px] text-gray-400 font-bold uppercase">Salários (após faltas)</p>
               <p class="text-lg font-bold text-gray-800">{{ totals.gross | number:'1.2-2' }} MT</p>
-              <p class="text-[10px] text-gray-400 mt-0.5" *ngIf="totals.subsidies > 0">+ {{ totals.subsidies | number:'1.2-2' }} subsídios</p>
+              <p class="text-[10px] text-gray-400 mt-0.5" *ngIf="totals.subsidies > 0">+ {{ totals.subsidies | number:'1.2-2' }} subsídios/extras</p>
            </div>
             <div class="bg-white p-4 rounded shadow-sm border-b-2 border-red-100">
               <p class="text-[10px] text-gray-400 font-bold uppercase text-red-500">IRPS Retido (4.4.2.1)</p>
               <p class="text-lg font-bold text-red-600">{{ (totals.irps || 0) | number:'1.2-2' }} MT</p>
             </div>
            <div class="bg-white p-4 rounded shadow-sm border-b-2 border-orange-100">
-              <p class="text-[10px] text-gray-400 font-bold uppercase text-orange-500">INSS Total (7%)</p>
+              <p class="text-[10px] text-gray-400 font-bold uppercase text-orange-500">INSS Total</p>
               <p class="text-lg font-bold text-orange-600">{{ totals.inssTotal | number:'1.2-2' }} MT</p>
-              <p class="text-[10px] text-gray-400 mt-0.5">Trab. 3%: {{ totals.inssEmployee | number:'1.2-2' }} · Patr. 4%: {{ totals.inssEmployer | number:'1.2-2' }}</p>
+              <p class="text-[10px] text-gray-400 mt-0.5">Trab.: {{ totals.inssEmployee | number:'1.2-2' }} · Patr.: {{ totals.inssEmployer | number:'1.2-2' }}</p>
            </div>
            <div class="bg-white p-4 rounded shadow-sm border-r-4 border-green-500">
               <p class="text-[10px] text-gray-400 font-bold uppercase text-green-600">Total Líquido</p>
@@ -109,8 +108,16 @@ import { Subscription, firstValueFrom } from 'rxjs';
            <div class="bg-slate-800 p-4 rounded shadow-sm text-white">
               <p class="text-[10px] text-slate-400 font-bold uppercase">Custo Total Empresa</p>
               <p class="text-xl font-black">{{ totals.employerCost | number:'1.2-2' }} MT</p>
-              <p class="text-[10px] text-slate-400 mt-0.5">Bruto + INSS Patronal + Subsídios</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">Salários + INSS patronal + subsídios/extras</p>
            </div>
+        </div>
+
+        <!-- Rejeição: motivo indicado pelo aprovador -->
+        <div *ngIf="rejectionNote" class="bg-red-50 border border-red-200 rounded p-3 text-xs text-red-800">
+          <b>Folha rejeitada:</b> {{ rejectionNote }} — corrija e volte a submeter.
+        </div>
+        <div *ngIf="payrollData.length && !hasDraftRecords" class="bg-slate-50 border border-slate-200 rounded p-2 text-[11px] text-slate-600">
+          Esta folha já saiu do rascunho ({{ statusLabel(payrollData[0].status) }}): os valores estão fechados e não são recalculados.
         </div>
 
         <!-- Contract alerts -->
@@ -152,7 +159,9 @@ import { Subscription, firstValueFrom } from 'rxjs';
                     <th class="p-3">Código</th>
                     <th class="p-3">Nome</th>
                     <th class="p-3 text-right">Bruto</th>
-                    <th class="p-3 text-right">INSS (4%)</th>
+                    <th class="p-3 text-right" title="Remuneração sujeita: base - faltas + habitação + horas extra + bónus">Sujeito</th>
+                    <th class="p-3 text-right" title="Horas extra e bónus do mês (editáveis em rascunho)">Extras / Bónus</th>
+                    <th class="p-3 text-right">INSS trab.</th>
                     <th class="p-3 text-right">IRPS</th>
                     <th class="p-3 text-center">Dep.</th>
                     <th class="p-3 text-center">Faltas/Férias</th>
@@ -167,6 +176,18 @@ import { Subscription, firstValueFrom } from 'rxjs';
                     <td class="p-3 font-medium">{{ r.employeeCode }}</td>
                     <td class="p-3 font-bold">{{ r.employeeName }}</td>
                     <td class="p-3 text-right font-mono">{{ r.grossSalary | number:'1.2-2' }}</td>
+                    <td class="p-3 text-right font-mono text-gray-600">{{ taxableOf(r) | number:'1.2-2' }}</td>
+                    <td class="p-2 text-right whitespace-nowrap">
+                      <ng-container *ngIf="canEditVariables(r); else fixedVars">
+                        <input type="number" min="0" step="0.01" [ngModel]="r.overtimeAmount || 0" (change)="saveVariables(r, 'overtimeAmount', $event)" title="Horas extra (MT)"
+                          class="w-20 px-1 py-0.5 border rounded text-right font-mono text-[11px]">
+                        <input type="number" min="0" step="0.01" [ngModel]="r.bonusAmount || 0" (change)="saveVariables(r, 'bonusAmount', $event)" title="Bónus (MT)"
+                          class="w-20 px-1 py-0.5 border rounded text-right font-mono text-[11px] ml-1">
+                      </ng-container>
+                      <ng-template #fixedVars>
+                        <span class="font-mono" [class.text-gray-300]="!extrasOf(r)">{{ extrasOf(r) ? (extrasOf(r) | number:'1.2-2') : '-' }}</span>
+                      </ng-template>
+                    </td>
                     <td class="p-3 text-right text-orange-600 font-mono">-{{ r.inssEmployee | number:'1.2-2' }}</td>
                     <td class="p-3 text-right text-red-600 font-mono">-{{ (r.irps || r['irm'] || 0) | number:'1.2-2' }}</td>
                     <td class="p-3 text-center text-gray-400 font-bold">{{ r.dependents || 0 }}</td>
@@ -193,7 +214,7 @@ import { Subscription, firstValueFrom } from 'rxjs';
                   </tr>
                   
                   <tr *ngIf="payrollData.length === 0" class="h-64">
-                    <td colspan="8" class="text-center text-gray-400 italic">
+                    <td colspan="13" class="text-center text-gray-400 italic">
                        Nenhum dado processado para este período.<br>Clique em "Gerar Folha" para iniciar.
                     </td>
                   </tr>
@@ -220,11 +241,58 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   printing = false;
   totals = { gross: 0, inssTotal: 0, inssEmployee: 0, inssEmployer: 0, irps: 0, net: 0, subsidies: 0, employerCost: 0 };
   employees: any[] = [];
-  paymentAccountCode: '1.1' | '1.2' = '1.2';
+  paymentAccountCode = '1.2.1';
+  /** Contas de caixa/banco que aceitam lançamentos (as de soma, como 1.2, não servem para pagar). */
+  paymentAccounts: { code: string; name: string }[] = [{ code: '1.2.1', name: 'Depósitos à ordem' }, { code: '1.1', name: 'Caixa' }];
   paying = false;
 
   submitting = false;
   approving = false;
+
+  rejectionNote = '';
+
+  /** Remuneração sujeita a INSS/IRPS (igual à do servidor). */
+  taxableOf(r: PayrollRecord): number {
+    return Math.max(0, Number(r.grossSalary || 0) - Number(r.absenceDeduction || 0) + Number(r.housingSubsidy || 0)
+      + Number(r.overtimeAmount || 0) + Number(r.bonusAmount || 0));
+  }
+
+  extrasOf(r: PayrollRecord): number {
+    return Number(r.overtimeAmount || 0) + Number(r.bonusAmount || 0);
+  }
+
+  canEditVariables(r: PayrollRecord): boolean {
+    return (r.status === 'DRAFT' || r.status === 'REJECTED') && this.perms.hasPerm('hr.payroll.generate');
+  }
+
+  /** Abre a folha já gerada do período (sem recalcular nada). */
+  loadPeriod() {
+    const cid = this.dataService.getCompanyId();
+    if (!cid) return;
+    this.sub.add(this.hrService.getPayroll(this.selectedYear, this.selectedMonth, cid).subscribe({
+      next: (data) => { this.setData(data || []); if (data?.length) this.loadEmployeesList(); },
+      error: () => { this.setData([]); }
+    }));
+  }
+
+  private setData(data: PayrollRecord[]) {
+    this.payrollData = data;
+    this.rejectionNote = (data.find(r => r.status === 'REJECTED' && r.approvalNotes)?.approvalNotes) || '';
+    this.calculateTotals();
+    this.cdr.detectChanges();
+  }
+
+  saveVariables(r: PayrollRecord, field: 'overtimeAmount' | 'bonusAmount', ev: Event) {
+    const cid = this.dataService.getCompanyId(); if (!cid) return;
+    const value = Number((ev.target as HTMLInputElement).value);
+    if (!isFinite(value) || value < 0) { this.toaster.showWarning('Valor inválido', 'Indique um valor igual ou maior que zero.'); return; }
+    this.sub.add(this.hrService.updatePayrollVariables(r.id, { [field]: value }, cid).subscribe({
+      next: (updated) => {
+        this.setData(this.payrollData.map(x => x.id === updated.id ? updated : x));
+      },
+      error: (e) => { this.toaster.showError('Erro', e?.error?.message || e.message); this.loadPeriod(); }
+    }));
+  }
 
   get hasDraftRecords() {
     return this.payrollData.some(r => r.status === 'DRAFT' || r.status === 'REJECTED');
@@ -295,7 +363,7 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
     this.sub.add(this.hrService.rejectPayroll(this.selectedYear, this.selectedMonth, cid, notes).subscribe({
       next: (res) => {
         this.approving = false;
-        if (res.success) { this.toaster.showWarning('Rejeitada', 'Folha rejeitada e devolvida ao RH para revisão.'); this.setLocalStatus(['SUBMITTED'], 'REJECTED'); }
+        if (res.success) { this.toaster.showWarning('Rejeitada', 'Folha rejeitada e devolvida ao RH para revisão.'); this.setLocalStatus(['SUBMITTED'], 'REJECTED'); this.rejectionNote = notes; }
         else this.toaster.showWarning('Aviso', res.message || 'Não foi possível rejeitar.');
         this.cdr.detectChanges();
       },
@@ -315,10 +383,20 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
+    this.sub.add(this.accountingService.accountsChanged$.subscribe((accs: any[]) => {
+      const list = (accs || [])
+        .filter(a => a.allowPosting && a.isActive !== false && /^1\.[12](\.|$)/.test(String(a.code)))
+        .sort((x, y) => String(x.code).localeCompare(String(y.code), undefined, { numeric: true }))
+        .map(a => ({ code: String(a.code), name: String(a.name) }));
+      if (!list.length) return;
+      this.paymentAccounts = list;
+      if (!list.some(a => a.code === this.paymentAccountCode)) this.paymentAccountCode = (list.find(a => a.code.startsWith('1.2')) || list[0]).code;
+    }));
     this.sub.add(
       this.dataService.activeCompany$.subscribe(company => {
         if (company) {
           this.payrollData = [];
+          this.loadPeriod();
         }
       })
     );
@@ -335,11 +413,10 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
 
     this.sub.add(this.hrService.processPayroll(this.selectedYear, this.selectedMonth, cid).subscribe({
       next: (data) => {
-        this.payrollData = data;
-        this.loadEmployeesList();
-        this.calculateTotals();
         this.processing = false;
-        this.cdr.detectChanges();
+        this.setData(data);
+        this.loadEmployeesList();
+        this.toaster.showSuccess('Folha calculada', `${data.length} funcionário(s) · líquido total ${this.totals.net.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })} MT`);
       },
       error: (e) => {
         const msg = e?.error?.message || e?.message || 'Erro desconhecido';
@@ -355,8 +432,8 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
       const rowIRPS = Number(r.irps || r['irm'] || 0);
       const ee = Number(r.inssEmployee || 0);
       const er = Number(r.inssEmployer || 0);
-      const subs = Number(r.transportSubsidy || 0) + Number(r.foodSubsidy || 0) + Number(r.overtimeAmount || 0) + Number(r.bonusAmount || 0);
-      const gross = Number(r.grossSalary || 0);
+      const subs = Number(r.transportSubsidy || 0) + Number(r.foodSubsidy || 0) + Number(r.housingSubsidy || 0) + Number(r.overtimeAmount || 0) + Number(r.bonusAmount || 0);
+      const gross = Number(r.grossSalary || 0) - Number(r.absenceDeduction || 0);
       return {
         gross: acc.gross + gross,
         inssTotal: acc.inssTotal + ee + er,
@@ -380,7 +457,7 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
         this.posting = false;
         if (res.success) {
           this.toaster.showSuccess('Lançamento criado!', `Folha ${this.selectedMonth}/${this.selectedYear} lançada na contabilidade. ID: ${res.entryId}`);
-          this.processPayroll();
+          this.loadPeriod();
         } else {
           this.toaster.showError('Erro ao lançar', res.message || res.error || 'Verifique os logs do servidor');
         }
@@ -446,7 +523,7 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
     const fmt = (v: number) => (Number(v) || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
     let rows = ''; let tg = 0, te = 0, tr = 0;
     this.payrollData.forEach(r => {
-      const gross = Number(r.grossSalary) || 0, ee = Number(r.inssEmployee) || 0, er = Number(r.inssEmployer) || 0;
+      const gross = this.taxableOf(r), ee = Number(r.inssEmployee) || 0, er = Number(r.inssEmployer) || 0;
       tg += gross; te += ee; tr += er;
       rows += `<tr><td>${r.employeeCode}</td><td>${r.employeeName}</td><td class="r">${fmt(gross)}</td><td class="r">${fmt(ee)}</td><td class="r">${fmt(er)}</td><td class="r">${fmt(ee + er)}</td></tr>`;
     });
@@ -461,7 +538,7 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
     </style></head><body>
       <h1>GUIA DE CONTRIBUIÇÕES — INSS</h1>
       <h2>${company.name} · NUIT: ${company.nif || '—'} · Período: ${monthName} / ${this.selectedYear}</h2>
-      <table><thead><tr><th>Código</th><th>Funcionário</th><th>Salário Bruto</th><th>Trabalhador (3%)</th><th>Entidade (4%)</th><th>Total (7%)</th></tr></thead>
+      <table><thead><tr><th>Código</th><th>Funcionário</th><th>Remuneração sujeita</th><th>Trabalhador</th><th>Entidade</th><th>Total</th></tr></thead>
       <tbody>${rows}</tbody>
       <tfoot><tr><td colspan="2">TOTAIS</td><td class="r">${fmt(tg)}</td><td class="r">${fmt(te)}</td><td class="r">${fmt(tr)}</td><td class="r">${fmt(te + tr)}</td></tr></tfoot></table>
       <p style="margin-top:14px">Total a entregar ao INSS: <b>${fmt(te + tr)} MT</b></p>
@@ -475,7 +552,8 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   paySalaries() {
     if (this.paying || this.salariesPaid) return;
     const cid = this.dataService.getCompanyId(); if (!cid) return;
-    const accLabel = this.paymentAccountCode === '1.1' ? 'Caixa (1.1)' : 'Banco (1.2)';
+    const acc = this.paymentAccounts.find(a => a.code === this.paymentAccountCode);
+    const accLabel = acc ? `${acc.code} · ${acc.name}` : this.paymentAccountCode;
     const msg = 'Pagar salários de ' + this.months[this.selectedMonth - 1] + '/' + this.selectedYear + '?\n\n'
       + 'Valor líquido: ' + this.totals.net.toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) + ' MT\n'
       + 'Conta: ' + accLabel;
@@ -498,30 +576,25 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
 
   exportToExcel() {
     if (this.payrollData.length === 0) return;
-    const headers = ['Codigo', 'Nome', 'Bruto', 'Faltas_Dias', 'Deducao_Faltas', 'Ferias_Dias', 'INSS_EE', 'IRPS', 'Sub_Transporte', 'Sub_Alimentacao', 'Liquido'];
+    const headers = ['Codigo', 'Nome', 'Salario_Base', 'Faltas_Dias', 'Deducao_Faltas', 'Ferias_Dias', 'Sub_Habitacao', 'Horas_Extra', 'Bonus',
+      'Remuneracao_Sujeita', 'INSS_Trabalhador', 'INSS_Entidade', 'IRPS', 'Sub_Transporte', 'Sub_Alimentacao', 'Vales', 'Liquido', 'Estado'];
+    const n = (v: any) => (Number(v) || 0).toFixed(2).replace('.', ',');
     const rows = this.payrollData.map(r => [
-      r.employeeCode,
-      r.employeeName,
-      r.grossSalary,
-      r.absenceDays || 0,
-      r.absenceDeduction || 0,
-      r.vacationDays || 0,
-      r.inssEmployee,
-      r.irps || r['irm'] || 0,
-      r.transportSubsidy || 0,
-      r.foodSubsidy || 0,
-      r.netSalary
+      r.employeeCode, `"${String(r.employeeName).replace(/"/g, '""')}"`, n(r.grossSalary), r.absenceDays || 0, n(r.absenceDeduction), r.vacationDays || 0,
+      n(r.housingSubsidy), n(r.overtimeAmount), n(r.bonusAmount), n(this.taxableOf(r)), n(r.inssEmployee), n(r.inssEmployer),
+      n(r.irps || r['irm']), n(r.transportSubsidy), n(r.foodSubsidy), n(r.cashVoucherDeduction), n(r.netSalary), this.statusLabel(r.status)
     ]);
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const csvContent = '\uFEFF' + [headers, ...rows].map(e => e.join(';')).join('\r\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Folha_Salarios_${this.selectedMonth}_${this.selectedYear}.csv`);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Folha_Salarios_${String(this.selectedMonth).padStart(2, '0')}_${this.selectedYear}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
   public getFileUrl(path: string) {
@@ -596,7 +669,7 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
           <td class="text-right text-red-600">${Number(r.cashVoucherDeduction || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
           <td class="text-right">${Number(r.inssEmployee).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
           <td class="text-right">${Number(r.irps || r['irm'] || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
-          <td class="text-right">${Number((r.transportSubsidy || 0) + (r.foodSubsidy || 0)).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
+          <td class="text-right">${(Number(r.transportSubsidy || 0) + Number(r.foodSubsidy || 0) + Number(r.housingSubsidy || 0) + this.extrasOf(r)).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
           <td class="text-right font-bold">${Number(r.netSalary).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
         </tr>
       `;
@@ -644,9 +717,9 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
                 <th class="text-right">Desc. Faltas</th>
                 <th class="text-center">Férias</th>
                 <th class="text-right">Vales/Adiantamentos</th>
-                <th class="text-right">INSS (4%)</th>
+                <th class="text-right">INSS Trab.</th>
                 <th class="text-right">IRPS</th>
-                <th class="text-right">Subsídios</th>
+                <th class="text-right">Subs./Extras</th>
                 <th class="text-right">Líquido</th>
               </tr>
             </thead>
@@ -662,7 +735,7 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
               <td class="text-right">${this.payrollData.reduce((p, c) => p + Number(c.cashVoucherDeduction || 0), 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
               <td class="text-right">${(this.payrollData.reduce((p, c) => p + Number(c.inssEmployee), 0)).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
               <td class="text-right">${this.totals.irps.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
-              <td class="text-right">${(this.payrollData.reduce((p, c) => p + Number((c.transportSubsidy || 0) + (c.foodSubsidy || 0)), 0)).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
+              <td class="text-right">${(this.payrollData.reduce((p, c) => p + Number(c.transportSubsidy || 0) + Number(c.foodSubsidy || 0) + Number(c.housingSubsidy || 0) + this.extrasOf(c), 0)).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
               <td class="text-right">${this.totals.net.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td>
             </tr>
           </table>
@@ -774,19 +847,14 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
   }
 
   private renderSingleRecibo(r: PayrollRecord, emp: any, company: any, month: string, watermark: string) {
-    const bonus = Number(r.bonusAmount || 0);
+    const fmt = (v: any) => (Number(v) || 0).toLocaleString('pt-MZ', { minimumFractionDigits: 2 });
+    const line = (label: string, v: any, always = false) => (always || Number(v) > 0) ? `<tr><td>${label}</td><td class="text-right">${fmt(v)}</td></tr>` : '';
     const absenceDeduction = Number(r.absenceDeduction || 0);
     const cashVoucherDeduction = Number(r.cashVoucherDeduction || 0);
-    const totalAbonos = Number(r.grossSalary) + bonus;
-    const totalDescontos = Number(r.inssEmployee) + Number(r.irps || 0) + absenceDeduction + cashVoucherDeduction;
-    const liquido = totalAbonos - totalDescontos;
-    const foodSubsidy = Number(r.foodSubsidy || 0);
-    const transportSubsidy = Number(r.transportSubsidy || 0);
-
-    // In the screenshot logic: 
-    // Bonus is often separated to be accumulated or paid differently.
-    const salaryNetToReceive = (Number(r.netSalary) - bonus);
-    const totalFinal = salaryNetToReceive + bonus;
+    const totalAbonos = Number(r.grossSalary || 0) + Number(r.housingSubsidy || 0) + Number(r.overtimeAmount || 0) + Number(r.bonusAmount || 0)
+      + Number(r.transportSubsidy || 0) + Number(r.foodSubsidy || 0);
+    const totalDescontos = absenceDeduction + Number(r.inssEmployee || 0) + Number(r.irps || 0) + cashVoucherDeduction;
+    const liquido = Number(r.netSalary || 0);
 
     return `
       <div class="header-top">
@@ -798,7 +866,7 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
           <div class="company-details">
             ${company.address || ''}<br>
             Cell: ${company.phone || '---'}<br>
-            Maputo
+            NUIT: ${company.nif || '---'}
           </div>
         </div>
         <div class="header-right">
@@ -821,47 +889,29 @@ export class PayrollProcessingComponent implements OnInit, OnDestroy {
 
       <div class="section-title"><span>Abonos</span></div>
       <table>
-        <tr><td>Salário base</td><td class="text-right">${Number(r.grossSalary).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td></tr>
-        ${Number(r.bonusAmount) > 0 ? `<tr><td>Bónus do mês</td><td class="text-right">${Number(r.bonusAmount).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td></tr>` : ''}
+        ${line('Salário base' + (Number(r.daysWorked) && Number(r.daysWorked) < 30 && !r.absenceDays ? ` (${r.daysWorked} dias)` : ''), r.grossSalary, true)}
+        ${line('Subsídio de habitação', r.housingSubsidy)}
+        ${line('Horas extraordinárias', r.overtimeAmount)}
+        ${line('Bónus / prémios', r.bonusAmount)}
+        ${line('Subsídio de transporte', r.transportSubsidy)}
+        ${line('Subsídio de alimentação', r.foodSubsidy)}
       </table>
-      <div class="total-line"><span>Total de abonos</span><span>${totalAbonos.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>
+      <div class="total-line"><span>Total de abonos</span><span>${fmt(totalAbonos)}</span></div>
 
       <div class="section-title"><span>Descontos</span></div>
       <table>
-        <tr><td>Faltas (${r.absenceDays || 0} dias)</td><td class="text-right">${absenceDeduction > 0 ? Number(absenceDeduction).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) : '-'}</td></tr>
-        <tr><td>IRPS</td><td class="text-right">${Number(r.irps).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td></tr>
-        <tr><td>INSS (3.00%)</td><td class="text-right">${Number(r.inssEmployee).toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td></tr>
-        <tr><td>Vales de Caixa / Adiantamentos</td><td class="text-right">${cashVoucherDeduction > 0 ? Number(cashVoucherDeduction).toLocaleString('pt-MZ', { minimumFractionDigits: 2 }) : '-'}</td></tr>
-        <tr><td>Empréstimos Recebidos</td><td class="text-right">-</td></tr>
+        ${absenceDeduction > 0 ? `<tr><td>Faltas (${r.absenceDays || 0} dias)</td><td class="text-right">${fmt(absenceDeduction)}</td></tr>` : ''}
+        ${line('INSS (trabalhador)', r.inssEmployee, true)}
+        ${line('IRPS' + (Number(r.dependents) ? ` (${r.dependents} dependente${Number(r.dependents) === 1 ? '' : 's'})` : ''), r.irps, true)}
+        ${line('Vales de caixa / adiantamentos', cashVoucherDeduction)}
       </table>
-      <div class="total-line"><span>Total de descontos</span><span>${totalDescontos.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>
+      <div class="total-line"><span>Total de descontos</span><span>${fmt(totalDescontos)}</span></div>
 
       <div class="summary-box">
-        <div class="summary-row"><span>Salário Líquido</span><span>${liquido.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>
-        ${foodSubsidy > 0 ? `<div class="summary-row"><span>Subsídio de Alimentação</span><span>${foodSubsidy.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>` : ''}
-        ${transportSubsidy > 0 ? `<div class="summary-row"><span>Subsídio de Transporte</span><span>${transportSubsidy.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>` : ''}
-        <div class="summary-row highlight"><span>Salário Líquido a Receber</span><span>${salaryNetToReceive.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>
+        <div class="summary-row highlight"><span>Líquido a receber</span><span>${fmt(liquido)} MT</span></div>
       </div>
-
-      <div class="section-title"><span>Bónus por Receber</span></div>
-      <table>
-        <tr><td>Bónus do mês</td><td class="text-right">${bonus.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</td></tr>
-        <tr><td>Bónus de Meses anteriores</td><td class="text-right">-</td></tr>
-      </table>
-      <div class="total-line"><span>Bónus Acumulado por receber</span><span>${bonus.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span></div>
-
-      <div class="summary-row" style="background: #f1f5f9; border-radius: 4px; margin-top: 2px;">
-        <span>Total a Receber (Salário + Bónus acumulado)</span>
-        <span>${totalFinal.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span>
-      </div>
-
-      <div class="status-bar bar-green">
-        <span>Salário Líquido Retido Por Consenso</span>
-        <span>-</span>
-      </div>
-      <div class="status-bar bar-yellow">
-        <span>100% do Salário Líquido a Receber na Conta</span>
-        <span>${totalFinal.toLocaleString('pt-MZ', { minimumFractionDigits: 2 })}</span>
+      <div style="font-size: 7px; color: #666; margin-top: 4px;">
+        ${emp.bankName || emp.nib ? `Pagamento por transferência${emp.bankName ? ' · ' + emp.bankName : ''}${emp.nib ? ' · NIB ' + emp.nib : ''}` : 'Pagamento em numerário'}
       </div>
 
       <div class="footer-sigs">

@@ -4,6 +4,7 @@ import { Repository, EntityTarget, ObjectLiteral, Not } from 'typeorm';
 import { Employee, ContractType } from '../entities/employee.entity';
 import { Absence, AbsenceStatus } from '../entities/absence.entity';
 import { EmployeeSalaryHistory } from '../entities/salary-history.entity';
+import { Payroll } from '../entities/payroll.entity';
 import { TaxBracket, HRSettings } from '../entities/hr-settings.entity';
 import { Company } from '../../companies/entities/company.entity';
 import { CreateEmployeeDto } from '../dto/create-employee.dto';
@@ -241,13 +242,33 @@ export class HRService {
   async remove(id: string, companyId?: string) {
     const repo = await this.getEmployeeRepo(companyId);
     const employee = await this.findOne(id, companyId);
+    // Quem já tem salários processados faz parte do histórico (recibos, INSS, IRPS): desactiva-se, não se apaga
+    const payrolls = await repo.manager.getRepository(Payroll).count({ where: { employeeId: id } });
+    if (payrolls > 0) {
+      throw new ConflictException(`"${employee.name}" já tem ${payrolls} processamento(s) salarial(is). Para manter o histórico, desactive o funcionário e indique a data de saída em vez de o apagar.`);
+    }
     return await repo.remove(employee);
   }
 
   // Absence Management
 
+  /** Datas coerentes e sem sobrepor outra ausência (pendente ou aprovada) do mesmo funcionário. */
+  private async validateAbsence(repo: Repository<Absence>, a: { id?: string; employeeId?: string; startDate?: string; endDate?: string; status?: string }) {
+    if (!a.employeeId || !a.startDate || !a.endDate) throw new BadRequestException('Indique o funcionário e as datas de início e fim.');
+    if (String(a.endDate).slice(0, 10) < String(a.startDate).slice(0, 10)) throw new BadRequestException('A data de fim não pode ser anterior à data de início.');
+    if (a.status === AbsenceStatus.REJECTED) return;
+    const others = await repo.find({ where: { employeeId: a.employeeId } });
+    const clash = others.find(o => o.id !== a.id && o.status !== AbsenceStatus.REJECTED
+      && String(o.startDate).slice(0, 10) <= String(a.endDate).slice(0, 10)
+      && String(o.endDate).slice(0, 10) >= String(a.startDate).slice(0, 10));
+    if (clash) {
+      throw new ConflictException(`Já existe uma ausência registada de ${String(clash.startDate).slice(0, 10)} a ${String(clash.endDate).slice(0, 10)} que se sobrepõe a estas datas.`);
+    }
+  }
+
   async createAbsence(data: any) {
     const repo = await this.getAbsenceRepo(data.companyId);
+    await this.validateAbsence(repo, data);
     const id = `ABS-${Date.now()}-${data.companyId || '0'}`;
     const absence = repo.create({ ...data, id });
     return await repo.save(absence);
@@ -277,6 +298,7 @@ export class HRService {
     for (const k of allowed) {
       if (data[k] !== undefined) (absence as any)[k] = data[k];
     }
+    await this.validateAbsence(repo, absence as any);
     return await repo.save(absence);
   }
 
@@ -380,13 +402,17 @@ export class HRService {
   async getVacationPlan(year: number, companyId?: string) {
     const cid = companyId || TenancyContext.getCompanyId();
     const repo = await this.getAbsenceRepo(cid);
-    return await repo.find({
+    const all = await repo.find({
       where: {
+        companyId: cid,
         type: 'VACATION' as any,
         status: 'APPROVED' as any
       },
       relations: ['employee'],
       order: { startDate: 'ASC' }
     });
+    // Férias que tocam o ano pedido (incluindo as que atravessam a passagem de ano)
+    if (!year) return all;
+    return all.filter(a => String(a.startDate).slice(0, 4) <= String(year) && String(a.endDate).slice(0, 4) >= String(year));
   }
 }

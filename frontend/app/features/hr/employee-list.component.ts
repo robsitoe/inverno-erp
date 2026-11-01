@@ -527,6 +527,11 @@ const MOZAMBIQUE_BANKS = [
 
                       </div>
 
+                      <div class="flex items-center justify-between">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase" title="Entra na remuneração sujeita a INSS e IRPS">Subs. Habitação</label>
+                        <input type="number" [(ngModel)]="selectedEmployee.subsidyHousing" class="w-24 px-2 py-1.5 border rounded text-xs text-right bg-gray-50">
+                      </div>
+
                     </div>
 
 
@@ -1137,7 +1142,7 @@ export class EmployeeListComponent implements OnInit, OnDestroy {
           this.selectedEmployee = null;
           this.refresh();
         },
-        error: (err) => this.toaster.showError('Erro ao eliminar', err.message)
+        error: (err) => this.toaster.showError('Não foi possível eliminar', err?.error?.message || err.message)
       })
     );
   }

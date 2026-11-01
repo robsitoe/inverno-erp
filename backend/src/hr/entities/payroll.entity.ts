@@ -38,10 +38,10 @@ export class Payroll {
     grossSalary: number;
 
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
-    inssEmployee: number; // 4%
+    inssEmployee: number; // trabalhador (3% por omissão)
 
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
-    inssEmployer: number; // 3%
+    inssEmployer: number; // entidade patronal (4% por omissão)
 
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     irps: number; // Mozambican Income Tax (IRPS)
@@ -51,6 +51,9 @@ export class Payroll {
 
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     foodSubsidy: number;
+
+    @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
+    housingSubsidy: number;
 
     @Column({ type: 'decimal', precision: 14, scale: 2, default: 0 })
     overtimeAmount: number;

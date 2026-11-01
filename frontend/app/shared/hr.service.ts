@@ -138,9 +138,13 @@ export interface PayrollRecord {
 
   foodSubsidy: number;
 
+  housingSubsidy?: number;
+
   overtimeAmount?: number;
 
   bonusAmount?: number;
+
+  approvalNotes?: string;
 
   dependents: number;
 
@@ -446,7 +450,17 @@ export class HRService {
 
 
 
-    submitPayroll(year: number, month: number, companyId: string): Observable<any> {
+  /** Folha já gerada de um período (sem recalcular). */
+  getPayroll(year: number, month: number, companyId: string): Observable<PayrollRecord[]> {
+    return this.http.get<PayrollRecord[]>(`${this.apiUrl}/payroll?year=${year}&month=${month}&companyId=${companyId}`);
+  }
+
+  /** Horas extra / bónus do mês de um registo em rascunho (o servidor recalcula o registo). */
+  updatePayrollVariables(id: string, data: { overtimeAmount?: number; bonusAmount?: number }, companyId: string): Observable<PayrollRecord> {
+    return this.http.patch<PayrollRecord>(`${this.apiUrl}/payroll/${encodeURIComponent(id)}/variables?companyId=${companyId}`, data);
+  }
+
+  submitPayroll(year: number, month: number, companyId: string): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/payroll/submit?companyId=${companyId}`, { year, month });
   }
 

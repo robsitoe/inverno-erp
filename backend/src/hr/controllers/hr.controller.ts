@@ -61,6 +61,7 @@ export class HRController {
   }
 
   @Get('employees')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get all employees' })
   findAllEmployees(@Query('companyId') companyId?: string) {
     return this.hrService.findAll(companyId);
@@ -95,6 +96,7 @@ export class HRController {
   }
 
   @Get('employees/:id')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get an employee by ID' })
   findOneEmployee(@Param('id') id: string, @Query('companyId') companyId?: string) {
     return this.hrService.findOne(id, companyId);
@@ -104,24 +106,28 @@ export class HRController {
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermission('hr.employees.manage')
   @ApiOperation({ summary: 'Update an employee' })
-  updateEmployee(@Param('id') id: string, @Body() updateEmployeeDto: UpdateEmployeeDto) {
-    // Note: in a production app, we would get the user from the request (e.g. req.user)
-    return this.hrService.update(id, updateEmployeeDto);
+  updateEmployee(@Param('id') id: string, @Body() updateEmployeeDto: UpdateEmployeeDto, @Req() req: any) {
+    return this.hrService.update(id, updateEmployeeDto, req.user);
   }
 
   @Get('employees/:id/salary-history')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get salary history for an employee' })
   getSalaryHistory(@Param('id') id: string, @Query('companyId') companyId?: string) {
     return this.hrService.getSalaryHistory(id, companyId);
   }
 
   @Post('salary-variations')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.employees.manage')
   @ApiOperation({ summary: 'Create a new salary variation' })
   createSalaryVariation(@Body() data: any, @Query('companyId') companyId?: string) {
     return this.hrService.createSalaryVariation(data, companyId);
   }
 
   @Patch('salary-variations/:id/apply')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.employees.manage')
   @ApiOperation({ summary: 'Apply a salary variation' })
   applySalaryVariation(@Param('id') id: string, @Query('companyId') companyId?: string) {
     return this.hrService.applySalaryVariation(id, companyId);
@@ -138,6 +144,8 @@ export class HRController {
   // ── Photo Upload ────────────────────────────────────────────────────────────
 
   @Post('employees/:id/photo')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.employees.manage')
   @ApiOperation({ summary: 'Upload employee profile photo' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('photo', {
@@ -163,6 +171,8 @@ export class HRController {
   // ── Document Attachments ────────────────────────────────────────────────────
 
   @Post('employees/:id/documents')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.employees.manage')
   @ApiOperation({ summary: 'Upload employee document (BI, contract, etc.)' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file', {
@@ -201,6 +211,8 @@ export class HRController {
   }
 
   @Delete('employees/:id/documents/:docId')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.employees.manage')
   @ApiOperation({ summary: 'Remove an employee document' })
   removeDocument(
     @Param('id') id: string,
@@ -274,20 +286,31 @@ export class HRController {
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermission('hr.payroll.pay')
   @ApiOperation({ summary: 'Pay net salaries (posts 4.6.2.2 against treasury account)' })
-  payPayroll(@Body() payload: { year: number, month: number, paymentAccountCode: '1.1' | '1.2' }, @Req() req: any, @Query('companyId') companyId?: string) {
-    return this.payrollService.payPayroll(payload.year, payload.month, payload.paymentAccountCode || '1.2', companyId, req.user);
+  payPayroll(@Body() payload: { year: number, month: number, paymentAccountCode: string }, @Req() req: any, @Query('companyId') companyId?: string) {
+    return this.payrollService.payPayroll(payload.year, payload.month, payload.paymentAccountCode || '1.2.1', companyId, req.user);
   }
 
   @Get('payroll/workflow-history')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Workflow history for a payroll period' })
   getPayrollWorkflowHistory(@Query('year') year: number, @Query('month') month: number, @Query('companyId') companyId?: string) {
     return this.payrollService.getPayrollWorkflowHistory(Number(year), Number(month), companyId);
   }
 
   @Get('payroll')
-  @ApiOperation({ summary: 'Get all payroll records' })
-  findAllPayroll(@Query('companyId') companyId?: string) {
-    return [];
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Payroll records of a period (without recalculating)' })
+  findPayroll(@Query('year') year: number, @Query('month') month: number, @Query('companyId') companyId?: string) {
+    if (!year || !month) throw new BadRequestException('Indique o ano e o mês.');
+    return this.payrollService.getPayroll(Number(year), Number(month), companyId);
+  }
+
+  @Patch('payroll/:id/variables')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.payroll.generate')
+  @ApiOperation({ summary: 'Set overtime / bonus of a draft payroll record and recalculate it' })
+  updatePayrollVariables(@Param('id') id: string, @Body() data: { overtimeAmount?: number; bonusAmount?: number }, @Query('companyId') companyId?: string) {
+    return this.payrollService.updatePayrollVariables(id, data, companyId);
   }
 
   // ── Absences ────────────────────────────────────────────────────────────────
@@ -301,6 +324,7 @@ export class HRController {
   }
 
   @Get('absences')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'List absences' })
   findAllAbsences(@Query('companyId') companyId?: string, @Query('employeeId') employeeId?: string) {
     return this.hrService.findAllAbsences(companyId, employeeId);
@@ -339,12 +363,16 @@ export class HRController {
   }
 
   @Post('tax-brackets')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.payroll.generate')
   @ApiOperation({ summary: 'Save/Update a tax bracket' })
   saveTaxBracket(@Body() data: any, @Query('companyId') companyId?: string) {
     return this.hrService.saveTaxBracket(data, companyId);
   }
 
   @Delete('tax-brackets/:id')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.payroll.generate')
   @ApiOperation({ summary: 'Delete a tax bracket' })
   deleteTaxBracket(@Param('id') id: string, @Query('companyId') companyId?: string) {
     return this.hrService.deleteTaxBracket(id, companyId);
@@ -357,6 +385,8 @@ export class HRController {
   }
 
   @Post('settings')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermission('hr.payroll.generate')
   @ApiOperation({ summary: 'Update HR settings' })
   updateSettings(@Body() data: any, @Query('companyId') companyId?: string) {
     return this.hrService.updateSettings(data, companyId);
@@ -365,24 +395,28 @@ export class HRController {
   // ── Reports ─────────────────────────────────────────────────────────────────
 
   @Get('reports/payroll-sheet')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get payroll sheet data' })
   getPayrollSheet(@Query('year') year: number, @Query('month') month: number, @Query('companyId') companyId?: string) {
     return this.payrollService.getPayrollReportData(Number(year), Number(month), companyId);
   }
 
   @Get('reports/nominal-relation')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get nominal relation data' })
   getNominalRelation(@Query('companyId') companyId?: string) {
     return this.hrService.getNominalRelation(companyId);
   }
 
   @Get('reports/seniority')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get seniority map data' })
   getSeniorityMap(@Query('companyId') companyId?: string) {
     return this.hrService.getSeniorityMap(companyId);
   }
 
   @Get('reports/vacation-plan')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get vacation plan data' })
   getVacationPlan(@Query('year') year: number, @Query('companyId') companyId?: string) {
     return this.hrService.getVacationPlan(Number(year), companyId);
