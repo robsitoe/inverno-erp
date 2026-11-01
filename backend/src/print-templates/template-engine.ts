@@ -1,7 +1,8 @@
 /**
  * Motor dos modelos de impressão.
  *
- * Um modelo é HTML + CSS com campos {{grupo.campo}} e blocos de repetição {{#linhas}}...{{/linhas}}.
+ * Um modelo é HTML + CSS com campos {{grupo.campo}}, blocos de repetição {{#linhas}}...{{/linhas}} e
+ * blocos condicionais {{#se grupo.campo}}...{{/se}} (só aparecem se o campo estiver preenchido).
  * O modelo controla só o aspeto: os valores vêm sempre do documento gravado.
  *
  * Proteções:
@@ -39,6 +40,17 @@ export const FIELDS: FieldDef[] = [
   { key: 'empresa.email', label: 'Email da empresa', fiscal: false, scope: 'doc' },
   { key: 'empresa.website', label: 'Website da empresa', fiscal: false, scope: 'doc' },
   { key: 'empresa.logo', label: 'Logótipo da empresa', fiscal: false, scope: 'doc' },
+  { key: 'empresa.cidade', label: 'Cidade da empresa', fiscal: false, scope: 'doc' },
+  { key: 'empresa.actividade', label: 'Actividade / designação comercial', fiscal: false, scope: 'doc' },
+  { key: 'empresa.capital', label: 'Capital social', fiscal: false, scope: 'doc' },
+  { key: 'empresa.nuel', label: 'N.º Único de Entidade Legal (NUEL)', fiscal: false, scope: 'doc' },
+  { key: 'empresa.banco', label: 'Banco da empresa', fiscal: false, scope: 'doc' },
+  // números de conta: protegidos e conferidos com a base de dados (ninguém troca a conta onde o cliente paga)
+  { key: 'empresa.conta', label: 'N.º de conta bancária', fiscal: true, scope: 'doc' },
+  { key: 'empresa.nib', label: 'NIB', fiscal: true, scope: 'doc' },
+  { key: 'empresa.iban', label: 'IBAN', fiscal: true, scope: 'doc' },
+  { key: 'empresa.swift', label: 'SWIFT', fiscal: false, scope: 'doc' },
+  { key: 'empresa.rodape', label: 'Rodapé dos documentos (Dados da Empresa)', fiscal: false, scope: 'doc' },
   { key: 'entidade.nome', label: 'Entidade (cliente / fornecedor / beneficiário)', fiscal: true, scope: 'doc', modules: FIN, requiredIn: FIN },
   { key: 'entidade.nif', label: 'NIF/NUIT da entidade', fiscal: true, scope: 'doc', modules: COM, requiredIn: COM },
   { key: 'entidade.morada', label: 'Morada da entidade', fiscal: false, scope: 'doc', modules: COM },
@@ -130,7 +142,8 @@ const CSS_RULES: { re: RegExp; msg: string }[] = [
   { re: /(^|[;{\s"'])position\s*:/i, msg: 'posicionamento (position) não é permitido — use tabelas ou flex para a disposição.' },
   { re: /(^|[;{\s"'])(top|left|right|bottom|inset)\s*:/i, msg: 'deslocamentos (top/left/right/bottom) não são permitidos.' },
   { re: /z-index/i, msg: 'z-index não é permitido (permitiria tapar valores).' },
-  { re: /transform/i, msg: 'transformações (transform) não são permitidas.' },
+  // só a propriedade transform (rodar/deslocar/escalar); text-transform (maiúsculas) é inofensivo
+  { re: /(^|[;{\s"'])transform\s*:/i, msg: 'transformações (transform) não são permitidas.' },
   { re: /opacity/i, msg: 'transparência (opacity) não é permitida.' },
   { re: /visibility\s*:/i, msg: 'visibility não é permitido.' },
   { re: /display\s*:\s*none/i, msg: 'display:none não é permitido (esconderia conteúdo).' },
@@ -170,11 +183,30 @@ function staticText(html: string): string {
 const AMOUNT_RE = /\d[\d .  ]*[.,]\d{2}(?!\d)/g;
 const NIF_RE = /(?<!\d)\d{9}(?!\d)/g;
 const DOCNUM_RE = /\b(FA|FR|FT|VD|NC|ND|GT|NE|OR|RE|PA)\s*\d{4}\s*\/\s*\d+/gi;
+/** NIB moçambicano (21 algarismos, com ou sem espaços) e IBAN: uma conta escrita à mão desviaria os pagamentos. */
+const NIB_RE = /(?<!\d)\d(?:[ .-]?\d){20}(?!\d)/g;
+const IBAN_RE = /\b[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]){11,30}\b/g;
 
 function literalFindings(text: string): string[] {
   const found = new Set<string>();
-  for (const re of [AMOUNT_RE, NIF_RE, DOCNUM_RE]) for (const m of text.matchAll(re)) found.add(m[0].trim());
+  for (const re of [AMOUNT_RE, NIF_RE, DOCNUM_RE, NIB_RE, IBAN_RE]) for (const m of text.matchAll(re)) found.add(m[0].trim());
   return [...found];
+}
+
+const SE_OPEN = /\{\{\s*#\s*se\s+([^}\s]+)\s*\}\}/g;
+const SE_CLOSE = /\{\{\s*\/\s*se\s*\}\}/g;
+/** Bloco {{#se campo}}...{{/se}} mais interior (sem outro #se lá dentro). */
+const SE_INNER = /\{\{\s*#\s*se\s+([^}\s]+)\s*\}\}((?:(?!\{\{\s*#\s*se\s)[\s\S])*?)\{\{\s*\/\s*se\s*\}\}/;
+
+/** Resolve os blocos condicionais: ficam só os dos campos preenchidos (os de dentro primeiro). */
+export function resolveConditionals(html: string, doc: Record<string, string>): string {
+  let out = html;
+  for (let i = 0; i < 200; i++) {
+    const m = SE_INNER.exec(out);
+    if (!m) break;
+    out = out.slice(0, m.index) + (String(doc[m[1].trim()] ?? '').trim() ? m[2] : '') + out.slice(m.index + m[0].length);
+  }
+  return out;
 }
 
 export function validateTemplate(html: string, css: string, module: PrintModule = 'SALES'): string[] {
@@ -216,6 +248,28 @@ export function validateTemplate(html: string, css: string, module: PrintModule 
     const m = re.exec(html);
     if (m) { loopBodies[name] = m[1]; outside = outside.replace(m[0], ' '); }
   }
+  // Blocos condicionais {{#se campo}}...{{/se}}
+  const seOpens = [...html.matchAll(SE_OPEN)].map(m => m[1].trim());
+  const seCloses = [...html.matchAll(SE_CLOSE)].length;
+  if (seOpens.length !== seCloses) errors.push('Um bloco {{#se campo}} não está fechado com {{/se}} (ou há {{/se}} a mais).');
+  for (const k of seOpens) {
+    const def = FIELD_MAP.get(k);
+    if (!def) errors.push(`Bloco condicional com campo desconhecido: {{#se ${k}}}.`);
+    else if (def.scope !== 'doc' || (def.modules && !def.modules.includes(module))) errors.push(`O campo {{${k}}} não pode ser usado num bloco {{#se}} neste documento.`);
+  }
+  for (const body of Object.values(loopBodies)) if (/\{\{\s*#\s*se\s/.test(body)) errors.push('Os blocos {{#se}} não podem estar dentro de {{#linhas}} ou {{#resumoIva}}.');
+  if (seOpens.length === seCloses) {
+    // os campos obrigatórios têm de aparecer sempre: não podem ficar dentro de um {{#se}}
+    let rest = html, inside = '';
+    for (let i = 0; i < 200; i++) { const m = SE_INNER.exec(rest); if (!m) break; inside += ' ' + m[2]; rest = rest.slice(0, m.index) + ' ' + rest.slice(m.index + m[0].length); }
+    if (/\{\{\s*#\s*(linhas|resumoIva)\s*\}\}/.test(inside)) errors.push('Os blocos {{#linhas}} e {{#resumoIva}} não podem estar dentro de um {{#se}}.');
+    for (const f of FIELDS) {
+      if (f.requiredIn?.includes(module) && new RegExp(`\\{\\{\\s*${f.key.replace('.', '\\.')}\\s*\\}\\}`).test(inside)) {
+        errors.push(`O campo obrigatório {{${f.key}}} não pode ficar dentro de um bloco {{#se}}.`);
+      }
+    }
+  }
+
   const used = new Set<string>();
   const checkFields = (text: string, allowed: FieldScope) => {
     for (const m of text.matchAll(/\{\{\s*([^#/][^}]*?)\s*\}\}/g)) {
@@ -267,7 +321,7 @@ function fill(text: string, values: Record<string, string>, data: RenderData): s
 }
 
 export function renderTemplate(html: string, css: string, data: RenderData, opts: RenderOptions): string {
-  let body = html;
+  let body = resolveConditionals(html, data.doc);
   for (const [name] of Object.entries(LOOPS)) {
     const re = new RegExp(`\\{\\{\\s*#\\s*${name}\\s*\\}\\}([\\s\\S]*?)\\{\\{\\s*\\/\\s*${name}\\s*\\}\\}`);
     body = body.replace(re, (_, inner) => ((data as any)[name] as Record<string, string>[]).map(row => fill(inner, row, data)).join(''));
@@ -288,6 +342,7 @@ export function renderTemplate(html: string, css: string, data: RenderData, opts
 /** Lista do que tem de aparecer na impressão, tirada da base de dados. */
 export function expectedValues(html: string, data: RenderData): ExpectedValue[] {
   const exp: ExpectedValue[] = [];
+  html = resolveConditionals(html, data.doc);
   const keysIn = (t: string) => [...t.matchAll(/\{\{\s*([^#/][^}]*?)\s*\}\}/g)].map(m => m[1].trim()).filter(k => FIELD_MAP.get(k)?.fiscal);
   let outside = html;
   for (const [name] of Object.entries(LOOPS)) {

@@ -324,7 +324,10 @@ export class PrintTemplatesComponent implements OnInit {
 
   get currentDocTypes() { return MODULE_TABS.find(m => m.id === this.module)!.docTypes; }
   get blocks() {
-    const list = [{ code: '{{#linhas}}\n\n{{/linhas}}', label: 'Bloco das linhas (repete por linha)' }];
+    const list = [
+      { code: '{{#linhas}}\n\n{{/linhas}}', label: 'Bloco das linhas (repete por linha)' },
+      { code: '{{#se empresa.nib}}\n\n{{/se}}', label: 'Mostrar só se o campo estiver preenchido (troque empresa.nib pelo campo)' },
+    ];
     if (this.module === 'SALES' || this.module === 'PURCHASES') list.push({ code: '{{#resumoIva}}\n\n{{/resumoIva}}', label: 'Bloco do resumo de IVA' });
     return list;
   }

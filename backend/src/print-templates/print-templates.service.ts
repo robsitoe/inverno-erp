@@ -307,6 +307,10 @@ export class PrintTemplatesService {
     return {
       'empresa.nome': c.name || '', 'empresa.nif': c.nif || '', 'empresa.morada': c.address || '',
       'empresa.telefone': c.phone || '', 'empresa.email': c.email || '', 'empresa.website': c.website || '',
+      // Administrador > Dados da Empresa > Dados nos documentos
+      'empresa.cidade': c.city || '', 'empresa.actividade': c.activity || '', 'empresa.capital': c.capital || '',
+      'empresa.nuel': c.legalId || '', 'empresa.banco': c.bankName || '', 'empresa.conta': c.bankAccountNumber || '',
+      'empresa.nib': c.nib || '', 'empresa.iban': c.iban || '', 'empresa.swift': c.swift || '', 'empresa.rodape': c.documentFooter || '',
     };
   }
 
@@ -348,7 +352,7 @@ export class PrintTemplatesService {
     const notFound = () => new NotFoundException('Documento não encontrado. Grave o documento antes de imprimir.');
 
     if (module === 'SALES') {
-      const d = await ds.getRepository(SalesDocument).findOne({ where: { id }, relations: ['lines'] });
+      const d = await ds.getRepository(SalesDocument).findOne({ where: { id }, relations: ['lines'] }).catch(() => null); // id inválido = não encontrado
       if (!d) throw notFound();
       // As linhas de venda não guardam a unidade: vem da ficha do artigo (pelo id ou pelo código)
       const keys = [...new Set((d.lines || []).flatMap(l => [l.articleId, l.articleCode]).filter(Boolean))];
@@ -375,7 +379,7 @@ export class PrintTemplatesService {
     }
 
     if (module === 'PURCHASES') {
-      const d = await ds.getRepository(PurchaseDocument).findOne({ where: { id }, relations: ['lines'] });
+      const d = await ds.getRepository(PurchaseDocument).findOne({ where: { id }, relations: ['lines'] }).catch(() => null); // id inválido = não encontrado
       if (!d) throw notFound();
       const numero = `${d.type} ${d.series}/${d.number}`;
       const { linhas, resumoIva } = this.commercialLines((d.lines || []).map(l => ({
@@ -400,7 +404,7 @@ export class PrintTemplatesService {
     }
 
     if (module === 'TREASURY') {
-      const d = await ds.getRepository(TreasuryDocument).findOne({ where: { id }, relations: ['lines'] });
+      const d = await ds.getRepository(TreasuryDocument).findOne({ where: { id }, relations: ['lines'] }).catch(() => null); // id inválido = não encontrado
       if (!d) throw notFound();
       const isReceipt = String(d.type).toUpperCase() === 'RECEIPT';
       const entity = (isReceipt ? d.customerName : d.beneficiaryName) || d.entityName || '';
@@ -429,7 +433,7 @@ export class PrintTemplatesService {
       };
     }
 
-    const d = await ds.getRepository(StockDocument).findOne({ where: { id }, relations: ['lines'] });
+    const d = await ds.getRepository(StockDocument).findOne({ where: { id }, relations: ['lines'] }).catch(() => null); // id inválido = não encontrado
     if (!d) throw notFound();
     const numero = `${d.type} ${d.series}/${d.number}`;
     const total = (d.lines || []).reduce((a, l) => a + (+l.total || (+l.quantity || 0) * (+l.unitPrice || 0)), 0);
@@ -455,6 +459,10 @@ export class PrintTemplatesService {
     const doc: Record<string, string> = {
       'empresa.nome': c.name || 'Empresa Exemplo, Lda', 'empresa.nif': c.nif || '400000000', 'empresa.morada': c.address || 'Av. Exemplo, Maputo',
       'empresa.telefone': c.phone || '', 'empresa.email': c.email || '', 'empresa.website': c.website || '',
+      'empresa.cidade': c.city || 'Maputo', 'empresa.actividade': c.activity || 'Comércio geral', 'empresa.capital': c.capital || '100 000,00 MT',
+      'empresa.nuel': c.legalId || '100000000', 'empresa.banco': c.bankName || 'Banco de Exemplo', 'empresa.conta': c.bankAccountNumber || '0000000000',
+      'empresa.nib': c.nib || '0000 0000 0000 0000 0000 0', 'empresa.iban': c.iban || 'MZ59 0000 0000 0000 0000 0000 0', 'empresa.swift': c.swift || 'EXEMMZMA',
+      'empresa.rodape': c.documentFooter || 'Texto do rodapé definido em Dados da Empresa.',
       'entidade.nome': module === 'PURCHASES' ? 'Fornecedor de Exemplo' : 'Cliente de Exemplo', 'entidade.nif': '400111222', 'entidade.morada': 'Rua de Exemplo, Matola',
       'documento.serie': '2026', 'documento.data': '01/01/2026', 'documento.vencimento': '31/01/2026', 'documento.condicao': 'A prazo',
       'documento.referencia': 'REF-001', 'documento.meioPagamento': 'Numerário', 'documento.armazem': 'ARM01',
