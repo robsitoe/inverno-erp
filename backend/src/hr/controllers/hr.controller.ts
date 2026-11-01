@@ -70,12 +70,14 @@ export class HRController {
   // ── Specific routes BEFORE /:id to avoid NestJS route conflicts ─────────────
 
   @Get('employees/next-code')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get next available employee code' })
   getNextCode(@Query('companyId') companyId: string) {
     return this.hrService.getNextCode(companyId);
   }
 
   @Get('employees/check-code')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Check if employee code is available' })
   checkCode(
     @Query('code') code: string,
@@ -86,6 +88,7 @@ export class HRController {
   }
 
   @Get('employees/check-nib')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Check if NIB is already registered' })
   checkNib(
     @Query('nib') nib: string,
@@ -300,7 +303,9 @@ export class HRController {
   @Get('payroll')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Payroll records of a period (without recalculating)' })
-  findPayroll(@Query('year') year: number, @Query('month') month: number, @Query('companyId') companyId?: string) {
+  findPayroll(@Query('year') year: number, @Query('month') month: number, @Query('companyId') companyId?: string, @Query('employeeId') employeeId?: string) {
+    // Por funcionário (ex.: tesouraria, salários por pagar) ou por período
+    if (employeeId) return this.payrollService.getEmployeePayrolls(employeeId, companyId);
     if (!year || !month) throw new BadRequestException('Indique o ano e o mês.');
     return this.payrollService.getPayroll(Number(year), Number(month), companyId);
   }
@@ -365,6 +370,7 @@ export class HRController {
   // ── Tax Tables & Settings ───────────────────────────────────────────────────
 
   @Get('tax-brackets')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'List all tax brackets' })
   findAllTaxBrackets(@Query('companyId') companyId?: string) {
     return this.hrService.findAllTaxBrackets(companyId);
@@ -387,6 +393,7 @@ export class HRController {
   }
 
   @Get('settings')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get HR settings' })
   getSettings(@Query('companyId') companyId?: string) {
     return this.hrService.getSettings(companyId);

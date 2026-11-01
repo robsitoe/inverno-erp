@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req, BadRequestException } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { UpdatePurchaseDto } from './dto/update-purchase.dto';
@@ -27,6 +27,7 @@ export class PurchasesController {
     @Query('series') series: string,
     @Query('number') number: number,
   ) {
+    if (!type || !series || !Number.isInteger(Number(number))) throw new BadRequestException('Indique o tipo, a série e o número do documento.');
     return this.purchasesService.findByNumber(companyId, type, series, Number(number));
   }
 

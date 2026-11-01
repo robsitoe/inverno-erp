@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, BadRequestException, Query, Delete, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, BadRequestException, Query, Delete, Param, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { AppService } from './app.service';
 import { DataSource, IsNull, EntityTarget, ObjectLiteral, Repository } from 'typeorm';
 import { Account } from './accounting/entities/account.entity';
@@ -60,21 +61,32 @@ export class AppController {
   // --- Companies Endpoints ---
   @Get('companies')
   async getCompanies() {
-    // Companies always in main database
-    return await this.dataSource.getRepository(Company).find({ order: { name: 'ASC' } });
+    // Pública (ecrã de entrada e app móvel): nunca devolve as credenciais da base de dados
+    const list = await this.dataSource.getRepository(Company).find({ order: { name: 'ASC' } });
+    return list.map(c => this.withoutDbSecrets(c));
+  }
+
+  private withoutDbSecrets(c: any) {
+    if (!c?.dbConfig) return c;
+    const { password, ...rest } = c.dbConfig;
+    return { ...c, dbConfig: rest };
   }
 
   @Get('company')
+
+  @UseGuards(JwtAuthGuard)
   async getCompanyInfo() {
     const companyId = TenancyContext.getCompanyId();
     if (!companyId) {
       // Fallback or error
       return this.dataSource.getRepository(Company).findOne({ where: {} });
     }
-    return await this.dataSource.getRepository(Company).findOne({ where: { id: companyId } });
+    return this.withoutDbSecrets(await this.dataSource.getRepository(Company).findOne({ where: { id: companyId } }));
   }
 
   @Post('company')
+
+  @UseGuards(JwtAuthGuard)
   async saveCompany(@Body() company: any) {
     try {
       const repo = this.dataSource.getRepository(Company);
@@ -126,6 +138,11 @@ export class AppController {
 
 
   @Delete('companies/:id')
+
+
+
+
+  @UseGuards(JwtAuthGuard)
   async deleteCompany(@Param('id') id: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -174,6 +191,7 @@ export class AppController {
 
   // --- Fiscal Years Endpoints ---
   @Get('fiscal-years')
+  @UseGuards(JwtAuthGuard)
   async getFiscalYears(@Query('companyId') companyId: string) {
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
     const repo = await this.getRepo(FiscalYear, filterCompanyId);
@@ -181,6 +199,8 @@ export class AppController {
   }
 
   @Post('fiscal-years')
+
+  @UseGuards(JwtAuthGuard)
   async saveFiscalYear(@Body() year: any) {
     const repo = await this.getRepo(FiscalYear);
     if (!year.id) {
@@ -190,6 +210,8 @@ export class AppController {
   }
 
   @Post('fiscal-years/set-current')
+
+  @UseGuards(JwtAuthGuard)
   async setCurrentYear(@Body() data: { year: number, companyId: string }) {
     const repo = await this.getRepo(FiscalYear);
     await repo.update({ companyId: data.companyId }, { isCurrent: false });
@@ -199,11 +221,16 @@ export class AppController {
 
 
   @Get('fiscal-years/:id/checklist')
+
+
+  @UseGuards(JwtAuthGuard)
   async getFiscalYearChecklist(@Param('id') id: string, @Query('companyId') companyId?: string) {
     return this.periodControlService.getClosureChecklist(id, companyId);
   }
 
   @Post('fiscal-years/:id/close')
+
+  @UseGuards(JwtAuthGuard)
   async closeFiscalYear(
     @Param('id') id: string,
     @Body() body: { reason: string; userId?: string; username?: string; companyId?: string },
@@ -212,6 +239,8 @@ export class AppController {
   }
 
   @Post('fiscal-years/:id/reopen')
+
+  @UseGuards(JwtAuthGuard)
   async reopenFiscalYear(
     @Param('id') id: string,
     @Body() body: { reason: string; userId: string; username?: string; companyId?: string },
@@ -225,6 +254,8 @@ export class AppController {
   }
 
   @Get('fiscal-years/:id/audit-logs')
+
+  @UseGuards(JwtAuthGuard)
   async getFiscalYearAuditLogs(@Param('id') id: string, @Query('companyId') companyId?: string) {
     const repo = await this.getRepo(PeriodAuditLog);
     const resolvedCompanyId = companyId || TenancyContext.getCompanyId();
@@ -236,6 +267,7 @@ export class AppController {
 
   // --- Series Endpoints ---
   @Get('series')
+  @UseGuards(JwtAuthGuard)
   async getSeries(@Query('companyId') companyId: string) {
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
     const repo = await this.getRepo(Series, filterCompanyId);
@@ -243,12 +275,16 @@ export class AppController {
   }
 
   @Post('series')
+
+  @UseGuards(JwtAuthGuard)
   async saveSeries(@Body() series: any) {
     const repo = await this.getRepo(Series);
     return await repo.save(series);
   }
 
   @Delete('series/:id')
+
+  @UseGuards(JwtAuthGuard)
   async deleteSeries(@Param('id') id: string) {
     const repo = await this.getRepo(Series);
     return await repo.delete(id);
@@ -256,6 +292,7 @@ export class AppController {
 
   // --- Journals Endpoints ---
   @Get('accounting/journals')
+  @UseGuards(JwtAuthGuard)
   async getJournals(@Query('companyId') companyId?: string) {
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
     const repo = await this.getRepo(Journal, filterCompanyId);
@@ -264,6 +301,9 @@ export class AppController {
 
 
   @Post('accounting/journals')
+
+
+  @UseGuards(JwtAuthGuard)
   async saveJournal(@Body() journal: CreateJournalDto | CreateJournalDto[]) {
     const repo = await this.getRepo(Journal);
     return await repo.save(journal as any);
@@ -271,6 +311,7 @@ export class AppController {
 
   // --- Customers Endpoints ---
   @Get('customers')
+  @UseGuards(JwtAuthGuard)
   async getCustomers(@Query('companyId') companyId?: string) {
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
     const repo = await this.getRepo(Customer, filterCompanyId);
@@ -279,6 +320,9 @@ export class AppController {
 
 
   @Post('customers')
+
+
+  @UseGuards(JwtAuthGuard)
   async saveCustomer(@Body() customer: CreateCustomerDto | CreateCustomerDto[]) {
     try {
       // Determine companyId from payload if possible
@@ -318,6 +362,8 @@ export class AppController {
   }
 
   @Get('delivery-points')
+
+  @UseGuards(JwtAuthGuard)
   async getDeliveryPoints(@Query('customerId') customerId: string, @Query('companyId') companyId?: string) {
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
     const repo = await this.getRepo(DeliveryPoint, filterCompanyId);
@@ -328,6 +374,8 @@ export class AppController {
   }
 
   @Post('delivery-points')
+
+  @UseGuards(JwtAuthGuard)
   async saveDeliveryPoint(@Body() point: any) {
     const companyId = point.companyId || TenancyContext.getCompanyId();
     const repo = await this.getRepo(DeliveryPoint, companyId);
@@ -335,6 +383,8 @@ export class AppController {
   }
 
   @Delete('delivery-points/:id')
+
+  @UseGuards(JwtAuthGuard)
   async deleteDeliveryPoint(@Param('id') id: string) {
     const repo = await this.getRepo(DeliveryPoint);
     return await repo.delete(id);
@@ -342,6 +392,7 @@ export class AppController {
 
   // --- Suppliers Endpoints ---
   @Get('suppliers')
+  @UseGuards(JwtAuthGuard)
   async getSuppliers(@Query('companyId') companyId?: string) {
     const repo = await this.getRepo(Supplier);
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
@@ -353,6 +404,9 @@ export class AppController {
 
 
   @Post('suppliers')
+
+
+  @UseGuards(JwtAuthGuard)
   async saveSupplier(@Body() supplier: CreateSupplierDto | CreateSupplierDto[]) {
     try {
       // Determine companyId from payload if possible
@@ -393,6 +447,7 @@ export class AppController {
 
   // --- Generic Entities Endpoints ---
   @Get('entities')
+  @UseGuards(JwtAuthGuard)
   async getGenericEntities(@Query('type') type: string, @Query('companyId') companyId?: string) {
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
     const repo = await this.getRepo(GenericEntity, filterCompanyId);
@@ -403,11 +458,15 @@ export class AppController {
   }
 
   @Post('entities')
+
+  @UseGuards(JwtAuthGuard)
   async saveGenericEntity(@Body() entity: any) {
     return await this.dataSource.getRepository(GenericEntity).save(entity);
   }
 
   @Post('test-db-connection')
+
+  @UseGuards(JwtAuthGuard)
   async testDbConnection(@Body() config: any) {
     if (!config || !config.host || !config.username || !config.database) {
       throw new BadRequestException('Configuração de base de dados incompleta.');
@@ -481,6 +540,7 @@ export class AppController {
 
   // --- Document Types Endpoints ---
   @Get('document-types')
+  @UseGuards(JwtAuthGuard)
   async getDocumentTypes(@Query('module') module: string, @Query('companyId') companyId?: string) {
     let filterCompanyId = companyId || TenancyContext.getCompanyId();
     try {
@@ -525,6 +585,8 @@ export class AppController {
   }
 
   @Post('document-types')
+
+  @UseGuards(JwtAuthGuard)
   async saveDocumentTypes(@Body() data: { module: string, types: any[] }) {
     const repo = await this.getRepo(DocumentType);
     const companyId = TenancyContext.getCompanyId();
@@ -551,6 +613,7 @@ export class AppController {
 
   // --- Payment Methods Endpoints ---
   @Get('payment-methods')
+  @UseGuards(JwtAuthGuard)
   async getPaymentMethods(@Query('companyId') companyId?: string) {
     const filterCompanyId = companyId || TenancyContext.getCompanyId();
     const repo = await this.getRepo(PaymentMethod, filterCompanyId);
@@ -558,6 +621,8 @@ export class AppController {
   }
 
   @Post('payment-methods')
+
+  @UseGuards(JwtAuthGuard)
   async savePaymentMethod(@Body() method: any) {
     const repo = await this.getRepo(PaymentMethod);
     if (!method.id) {
@@ -567,6 +632,8 @@ export class AppController {
   }
 
   @Post('sync/push')
+
+  @UseGuards(JwtAuthGuard)
   async syncPush(@Body() data: any) {
     // 1. Save Global Data (Companies, Users) to MAIN DB
     const mainQueryRunner = this.dataSource.createQueryRunner();

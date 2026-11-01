@@ -7,11 +7,14 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CampaignService } from './campaign.service';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 
 @Controller('sales/campaigns')
+@UseGuards(JwtAuthGuard)
 export class CampaignController {
   constructor(private readonly campaignService: CampaignService) {}
 

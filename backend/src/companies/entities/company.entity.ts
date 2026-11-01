@@ -75,6 +75,40 @@ export class Company {
   @Column({ nullable: true })
   documentNameFormat?: string;
 
+  // ── Dados impressos nos documentos (faturas, recibos...) ──
+  @Column({ nullable: true })
+  city?: string;
+
+  /** Actividade / designação comercial (ex.: "Comércio geral"). */
+  @Column({ nullable: true })
+  activity?: string;
+
+  @Column({ nullable: true })
+  capital?: string;
+
+  /** Número Único de Entidade Legal (NUEL). */
+  @Column({ nullable: true })
+  legalId?: string;
+
+  @Column({ nullable: true })
+  bankName?: string;
+
+  @Column({ nullable: true })
+  bankAccountNumber?: string;
+
+  @Column({ nullable: true })
+  nib?: string;
+
+  @Column({ nullable: true })
+  iban?: string;
+
+  @Column({ nullable: true })
+  swift?: string;
+
+  /** Texto livre no rodapé dos documentos (ex.: condições, contactos de assistência). */
+  @Column({ type: 'text', nullable: true })
+  documentFooter?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

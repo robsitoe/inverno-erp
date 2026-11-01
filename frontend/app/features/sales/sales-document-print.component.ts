@@ -19,14 +19,14 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
               <img [src]="companyInfo.logoUrl" alt="Logo" class="print-logo">
             </div>
             <div class="company-details">
-              <h1 class="comp-name-main">{{ companyInfo?.name || 'INVERNO ERP' }}</h1>
-              <p class="comp-sub">{{ companyInfo?.description || 'Distribuição Geral, Lda' }}</p>
-              <p>{{ companyInfo?.address }}</p>
-              <p>{{ companyInfo?.city }} {{ companyInfo?.postalCode }}</p>
-              <p>Telef: {{ companyInfo?.phone }} Fax: {{ companyInfo?.fax || '-' }}</p>
-              <p>Contribuinte N.º: {{ companyInfo?.nif }}</p>
-              <p>Capital Social: {{ companyInfo?.capital || '5 000,00 MT' }}</p>
-              <p>Nº de Entidade Legal: {{ companyInfo?.legalId || '100138395' }}</p>
+              <h1 class="comp-name-main">{{ companyInfo?.name }}</h1>
+              <p class="comp-sub" *ngIf="companyInfo?.activity || companyInfo?.description">{{ companyInfo?.activity || companyInfo?.description }}</p>
+              <p *ngIf="companyInfo?.address">{{ companyInfo?.address }}</p>
+              <p *ngIf="companyInfo?.city || companyInfo?.postalCode">{{ companyInfo?.postalCode }} {{ companyInfo?.city }}</p>
+              <p *ngIf="companyInfo?.phone || companyInfo?.email">{{ companyInfo?.phone ? 'Telef: ' + companyInfo.phone : '' }}{{ companyInfo?.phone && companyInfo?.email ? ' · ' : '' }}{{ companyInfo?.email }}</p>
+              <p>NUIT: {{ companyInfo?.nif || '—' }}</p>
+              <p *ngIf="companyInfo?.capital">Capital Social: {{ companyInfo.capital }}</p>
+              <p *ngIf="companyInfo?.legalId">NUEL: {{ companyInfo.legalId }}</p>
             </div>
           </div>
 
@@ -35,7 +35,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
               <p class="envelope-label">Exmo.(s) Sr.(s)</p>
               <p class="envelope-name">{{ document.customerName }}</p>
               <p class="envelope-address">{{ document.customerAddress }}</p>
-              <p class="envelope-city">{{ document.customerCity || 'Maputo' }}</p>
+              <p class="envelope-city" *ngIf="document.customerCity">{{ document.customerCity }}</p>
             </div>
             <h2 class="document-type-title">{{ getDocTitle() }} N.º {{ document.documentNumber }}</h2>
           </div>
@@ -73,8 +73,6 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
                 <th>Desc. Cli.</th>
                 <th>Condição Pagamento</th>
                 <th>Desc. Fin.</th>
-                <th>Zona</th>
-                <th>Vend.</th>
                 <th>Pag.</th>
               </tr>
             </thead>
@@ -84,8 +82,6 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
                 <td>{{ (document.clientDiscount || 0) | number:'1.2-2' }}</td>
                 <td>{{ document.paymentCondition === 'PRONTO' ? 'Pronto Pagamento' : 'A Prazo (Crédito)' }}</td>
                 <td>{{ (document.financialDiscount || 0) | number:'1.2-2' }}</td>
-                <td>01</td>
-                <td>01</td>
                 <td>1/1</td>
               </tr>
             </tbody>
@@ -113,7 +109,7 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
                 <td>{{ line.articleCode }}</td>
                 <td>{{ line.articleName }}<div *ngIf="line.notes" style="font-size:0.85em;font-style:italic;color:#555;white-space:pre-wrap">{{ line.notes }}</div></td>
                 <td class="text-right">{{ line.quantity | number:'1.2-2' }}</td>
-                <td class="text-center">UN</td>
+                <td class="text-center">{{ $any(line).unit || 'UN' }}</td>
                 <td class="text-right">{{ line.unitPrice | number:'1.2-2' }}</td>
                 <td class="text-right">{{ (line.discount || 0) | number:'1.2-2' }}</td>
                 <td class="text-right">{{ line.ivaRate | number:'1.1-1' }}</td>
@@ -150,14 +146,15 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
                </tbody>
              </table>
 
-             <div class="bank-details-box">
+             <!-- Só a conta bancária configurada em Administrador > Dados da Empresa -->
+             <div class="bank-details-box" *ngIf="hasBankDetails()">
                <p class="bank-title">DETALHES BANCÁRIOS:</p>
                <div class="bank-info-content">
-                 <p><strong>{{ companyInfo?.bankName || 'BCI' }}</strong></p>
-                 <p>CONTA: {{ companyInfo?.bankAccountNumber || '2988977510001' }}</p>
-                 <p>NIB: {{ companyInfo?.nib || '0008 0000 29889775101 80' }}</p>
-                 <p>IBAN: {{ companyInfo?.iban || 'MZ59 0008 0000 29889775101 80' }}</p>
-                 <p>SWIFT: {{ companyInfo?.swift || 'CGDIMZMA' }}</p>
+                 <p *ngIf="companyInfo?.bankName"><strong>{{ companyInfo.bankName }}</strong></p>
+                 <p *ngIf="companyInfo?.bankAccountNumber">CONTA: {{ companyInfo.bankAccountNumber }}</p>
+                 <p *ngIf="companyInfo?.nib">NIB: {{ companyInfo.nib }}</p>
+                 <p *ngIf="companyInfo?.iban">IBAN: {{ companyInfo.iban }}</p>
+                 <p *ngIf="companyInfo?.swift">SWIFT: {{ companyInfo.swift }}</p>
                </div>
              </div>
           </div>
@@ -176,10 +173,6 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
                 <td>IVA</td>
                 <td class="val">{{ document.totalIva | number:'1.2-2' }}</td>
               </tr>
-              <tr>
-                <td>Acerto</td>
-                <td class="val">0,00</td>
-              </tr>
               <tr class="grand-total-row">
                 <td class="label">Total ( {{ document.currency || 'MZN' }} )</td>
                 <td class="amount">{{ document.total | number:'1.2-2' }}</td>
@@ -194,10 +187,9 @@ import { PrintSettings } from '../../shared/components/print-settings-modal.comp
           </div>
 
         <div class="legal-footer">
-          <p>Documento Processado por Computador | Licença N.º 103265</p>
-          <div class="office-info">
-            <p>Sistemas de Gás para residências, hotéis, quartéis, penitenciarias e restaurantes</p>
-            <p>Assistência técnica: 841829890 / 820829890</p>
+          <p>Documento processado por computador · Inverno ERP</p>
+          <div class="office-info" *ngIf="companyInfo?.documentFooter">
+            <p style="white-space: pre-line">{{ companyInfo.documentFooter }}</p>
           </div>
         </div>
 
@@ -476,6 +468,11 @@ export class SalesDocumentPrintComponent {
     }
   }
 
+  hasBankDetails(): boolean {
+    const c = this.companyInfo || {};
+    return !!(c.bankName || c.bankAccountNumber || c.nib || c.iban || c.swift);
+  }
+
   getCopies(): number[] {
     if (!this.settings) return [1];
     return Array(this.settings.copies).fill(0);
@@ -490,7 +487,13 @@ export class SalesDocumentPrintComponent {
     if (!this.document) return '';
     const types: { [key: string]: string } = {
       'FA': 'FACTURA',
+      'FR': 'FACTURA-RECIBO',
+      'FT': 'FACTURA',
+      'FS': 'FACTURA SIMPLIFICADA',
       'VD': 'VENDA A DINHEIRO',
+      'GT': 'GUIA DE TRANSPORTE',
+      'NE': 'NOTA DE ENCOMENDA',
+      'OR': 'ORÇAMENTO',
       'NC': 'NOTA DE CRÉDITO',
       'ND': 'NOTA DE DÉBITO',
       'GR': 'GUIA DE REMESSA',

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SalesService } from './sales.service';
 import { CreateSalesDocumentDto } from './dto/create-sales-document.dto';
@@ -38,6 +38,7 @@ export class SalesController {
     @Query('series') series: string,
     @Query('number') number: number,
   ) {
+    if (!type || !series || !Number.isInteger(Number(number))) throw new BadRequestException('Indique o tipo, a série e o número do documento.');
     return this.salesService.findByNumber(companyId, type, series, Number(number));
   }
 

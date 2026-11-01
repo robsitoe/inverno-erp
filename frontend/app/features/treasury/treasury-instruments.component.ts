@@ -203,12 +203,14 @@ export class TreasuryInstrumentsComponent implements OnChanges {
   get overdue() { return this.openItems.filter(i => i.overdue); }
   get dueSoon() { return this.openItems.filter(i => i.daysToDue >= 0 && i.daysToDue <= 7); }
   get problem() { return this.items.filter(i => i.status === 'DEVOLVIDO' || i.status === 'PROTESTADA'); }
-  get statusOptions() {
+  /** Opções do filtro: calculadas só quando muda o tipo/direção (uma lista nova a cada ciclo põe o <select> em ciclo infinito). */
+  statusOptions: { status: string; label: string }[] = [];
+  private refreshStatusOptions() {
     const by: Record<string, string[]> = {
       'CHEQUE:IN': ['CARTEIRA', 'DEPOSITADO', 'COBRADO', 'DEVOLVIDO', 'ANULADO'], 'CHEQUE:OUT': ['EMITIDO', 'ENTREGUE', 'PAGO', 'ANULADO'],
       'LETRA:IN': ['CARTEIRA', 'DESCONTADA', 'COBRADA', 'REFORMADA', 'PROTESTADA', 'ANULADO'], 'LETRA:OUT': ['ACEITE', 'PAGA', 'REFORMADA'],
     };
-    return (by[`${this.kind}:${this.direction}`] || []).map(s => ({ status: s, label: this.labels[s] }));
+    this.statusOptions = (by[`${this.kind}:${this.direction}`] || []).map(s => ({ status: s, label: this.labels[s] }));
   }
   get filtered() {
     const s = this.search.trim().toLowerCase();
@@ -236,8 +238,8 @@ export class TreasuryInstrumentsComponent implements OnChanges {
     } as any)[s] || 'Regista a mudança no histórico.';
   }
 
-  ngOnChanges() { this.direction = 'IN'; this.statusFilter = 'OPEN'; this.load(); this.loadRefs(); }
-  setDirection(d: 'IN' | 'OUT') { this.direction = d; this.statusFilter = 'OPEN'; this.load(); }
+  ngOnChanges() { this.direction = 'IN'; this.statusFilter = 'OPEN'; this.refreshStatusOptions(); this.load(); this.loadRefs(); }
+  setDirection(d: 'IN' | 'OUT') { this.direction = d; this.statusFilter = 'OPEN'; this.refreshStatusOptions(); this.load(); }
 
   async load() {
     try { this.items = await firstValueFrom(this.http.get<any[]>(`${this.api}/instruments`, { params: { kind: this.kind, direction: this.direction } })); }

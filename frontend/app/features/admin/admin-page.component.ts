@@ -19,6 +19,16 @@ interface CompanyInfo {
   phone: string;
   website: string;
   id?: string;
+  city?: string;
+  activity?: string;
+  capital?: string;
+  legalId?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  nib?: string;
+  iban?: string;
+  swift?: string;
+  documentFooter?: string;
 }
 
 interface FiscalYear {
@@ -114,6 +124,37 @@ interface FiscalYear {
                   <input [(ngModel)]="companyInfo.website" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="www.empresa.com">
                 </div>
               </div>
+            </div>
+
+            <!-- Dados impressos nas faturas e recibos -->
+            <div class="px-6 pb-6">
+              <h3 class="text-sm font-semibold text-gray-800 border-t border-gray-200 pt-5 mb-1">Dados nos documentos (faturas, recibos)</h3>
+              <p class="text-xs text-gray-500 mb-4">Aparecem no cabeçalho e no rodapé dos documentos impressos. O que ficar vazio não é impresso.</p>
+              <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Actividade / designação comercial</label>
+                  <input [(ngModel)]="companyInfo.activity" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="Ex.: Comércio geral e distribuição"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Cidade</label>
+                  <input [(ngModel)]="companyInfo.city" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="Ex.: Maputo"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Capital social</label>
+                  <input [(ngModel)]="companyInfo.capital" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="Ex.: 50 000,00 MT"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">N.º Único de Entidade Legal (NUEL)</label>
+                  <input [(ngModel)]="companyInfo.legalId" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="Ex.: 100123456"></div>
+              </div>
+              <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-5 mb-2">Conta bancária para pagamentos</h4>
+              <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Banco</label>
+                  <input [(ngModel)]="companyInfo.bankName" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="Ex.: BCI, Millennium bim, Standard Bank"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">N.º de conta</label>
+                  <input [(ngModel)]="companyInfo.bankAccountNumber" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">NIB</label>
+                  <input [(ngModel)]="companyInfo.nib" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="21 dígitos"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">IBAN</label>
+                  <input [(ngModel)]="companyInfo.iban" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="MZ59 ..."></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">SWIFT</label>
+                  <input [(ngModel)]="companyInfo.swift" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"></div>
+              </div>
+              <div class="mt-4"><label class="block text-sm font-medium text-gray-700 mb-1">Rodapé dos documentos</label>
+                <textarea [(ngModel)]="companyInfo.documentFooter" rows="2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="Ex.: Assistência técnica: 84 000 0000 · Os bens vendidos não se aceitam devolução após 7 dias."></textarea></div>
             </div>
           </div>
         </div>
@@ -506,8 +547,9 @@ export class AdminPageComponent implements OnInit {
   }
 
   saveCompanyInfo() {
-    this.dataService.saveCompanyInfo(this.companyInfo).subscribe(() => {
-      alert('Dados da empresa gravados com sucesso!');
+    this.dataService.saveCompanyInfo(this.companyInfo).subscribe({
+      next: () => alert('Dados da empresa gravados com sucesso!'),
+      error: (e) => alert('Não foi possível gravar: ' + (e?.error?.message || e?.message || 'erro desconhecido')),
     });
   }
 
@@ -723,7 +765,8 @@ export class AdminPageComponent implements OnInit {
       const response = await fetch('' + environment.apiUrl + '/test-db-connection', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         },
         body: JSON.stringify(this.systemConfig.postgresConfig)
       });

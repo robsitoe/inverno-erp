@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TaxesService } from './taxes.service';
 import { CreateTaxRateDto } from './dto/create-tax-rate.dto';
@@ -7,7 +8,7 @@ import { LicenseGuard } from '../auth/guards/license.guard';
 
 @ApiTags('taxes')
 @Controller('taxes')
-@UseGuards(LicenseGuard)
+@UseGuards(JwtAuthGuard, LicenseGuard)
 export class TaxesController {
     constructor(private readonly taxesService: TaxesService) { }
 

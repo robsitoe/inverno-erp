@@ -1,10 +1,11 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TreasuryService } from './treasury.service';
 import { PaymentMethod } from './entities/payment-method.entity';
 import { LicenseGuard } from '../auth/guards/license.guard';
 
 @Controller('payment-methods')
-@UseGuards(LicenseGuard)
+@UseGuards(JwtAuthGuard, LicenseGuard)
 export class PaymentMethodsController {
     constructor(private readonly treasuryService: TreasuryService) { }
 

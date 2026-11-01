@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe, UseGuards, BadRequestException } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AccountingService } from './accounting.service';
 import { CreateAccountDto } from './dto/create-account.dto';
@@ -8,7 +9,7 @@ import { LicenseGuard } from '../auth/guards/license.guard';
 
 @ApiTags('accounting')
 @Controller('accounting')
-@UseGuards(LicenseGuard)
+@UseGuards(JwtAuthGuard, LicenseGuard)
 export class AccountingController {
   constructor(private readonly accountingService: AccountingService) { }
 

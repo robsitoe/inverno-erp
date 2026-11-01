@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { InventoryService } from './inventory.service';
 import { CreateArticleDto } from './dto/create-article.dto';
@@ -9,7 +10,7 @@ import { LicenseGuard } from '../auth/guards/license.guard';
 
 @ApiTags('inventory')
 @Controller('inventory')
-@UseGuards(LicenseGuard)
+@UseGuards(JwtAuthGuard, LicenseGuard)
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) { }
 

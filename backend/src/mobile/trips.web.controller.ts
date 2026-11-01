@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { TripsService } from './trips.service';
 import { LicenseGuard } from '../auth/guards/license.guard';
@@ -11,7 +12,7 @@ import { LicenseGuard } from '../auth/guards/license.guard';
  */
 @ApiTags('trips')
 @Controller('trips')
-@UseGuards(LicenseGuard)
+@UseGuards(JwtAuthGuard, LicenseGuard)
 export class TripsWebController {
     constructor(private readonly tripsService: TripsService) {}
 

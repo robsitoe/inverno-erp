@@ -6,12 +6,16 @@ import {
   Param,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { LicenseGuard } from '../auth/guards/license.guard';
 
 @ApiTags('fleet')
 @Controller('fleet')
+@UseGuards(JwtAuthGuard, LicenseGuard)
 export class FleetController {
   constructor(private readonly inventoryService: InventoryService) {}
 

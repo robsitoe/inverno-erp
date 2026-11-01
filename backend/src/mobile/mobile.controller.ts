@@ -371,12 +371,14 @@ export class MobileController {
 
     // --- Payment Endpoints ---
 
+    @UseGuards(AuthGuard('jwt'))
     @Get('payment-methods')
     async getPaymentMethods(@Query('companyId') companyId: string, @Request() req: any) {
         const targetCompanyId = companyId || req?.user?.companyId;
         return this.mobileService.getPaymentMethods(targetCompanyId);
     }
 
+    @UseGuards(AuthGuard('jwt'))
     @Post('mpesa/pay')
     async processPayment(@Body() paymentData) {
         return { status: 'PENDING', message: 'Payment initiated via M-Pesa' };

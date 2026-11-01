@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TenancyService } from './tenancy/tenancy.service';
 import { PeriodControlService } from './periods/period-control.service';
+import { LicensesService } from './licenses/licenses.service';
 
 describe('AppController', () => {
   let appController: AppController;
@@ -23,6 +24,7 @@ describe('AppController', () => {
             reopenFiscalYear: jest.fn(),
           },
         },
+        { provide: LicensesService, useValue: { assertCanAddCompany: jest.fn() } },
       ],
     }).compile();
 

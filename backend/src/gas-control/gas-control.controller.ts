@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Query, Param, Delete, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Param, Delete, Patch, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GasControlService } from './gas-control.service';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
 @ApiTags('Gas Control')
 @Controller('gas-control')
+@UseGuards(JwtAuthGuard)
 export class GasControlController {
     constructor(private readonly gasService: GasControlService) { }
 

@@ -59,6 +59,7 @@ import { Warehouse } from '../inventory/entities/warehouse.entity';
 import { Vehicle } from '../inventory/entities/vehicle.entity';
 import { VehicleTrip } from '../inventory/entities/vehicle-trip.entity';
 import { VehicleLocationHistory } from '../inventory/entities/vehicle-location.entity';
+import { PaymentGatewayConfig } from '../payment-gateways/entities/payment-gateway-config.entity';
 import {
   SALES_DOCUMENT_TYPES,
   PURCHASE_DOCUMENT_TYPES,
@@ -178,6 +179,7 @@ export class TenancyService implements OnModuleDestroy {
           Vehicle,
           VehicleTrip,
           VehicleLocationHistory,
+          PaymentGatewayConfig,
         ],
         synchronize: true,
         logging: ['error', 'warn'],

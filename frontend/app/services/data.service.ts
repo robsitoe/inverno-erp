@@ -531,7 +531,10 @@ export class DataService {
         } else {
 
 
-            return this.http.post(`${this.baseUrl}/company`, data);
+            return this.http.post(`${this.baseUrl}/company`, data).pipe(
+                // a impressão lê a empresa activa do armazenamento local: mantém-na actualizada
+                tap((saved: any) => { if (saved?.id && saved.id === this.getCompanyId()) this.setActiveCompany({ ...this.getCurrentCompany(), ...saved }); })
+            );
 
 
         }

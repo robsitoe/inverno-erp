@@ -1909,7 +1909,7 @@ export class SalesDocumentFormComponent implements OnDestroy {
           if (found) {
             this.updateRowWithArticle(index, found);
           } else {
-            this.toaster.showWarning('Artigo Inválido', `O código de artigo '\' não foi encontrado.`);
+            this.toaster.showWarning('Artigo Inválido', `O código de artigo '${code}' não foi encontrado.`);
             this.rows[index].articleCode = '';
           }
         },

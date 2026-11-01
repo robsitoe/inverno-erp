@@ -133,7 +133,17 @@ export class PayrollService {
     return payRepo.find({ where: { companyId: cid, year, month }, order: { employeeCode: 'ASC' } });
   }
 
-  private static readonly MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  /** Folhas de um funcionário (pelo id ou pelo código), da mais recente para a mais antiga. */
+  async getEmployeePayrolls(employee: string, companyId?: string): Promise<Payroll[]> {
+    const cid = companyId || TenancyContext.getCompanyId();
+    const payRepo = await this.getPayrollRepo(cid);
+    return payRepo.find({
+      where: [{ companyId: cid, employeeId: employee }, { companyId: cid, employeeCode: employee }],
+      order: { year: 'DESC', month: 'DESC' },
+    });
+  }
+
+  private static readonly MONTHS =['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
   /**
    * Ordem dos meses: com histórico de folhas, não se salta um mês.
