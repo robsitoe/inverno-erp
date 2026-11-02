@@ -49,6 +49,7 @@ import { EntityManagementComponent } from '../features/admin/entity-management.c
 import { BankReconciliationComponent } from '../features/treasury/bank-reconciliation.component';
 import { AccountStatementComponent } from '../features/treasury/account-statement.component';
 import { AgingReportComponent } from '../features/treasury/aging-report.component';
+import { FiscalDocumentsReportComponent } from '../features/accounting/fiscal-documents-report.component';
 import { ToasterComponent } from '../shared/toaster.component';
 import { LicenseManagerComponent } from '../features/admin/license-manager.component';
 import { EmployeeListComponent } from '../features/hr/employee-list.component';
@@ -118,6 +119,7 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
     BankReconciliationComponent,
     AccountStatementComponent,
     AgingReportComponent,
+    FiscalDocumentsReportComponent,
     ToasterComponent,
     EmployeeListComponent,
     PayrollProcessingComponent,
@@ -343,6 +345,9 @@ import { DashboardComponent } from '../features/dashboard/dashboard.component';
     <ng-container *ngIf="activeView === 'aging-report'">
       <app-aging-report class="w-full h-full block"></app-aging-report>
     </ng-container>
+    <ng-container *ngIf="activeView === 'fiscal-documents'">
+      <app-fiscal-documents-report class="w-full h-full block"></app-fiscal-documents-report>
+    </ng-container>
 
     <!-- Treasury: Petty Cash Vouchers -->
     <ng-container *ngIf="activeView === 'petty-cash-vouchers'">
@@ -546,6 +551,7 @@ export class MainContentComponent {
       'bank-reconciliation',
       'account-statement',
       'aging-report',
+      'fiscal-documents',
       'petty-cash-vouchers',
       'delivery-planning',
       'warehouse-management',

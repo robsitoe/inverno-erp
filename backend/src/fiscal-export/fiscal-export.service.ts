@@ -6,6 +6,7 @@ import { SalesDocument } from '../sales/entities/sales-document.entity';
 import { PurchaseDocument } from '../purchases/entities/purchase.entity';
 import { TaxRate } from '../taxes/entities/tax-rate.entity';
 import { isIssued } from '../common/document-integrity';
+import { CurrentAccountsService } from '../treasury/current-accounts.service';
 
 /**
  * Ficheiro mensal de faturas para a AT (comunicação no e-Declaração).
@@ -35,7 +36,17 @@ interface ExportDoc {
   number: string; type: string; series: string; date: string; status: 'N' | 'A'; statusReason: string;
   partyTaxId: string; partyName: string; partyAddress: string; reference: string;
   lines: ExportLine[]; netTotal: number; taxTotal: number; grossTotal: number;
+  /** Data e hora da anulação; vendas a dinheiro e faturas-recibo nascem pagas. */
+  voidedAt?: string; paidOnIssue?: boolean;
 }
+
+/** Faturas (o que gera dívida ou se recebe no ato), notas de crédito e de débito de cada lado. */
+const INVOICE_TYPES: Record<FiscalExportKind, string[]> = { SALES: ['FA', 'FR', 'VD', 'FT'], PURCHASES: ['FC', 'VDC'] };
+const DEBIT_NOTE_TYPES = ['ND', 'NDC'];
+const PAID_ON_ISSUE_TYPES = ['FR', 'VD', 'VDC'];
+
+export type PaymentState = 'PAGO' | 'PARCIAL' | 'POR_PAGAR' | 'NA';
+const norm = (s: any) => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '').toUpperCase();
 
 const r2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
 const money = (n: number) => r2(n).toFixed(2);
@@ -45,7 +56,7 @@ const csv = (s: any) => { const v = String(s ?? ''); return /[;"\r\n]/.test(v) ?
 
 @Injectable()
 export class FiscalExportService {
-  constructor(private readonly main: DataSource, private readonly tenancy: TenancyService) { }
+  constructor(private readonly main: DataSource, private readonly tenancy: TenancyService, private readonly currentAccounts: CurrentAccountsService) { }
 
   private period(year: number, month: number) {
     if (!Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(month) || month < 1 || month > 12) {
@@ -90,6 +101,7 @@ export class FiscalExportService {
       return docs.filter(this.counts).map(d => this.totals({
         number: d.documentNumber, type: d.documentType, series: d.series || '', date: day(d.date),
         status: d.voidedAt ? 'A' : 'N', statusReason: d.voidedAt ? (d.statusNotes || '') : '',
+        voidedAt: d.voidedAt ? new Date(d.voidedAt).toISOString() : undefined, paidOnIssue: PAID_ON_ISSUE_TYPES.includes(d.documentType),
         partyTaxId: d.customerNif || '', partyName: d.customerName || '', partyAddress: d.customerAddress || '', reference: '',
         lines: (d.lines || []).map((l, i) => this.lineFrom(i + 1, {
           code: l.articleCode, description: l.articleName, unit: '', q: +l.quantity || 0, p: +l.unitPrice || 0, d: +l.discount || 0, r: +l.ivaRate || 0,
@@ -104,12 +116,63 @@ export class FiscalExportService {
     return docs.filter(this.counts).map(d => this.totals({
       number: `${d.type} ${d.series}/${d.number}`, type: d.type, series: d.series || '', date: day(d.date),
       status: d.voidedAt ? 'A' : 'N', statusReason: d.voidedAt ? (d.statusNotes || '') : '',
+      voidedAt: d.voidedAt ? new Date(d.voidedAt).toISOString() : undefined, paidOnIssue: PAID_ON_ISSUE_TYPES.includes(d.type),
       partyTaxId: d.supplierNif || '', partyName: d.supplierName || '', partyAddress: d.supplierAddress || '', reference: d.reference || '',
       lines: (d.lines || []).map((l, i) => this.lineFrom(i + 1, {
         code: l.articleCode, description: l.description || l.articleName, unit: l.unit || '', q: +l.quantity || 0, p: +l.unitPrice || 0, d: +l.discount || 0, r: +l.taxRate || 0,
         taxCode: String(l.taxCode || ''),
       }, reasons)),
     }));
+  }
+
+  /**
+   * Mapa de documentos fiscais de um período (Despacho do Ministro das Finanças de 22/12/2011, n.º 10, g) e h)):
+   * faturas emitidas, pagas e anuladas e notas de crédito e de débito, com os valores e o estado de pagamento.
+   * O pago vem das contas-correntes (recibos/pagamentos que liquidam cada documento).
+   */
+  async listing(companyId: string, kind: FiscalExportKind, from: string, to: string) {
+    if (!FISCAL_TYPES[kind]) throw new BadRequestException('Escolha vendas ou compras.');
+    const iso = /^\d{4}-\d{2}-\d{2}$/;
+    if (!iso.test(String(from)) || !iso.test(String(to)) || from > to) throw new BadRequestException('Indique um período válido (de … até …).');
+    const company = await this.main.getRepository(Company).findOne({ where: { id: companyId } });
+    if (!company) throw new NotFoundException('Empresa não encontrada.');
+
+    const ds = await this.tenancy.getTenantDataSource(companyId);
+    const docs = await this.load(ds, kind, from, to);
+    const open = await this.currentAccounts.getOpenItems(kind === 'SALES' ? 'CUSTOMER' : 'SUPPLIER', { companyId, includeSettled: true });
+    const byNumber = new Map(open.map(o => [norm(o.docNumber), o]));
+
+    const rows = docs.map(d => {
+      let paid = 0, pending = 0, payment: PaymentState = 'NA';
+      if (d.status === 'N' && !CREDIT_TYPES.includes(d.type)) {
+        const o = byNumber.get(norm(d.number));
+        if (d.paidOnIssue) paid = d.grossTotal;
+        else if (o) paid = Math.max(0, Math.min(d.grossTotal, r2(o.paid)));
+        pending = r2(d.grossTotal - paid);
+        payment = pending <= 0.01 ? 'PAGO' : paid > 0.01 ? 'PARCIAL' : 'POR_PAGAR';
+      }
+      return {
+        number: d.number, type: d.type, date: d.date, partyName: d.partyName, partyTaxId: d.partyTaxId, reference: d.reference,
+        netTotal: d.netTotal, taxTotal: d.taxTotal, grossTotal: d.grossTotal,
+        state: d.status === 'A' ? 'ANULADO' : 'EMITIDO', voidReason: d.statusReason, voidedAt: d.voidedAt || null,
+        paid, pending, payment,
+      };
+    });
+
+    const group = (pick: (r: typeof rows[number]) => boolean) => {
+      const g = rows.filter(pick);
+      return { count: g.length, total: r2(g.reduce((s, r) => s + r.grossTotal, 0)) };
+    };
+    const invoices = rows.filter(r => r.state === 'EMITIDO' && INVOICE_TYPES[kind].includes(r.type));
+    const summary = {
+      invoices: { ...group(r => r.state === 'EMITIDO' && INVOICE_TYPES[kind].includes(r.type)),
+        paid: r2(invoices.reduce((s, r) => s + r.paid, 0)), pending: r2(invoices.reduce((s, r) => s + r.pending, 0)),
+        paidCount: invoices.filter(r => r.payment === 'PAGO').length },
+      voided: group(r => r.state === 'ANULADO'),
+      creditNotes: group(r => r.state === 'EMITIDO' && CREDIT_TYPES.includes(r.type)),
+      debitNotes: group(r => r.state === 'EMITIDO' && DEBIT_NOTE_TYPES.includes(r.type)),
+    };
+    return { company: { name: company.name, nif: company.nif || '' }, kind, from, to, rows, summary };
   }
 
   /** Resumo do mês (para o ecrã) e ficheiro no formato pedido. */

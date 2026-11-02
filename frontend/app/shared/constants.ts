@@ -33,6 +33,7 @@ export const MENU_ITEMS: MenuItem[] = [
       { label: "Demonstrações Financeiras", icon: "assessment", view: "financial-statements" },
       { label: "Centros de Custo", icon: "business_center", view: "cost-centers" },
       { label: "IVA", icon: "receipt_long", view: "vat" },
+      { label: "Mapa de Documentos Fiscais", icon: "fact_check", view: "fiscal-documents", context: "CUSTOMER" },
       { label: "Fecho de Período", icon: "lock_clock", view: "period-close" },
       { label: "Exploração", icon: "explore", view: "exploration" },
       { label: "Utilitários", icon: "build", view: "utilities" }
@@ -152,7 +153,8 @@ export const MENU_ITEMS: MenuItem[] = [
         icon: "explore",
         children: [
           { label: "Extrato de Conta", icon: "history", view: "account-statement", context: "CUSTOMER" },
-          { label: "Antiguidade de Saldos", icon: "hourglass_bottom", view: "aging-report", context: "CUSTOMER" }
+          { label: "Antiguidade de Saldos", icon: "hourglass_bottom", view: "aging-report", context: "CUSTOMER" },
+          { label: "Mapa de Documentos Fiscais", icon: "fact_check", view: "fiscal-documents", context: "CUSTOMER" }
         ]
       },
       { label: "Utilitários", icon: "build" }
@@ -171,6 +173,7 @@ export const MENU_ITEMS: MenuItem[] = [
         children: [
           { label: "Extrato de Conta", icon: "history", view: "account-statement", context: "SUPPLIER" },
           { label: "Antiguidade de Saldos", icon: "hourglass_bottom", view: "aging-report", context: "SUPPLIER" },
+          { label: "Mapa de Documentos Fiscais", icon: "fact_check", view: "fiscal-documents", context: "SUPPLIER" },
           { label: "Estado de Encomendas", icon: "local_shipping" },
           { label: "Preços de Compra", icon: "euro" }
         ]
