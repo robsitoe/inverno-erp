@@ -10,6 +10,9 @@ import { StockDocument } from '../inventory/entities/stock-document.entity';
 import { DocumentType } from '../common-entities/entities/document-type.entity';
 import { Article } from '../inventory/entities/article.entity';
 import { TaxRate } from '../taxes/entities/tax-rate.entity';
+import { Customer } from '../customers/entities/customer.entity';
+import { Supplier } from '../suppliers/entities/supplier.entity';
+import { WorkflowHistory } from '../common/entities/workflow-history.entity';
 import {
   MODULES, PrintModule, RenderData, checkRendered, expectedValues, fieldsFor, fmtDate, fmtMoney, fmtQty, renderTemplate, validateTemplate,
 } from './template-engine';
@@ -339,7 +342,7 @@ export class PrintTemplatesService {
       linhas: vals.map(v => ({
         'linha.codigo': v.codigo || '', 'linha.descricao': v.descricao || '', 'linha.unidade': v.unidade || '',
         'linha.quantidade': fmtQty(v.q), 'linha.precoUnitario': fmtMoney(v.p), 'linha.desconto': fmtMoney(v.d),
-        'linha.taxaIva': fmtMoney(v.r), 'linha.iva': fmtMoney(v.iva), 'linha.total': fmtMoney(v.total),
+        'linha.taxaIva': fmtMoney(v.r), 'linha.iva': fmtMoney(v.iva), 'linha.liquido': fmtMoney(v.liquid), 'linha.total': fmtMoney(v.total),
       })),
       resumoIva: [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([taxa, g]) => ({
         'iva.taxa': fmtMoney(taxa), 'iva.base': fmtMoney(g.base), 'iva.valor': fmtMoney(g.valor),
@@ -352,6 +355,19 @@ export class PrintTemplatesService {
   private async taxDescriptions(ds: DataSource): Promise<Map<string, string>> {
     const taxes = await ds.getRepository(TaxRate).find().catch(() => [] as TaxRate[]);
     return new Map(taxes.map(t => [String(t.code), String(t.description || '')]));
+  }
+
+  /** Quem emitiu o documento: o utilizador do primeiro registo do histórico, que fica na base principal (vazio sem histórico). */
+  private async operatorOf(documentId: string): Promise<string> {
+    const h = await this.main.getRepository(WorkflowHistory).findOne({ where: { documentId }, order: { createdAt: 'ASC' } }).catch(() => null);
+    return h?.userName || '';
+  }
+
+  /** Código e cidade do cliente/fornecedor, pela ficha (o documento guarda só nome, NUIT e morada). */
+  private async partyOf(ds: DataSource, entity: typeof Customer | typeof Supplier, ref: string): Promise<{ code: string; city: string }> {
+    if (!ref) return { code: '', city: '' };
+    const p: any = await ds.getRepository(entity as any).findOne({ where: [{ code: ref }, { id: ref }] as any }).catch(() => null);
+    return { code: p?.code || ref, city: p?.city || '' };
   }
 
   private async loadDocument(companyId: string, module: PrintModule, id: string, copia: string): Promise<LoadedDoc> {
@@ -374,15 +390,19 @@ export class PrintTemplatesService {
         motivo: taxes.get(String(l.ivaCode || '')) || '',
         liquid: l.subtotal, iva: l.ivaAmount, total: l.total,
       })));
+      const party = await this.partyOf(ds, Customer, d.customerId);
       return {
         id: d.id, docType: d.documentType, numero: d.documentNumber, date: d.date, nif: d.customerNif || '', total: +d.total || 0, status: String(d.status),
         data: {
           logoDataUri: company.logoUrl || undefined, linhas, resumoIva,
           doc: {
             ...base, 'entidade.nome': d.customerName || '', 'entidade.nif': d.customerNif || '', 'entidade.morada': d.customerAddress || '',
+            'entidade.codigo': party.code, 'entidade.cidade': party.city,
             'documento.descricao': await this.describe(ds, d.documentType), 'documento.numero': d.documentNumber || '', 'documento.serie': d.series || '',
             'documento.data': fmtDate(d.date), 'documento.vencimento': fmtDate(d.dueDate),
             'documento.condicao': CONDITIONS[String(d.paymentCondition || '').toUpperCase()] || '',
+            // As vendas são sempre em moeda nacional
+            'documento.moeda': 'MT', 'documento.cambio': '1,00', 'documento.operador': await this.operatorOf(d.id),
             'documento.observacoes': d.notes || '', 'documento.copia': copia,
             'totais.subtotal': fmtMoney(d.subtotal), 'totais.descontos': fmtMoney(d.discounts), 'totais.iva': fmtMoney(d.totalIva), 'totais.total': fmtMoney(d.total),
           },
@@ -400,12 +420,19 @@ export class PrintTemplatesService {
         d: +l.discount || 0, r: +l.taxRate || 0, motivo: taxes.get(String(l.taxCode || '')) || '', liquid: l.totalLiquid, total: l.totalValue,
         iva: l.totalValue != null && l.totalLiquid != null ? Number(l.totalValue) - Number(l.totalLiquid) : null,
       })));
+      const party = await this.partyOf(ds, Supplier, d.supplierCode);
+      const currency = String(d.currency || 'MZN').toUpperCase();
+      const national = currency === 'MZN' || currency === 'MT';
       return {
         id: d.id, docType: d.type, numero, date: d.date, nif: d.supplierNif || '', total: +d.totalValue || 0, status: String(d.status),
         data: {
           logoDataUri: company.logoUrl || undefined, linhas, resumoIva,
           doc: {
             ...base, 'entidade.nome': d.supplierName || '', 'entidade.nif': d.supplierNif || '', 'entidade.morada': d.supplierAddress || '',
+            'entidade.codigo': party.code, 'entidade.cidade': party.city,
+            // A compra não guarda a taxa de câmbio: só em meticais se mostra 1,00
+            'documento.moeda': national ? 'MT' : currency, 'documento.cambio': national ? '1,00' : '',
+            'documento.operador': await this.operatorOf(d.id),
             'documento.descricao': await this.describe(ds, d.type), 'documento.numero': numero, 'documento.serie': d.series || '',
             'documento.data': fmtDate(d.date), 'documento.vencimento': fmtDate(d.dueDate),
             'documento.condicao': CONDITIONS[String(d.paymentCondition || '').toUpperCase()] || '', 'documento.referencia': d.reference || '',
@@ -477,6 +504,7 @@ export class PrintTemplatesService {
       'empresa.nib': c.nib || '0000 0000 0000 0000 0000 0', 'empresa.iban': c.iban || 'MZ59 0000 0000 0000 0000 0000 0', 'empresa.swift': c.swift || 'EXEMMZMA',
       'empresa.rodape': c.documentFooter || 'Texto do rodapé definido em Dados da Empresa.',
       'entidade.nome': module === 'PURCHASES' ? 'Fornecedor de Exemplo' : 'Cliente de Exemplo', 'entidade.nif': '400111222', 'entidade.morada': 'Rua de Exemplo, Matola',
+      'entidade.codigo': 'C001', 'entidade.cidade': 'Matola', 'documento.moeda': 'MT', 'documento.cambio': '1,00', 'documento.operador': 'admin',
       'documento.serie': '2026', 'documento.data': '01/01/2026', 'documento.vencimento': '31/01/2026', 'documento.condicao': 'A prazo',
       'documento.referencia': 'REF-001', 'documento.meioPagamento': 'Numerário', 'documento.armazem': 'ARM01',
       'documento.observacoes': 'Observações do documento.', 'documento.copia': 'Original',

@@ -54,12 +54,17 @@ export const FIELDS: FieldDef[] = [
   { key: 'entidade.nome', label: 'Entidade (cliente / fornecedor / beneficiário)', fiscal: true, scope: 'doc', modules: FIN, requiredIn: FIN },
   { key: 'entidade.nif', label: 'NIF/NUIT da entidade', fiscal: true, scope: 'doc', modules: COM, requiredIn: COM },
   { key: 'entidade.morada', label: 'Morada da entidade', fiscal: false, scope: 'doc', modules: COM },
+  { key: 'entidade.codigo', label: 'Código da entidade', fiscal: false, scope: 'doc', modules: COM },
+  { key: 'entidade.cidade', label: 'Cidade da entidade', fiscal: false, scope: 'doc', modules: COM },
   { key: 'documento.descricao', label: 'Tipo de documento (ex.: Fatura)', fiscal: false, scope: 'doc' },
   { key: 'documento.numero', label: 'Número do documento', fiscal: true, scope: 'doc', requiredIn: MODULES },
   { key: 'documento.serie', label: 'Série', fiscal: false, scope: 'doc' },
   { key: 'documento.data', label: 'Data do documento', fiscal: true, scope: 'doc', requiredIn: MODULES },
   { key: 'documento.vencimento', label: 'Data de vencimento', fiscal: true, scope: 'doc', modules: COM },
   { key: 'documento.condicao', label: 'Condição de pagamento', fiscal: false, scope: 'doc', modules: COM },
+  { key: 'documento.moeda', label: 'Moeda', fiscal: false, scope: 'doc', modules: COM },
+  { key: 'documento.cambio', label: 'Câmbio', fiscal: false, scope: 'doc', modules: COM },
+  { key: 'documento.operador', label: 'Operador (quem emitiu)', fiscal: false, scope: 'doc', modules: COM },
   { key: 'documento.referencia', label: 'Referência (V/Ref., documento relacionado)', fiscal: false, scope: 'doc', modules: ['PURCHASES', 'TREASURY'] },
   { key: 'documento.meioPagamento', label: 'Meio de pagamento', fiscal: false, scope: 'doc', modules: ['TREASURY'] },
   { key: 'documento.armazem', label: 'Armazém', fiscal: false, scope: 'doc', modules: ['STOCK'] },
@@ -76,6 +81,7 @@ export const FIELDS: FieldDef[] = [
   { key: 'linha.desconto', label: 'Desconto', fiscal: true, scope: 'linha', modules: FIN },
   { key: 'linha.taxaIva', label: 'Taxa de IVA (%)', fiscal: true, scope: 'linha', modules: COM },
   { key: 'linha.iva', label: 'Valor do IVA da linha', fiscal: true, scope: 'linha', modules: COM },
+  { key: 'linha.liquido', label: 'Total líquido da linha (sem IVA)', fiscal: true, scope: 'linha', modules: COM },
   { key: 'linha.total', label: 'Total da linha / valor liquidado', fiscal: true, scope: 'linha', requiredIn: FIN },
   { key: 'totais.subtotal', label: 'Subtotal (mercadoria)', fiscal: true, scope: 'doc', modules: COM },
   { key: 'totais.descontos', label: 'Total de descontos', fiscal: true, scope: 'doc', modules: FIN },
@@ -210,6 +216,9 @@ export function resolveConditionals(html: string, doc: Record<string, string>): 
   return out;
 }
 
+/** Campos que cumprem a obrigação de outro (só contam onde existem: o modelo é validado por módulo). */
+const EQUIVALENT: Record<string, string[]> = { 'linha.total': ['linha.liquido'] };
+
 export function validateTemplate(html: string, css: string, module: PrintModule = 'SALES'): string[] {
   const errors: string[] = [];
   html = html || ''; css = css || '';
@@ -292,7 +301,9 @@ export function validateTemplate(html: string, css: string, module: PrintModule 
   if (loopBodies.resumoIva !== undefined) checkFields(loopBodies.resumoIva, 'iva');
   if (loopBodies.linhas === undefined) errors.push('Falta o bloco das linhas: {{#linhas}} ... {{/linhas}}.');
   if (loopBodies.resumoIva !== undefined && !['SALES', 'PURCHASES'].includes(module)) errors.push('O bloco {{#resumoIva}} só existe em vendas e compras.');
-  for (const f of FIELDS) if (f.requiredIn?.includes(module) && !used.has(f.key)) errors.push(`Falta o campo obrigatório {{${f.key}}} (${f.label}).`);
+  // Um campo obrigatório pode ser cumprido por um equivalente (ex.: total da linha com ou sem IVA)
+  const satisfied = (key: string) => used.has(key) || (EQUIVALENT[key] || []).some(k => used.has(k));
+  for (const f of FIELDS) if (f.requiredIn?.includes(module) && !satisfied(f.key)) errors.push(`Falta o campo obrigatório {{${f.key}}} (${f.label}).`);
 
   // 4. Valores escritos à mão no texto fixo
   const literals = literalFindings(staticText(html));
