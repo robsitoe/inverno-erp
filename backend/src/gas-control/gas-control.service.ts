@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityTarget, ObjectLiteral } from 'typeorm';
 import { GasCylinderType, GasDailyControl, GasDailyEntry } from './gas-control.entity';
@@ -7,6 +7,15 @@ import { TenancyContext } from '../tenancy/tenancy.context';
 import { InventoryService } from '../inventory/inventory.service';
 import { Article } from '../inventory/entities/article.entity';
 import { StockMovement } from '../inventory/entities/stock-movement.entity';
+import { SalesDocument } from '../sales/entities/sales-document.entity';
+import { isIssued } from '../common/document-integrity';
+
+const norm = (s: any) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '').toUpperCase();
+// Documentos de venda que fazem sair garrafas cheias; a nota de crédito devolve-as
+const OUT_DOC_TYPES = ['FA', 'FR', 'VD', 'FS', 'FT', 'GT'];
+const RETURN_DOC_TYPES = ['NC'];
+// Linhas de vasilhame, caução, vazias ou avariadas não são garrafas cheias
+const NOT_FULL = /VAZI|VASILH|^VAS\b|VAS-|AVARIA|CAU[CÇ]/;
 
 @Injectable()
 export class GasControlService {
@@ -112,6 +121,7 @@ export class GasControlService {
   async saveEntry(data: any, companyId?: string) {
     const cid = companyId || TenancyContext.getCompanyId();
     const repo = await this.getRepo(GasDailyEntry, this.defaultEntryRepo, cid);
+    await this.assertDayOpen(data.controlId, cid);
     if (!data.id) {
       data.id = `GDE-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     }
@@ -121,7 +131,17 @@ export class GasControlService {
 
   async deleteEntry(id: string, companyId?: string) {
     const repo = await this.getRepo(GasDailyEntry, this.defaultEntryRepo, companyId);
+    const entry = await repo.findOne({ where: { id } });
+    if (entry) await this.assertDayOpen(entry.controlId, companyId);
     return repo.delete(id);
+  }
+
+  /** Os lançamentos só mudam com o dia aberto: um dia fechado tem de ser reaberto, o que fica no registo de auditoria. */
+  private async assertDayOpen(controlId: string, companyId?: string) {
+    const repo = await this.getRepo(GasDailyControl, this.defaultControlRepo, companyId);
+    const control = controlId ? await repo.findOne({ where: { id: controlId } }) : null;
+    if (!control || control.status === 'NOT_STARTED') throw new BadRequestException('O dia ainda não foi aberto. Faça a abertura antes de lançar movimentos.');
+    if (control.status === 'CLOSED') throw new BadRequestException(`O mapa de ${String(control.date).slice(0, 10).split('-').reverse().join('/')} está fechado. Reabra-o para corrigir (a reabertura fica registada).`);
   }
 
   async openDaily(date: string, user: string, companyId?: string) {
@@ -170,6 +190,7 @@ export class GasControlService {
     const repo = await this.getRepo(GasDailyControl, this.defaultControlRepo, companyId);
     const control = await repo.findOne({ where: { id } });
     if (!control) throw new NotFoundException('Control not found');
+    if (control.status !== 'OPENED') throw new BadRequestException('Só um dia aberto pode ser fechado.');
 
     control.status = 'CLOSED';
     control.closedBy = user;
@@ -182,6 +203,7 @@ export class GasControlService {
     const repo = await this.getRepo(GasDailyControl, this.defaultControlRepo, companyId);
     const control = await repo.findOne({ where: { id } });
     if (!control) throw new NotFoundException('Control not found');
+    if (control.status !== 'CLOSED') return control;
 
     control.status = 'OPENED';
     if (!control.auditLog) control.auditLog = [];
@@ -201,22 +223,25 @@ export class GasControlService {
     const control = await repo.findOne({ where: { id: controlId, companyId: cid } });
     if (!control) throw new NotFoundException('Control not found');
 
-    const isReopeningLog = control.status === 'CLOSED';
+    if (control.status !== 'OPENED') throw new BadRequestException(control.status === 'CLOSED'
+      ? 'O mapa deste dia está fechado. Reabra-o para corrigir (a reabertura fica registada).'
+      : 'O dia ainda não foi aberto.');
+
+    // Num dia reaberto, cada alteração de valores fica no registo de auditoria
+    const wasReopened = (control.auditLog || []).some(l => l?.type === 'REOPEN');
+    const previousFinal = control.finalStock;
 
     control.initialStock = initialStock;
     control.finalStock = finalStock;
 
-    if (isReopeningLog) {
+    if (wasReopened) {
       if (!control.auditLog) control.auditLog = [];
-
-      // Generate a more descriptive summary of what changed
-      let diffDetails = 'Alteração de: ';
       const changes: string[] = [];
 
       // Check for stock changes in keys (cylinder types)
       for (const key of Object.keys(finalStock || {})) {
         if (key === 'footers') continue;
-        const oldGpl = control.finalStock?.[key]?.gpl || 0;
+        const oldGpl = previousFinal?.[key]?.gpl || 0;
         const newGpl = finalStock[key]?.gpl || 0;
         if (oldGpl !== newGpl) {
           changes.push(`${key} (GPL: ${oldGpl}->${newGpl})`);
@@ -224,17 +249,17 @@ export class GasControlService {
       }
 
       // Check for physical cash changes
-      const oldCash = control.finalStock?.footers?.closingBalance || 0;
+      const oldCash = previousFinal?.footers?.closingBalance || 0;
       const newCash = finalStock?.footers?.closingBalance || 0;
       if (oldCash !== newCash) {
         changes.push(`Numerário (${oldCash}->${newCash})`);
       }
 
-      control.auditLog.push({
+      if (changes.length) control.auditLog.push({
         type: 'EDIT_AFTER_CLOSURE',
         user,
         timestamp: new Date(),
-        summary: changes.length > 0 ? `Alterações: ${changes.join(', ')}` : 'Sincronização de dados (sem alteração de valores críticos)'
+        summary: `Alterações: ${changes.join(', ')}`
       });
     }
 
@@ -537,6 +562,112 @@ export class GasControlService {
         expenses: sum(days, d => d.expenses),
         cashDifference: sum(days, d => num(d.cashDifference)),
         salesByType: types.reduce((acc, t) => { const q = sum(days, d => num(d.salesByType[t.name])); if (q) acc[t.name] = q; return acc; }, {} as Record<string, number>),
+      },
+    };
+  }
+
+  /**
+   * Conferência do dia entre o mapa e os documentos de venda emitidos no ERP: garrafas cheias que saíram
+   * para clientes no mapa contra as faturadas (FA/FR/VD/FS/FT e guias GT, menos as devolvidas em NC),
+   * por tamanho e por cliente. Uma saída sem documento é uma venda por faturar.
+   */
+  async getFiscalCheck(date: string, companyId?: string) {
+    const cid = (companyId || TenancyContext.getCompanyId()) as string;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) throw new BadRequestException('Indique a data do mapa.');
+    const types = await this.getCylinderTypes(cid);
+    const num = (v: any) => Number(v) || 0;
+
+    // Linha de documento → tamanho da garrafa: pelo código do artigo da garrafa cheia, ou pelos "kg" no código/nome
+    const byCode = new Map<string, string>();
+    const byKg = new Map<number, string>();
+    for (const t of types) {
+      for (const code of [t.fullArticleCode, `GAS-${t.name}-CHEIA`, t.name]) if (code) byCode.set(norm(code), t.name);
+      const kg = parseInt(t.name, 10) || num(t.capacity);
+      if (kg && !byKg.has(kg)) byKg.set(kg, t.name);
+    }
+    const typeOfLine = (code: string, name: string): string | null => {
+      const direct = byCode.get(norm(code));
+      if (direct) return direct;
+      const text = `${code} ${name}`.toUpperCase();
+      if (NOT_FULL.test(text)) return null;
+      const m = text.match(/(\d{1,2})\s*KG/);
+      return m ? byKg.get(parseInt(m[1], 10)) || null : null;
+    };
+
+    // Saídas do mapa: garrafas cheias entregues a clientes (sem os acertos)
+    const { control, entries } = await this.getDailyControl(date, cid);
+    const typeName = new Map(types.map(t => [t.id, t.name]));
+    const mapRows = (entries || []).filter(e => e.entryType === 'CUSTOMER' && !e.isAdj && num(e.s_gpl) > 0);
+
+    const ds = await this.tenancyService.getTenantDataSource(cid);
+    const docs = await ds.getRepository(SalesDocument).createQueryBuilder('d')
+      .leftJoinAndSelect('d.lines', 'l')
+      .where('d.date = :date', { date })
+      .andWhere('d.documentType IN (:...types)', { types: [...OUT_DOC_TYPES, ...RETURN_DOC_TYPES] })
+      .orderBy('d.documentNumber', 'ASC')
+      .getMany();
+
+    const documents = docs
+      .filter(d => isIssued(d.status) || !!d.voidedAt)
+      .map(d => {
+        const quantities: Record<string, number> = {};
+        for (const l of d.lines || []) {
+          const t = typeOfLine(l.articleCode, l.articleName);
+          if (t) quantities[t] = (quantities[t] || 0) + num(l.quantity);
+        }
+        return {
+          id: d.id, number: d.documentNumber, type: d.documentType, customerName: d.customerName || '',
+          voided: !!d.voidedAt, total: num(d.total), quantities,
+          sign: RETURN_DOC_TYPES.includes(d.documentType) ? -1 : 1,
+        };
+      })
+      .filter(d => Object.keys(d.quantities).length > 0);
+
+    // Por cliente e tamanho
+    const rows = new Map<string, { customer: string; type: string; map: number; documented: number; documents: string[]; mapKind: string[] }>();
+    const row = (customer: string, type: string) => {
+      const k = `${norm(customer)}|${type}`;
+      if (!rows.has(k)) rows.set(k, { customer, type, map: 0, documented: 0, documents: [], mapKind: [] });
+      return rows.get(k)!;
+    };
+    for (const e of mapRows) {
+      const t = typeName.get(e.cylinderTypeId);
+      if (!t) continue;
+      const r = row(e.customerName || '(sem nome)', t);
+      r.map += num(e.s_gpl);
+      const kind = e.invoice ? 'Fatura' : e.gr ? 'Guia' : 'VD';
+      if (!r.mapKind.includes(kind)) r.mapKind.push(kind);
+    }
+    for (const d of documents) {
+      if (d.voided) continue;
+      for (const [t, q] of Object.entries(d.quantities)) {
+        const r = row(d.customerName || '(sem nome)', t);
+        r.documented += d.sign * q;
+        if (!r.documents.includes(d.number)) r.documents.push(d.number);
+      }
+    }
+    const byCustomer = [...rows.values()]
+      .map(r => ({ ...r, difference: r.map - r.documented }))
+      .sort((a, b) => Math.abs(b.difference) - Math.abs(a.difference) || a.customer.localeCompare(b.customer));
+
+    const byType = types.map(t => {
+      const map = byCustomer.filter(r => r.type === t.name).reduce((a, r) => a + r.map, 0);
+      const documented = byCustomer.filter(r => r.type === t.name).reduce((a, r) => a + r.documented, 0);
+      return { type: t.name, map, documented, difference: map - documented };
+    }).filter(r => r.map || r.documented);
+
+    return {
+      date,
+      status: control?.status || 'NOT_STARTED',
+      documents,
+      byType,
+      byCustomer,
+      totals: {
+        map: byType.reduce((a, r) => a + r.map, 0),
+        documented: byType.reduce((a, r) => a + r.documented, 0),
+        // Garrafas que saíram no mapa sem documento, e faturadas que não aparecem no mapa
+        undocumented: byCustomer.reduce((a, r) => a + Math.max(0, r.difference), 0),
+        notInMap: byCustomer.reduce((a, r) => a + Math.max(0, -r.difference), 0),
       },
     };
   }

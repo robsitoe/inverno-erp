@@ -87,6 +87,12 @@ export class GasControlController {
         return this.gasService.getAnalysis(from, to, companyId);
     }
 
+    @Get('daily/fiscal-check')
+    @ApiOperation({ summary: 'Conferência do dia: saídas do mapa contra os documentos de venda emitidos' })
+    getFiscalCheck(@Query('date') date: string, @Query('companyId') companyId?: string) {
+        return this.gasService.getFiscalCheck(date, companyId);
+    }
+
     @Post('daily/resync-all')
     @ApiOperation({ summary: 'Resync all past gas control days with inventory' })
     reSyncAllDays(@Query('companyId') companyId?: string) {

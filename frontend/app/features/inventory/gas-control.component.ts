@@ -94,7 +94,7 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
       <!-- Interaction Blanket for NOT_STRTED -->
 
 
-      <div *ngIf="(activeTab === 'MOVEMENT' || activeTab === 'INVENTORY') && (!control || control?.status === 'NOT_STRTED')" class="fixed inset-0 z-[150] bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center animate-in fade-in duration-500 no-print">
+      <div *ngIf="(activeTab === 'MOVEMENT' || activeTab === 'INVENTORY') && (!control || control?.status === 'NOT_STARTED')" class="fixed inset-0 z-[150] bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center animate-in fade-in duration-500 no-print">
 
 
          <div class="bg-white p-10 rounded-3xl shadow-2xl border border-blue-200 text-center max-w-md space-y-6 transform animate-in zoom-in-95 duration-300">
@@ -224,7 +224,7 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
 
            <div class="h-6 w-px bg-gray-300"></div>
 
-           <button (click)="saveStocks()" class="flex items-center gap-2 px-5 py-1.5 bg-emerald-600 text-white rounded font-black text-xs hover:bg-emerald-700 transition-all shadow-md active:scale-95 uppercase tracking-wider">
+           <button *ngIf="control?.status === 'OPENED'" (click)="saveStocks()" class="flex items-center gap-2 px-5 py-1.5 bg-emerald-600 text-white rounded font-black text-xs hover:bg-emerald-700 transition-all shadow-md active:scale-95 uppercase tracking-wider">
              <app-icon name="save" [size]="16"></app-icon> Gravar Tudo
            </button>
 
@@ -266,6 +266,74 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
               [globalTotal]="getGlobalTotal()">
            </app-gas-control-report-print>
 
+           <div *ngIf="control?.status === 'CLOSED'" class="no-print flex items-center gap-2 px-4 py-2 rounded-lg border border-amber-200 bg-amber-50 text-[11px] font-bold text-amber-800">
+              <app-icon name="lock" [size]="14"></app-icon>
+              Mapa fechado por {{ control?.closedBy || '—' }}{{ control?.closedAt ? ' em ' + (control.closedAt | date:'dd/MM/yyyy HH:mm') : '' }}: só leitura. Para corrigir use «Editar Documento» (a reabertura fica registada).
+           </div>
+
+           <!-- CONFERÊNCIA COM OS DOCUMENTOS DE VENDA -->
+           <div *ngIf="fiscalCheck && (fiscalCheck.byType.length || fiscalCheck.documents.length)" class="bg-white rounded-xl shadow-lg border no-print overflow-hidden"
+                [ngClass]="fiscalCheck.totals.undocumented || fiscalCheck.totals.notInMap ? 'border-rose-200' : 'border-emerald-200'">
+              <button type="button" (click)="fiscalCheckOpen = !fiscalCheckOpen" class="w-full flex flex-wrap items-center gap-3 px-3 py-2 text-left"
+                      [ngClass]="fiscalCheck.totals.undocumented || fiscalCheck.totals.notInMap ? 'bg-rose-50' : 'bg-emerald-50'">
+                 <app-icon [name]="fiscalCheck.totals.undocumented || fiscalCheck.totals.notInMap ? 'warning' : 'verified'" [size]="16"
+                           [class]="fiscalCheck.totals.undocumented || fiscalCheck.totals.notInMap ? 'text-rose-600' : 'text-emerald-600'"></app-icon>
+                 <span class="font-black text-[10px] uppercase text-slate-800">Conferência com os documentos de venda</span>
+                 <span class="text-[10px] text-gray-600">Saíram no mapa <b>{{ fiscalCheck.totals.map }}</b> garrafas cheias · documentadas <b>{{ fiscalCheck.totals.documented }}</b></span>
+                 <span *ngIf="fiscalCheck.totals.undocumented" class="px-2 py-0.5 rounded bg-rose-600 text-white text-[9px] font-black uppercase">{{ fiscalCheck.totals.undocumented }} sem documento</span>
+                 <span *ngIf="fiscalCheck.totals.notInMap" class="px-2 py-0.5 rounded bg-amber-500 text-white text-[9px] font-black uppercase">{{ fiscalCheck.totals.notInMap }} faturadas fora do mapa</span>
+                 <span *ngIf="!fiscalCheck.totals.undocumented && !fiscalCheck.totals.notInMap" class="text-[9px] font-black uppercase text-emerald-700">Tudo documentado</span>
+                 <app-icon [name]="fiscalCheckOpen ? 'expand_less' : 'expand_more'" [size]="16" class="ml-auto text-gray-500"></app-icon>
+              </button>
+              <div *ngIf="fiscalCheckOpen" class="p-3 grid gap-4 lg:grid-cols-2 text-[10px]">
+                 <div class="space-y-3">
+                    <table class="w-full border-collapse">
+                       <thead><tr class="bg-gray-100 text-[9px] uppercase text-gray-500">
+                          <th class="p-1 text-left">Tamanho</th><th class="p-1 text-right">Mapa</th><th class="p-1 text-right">Documentos</th><th class="p-1 text-right">Diferença</th>
+                       </tr></thead>
+                       <tbody>
+                          <tr *ngFor="let r of fiscalCheck.byType" class="border-b border-gray-100">
+                             <td class="p-1 font-black">{{ r.type }}</td><td class="p-1 text-right tabular-nums">{{ r.map }}</td><td class="p-1 text-right tabular-nums">{{ r.documented }}</td>
+                             <td class="p-1 text-right tabular-nums font-black" [ngClass]="r.difference > 0 ? 'text-rose-600' : r.difference < 0 ? 'text-amber-600' : 'text-emerald-600'">{{ r.difference > 0 ? '+' : '' }}{{ r.difference }}</td>
+                          </tr>
+                       </tbody>
+                    </table>
+                    <div>
+                       <div class="text-[9px] font-black uppercase text-gray-400 mb-1">Documentos do dia com gás</div>
+                       <div *ngIf="!fiscalCheck.documents.length" class="text-gray-400 italic">Nenhum documento de venda emitido neste dia.</div>
+                       <div *ngFor="let d of fiscalCheck.documents" class="flex items-center gap-2 py-0.5" [class.line-through]="d.voided" [class.text-gray-400]="d.voided">
+                          <span class="font-mono font-bold">{{ d.number }}</span>
+                          <span class="flex-1 truncate">{{ d.customerName }}</span>
+                          <span class="text-gray-500">{{ quantitiesLabel(d.quantities) }}</span>
+                          <span *ngIf="d.voided" class="text-[8px] font-black uppercase no-underline">anulado</span>
+                       </div>
+                    </div>
+                 </div>
+                 <div>
+                    <table class="w-full border-collapse">
+                       <thead><tr class="bg-gray-100 text-[9px] uppercase text-gray-500">
+                          <th class="p-1 text-left">Cliente</th><th class="p-1">Tam.</th><th class="p-1 text-right">Mapa</th><th class="p-1 text-right">Doc.</th><th class="p-1 text-left">Documentos</th>
+                       </tr></thead>
+                       <tbody>
+                          <tr *ngFor="let r of fiscalCheck.byCustomer" class="border-b border-gray-100" [ngClass]="r.difference > 0 ? 'bg-rose-50' : r.difference < 0 ? 'bg-amber-50' : ''">
+                             <td class="p-1 font-bold">{{ r.customer }} <span *ngIf="r.mapKind.length" class="text-[8px] text-gray-400 font-normal">({{ r.mapKind.join(', ') }})</span></td>
+                             <td class="p-1 text-center">{{ r.type }}</td>
+                             <td class="p-1 text-right tabular-nums">{{ r.map }}</td>
+                             <td class="p-1 text-right tabular-nums">{{ r.documented }}</td>
+                             <td class="p-1">
+                                <span *ngIf="r.documents.length" class="font-mono">{{ r.documents.join(', ') }}</span>
+                                <span *ngIf="!r.documents.length" class="text-rose-600 font-black uppercase text-[8px]">por faturar</span>
+                                <span *ngIf="r.difference < 0" class="text-amber-700 font-black uppercase text-[8px] ml-1">não está no mapa</span>
+                             </td>
+                          </tr>
+                       </tbody>
+                    </table>
+                    <p class="mt-2 text-[9px] text-gray-400">Compara as garrafas cheias entregues a clientes no mapa com as faturas, faturas-recibo, vendas a dinheiro e guias emitidas no ERP nesta data (menos as notas de crédito). Os nomes dos clientes têm de coincidir.</p>
+                 </div>
+              </div>
+           </div>
+
+           <fieldset [disabled]="control?.status !== 'OPENED'" class="space-y-6 min-w-0 border-0 p-0 m-0">
            <!-- DASHBOARD HEADER & STOCK -->
            <div class="p-4 bg-white rounded-xl shadow-lg border border-gray-200 no-print space-y-6">
               <div class="text-center font-bold uppercase tracking-widest text-[12px] border-b-2 border-black pb-2 mb-2 flex justify-between items-center">
@@ -562,8 +630,10 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
                  <p *ngIf="!dayNotes.length && control?.status === 'CLOSED'" class="text-[10px] text-gray-400 italic">Sem observações.</p>
               </div>
            </div>
+           </fieldset>
          </div>
 <ng-container *ngIf="activeTab === 'INVENTORY'">
+             <fieldset [disabled]="control?.status !== 'OPENED'" class="min-w-0 border-0 p-0 m-0">
              <div class="print-a4 bg-white p-4 font-sans text-black overflow-auto min-h-screen">
                 <!-- HEADER SECTION -->
                 <div class="flex flex-col mb-4">
@@ -880,6 +950,7 @@ import { GasControlReportPrintComponent } from './gas-control-report-print.compo
                    </div>
                 </div>
              </div>
+             </fieldset>
           </ng-container>
 
     <!-- ===== TAB: ANÁLISES (como a folha "Analises" do mapa) ===== -->
@@ -1301,6 +1372,9 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
    @Input() activeTab: 'MOVEMENT' | 'INVENTORY' | 'STATS' | 'ANALYSIS' = 'MOVEMENT';
+   /** Conferência do dia: saídas do mapa contra os documentos de venda emitidos. */
+   fiscalCheck: any = null;
+   fiscalCheckOpen = false;
    analysis: any = null;
    analysisLoading = false;
    analysisOnlyIssues = false;
@@ -1769,6 +1843,10 @@ export class GasControlComponent implements OnInit, OnDestroy {
             this.customerDebts = this.control?.initialStock?.footers?.customerDebts || {};
             this.manualStockAdj = (footers.manualStockAdj && Object.keys(footers.manualStockAdj).length > 0) ? footers.manualStockAdj : (this.control?.initialStock?.footers?.manualStockAdj || {});
 
+            this.fiscalCheck = null;
+            this.fiscalCheckOpen = false;
+            this.loadFiscalCheck();
+
 
             this.isLoading = false;
 
@@ -1900,7 +1978,8 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
    saveStocks() {
       const cid = this.dataService.getCompanyId();
-      if (!cid || !this.control) return;
+      // Dia fechado ou por abrir é só leitura (o servidor também o recusa)
+      if (!cid || this.control?.status !== 'OPENED') return;
 
       // Auto-calculate 'physicalManeio' (A) based on B + IN - OUT (C)
       this.cylinderTypes.forEach(t => {
@@ -1927,27 +2006,18 @@ export class GasControlComponent implements OnInit, OnDestroy {
 
 
             this.toaster.showSuccess('Relatório Gravado', 'Stocks e Caixa sincronizados.');
-
-
-            if (this.control.status === 'CLOSED') {
-
-
-               this.toaster.showWarning('Auditoria', 'Alteração registada após fecho do mapa.');
-
-
-            }
-
+            this.loadFiscalCheck();
 
          },
 
 
-         error: () => {
+         error: (err) => {
 
 
             this.isLoading = false;
 
 
-            this.toaster.showError('Erro', 'Falha ao gravar relatório.');
+            this.toaster.showError('Erro', err?.error?.message || 'Falha ao gravar relatório.');
 
 
          }
@@ -2329,6 +2399,26 @@ export class GasControlComponent implements OnInit, OnDestroy {
          next: (data) => { this.analysis = data; this.analysisLoading = false; this.cdr.detectChanges(); },
          error: () => { this.analysisLoading = false; this.toaster.showError('Erro', 'Não foi possível calcular a análise.'); this.cdr.detectChanges(); }
       });
+   }
+
+   loadFiscalCheck() {
+      const cid = this.dataService.getCompanyId();
+      if (!cid) return;
+      const date = this.selectedDate;
+      this.gasService.getFiscalCheck(date, cid).subscribe({
+         next: (data) => {
+            if (date !== this.selectedDate) return;
+            this.fiscalCheck = data;
+            // Abre sozinha quando há garrafas por documentar
+            if (data.totals.undocumented || data.totals.notInMap) this.fiscalCheckOpen = true;
+            this.cdr.detectChanges();
+         },
+         error: () => { this.fiscalCheck = null; this.cdr.detectChanges(); }
+      });
+   }
+
+   quantitiesLabel(q: Record<string, number>): string {
+      return Object.entries(q || {}).map(([t, n]) => n + '×' + t).join(' + ');
    }
 
    /** Abre o Movimento Geral Diário desse dia. */

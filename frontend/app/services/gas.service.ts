@@ -223,6 +223,10 @@ export class GasService {
         return this.http.get<any>(`${this.apiUrl}/statistics?from=${from}&to=${to}&companyId=${companyId}`);
     }
 
+    getFiscalCheck(date: string, companyId: string): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/daily/fiscal-check?date=${date}&companyId=${companyId}`);
+    }
+
     getAnalysis(from: string, to: string, companyId: string): Observable<any> {
         return this.http.get<any>(`${this.apiUrl}/analysis?from=${from}&to=${to}&companyId=${companyId}`);
     }
